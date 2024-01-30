@@ -4,6 +4,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS True)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(BUILD_SHARED_LIBS ON)
+set(BUILD_TESTS ON)
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set(CMAKE_BUILD_TYPE "Release")
@@ -42,7 +44,6 @@ find_package(openssl REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(nreal_mnn REQUIRED)
 find_package(snpe REQUIRED)
-find_package(Ceres REQUIRED)
 find_package(framework CONFIG REQUIRED)
 set_property(TARGET framework::framework
         PROPERTY INTERFACE_COMPILE_OPTIONS

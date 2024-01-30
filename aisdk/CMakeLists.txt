@@ -1,15 +1,2 @@
-add_library(test
-SHARED
-${CMAKE_CURRENT_SOURCE_DIR}/test.cpp
-)
-install(TARGETS test
-            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
-FILE(GLOB HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
-install(
-  FILES 
-  ${HEADERS}
-  DESTINATION
-  ${AISDK_INCLUDE_INSTALL_DIR}
-)
+add_subdirectory(base)
+add_subdirectory(task)

@@ -1,0 +1,6 @@
+message(STATUS "EANABLE BUILD TESTS")
+find_package(doctest REQUIRED)
+include(${PROJECT_SOURCE_DIR}/cmake/test_macro.cmake)
+set(TEST_DEP_LIBS doctest::doctest)
+list(APPEND TEST_DEP_LIBS base)
+ADD_TEST_CASE(${CMAKE_CURRENT_SOURCE_DIR}/test_camera_model.cpp "" TEST_DEP_LIBS)
