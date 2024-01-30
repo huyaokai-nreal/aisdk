@@ -1,0 +1,51 @@
+# Windows:
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Visual Studio files
+.vs
+*.sdf
+*.opensdf
+*.VC.opendb
+*.VC.db
+*.suo
+*.user
+_ReSharper.Caches/
+Win32-Debug/
+Win32-Release/
+x64/
+x64-Debug/
+x64-Release/
+Testing/
+.vscode/
+
+# MacOS:
+.DS_Store
+
+# Android
+.gradle
+local.properties
+
+# Project
+build*/
+run.sh
+obfuscate.log
+obfuscate
+install/
+tmp
+
+# Misc
+.idea/
+.vscode
+.ccls-cache/
+compile_commands.json
+.project_alt.json
+CMakeUserPresets.json
+
+# Custom
+include/version.h
+external/project
+developer*
+offline*
+.cache
