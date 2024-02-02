@@ -1,6 +1,5 @@
 #pragma once
 #include <opencv2/core.hpp>
-#include <utility>
 
 #include "camera_model_distortion.h"
 #include "camera_model_projection.h"

@@ -138,14 +138,12 @@ class CoordTransformService {
                 m_transforms[static_cast<std::size_t>(from)][static_cast<std::size_t>(to)] =
                     m_transforms[i][static_cast<std::size_t>(to)] * m_transforms[static_cast<std::size_t>(from)][i];
                 m_transformSet[static_cast<std::size_t>(from)][static_cast<std::size_t>(to)] = true;
-                return;
             } else if (m_transformSet[static_cast<std::size_t>(from)][i]) {
                 calculateTransform(intermediate, to, visited);
                 if (m_transformSet[i][static_cast<std::size_t>(to)]) {
                     m_transforms[static_cast<std::size_t>(from)][static_cast<std::size_t>(to)] =
                         m_transforms[i][static_cast<std::size_t>(to)] * m_transforms[static_cast<std::size_t>(from)][i];
                     m_transformSet[static_cast<std::size_t>(from)][static_cast<std::size_t>(to)] = true;
-                    return;
                 }
             }
         }

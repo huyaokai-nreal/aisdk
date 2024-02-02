@@ -1,4 +1,5 @@
-message(STATUS "EANABLE BUILD TESTS")
+message(STATUS "ENABLE BUILD TESTS")
+set(CMAKE_CXX_CLANG_TIDY)
 find_package(doctest REQUIRED)
-include(${PROJECT_SOURCE_DIR}/cmake/test_macro.cmake)
+include(test_macro)
 add_subdirectory(base)

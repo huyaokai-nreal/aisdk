@@ -19,12 +19,14 @@ endif()
 set(PROJECT_SRC_DIR "aisdk")
 set(EXTERNAL_PROJECT_DIR ${PROJECT_SOURCE_DIR}/external/project)
 list( APPEND CMAKE_MODULE_PATH "${EXTERNAL_PROJECT_DIR}/cmake" )
+list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 option(FORCE_USE_PUSH "build lib for pushing" OFF)
 option(BUILD_HANDTRACKING_STD_SDK "build lib for std sdk" ON)
 option(BUILD_HANDTRACKING_FPTOOL_SDK "build lib for detect fp_tool sdk" OFF)
 option(BUILD_EXAMPLE "Build examples." OFF)
 option(BUILD_TOOL "Build tools."  OFF)
+option(ENABLE_CLANG_TIDY_CHECK       "Analyze code with clang-tidy."                OFF)
 
 if(BUILD_HANDTRACKING_FPTOOL_SDK)
     # 目前互斥
@@ -68,7 +70,13 @@ install(
 # add global include root
 include_directories(${PROJECT_SOURCE_DIR})
 # import clang-format tool
-include(${PROJECT_SOURCE_DIR}/cmake/clang_format.cmake)
+include(clang_format)
+# set clang-tidy check
+if(ENABLE_CLANG_TIDY_CHECK)
+  message(STATUS "clang-tidy enabled")
+  set(CMAKE_CXX_CLANG_TIDY clang-tidy -format-style=file)
+endif()
+
 # build aisdk
 include(Project)
 
