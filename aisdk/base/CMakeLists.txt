@@ -7,3 +7,4 @@ add_library(
 )
 
 target_link_libraries(base PUBLIC Eigen3::Eigen opencv::opencv)
+add_clang_format_target(base)

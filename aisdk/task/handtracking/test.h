@@ -1,5 +1,5 @@
-#pragma  once 
+#pragma once
 namespace aisdk {
-    int plus(int a, int b);
+int plus(int a, int b);
 
 }

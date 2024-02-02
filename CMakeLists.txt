@@ -67,6 +67,8 @@ install(
 )
 # add global include root
 include_directories(${PROJECT_SOURCE_DIR})
+# import clang-format tool
+include(${PROJECT_SOURCE_DIR}/cmake/clang_format.cmake)
 # build aisdk
 include(Project)
 
