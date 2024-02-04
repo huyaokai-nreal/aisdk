@@ -1,4 +1,5 @@
 #include "camera_model.h"
+#include <camera-models/CameraModelFisheye624.h>
 
 #include <opencv2/calib3d.hpp>
 namespace aisdk {
@@ -166,6 +167,72 @@ std::vector<Eigen::Vector3f> OpenCVFisheyeCameraModel::window_to_eye(const std::
 }
 
 std::vector<Eigen::Vector3f> OpenCVFisheyeCameraModel::window_to_eye(const std::vector<Eigen::Vector3f>& point_3d) {
+    std::vector<Eigen::Vector2f> uv_points(point_3d.size());
+    std::vector<Eigen::Vector2f> normalized_points(point_3d.size());
+    std::vector<Eigen::Vector3f> absolute_3d(point_3d.size());
+
+    for (size_t i = 0; i < point_3d.size(); i++) {
+        uv_points[i] = point_3d[i].head<2>();
+    }
+
+    auto undistort_points = this->undistort(uv_points);
+
+    for (size_t i = 0; i < point_3d.size(); i++) {
+        normalized_points[i](0) = (undistort_points[i](0) - camera_intrinsics_.cx_) / camera_intrinsics_.fx_;
+        normalized_points[i](1) = (undistort_points[i](1) - camera_intrinsics_.cy_) / camera_intrinsics_.fy_;
+    }
+
+    auto relative_3d = this->projection_model_.unproject(normalized_points);
+
+    for (size_t i = 0; i < point_3d.size(); i++) {
+        absolute_3d[i] = relative_3d[i] * (point_3d[i](2) / relative_3d[i](2));
+    }
+
+    return absolute_3d;
+}
+// Fisheye624
+std::vector<Eigen::Vector2f> Fisheye624CameraModel::eye_to_window(const std::vector<Eigen::Vector3f>& point_3d) {
+    std::vector<Eigen::Vector2f> result;
+    auto projected_points = this->projection_model_.project(point_3d);
+    result = this->distortion_model_.evaluate(projected_points);
+
+    for (size_t i = 0; i < point_3d.size(); i++) {
+        result[i][0] = result[i][0] * camera_intrinsics_.fx_ + camera_intrinsics_.cx_;
+        result[i][1] = result[i][1] * camera_intrinsics_.fy_ + camera_intrinsics_.cy_;
+    }
+
+    return result;
+}
+
+std::vector<Eigen::Vector2f> Fisheye624CameraModel::undistort(const std::vector<Eigen::Vector2f>& point_2d) {
+    std::vector<Eigen::Vector2f> result(point_2d.size());
+    Eigen::Vector2f fc{camera_intrinsics_.fx_, camera_intrinsics_.fy_};
+    Eigen::Vector2f cc{camera_intrinsics_.cx_, camera_intrinsics_.cy_};
+    auto D = distortion_model_.getDistortionParams();
+    Eigen::Matrix<float, 12, 1> kc(D.data());
+    for (const auto& point: point_2d){
+        Eigen::Vector2f undistorted_point;
+        camera_models::CameraModelFisheye624<float>::StaticUndistort(point, fc,  cc, kc, undistorted_point);
+        result.push_back(undistorted_point);
+    }
+    return result;
+}
+
+std::vector<Eigen::Vector3f> Fisheye624CameraModel::window_to_eye(const std::vector<Eigen::Vector2f>& point_2d) {
+    std::vector<Eigen::Vector2f> normalized_points(point_2d.size());
+
+    auto undistort_points = this->undistort(point_2d);
+
+    for (size_t i = 0; i < point_2d.size(); i++) {
+        normalized_points[i](0) = (undistort_points[i](0) - camera_intrinsics_.cx_) / camera_intrinsics_.fx_;
+        normalized_points[i](1) = (undistort_points[i](1) - camera_intrinsics_.cy_) / camera_intrinsics_.fy_;
+    }
+
+    auto relative_3d = this->projection_model_.unproject(normalized_points);
+    return relative_3d;
+}
+
+std::vector<Eigen::Vector3f> Fisheye624CameraModel::window_to_eye(const std::vector<Eigen::Vector3f>& point_3d) {
     std::vector<Eigen::Vector2f> uv_points(point_3d.size());
     std::vector<Eigen::Vector2f> normalized_points(point_3d.size());
     std::vector<Eigen::Vector3f> absolute_3d(point_3d.size());

@@ -69,4 +69,19 @@ class OpenCVFisheyeCameraModel : public CameraModel {
     OpenCVFisheyeCameraDistortion distortion_model_;
 };
 
+class Fisheye624CameraModel : public CameraModel {
+   public:
+    Fisheye624CameraModel(const CameraIntrinsics& camera_intrinsics, const Fisheye624CameraDistortion& distortion,
+                             const Eigen::Isometry3f& camera_to_world_xf)
+        : CameraModel(camera_intrinsics, camera_to_world_xf), distortion_model_(distortion) {}
+    std::vector<Eigen::Vector2f> undistort(const std::vector<Eigen::Vector2f>& point_2d) override;
+    std::vector<Eigen::Vector2f> eye_to_window(const std::vector<Eigen::Vector3f>& point_3d) override;
+    std::vector<Eigen::Vector3f> window_to_eye(const std::vector<Eigen::Vector2f>& point_2d) override;
+    std::vector<Eigen::Vector3f> window_to_eye(const std::vector<Eigen::Vector3f>& point_3d) override;
+
+   private:
+    PerspectiveProjection projection_model_;
+    Fisheye624CameraDistortion distortion_model_;
+};
+
 }  // namespace aisdk

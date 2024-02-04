@@ -64,5 +64,28 @@ class Fisheye62CameraDistortion {
     float k5_;
     float k6_;
 };
+class Fisheye624CameraDistortion {
+   public:
+    Fisheye624CameraDistortion(float k1, float k2, float k3, float k4, float p1, float p2, float k5, float k6, float s1, float s2, float s3, float s4 )
+        : k1_(k1), k2_(k2), k3_(k3), k4_(k4),  k5_(k5), k6_(k6),p1_(p1), p2_(p2), s1_(s1), s2_(s2), s3_(s3), s4_(s4) {}
+
+    Fisheye624CameraDistortion() = delete;
+    std::vector<Eigen::Vector2f> evaluate(const std::vector<Eigen::Vector2f>& point_2d);
+    std::vector<float> getDistortionParams() { return {k1_, k2_, k3_, k4_,  k5_, k6_, p1_, p2_,s1_, s2_, s3_, s4_}; }
+
+   private:
+    float k1_;
+    float k2_;
+    float k3_;
+    float k4_;
+    float k5_;
+    float k6_;
+    float p1_;
+    float p2_;
+    float s1_;
+    float s2_;
+    float s3_;
+    float s4_;
+};
 
 }  // namespace aisdk

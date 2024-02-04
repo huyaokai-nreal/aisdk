@@ -38,6 +38,7 @@ add_definitions(-DFORCE_USE_PUSH=ON)
 endif()
 
 find_package(fmt REQUIRED)
+find_package(camera_model REQUIRED)
 find_package(jsoncpp REQUIRED)
 find_package(spdlog REQUIRED)
 add_compile_definitions(SPDLOG_FMT_EXTERNAL)

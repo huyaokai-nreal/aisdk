@@ -1,4 +1,6 @@
 #include "camera_model_distortion.h"
+#include <camera-models/CameraModelFisheye624.h>
+#include <vector>
 namespace aisdk {
 std::vector<Eigen::Vector2f> OpenCVPinholeCameraDistortion::evaluate(const std::vector<Eigen::Vector2f>& point_2d) {
     std::vector<Eigen::Vector2f> result;
@@ -35,6 +37,20 @@ std::vector<Eigen::Vector2f> OpenCVFisheyeCameraDistortion::evaluate(const std::
         result.push_back(uv);
     }
 
+    return result;
+}
+
+std::vector<Eigen::Vector2f> Fisheye624CameraDistortion::evaluate(const std::vector<Eigen::Vector2f>& point_2d){
+    std::vector<Eigen::Vector2f> result;
+    Eigen::Matrix<float, 12, 1> kc;
+    kc << k1_, k2_, k3_, k4_, k5_, k6_, p1_, p2_, s1_, s2_, s3_, s4_;
+    Eigen::Vector2f fc{1,1};
+    Eigen::Vector2f cc{0,0};
+    for(const auto& point: point_2d){
+        Eigen::Vector2f undistort_pt;
+        camera_models::CameraModelFisheye624<float>::StaticDistort(point, fc, cc, kc, undistort_pt);
+        result.push_back(undistort_pt);
+    }
     return result;
 }
 
