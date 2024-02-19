@@ -5,7 +5,7 @@
 #include <camera-models/CameraModelRadial.h>
 
 #include <vector>
-namespace aisdk {
+namespace aisdk::base {
 std::vector<Eigen::Vector2f> OpenCVPinholeCameraDistortion::distort(const std::vector<Eigen::Vector2f>& point_2d) {
     std::vector<Eigen::Vector2f> result;
 
@@ -99,4 +99,4 @@ std::vector<Eigen::Vector2f> Fisheye624CameraDistortion::undistort(const std::ve
     return result;
 }
 
-}  // namespace aisdk
+}  // namespace aisdk::base

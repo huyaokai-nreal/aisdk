@@ -9,7 +9,7 @@
 
 #include "aisdk/base/camera_model_distortion.h"
 #include "aisdk/base/camera_model_projection.h"
-namespace aisdk {
+namespace aisdk::base {
 template <typename P, typename D>
 std::vector<Eigen::Vector3f> CameraModel<P, D>::world_to_eye(const std::vector<Eigen::Vector3f>& point_3d) {
     std::vector<Eigen::Vector3f> result;
@@ -94,4 +94,4 @@ template class CameraModel<PerspectiveProjection, OpenCVPinholeCameraDistortion>
 template class CameraModel<PerspectiveProjection, OpenCVFisheyeCameraDistortion>;
 template class CameraModel<PerspectiveProjection, Fisheye624CameraDistortion>;
 template class CameraModel<PerspectiveProjection, NoDistortion>;
-}  // namespace aisdk
+}  // namespace aisdk::base

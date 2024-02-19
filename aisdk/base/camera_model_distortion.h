@@ -1,7 +1,7 @@
 #pragma once
 #include <Eigen/Dense>
 #include <vector>
-namespace aisdk {
+namespace aisdk::base {
 class Distortion {
    public:
     virtual std::vector<Eigen::Vector2f> distort(const std::vector<Eigen::Vector2f>& point_2d) = 0;
@@ -74,4 +74,4 @@ class Fisheye624CameraDistortion: public Distortion {
     float s4_;
 };
 
-}  // namespace aisdk
+}  // namespace aisdk::base

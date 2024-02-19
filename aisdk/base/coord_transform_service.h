@@ -10,7 +10,7 @@
 
 #include "Eigen/src/Geometry/Transform.h"
 
-namespace aisdk {
+namespace aisdk::base {
 
 template <typename CoordinateSystemEnum, std::size_t N, typename ScalarType>
 class CoordTransformService {
@@ -162,4 +162,4 @@ class CoordTransformService {
     std::array<std::array<bool, N>, N> m_transformSet;
 };
 
-}  // namespace aisdk
+}  // namespace aisdk::base

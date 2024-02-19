@@ -1,7 +1,7 @@
 #include "camera_model_projection.h"
 
 #include "cmath"
-namespace aisdk {
+namespace aisdk::base {
 constexpr float PI = 3.14159265358979323846;
 constexpr float EPS = 1e-5;
 float sinc(float x) {
@@ -61,4 +61,4 @@ std::vector<Eigen::Vector3f> ArctanProjection::unproject(const std::vector<Eigen
     return result_3d;
 }
 
-}  // namespace aisdk
+}  // namespace aisdk::base

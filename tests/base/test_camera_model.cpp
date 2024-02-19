@@ -3,7 +3,7 @@
 #include <doctest/doctest.h>
 
 #include "aisdk/base/camera_model.h"
-using namespace aisdk;
+using namespace aisdk::base;
 TEST_CASE("testing the opencv pinhole camera") {
     CameraIntrinsics cam_k{240.47993898902308, 240.45010798807022, 238.24292414176563, 318.920557320675};
     OpenCVPinholeCameraDistortion cam_d{0.012542161517124128, 0.04662863296034774, -0.04361866666639336, 0,

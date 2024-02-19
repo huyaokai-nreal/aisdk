@@ -1,7 +1,7 @@
 #pragma once
 #include "camera_model_distortion.h"
 #include "camera_model_projection.h"
-namespace aisdk {
+namespace aisdk::base {
 struct CameraIntrinsics {
     float fx_ = 0;
     float fy_ = 0;
@@ -39,4 +39,4 @@ using OpenCVFisheyeCameraModel = CameraModel<PerspectiveProjection, OpenCVFishey
 using Fisheye624CameraModel = CameraModel<PerspectiveProjection, Fisheye624CameraDistortion>;
 using PerspectiveCameraModel = CameraModel<PerspectiveProjection, NoDistortion>;
 
-}  // namespace aisdk
+}  // namespace aisdk::base
