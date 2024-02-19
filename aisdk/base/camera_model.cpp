@@ -1,12 +1,6 @@
 #include "camera_model.h"
-
-#include <Eigen/src/Core/Matrix.h>
-#include <camera-models/CameraModelFisheye.h>
-#include <camera-models/CameraModelFisheye624.h>
-#include <camera-models/CameraModelRadial.h>
-
+#include <camera-models/CameraModelBase.h>
 #include <vector>
-
 #include "aisdk/base/camera_model_distortion.h"
 #include "aisdk/base/camera_model_projection.h"
 namespace aisdk::base {

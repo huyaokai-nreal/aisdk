@@ -1,8 +1,5 @@
 #include "camera_model_distortion.h"
-
-#include <camera-models/CameraModelFisheye.h>
-#include <camera-models/CameraModelFisheye624.h>
-#include <camera-models/CameraModelRadial.h>
+#include <camera-models/CameraModelBase.h>
 
 #include <vector>
 namespace aisdk::base {
