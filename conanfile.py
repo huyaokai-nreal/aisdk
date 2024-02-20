@@ -20,7 +20,8 @@ class AISDK(ConanFile):
         self.requires("nreal_mnn/2.0.0", transitive_headers=True, transitive_libs=True)
         self.requires("snpe/2.17.0", transitive_headers=False, transitive_libs=False)
         self.requires("camera_model/develop", transitive_libs=True)
-        self.requires(super().override_require("framework/jenkins"), run=True)
+        self.requires("framework/jenkins#c6267a1decb4846582cf18e15d5e22ad6a7f6150")
+        #self.requires(super().override_require("framework/jenkins"), run=True)
 
     def package_info(self):
         self.cpp_info.libs = ["test"]

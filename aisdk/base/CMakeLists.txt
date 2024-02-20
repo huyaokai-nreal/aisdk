@@ -4,6 +4,7 @@ add_library(
     ${CMAKE_CURRENT_SOURCE_DIR}/camera_model_distortion.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/camera_model_projection.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/camera_model.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/file.cpp
 )
 
 target_link_libraries(base PUBLIC Eigen3::Eigen camera_model::camera_model framework::framework)
