@@ -1,7 +1,7 @@
 #ifndef _NRHAL_MODEL_LOAD_H_
 #define _NRHAL_MODEL_LOAD_H_
 
-#include "aisdk/xengine/nrhal_define.h"
+#include "aisdk/xengine/nr_model_mgr.h"
 
 extern "C" {
 

@@ -73,7 +73,11 @@ Status SNPE_Session::Init(std::shared_ptr<AIModel> &model, SessionConfig &Sconfi
         mSnpeWrapper->setOutputTensors(Sconfig.customize_ioname.output_tensorname);
     }
 
-    mSnpeWrapper->init((const uint8_t *)aimodel->m_config.model_mem, aimodel->m_config.model_size, runtime_mark);
+    bool initok =
+        mSnpeWrapper->init((const uint8_t *)aimodel->m_config.model_mem, aimodel->m_config.model_size, runtime_mark);
+    if (!initok) {
+        return Status::FAILURE;
+    }
 
     //     bool useUserSuppliedBuffers = false;
     // #ifdef BUFFERTYPE_USER

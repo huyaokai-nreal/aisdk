@@ -30,7 +30,7 @@
 
 void PrintfHalModelConfig(Xengine::ModelConfig& info) {
     AISDK_LOG_TRACE("[HalModelConfig] model_path={} model_mem={} model_size={} vendor_type={}", info.model_path.c_str(),
-                    info.model_mem, info.model_size, (int)info.vendor_type);
+                    static_cast<const void*>(info.model_mem), info.model_size, (int)info.vendor_type);
 }
 
 void PrintfHalSessionConfig(Xengine::SessionConfig& info) {
@@ -283,9 +283,9 @@ bool checkHexagonDSP() {
         return false;
     }
     bool res = temp.Snpe_Util_IsRuntimeAvailable(Snpe_Runtime_t::SNPE_RUNTIME_DSP);
-    AISDK_LOG_TRACE("Snpe_Util_IsRuntimeAvailable: %d", res);
+    AISDK_LOG_TRACE("Snpe_Util_IsRuntimeAvailable: {}", res);
     if (!res) {
-        AISDK_LOG_ERROR("checkHexagonDSP failed: %s", temp.Snpe_ErrorCode_GetLastErrorString());
+        AISDK_LOG_ERROR("checkHexagonDSP failed: {}", temp.Snpe_ErrorCode_GetLastErrorString());
     }
     return res;
 }

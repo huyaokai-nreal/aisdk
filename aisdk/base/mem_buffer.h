@@ -42,7 +42,7 @@ class FixedMembuffer {
                     free_cache.erase(k);
                     break;
                 } else {
-                    AISDK_LOG_WARN("RequestMemBlob warning, name=%s, reason=(%lu != %lu)", module_name.c_str(), v->size,
+                    AISDK_LOG_WARN("RequestMemBlob warning, name={}, reason=({} != {})", module_name.c_str(), v->size,
                                    alloc_size);
                 }
             }
@@ -50,7 +50,7 @@ class FixedMembuffer {
 
         if (nullptr == find_mem) {
             if ((cache_size + alloc_size) > warning_size) {
-                AISDK_LOG_WARN("RequestMemBlob failure, name=%s, reason=(%lu + %lu > %lu)", module_name.c_str(),
+                AISDK_LOG_WARN("RequestMemBlob failure, name={}, reason=({} + {} > {})", module_name.c_str(),
                                cache_size, alloc_size, warning_size);
                 return nullptr;
             }
