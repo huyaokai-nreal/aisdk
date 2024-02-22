@@ -1,6 +1,9 @@
 #include "camera_model.h"
+
 #include <camera-models/CameraModelBase.h>
+
 #include <vector>
+
 #include "aisdk/base/camera_model_distortion.h"
 #include "aisdk/base/camera_model_projection.h"
 namespace aisdk::base {

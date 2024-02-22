@@ -1,4 +1,5 @@
 #include "camera_model_distortion.h"
+
 #include <camera-models/CameraModelBase.h>
 
 #include <vector>

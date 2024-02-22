@@ -1,4 +1,5 @@
 #include "aisdk/base/time.h"
+
 #include "aisdk/base/log.h"
 
 namespace aisdk::base {
@@ -43,8 +44,7 @@ NaiveTimer::NaiveTimer(int line, const char* func, std::string _tag) : TimerBase
 }
 NaiveTimer::~NaiveTimer() {
     auto timeInUs = durationInUs();
-    AISDK_LOG_INFO("[Name:{}],[Line:{}],[{}][cost:{:.3f}ms]", name_, line_, tag_.c_str(),
-                          (float)timeInUs / 1000.0f);
+    AISDK_LOG_INFO("[Name:{}],[Line:{}],[{}][cost:{:.3f}ms]", name_, line_, tag_.c_str(), (float)timeInUs / 1000.0f);
 }
 
 }  // namespace aisdk::base

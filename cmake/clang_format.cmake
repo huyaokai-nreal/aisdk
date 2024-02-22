@@ -1,7 +1,7 @@
 function(add_clang_format_target target_name)
     find_program(${PROJECT_NAME}_CLANG_FORMAT_BINARY clang-format)
     get_target_property(TARGET_SOURCES ${target_name} SOURCES)
-    add_custom_target(clang-format_${target_name}
+    add_custom_target(clang-format_${target_name} ALL
             COMMAND ${${PROJECT_NAME}_CLANG_FORMAT_BINARY}
             -i ${TARGET_SOURCES}
             WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
