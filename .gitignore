@@ -34,6 +34,8 @@ obfuscate.log
 obfuscate
 install/
 tmp
+pipeline_tar/
+aisdk/xengine/model/model.h
 
 # Misc
 .idea/

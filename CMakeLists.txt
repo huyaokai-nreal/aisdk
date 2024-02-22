@@ -7,6 +7,20 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(BUILD_SHARED_LIBS ON)
 set(BUILD_TESTS ON)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-c++11-narrowing")
+
+if(CMAKE_SYSTEM_NAME MATCHES "^Android")
+    if(${ANDROID_ABI} MATCHES "arm64-v8a")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv8.2-a+dotprod")
+    endif()
+endif()
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "arm64")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv8.2-a+dotprod")
+    endif()
+endif()
+
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set(CMAKE_BUILD_TYPE "Release")
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release")
@@ -77,6 +91,27 @@ if(ENABLE_CLANG_TIDY_CHECK)
   message(STATUS "clang-tidy enabled")
   set(CMAKE_CXX_CLANG_TIDY clang-tidy -format-style=file)
 endif()
+
+# build xengine model package
+set(MODEL_TAR_NAME "handtracking_pipeline_v1.0.0.tar")
+set(DEFAULT_PIPELINE_TAR_PATH "${CMAKE_CURRENT_SOURCE_DIR}/pipeline_tar/${MODEL_TAR_NAME}.enc")
+set(DEFAULT_PIPELINE_TAR_KEY "${CMAKE_CURRENT_SOURCE_DIR}/pipeline_tar/${MODEL_TAR_NAME}.key")
+file(STRINGS ${DEFAULT_PIPELINE_TAR_KEY} file_content)
+list(GET file_content 2 DEFAULT_PIPELINE_TAR_KEY)
+message(STATUS "MODEL_KEY: ${DEFAULT_PIPELINE_TAR_KEY}") 
+configure_file (
+    "${CMAKE_CURRENT_SOURCE_DIR}/aisdk/xengine/model/models.h.in"
+    "${CMAKE_CURRENT_SOURCE_DIR}/aisdk/xengine/model/models.h"
+)
+
+# build xengine nn 
+option(ENABLE_XENGINE_SNPE_NN "enable snpe nn."  ON)
+set(SNPE_VERSION "snpe-2.17.0" CACHE STRING "set snpe version.")
+message(STATUS "SNPE_VERSION=" ${SNPE_VERSION})
+option(ENABLE_HEXAGON_DSP_OP "enable hexagon dsp op."  OFF)
+option(ENABLE_XENGINE_MNN_NN "enable mnn nn."  ON)
+option(ENABLE_XENGINE_ARTOSYN_NN "enable artosyn nn."  OFF)
+option(ENABLE_XENGINE_TENSORRT_NN "enable tensorrt nn."  OFF)
 
 # build aisdk
 include(Project)

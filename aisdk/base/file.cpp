@@ -22,7 +22,8 @@ bool RemoveDir(const std::string_view& path) {
         FILE* file = NULL;
         char abs_path[256];
         if ((*(entry->d_name) != '.') || ((strlen(entry->d_name) > 1) && (entry->d_name[1] != '.'))) {
-            sprintf(abs_path, "%s/%s", path.data(), entry->d_name);
+            auto ret = snprintf(abs_path, sizeof(abs_path) - 1, "%s/%s", path.data(), entry->d_name);
+            (void)ret;
             if ((sub_dir = opendir(abs_path))) {
                 closedir(sub_dir);
                 RemoveDir(abs_path);
