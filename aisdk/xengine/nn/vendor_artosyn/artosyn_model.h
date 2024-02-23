@@ -4,7 +4,7 @@
 #include "nr_artosyn_header.h"
 #include "nrnn_model.h"
 
-namespace Xengine {
+namespace aisdk::xengine {
 
 class ARTOSYN_AIModel : public AIModel {
    public:
@@ -24,6 +24,6 @@ class ARTOSYN_AIModel : public AIModel {
     AR_U32 u32FrameId;
     AR_IMG_SET_S stInImg;
 };
-}  // namespace Xengine
+}  // namespace aisdk::xengine
 
 #endif

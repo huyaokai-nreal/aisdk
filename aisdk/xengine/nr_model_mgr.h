@@ -7,7 +7,7 @@
 #define NAME_TO_STRING(x) N2S(x)
 #define DEFAULT_PIPELINE_TAR_NAME aisdk_common_pipeline_tar
 
-namespace Xengine {
+namespace aisdk::xengine {
 
 enum class NodeType {
     UNKNOWN = 0,
@@ -36,8 +36,8 @@ struct LogicAlgoConfig {
     std::string algo_param;
 };
 
-using NetAlgoNodeTupleConfig = std::tuple<Xengine::ModelConfig, Xengine::SessionConfig, Xengine::NetAlgoConfig>;
-using LogicAlgoNodeTupleConfig = std::tuple<Xengine::LogicAlgoConfig>;
+using NetAlgoNodeTupleConfig = std::tuple<aisdk::xengine::ModelConfig, aisdk::xengine::SessionConfig, aisdk::xengine::NetAlgoConfig>;
+using LogicAlgoNodeTupleConfig = std::tuple<aisdk::xengine::LogicAlgoConfig>;
 
 struct PipelineRelatedFeature {
     std::string bind_sensor_orientation;  // "horizontal / vertical"
@@ -50,11 +50,11 @@ struct PipelineConfig {
     // node名称
     std::vector<std::string> node_name;
     // node类型
-    std::vector<Xengine::NodeType> node_type;
+    std::vector<aisdk::xengine::NodeType> node_type;
     // 网络node配置
-    std::vector<Xengine::NetAlgoNodeTupleConfig> netnode_config;
+    std::vector<aisdk::xengine::NetAlgoNodeTupleConfig> netnode_config;
     // 逻辑node配置
-    std::vector<Xengine::LogicAlgoNodeTupleConfig> logicnode_config;
+    std::vector<aisdk::xengine::LogicAlgoNodeTupleConfig> logicnode_config;
     // pipeline关联的特性
     PipelineRelatedFeature related_feature;
 };
@@ -71,7 +71,7 @@ class AnalysisTar {
     // 从目录中导入默认的模型tar包
     virtual bool TarFile(const char *pipeline_tarfile, const char *aeskey);
     // 获取tar中解析完成的PipelineConfig
-    virtual std::vector<Xengine::PipelineConfig> &GetPipelineConfig();
+    virtual std::vector<aisdk::xengine::PipelineConfig> &GetPipelineConfig();
    private:
     // 释放缓存的模型内存等信息
     void ReleaseCache();
@@ -80,15 +80,15 @@ class AnalysisTar {
     std::vector<PipelineConfig> m_config;
 };
 
-}  // namespace Xengine
+}  // namespace aisdk::xengine
 
 
 extern "C" {
-typedef Xengine::AnalysisTar *(*CreateAnalysisTarFunc)();
-typedef void (*DestoryAnalysisTarFunc)(Xengine::AnalysisTar *handle);
+typedef aisdk::xengine::AnalysisTar *(*CreateAnalysisTarFunc)();
+typedef void (*DestoryAnalysisTarFunc)(aisdk::xengine::AnalysisTar *handle);
 
-SYM_EXPORT Xengine::AnalysisTar *_ZN2NR200TK7FUNC007E();
-SYM_EXPORT void _ZN2NR200TK7FUNC008E(Xengine::AnalysisTar *handle);
+SYM_EXPORT aisdk::xengine::AnalysisTar *_ZN2NR200TK7FUNC007E();
+SYM_EXPORT void _ZN2NR200TK7FUNC008E(aisdk::xengine::AnalysisTar *handle);
 
 }
 #endif

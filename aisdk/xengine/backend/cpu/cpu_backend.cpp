@@ -6,19 +6,19 @@
 
 #include "cpu_algop_impl.h"
 
-namespace Xengine {
+namespace aisdk::xengine {
 
 CpuBackend::CpuBackend() : Backend() {}
 
 CpuBackend::~CpuBackend() {}
 
-Xengine::Status CpuBackend::AcquireTensorbuffer(Xengine::Tensor& t, uint32_t batch_n) {
+aisdk::xengine::Status CpuBackend::AcquireTensorbuffer(aisdk::xengine::Tensor& t, uint32_t batch_n) {
     uint32_t len = batch_n * t.m_elementbyte * t.m_elementsize;
     t.m_viraddr = malloc(len);
     return Status::SUCCESS;
 }
 
-Xengine::Status CpuBackend::ReleaseTensorbuffer(Xengine::Tensor& t) {
+aisdk::xengine::Status CpuBackend::ReleaseTensorbuffer(aisdk::xengine::Tensor& t) {
     if (t.m_viraddr) {
         free(t.m_viraddr);
         t.m_viraddr = nullptr;
@@ -26,15 +26,15 @@ Xengine::Status CpuBackend::ReleaseTensorbuffer(Xengine::Tensor& t) {
     return Status::SUCCESS;
 }
 
-Xengine::AlgOpSet CpuBackend::GetAlgOpSet() { return CpuAlgOpManager::GetOriginOpSet(); }
+aisdk::xengine::AlgOpSet CpuBackend::GetAlgOpSet() { return CpuAlgOpManager::GetOriginOpSet(); }
 
-Xengine::TensorAlgOpSet CpuBackend::GetTensorAlgOpSet() { return CpuAlgOpManager::GetTensorOpSet(); }
+aisdk::xengine::TensorAlgOpSet CpuBackend::GetTensorAlgOpSet() { return CpuAlgOpManager::GetTensorOpSet(); }
 
-Xengine::AlgOpAttribute CpuBackend::GetAlgOpAttribute(Xengine::AlgOpType op_type) {
-    Xengine::AlgOpAttribute ret;
-    if (op_type == Xengine::AlgOpType::AlgOpType_NORM) {
+aisdk::xengine::AlgOpAttribute CpuBackend::GetAlgOpAttribute(aisdk::xengine::AlgOpType op_type) {
+    aisdk::xengine::AlgOpAttribute ret;
+    if (op_type == aisdk::xengine::AlgOpType::AlgOpType_NORM) {
     }
     return ret;
 }
 
-}  // namespace Xengine
+}  // namespace aisdk::xengine

@@ -7,7 +7,7 @@
 
 #include "nrhal_define.h"
 
-namespace Xengine {
+namespace aisdk::xengine {
 
 struct ModelConfig {
     std::string model_path;
@@ -33,8 +33,8 @@ class AIModel {
     bool m_success = false;
     ModelInfo m_info;
 };
-}  // namespace Xengine
+}  // namespace aisdk::xengine
 
-std::shared_ptr<Xengine::AIModel> CreateModelPtr(std::string &key, Xengine::ModelConfig &config);
-Xengine::Status DestoryModelPtr(std::string &key);
+std::shared_ptr<aisdk::xengine::AIModel> CreateModelPtr(std::string &key, aisdk::xengine::ModelConfig &config);
+aisdk::xengine::Status DestoryModelPtr(std::string &key);
 #endif

@@ -19,11 +19,11 @@
 #endif
 
 static std::atomic<uint32_t> g_newkey_id(0);
-static std::map<std::string, std::weak_ptr<Xengine::AIModel>> g_hasmod;
+static std::map<std::string, std::weak_ptr<aisdk::xengine::AIModel>> g_hasmod;
 
-std::shared_ptr<Xengine::AIModel> CreateModelPtr(std::string &key, Xengine::ModelConfig &config) {
+std::shared_ptr<aisdk::xengine::AIModel> CreateModelPtr(std::string &key, aisdk::xengine::ModelConfig &config) {
     bool is_newkey = false;
-    std::shared_ptr<Xengine::AIModel> ret = nullptr;
+    std::shared_ptr<aisdk::xengine::AIModel> ret = nullptr;
     if (g_hasmod.find(key) != g_hasmod.end()) {
         if (!g_hasmod[key].expired()) {
             auto tmp = g_hasmod[key].lock();
@@ -38,17 +38,17 @@ std::shared_ptr<Xengine::AIModel> CreateModelPtr(std::string &key, Xengine::Mode
         }
     }
 
-    if (config.vendor_type == Xengine::VendorType::MNN) {
+    if (config.vendor_type == aisdk::xengine::VendorType::MNN) {
 #if defined(HAVE_HAL_MNN)
-        ret = std::make_shared<Xengine::MNN_AIModel>(config);
+        ret = std::make_shared<aisdk::xengine::MNN_AIModel>(config);
 #endif
-    } else if (config.vendor_type == Xengine::VendorType::ROCKCHIP) {
+    } else if (config.vendor_type == aisdk::xengine::VendorType::ROCKCHIP) {
 #if defined(HAVE_HAL_RKNN)
-        ret = std::make_shared<Xengine::RKNN_AIModel>(config);
+        ret = std::make_shared<aisdk::xengine::RKNN_AIModel>(config);
 #endif
-    } else if (config.vendor_type == Xengine::VendorType::SNPE) {
+    } else if (config.vendor_type == aisdk::xengine::VendorType::SNPE) {
 #if defined(HAVE_HAL_SNPE)
-        ret = std::make_shared<Xengine::SNPE_AIModel>(config);
+        ret = std::make_shared<aisdk::xengine::SNPE_AIModel>(config);
 #endif
     }
 
@@ -61,12 +61,12 @@ std::shared_ptr<Xengine::AIModel> CreateModelPtr(std::string &key, Xengine::Mode
     return ret;
 }
 
-Xengine::Status DestoryModelPtr(std::string &key) {
+aisdk::xengine::Status DestoryModelPtr(std::string &key) {
     if (g_hasmod.find(key) != g_hasmod.end()) {
         if (g_hasmod[key].use_count() == 0) {
             g_hasmod.erase(key);
         }
-        return Xengine::Status::SUCCESS;
+        return aisdk::xengine::Status::SUCCESS;
     }
-    return Xengine::Status::FAILURE;
+    return aisdk::xengine::Status::FAILURE;
 }

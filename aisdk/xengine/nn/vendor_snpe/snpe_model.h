@@ -3,7 +3,7 @@
 
 #include "aisdk/xengine/nr_snpe_header.h"
 #include "aisdk/xengine/nrnn_model.h"
-namespace Xengine {
+namespace aisdk::xengine {
 
 class SNPE_AIModel : public AIModel {
    public:
@@ -14,6 +14,6 @@ class SNPE_AIModel : public AIModel {
    private:
     std::unique_ptr<zdl::DlContainer::IDlContainer> m_container;
 };
-}  // namespace Xengine
+}  // namespace aisdk::xengine
 
 #endif

@@ -4,7 +4,7 @@
 #include "tensorrt_model.h"
 #include "tensorrt_session.h"
 
-namespace Xengine {
+namespace aisdk::xengine {
 static TrtExecApi gfunc;
 
 TRT_AIModel::TRT_AIModel(ModelConfig &config) : AIModel() {
@@ -79,8 +79,8 @@ Status TRT_Session::Init(std::shared_ptr<AIModel> &model, SessionConfig &Sconfig
                         tmp.m_dims[i] = tensor.dims[i];
                         elementsize *= tensor.dims[i];
                     }
-                    tmp.m_dimtype = Xengine::TensorFormat(tensor.dimtype);
-                    tmp.m_elementype = Xengine::ElementType(tensor.elementype);
+                    tmp.m_dimtype = aisdk::xengine::TensorFormat(tensor.dimtype);
+                    tmp.m_elementype = aisdk::xengine::ElementType(tensor.elementype);
                     tmp.m_elementbyte = sizeof(float);
                     tmp.m_elementsize = elementsize;
                     tmp.m_viraddr = tensor.host_viraddr;
@@ -109,4 +109,4 @@ Status TRT_Session::Forword(ModelInfo &handle) {
     return Status::FAILURE;
 }
 
-}  // namespace Xengine
+}  // namespace aisdk::xengine

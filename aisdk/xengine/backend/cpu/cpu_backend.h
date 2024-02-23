@@ -3,19 +3,19 @@
 
 #include "aisdk/xengine/nrhal_backend.h"
 
-namespace Xengine {
+namespace aisdk::xengine {
 
 class CpuBackend : public Backend {
    public:
     CpuBackend();
     virtual ~CpuBackend();
-    Xengine::Status AcquireTensorbuffer(Xengine::Tensor& t, uint32_t batch_n);
-    Xengine::Status ReleaseTensorbuffer(Xengine::Tensor& t);
-    Xengine::AlgOpSet GetAlgOpSet();
-    Xengine::TensorAlgOpSet GetTensorAlgOpSet();
-    Xengine::AlgOpAttribute GetAlgOpAttribute(Xengine::AlgOpType op_type);
+    aisdk::xengine::Status AcquireTensorbuffer(aisdk::xengine::Tensor& t, uint32_t batch_n);
+    aisdk::xengine::Status ReleaseTensorbuffer(aisdk::xengine::Tensor& t);
+    aisdk::xengine::AlgOpSet GetAlgOpSet();
+    aisdk::xengine::TensorAlgOpSet GetTensorAlgOpSet();
+    aisdk::xengine::AlgOpAttribute GetAlgOpAttribute(aisdk::xengine::AlgOpType op_type);
 };
 
-}  // namespace Xengine
+}  // namespace aisdk::xengine
 
 #endif

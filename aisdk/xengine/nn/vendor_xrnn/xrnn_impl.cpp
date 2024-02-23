@@ -2,7 +2,7 @@
 #include "xrnn_model.h"
 #include "xrnn_session.h"
 
-namespace Xengine {
+namespace aisdk::xengine {
 
 XRNN_AIModel::XRNN_AIModel(ModelConfig &config) : AIModel() { (void)config.model_mem; }
 
@@ -22,4 +22,4 @@ Status XRNN_Session::Forword(ModelInfo &handle) {
     return Status::SUCCESS;
 }
 
-}  // namespace Xengine
+}  // namespace aisdk::xengine

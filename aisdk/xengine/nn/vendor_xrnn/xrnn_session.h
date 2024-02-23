@@ -2,7 +2,7 @@
 #define _XRNN_SESSION_H_
 
 #include "aisdk/xengine/nrnn_session.h"
-namespace Xengine {
+namespace aisdk::xengine {
 
 class XRNN_Session : public Session {
    public:
@@ -16,5 +16,5 @@ class XRNN_Session : public Session {
     Status Forword(ModelInfo &handle);
 };
 
-}  // namespace Xengine
+}  // namespace aisdk::xengine
 #endif

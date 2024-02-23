@@ -4,7 +4,7 @@
 #include "aisdk/xengine/nr_mnn_header.h"
 #include "aisdk/xengine/nrnn_model.h"
 
-namespace Xengine {
+namespace aisdk::xengine {
 
 class MNN_AIModel : public AIModel {
    public:
@@ -15,6 +15,6 @@ class MNN_AIModel : public AIModel {
    private:
     std::unique_ptr<MNN::Interpreter> m_network;
 };
-}  // namespace Xengine
+}  // namespace aisdk::xengine
 
 #endif

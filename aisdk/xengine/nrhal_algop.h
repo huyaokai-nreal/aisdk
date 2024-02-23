@@ -9,12 +9,12 @@ using ReduceOp = void (*)(float *, float *, int, int, int);
 using SoftmaxOp = void (*)(float *, float *, const std::vector<int> &, bool);
 
 
-using TensorElewisemulOp = void (*)(Xengine::Tensor *, Xengine::Tensor *, uint32_t);
-using TensorNormOp = float (*)(Xengine::Tensor *, Xengine::Tensor *, uint32_t);
-using TensorReduceOp = void (*)(Xengine::Tensor *, Xengine::Tensor *, uint32_t);
-using TensorSoftmaxOp = void (*)(Xengine::Tensor *, Xengine::Tensor *, uint32_t);
+using TensorElewisemulOp = void (*)(aisdk::xengine::Tensor *, aisdk::xengine::Tensor *, uint32_t);
+using TensorNormOp = float (*)(aisdk::xengine::Tensor *, aisdk::xengine::Tensor *, uint32_t);
+using TensorReduceOp = void (*)(aisdk::xengine::Tensor *, aisdk::xengine::Tensor *, uint32_t);
+using TensorSoftmaxOp = void (*)(aisdk::xengine::Tensor *, aisdk::xengine::Tensor *, uint32_t);
 
-namespace Xengine {
+namespace aisdk::xengine {
 
 enum SYM_EXPORT AlgOpType {
     AlgOpType_UNKOWN = 0,
@@ -47,5 +47,5 @@ struct SYM_EXPORT AlgOpAttribute {
     bool support_tensorflow_tensor_mem_order = false;
 };
 
-}  // namespace Xengine
+}  // namespace aisdk::xengine
 #endif

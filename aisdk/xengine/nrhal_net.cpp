@@ -6,42 +6,43 @@
 #include "aisdk/base/log.h"
 #include "aisdk/base/profiling.h"
 
-namespace Xengine {
+namespace aisdk::xengine {
 
 BaseNetAlgo::BaseNetAlgo() {}
 
 BaseNetAlgo::~BaseNetAlgo() { m_impl = nullptr; }
 
-Xengine::Status BaseNetAlgo::Init(std::string &netname, Xengine::ModelConfig &model, Xengine::SessionConfig &session) {
+aisdk::xengine::Status BaseNetAlgo::Init(std::string &netname, aisdk::xengine::ModelConfig &model,
+                                         aisdk::xengine::SessionConfig &session) {
     // 根据模型类型，添加对应的runtime
     if (aisdk::base::DebugProfiling::Get().GetOpt().aisdk_init_report) {
         PrintfHalModelConfig(model);
         PrintfHalSessionConfig(session);
     }
 
-    Xengine::Status ret = Xengine::Status::UNKNOWN;
-    m_impl = std::make_unique<Xengine::Inference>(model, session);
+    aisdk::xengine::Status ret = aisdk::xengine::Status::UNKNOWN;
+    m_impl = std::make_unique<aisdk::xengine::Inference>(model, session);
     if (m_impl) {
         ret = m_impl->Init(netname);
-        if (ret != Xengine::Status::SUCCESS) {
+        if (ret != aisdk::xengine::Status::SUCCESS) {
             AISDK_LOG_TRACE("BaseNetAlgo::Init netname=%s error=%d", netname.c_str(), (int)ret);
         }
     }
     return ret;
 }
 
-Xengine::IoTensors BaseNetAlgo::GetInputTensors() {
+aisdk::xengine::IoTensors BaseNetAlgo::GetInputTensors() {
     if (m_impl) {
         return m_impl->GetInputTensors();
     }
-    return Xengine::IoTensors();
+    return aisdk::xengine::IoTensors();
 }
 
-Xengine::IoTensors BaseNetAlgo::GetOutputTensors() {
+aisdk::xengine::IoTensors BaseNetAlgo::GetOutputTensors() {
     if (m_impl) {
         return m_impl->GetOutputTensors();
     }
-    return Xengine::IoTensors();
+    return aisdk::xengine::IoTensors();
 }
 
 uint32_t BaseNetAlgo::GetInputTensorIndex(const std::string &tensorname) {
@@ -59,29 +60,30 @@ uint32_t BaseNetAlgo::GetOutputTensorIndex(const std::string &tensorname) {
 }
 
 // inference
-Xengine::Status BaseNetAlgo::RunNet() {
+aisdk::xengine::Status BaseNetAlgo::RunNet() {
     if (m_impl) {
         return m_impl->RunNet();
     }
 
-    return Xengine::Status::UNKNOWN;
+    return aisdk::xengine::Status::UNKNOWN;
 }
 
-}  // namespace Xengine
+}  // namespace aisdk::xengine
 
 extern "C" {
 
-SYM_EXPORT Xengine::BaseNetAlgo *_ZN2NR200TK7FUNC002E(const char *algoname_version, const char *netname,
-                                                      Xengine::ModelConfig *model, Xengine::SessionConfig *session) {
+SYM_EXPORT aisdk::xengine::BaseNetAlgo *_ZN2NR200TK7FUNC002E(const char *algoname_version, const char *netname,
+                                                             aisdk::xengine::ModelConfig *model,
+                                                             aisdk::xengine::SessionConfig *session) {
     (void)algoname_version;
     (void)netname;
     (void)model;
     (void)session;
-    Xengine::BaseNetAlgo *impl = new Xengine::BaseNetAlgo();
+    aisdk::xengine::BaseNetAlgo *impl = new aisdk::xengine::BaseNetAlgo();
     return impl;
 }
 
-SYM_EXPORT void _ZN2NR200TK7FUNC003E(Xengine::BaseNetAlgo *base) {
+SYM_EXPORT void _ZN2NR200TK7FUNC003E(aisdk::xengine::BaseNetAlgo *base) {
     if (base) {
         delete base;
     }

@@ -13,11 +13,11 @@ TEST_CASE("testing create netalgo") {
     profcnf.aisdk_init_report = true;
     _ZN2NR200TK7FUNC005E(profcnf);
 
-    Xengine::PlatformStatus* platform = _ZN2NR200TK7FUNC001E();
+    aisdk::xengine::PlatformStatus* platform = _ZN2NR200TK7FUNC001E();
     AISDK_LOG_INFO("is_snpe_support={}",platform->is_snpe_support);
     
     std::string tar_name(NAME_TO_STRING(DEFAULT_PIPELINE_TAR_NAME));
-    Xengine::AnalysisTar *tar_handle = _ZN2NR200TK7FUNC007E();
+    aisdk::xengine::AnalysisTar *tar_handle = _ZN2NR200TK7FUNC007E();
     bool ret = tar_handle->TarMem(tar_name.c_str());
     AISDK_LOG_INFO("TarMem ret={}",ret);
     CHECK(ret);
@@ -31,23 +31,23 @@ TEST_CASE("testing create netalgo") {
         for (uint32_t i = 0; i < config.node_name.size(); i++) {
             AISDK_LOG_INFO("i={} node_name={}", i, config.node_name[i].c_str());
             // netalgo_node的初始化
-            if (Xengine::NodeType::NET_ALGO == config.node_type[i]) {
+            if (aisdk::xengine::NodeType::NET_ALGO == config.node_type[i]) {
                 auto &algo_tp = config.netnode_config[i];
-                Xengine::ModelConfig pa = std::get<0>(algo_tp);
-                Xengine::SessionConfig pb = std::get<1>(algo_tp);
-                Xengine::NetAlgoConfig &pc = std::get<2>(algo_tp);
+                aisdk::xengine::ModelConfig pa = std::get<0>(algo_tp);
+                aisdk::xengine::SessionConfig pb = std::get<1>(algo_tp);
+                aisdk::xengine::NetAlgoConfig &pc = std::get<2>(algo_tp);
                 AISDK_LOG_INFO("algo_name={}", pc.algo_name.c_str());
                 if (pc.has_param) {
                     AISDK_LOG_INFO("algo_param={}", pc.algo_param.c_str());
                 }
             
-                Xengine::BaseNetAlgo* basealgo = _ZN2NR200TK7FUNC002E(nullptr, nullptr, nullptr, nullptr);
+                aisdk::xengine::BaseNetAlgo* basealgo = _ZN2NR200TK7FUNC002E(nullptr, nullptr, nullptr, nullptr);
                 CHECK(basealgo);
-                Xengine::Status initok = basealgo->Init(pc.net_unique_id, pa, pb);
-                if(initok == Xengine::Status::SUCCESS) {
-                    Xengine::IoTensors iots = basealgo->GetInputTensors();
+                aisdk::xengine::Status initok = basealgo->Init(pc.net_unique_id, pa, pb);
+                if(initok == aisdk::xengine::Status::SUCCESS) {
+                    aisdk::xengine::IoTensors iots = basealgo->GetInputTensors();
                     PrintfHalIoTensors(iots);
-                    Xengine::IoTensors oots = basealgo->GetOutputTensors();
+                    aisdk::xengine::IoTensors oots = basealgo->GetOutputTensors();
                     PrintfHalIoTensors(oots);
                 }
                 _ZN2NR200TK7FUNC003E(basealgo);

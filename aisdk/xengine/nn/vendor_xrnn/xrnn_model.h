@@ -3,7 +3,7 @@
 
 #include "aisdk/xengine/nrnn_model.h"
 
-namespace Xengine {
+namespace aisdk::xengine {
 
 class XRNN_AIModel : public AIModel {
    public:
@@ -11,6 +11,6 @@ class XRNN_AIModel : public AIModel {
     virtual ~XRNN_AIModel();
     bool IsShared() { return false; }
 };
-}  // namespace Xengine
+}  // namespace aisdk::xengine
 
 #endif

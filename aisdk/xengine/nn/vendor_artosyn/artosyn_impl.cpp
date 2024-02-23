@@ -4,7 +4,7 @@
 
 #define ALIGNED_256B(x) ((x) % 256 == 0 ? (x) : (((x) / 256 + 1) * 256))
 
-namespace Xengine {
+namespace aisdk::xengine {
 
 ARTOSYN_AIModel::ARTOSYN_AIModel(ModelConfig &config) : AIModel() {
 memset(&stCNNDesc, 0, sizeof(stCNNDesc));
@@ -101,10 +101,10 @@ ARTOSYN_AIModel::~ARTOSYN_AIModel() {
 
 }
 
-Xengine::ElementType ARTOSYNNConvertElementType() { return Xengine::ElementType::UNKNOWN; }
+aisdk::xengine::ElementType ARTOSYNNConvertElementType() { return aisdk::xengine::ElementType::UNKNOWN; }
 
-Xengine::TensorFormat ARTOSYNConvertTensorFormat(int dtype, int rank) {
-    Xengine::TensorFormat ret;
+aisdk::xengine::TensorFormat ARTOSYNConvertTensorFormat(int dtype, int rank) {
+    aisdk::xengine::TensorFormat ret;
     return ret;
 }
 
@@ -120,4 +120,4 @@ Status ARTOSYN_Session::Forword(ModelInfo &handle) {
 
 }
 
-}  // namespace Xengine
+}  // namespace aisdk::xengine

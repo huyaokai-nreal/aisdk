@@ -5,7 +5,7 @@
 #include "snpe_model.h"
 #include "snpe_session.h"
 
-namespace Xengine {
+namespace aisdk::xengine {
 
 SNPE_AIModel::SNPE_AIModel(ModelConfig &config) : AIModel() {
     m_config = config;
@@ -14,8 +14,8 @@ SNPE_AIModel::SNPE_AIModel(ModelConfig &config) : AIModel() {
 
 SNPE_AIModel::~SNPE_AIModel() {}
 
-// Xengine::ElementType ConvertElementType(zdl::DlSystem::UserBufferEncoding::ElementType_t type) {
-//     return Xengine::ElementType::UNKNOWN;
+// aisdk::xengine::ElementType ConvertElementType(zdl::DlSystem::UserBufferEncoding::ElementType_t type) {
+//     return aisdk::xengine::ElementType::UNKNOWN;
 // }
 
 SNPE_Session::SNPE_Session() : Session() {}
@@ -25,7 +25,7 @@ Status SNPE_Session::Init(std::shared_ptr<AIModel> &model, SessionConfig &Sconfi
     auto aimodel = std::dynamic_pointer_cast<SNPE_AIModel>(model);
 
 #if (defined(ANDROID) || defined(__ANDROID__))
-    Xengine::PlatformStatus *platform = _ZN2NR200TK7FUNC001E();
+    aisdk::xengine::PlatformStatus *platform = _ZN2NR200TK7FUNC001E();
     if (false == platform->is_hexagon_dsp && false == platform->is_hexagon_unsignedPD_dsp) {
         return Status::PLATFORM_NO_SUPPORT;
     }
@@ -146,7 +146,7 @@ Status SNPE_Session::Init(std::shared_ptr<AIModel> &model, SessionConfig &Sconfi
                 m_in.m_tensors[i].m_dims[j - 1] = dims[j];
                 elementsize *= dims[j];
             }
-            m_in.m_tensors[i].m_elementype = Xengine::ElementType::FLOAT32;
+            m_in.m_tensors[i].m_elementype = aisdk::xengine::ElementType::FLOAT32;
             m_in.m_tensors[i].m_elementbyte = sizeof(float);
             m_in.m_tensors[i].m_elementsize = elementsize;
             m_in.m_tensors[i].m_viraddr = (void *)mSnpeWrapper->getInputTensor(name);
@@ -180,7 +180,7 @@ Status SNPE_Session::Init(std::shared_ptr<AIModel> &model, SessionConfig &Sconfi
                 m_out.m_tensors[i].m_dims[j - 1] = dims[j];
                 elementsize *= dims[j];
             }
-            m_out.m_tensors[i].m_elementype = Xengine::ElementType::FLOAT32;
+            m_out.m_tensors[i].m_elementype = aisdk::xengine::ElementType::FLOAT32;
             m_out.m_tensors[i].m_elementbyte = sizeof(float);
             m_out.m_tensors[i].m_elementsize = elementsize;
             m_out.m_tensors[i].m_viraddr = (void *)mSnpeWrapper->getOutputTensor(name);
@@ -219,7 +219,7 @@ Status SNPE_Session::Init(std::shared_ptr<AIModel> &model, SessionConfig &Sconfi
                 m_in.m_tensors[i].m_dims[j - 1] = inputShape[j];
             }
 
-            m_in.m_tensors[i].m_elementype = Xengine::ElementType::FLOAT32;
+            m_in.m_tensors[i].m_elementype = aisdk::xengine::ElementType::FLOAT32;
             m_in.m_tensors[i].m_elementbyte = sizeof(float);
             m_in.m_tensors[i].m_elementsize = mInputinputTensors[i]->getSize() / m_in.m_batch;
             m_in.m_tensors[i].m_viraddr = new float[mInputinputTensors[i]->getSize()];
@@ -248,7 +248,7 @@ Status SNPE_Session::Init(std::shared_ptr<AIModel> &model, SessionConfig &Sconfi
                 m_out.m_tensors[i].m_dims[j - 1] = shape[j];
                 elementsize *= shape[j];
             }
-            m_out.m_tensors[i].m_elementype = Xengine::ElementType::FLOAT32;
+            m_out.m_tensors[i].m_elementype = aisdk::xengine::ElementType::FLOAT32;
             m_out.m_tensors[i].m_elementbyte = sizeof(float);
             m_out.m_tensors[i].m_elementsize = elementsize;
             m_out.m_tensors[i].m_viraddr = new float[elementsize * m_out.m_batch];
@@ -302,4 +302,4 @@ Status SNPE_Session::Forword(ModelInfo &handle) {
 #endif
 }
 
-}  // namespace Xengine
+}  // namespace aisdk::xengine

@@ -5,7 +5,7 @@
 #include "nrnn_model.h"
 #include "nrnn_session.h"
 
-namespace Xengine {
+namespace aisdk::xengine {
 
 class TRT_AIModel : public AIModel {
    public:
@@ -16,5 +16,5 @@ class TRT_AIModel : public AIModel {
    public:
     ModelConfig m_config;
 };
-}  // namespace Xengine
+}  // namespace aisdk::xengine
 #endif

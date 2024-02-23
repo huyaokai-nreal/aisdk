@@ -3,37 +3,37 @@
 
 #include "nrhal_common.h"
 
-namespace Xengine {
+namespace aisdk::xengine {
 
 class SYM_EXPORT BaseNetAlgo {
    public:
     BaseNetAlgo();
     virtual ~BaseNetAlgo();
-    virtual Xengine::Status Init(std::string &netname, Xengine::ModelConfig &model, Xengine::SessionConfig &session);
+    virtual aisdk::xengine::Status Init(std::string &netname, aisdk::xengine::ModelConfig &model, aisdk::xengine::SessionConfig &session);
 
-    virtual Xengine::IoTensors GetInputTensors();
-    virtual Xengine::IoTensors GetOutputTensors();
+    virtual aisdk::xengine::IoTensors GetInputTensors();
+    virtual aisdk::xengine::IoTensors GetOutputTensors();
 
     virtual uint32_t GetInputTensorIndex(const std::string &tensorname);
     virtual uint32_t GetOutputTensorIndex(const std::string &tensorname);
 
     // inference
-    virtual Xengine::Status RunNet();
+    virtual aisdk::xengine::Status RunNet();
 
    protected:
-    std::unique_ptr<Xengine::Inference> m_impl;
+    std::unique_ptr<aisdk::xengine::Inference> m_impl;
 };
 
-}  // namespace Xengine
+}  // namespace aisdk::xengine
 
 extern "C" {
-typedef Xengine::BaseNetAlgo *(*CreateNetAlgoFunc)(const char *algoname_version, const char *netname,
-                                                 Xengine::ModelConfig *model, Xengine::SessionConfig *session);
-typedef void (*DestoryNetAlgoFunc)(Xengine::BaseNetAlgo *base);
+typedef aisdk::xengine::BaseNetAlgo *(*CreateNetAlgoFunc)(const char *algoname_version, const char *netname,
+                                                 aisdk::xengine::ModelConfig *model, aisdk::xengine::SessionConfig *session);
+typedef void (*DestoryNetAlgoFunc)(aisdk::xengine::BaseNetAlgo *base);
 
-SYM_EXPORT Xengine::BaseNetAlgo *_ZN2NR200TK7FUNC002E(const char *algoname_version, const char *netname,
-                                             Xengine::ModelConfig *model, Xengine::SessionConfig *session);
-SYM_EXPORT void _ZN2NR200TK7FUNC003E(Xengine::BaseNetAlgo *base);
+SYM_EXPORT aisdk::xengine::BaseNetAlgo *_ZN2NR200TK7FUNC002E(const char *algoname_version, const char *netname,
+                                             aisdk::xengine::ModelConfig *model, aisdk::xengine::SessionConfig *session);
+SYM_EXPORT void _ZN2NR200TK7FUNC003E(aisdk::xengine::BaseNetAlgo *base);
 }
 
 #endif

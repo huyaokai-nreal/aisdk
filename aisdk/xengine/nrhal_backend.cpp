@@ -10,13 +10,13 @@
 #endif
 
 extern "C" {
-SYM_EXPORT Xengine::Backend* _ZN2NR200TK7FUNC006E(Xengine::BackendConfig& config) {
-    static std::map<Xengine::RuntimeType, Xengine::Backend*> gbackend;
+SYM_EXPORT aisdk::xengine::Backend* _ZN2NR200TK7FUNC006E(aisdk::xengine::BackendConfig& config) {
+    static std::map<aisdk::xengine::RuntimeType, aisdk::xengine::Backend*> gbackend;
     static std::once_flag gonce;
     std::call_once(gonce, [&]() {
-        gbackend[Xengine::RuntimeType::CPU] = new Xengine::CpuBackend();
+        gbackend[aisdk::xengine::RuntimeType::CPU] = new aisdk::xengine::CpuBackend();
 #if defined(HAVE_HAL_HEXAGON_DSP_OPS)
-        gbackend[Xengine::RuntimeType::DSP] = new Xengine::HexagonDspBackend();
+        gbackend[aisdk::xengine::RuntimeType::DSP] = new aisdk::xengine::HexagonDspBackend();
 #endif
     });
 

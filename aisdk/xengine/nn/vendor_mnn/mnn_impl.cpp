@@ -4,7 +4,7 @@
 #include "mnn_model.h"
 #include "mnn_session.h"
 
-namespace Xengine {
+namespace aisdk::xengine {
 
 MNN_AIModel::MNN_AIModel(ModelConfig &config) : AIModel() {
     m_network = std::unique_ptr<MNN::Interpreter>(
@@ -23,31 +23,31 @@ MNN_AIModel::~MNN_AIModel() {
     MNN::Interpreter::destroy(p);
 }
 
-Xengine::ElementType MNNConvertElementType() { return Xengine::ElementType::UNKNOWN; }
+aisdk::xengine::ElementType MNNConvertElementType() { return aisdk::xengine::ElementType::UNKNOWN; }
 
-Xengine::TensorFormat MNNConvertTensorFormat(MNN::Tensor::DimensionType dtype, int rank) {
+aisdk::xengine::TensorFormat MNNConvertTensorFormat(MNN::Tensor::DimensionType dtype, int rank) {
     // 最高维是固定的batch
     // 这里只是凭经验实现，可能有误
-    Xengine::TensorFormat ret = Xengine::TensorFormat::UNKNOWN;
+    aisdk::xengine::TensorFormat ret = aisdk::xengine::TensorFormat::UNKNOWN;
     if (dtype == MNN::Tensor::DimensionType::CAFFE || dtype == MNN::Tensor::DimensionType::CAFFE_C4) {
         if (5 == rank) {
-            ret = Xengine::TensorFormat::CDHW;
+            ret = aisdk::xengine::TensorFormat::CDHW;
         } else if (4 == rank) {
-            ret = Xengine::TensorFormat::CHW;
+            ret = aisdk::xengine::TensorFormat::CHW;
         } else if (3 == rank) {
-            ret = Xengine::TensorFormat::HW;
+            ret = aisdk::xengine::TensorFormat::HW;
         } else if (2 == rank) {
-            ret = Xengine::TensorFormat::W;
+            ret = aisdk::xengine::TensorFormat::W;
         }
     } else if (dtype == MNN::Tensor::DimensionType::TENSORFLOW) {
         if (5 == rank) {
-            ret = Xengine::TensorFormat::DHWC;
+            ret = aisdk::xengine::TensorFormat::DHWC;
         } else if (4 == rank) {
-            ret = Xengine::TensorFormat::HWC;
+            ret = aisdk::xengine::TensorFormat::HWC;
         } else if (3 == rank) {
-            ret = Xengine::TensorFormat::HW;
+            ret = aisdk::xengine::TensorFormat::HW;
         } else if (2 == rank) {
-            ret = Xengine::TensorFormat::W;
+            ret = aisdk::xengine::TensorFormat::W;
         }
     }
 
@@ -129,7 +129,7 @@ Status MNN_Session::Init(std::shared_ptr<AIModel> &model, SessionConfig &Sconfig
         }
         // 返回上层的dims不含batch
         m_in.m_tensors[multi_i].m_dimtype = MNNConvertTensorFormat(m_idimstype, rank);
-        m_in.m_tensors[multi_i].m_elementype = Xengine::ElementType::FLOAT32;
+        m_in.m_tensors[multi_i].m_elementype = aisdk::xengine::ElementType::FLOAT32;
         m_in.m_tensors[multi_i].m_elementbyte = sizeof(float);
         m_in.m_tensors[multi_i].m_elementsize = elementsize;
         m_in.m_tensors[multi_i].m_viraddr = (void *)mNetworkInputBuffer[name].data();
@@ -172,7 +172,7 @@ Status MNN_Session::Init(std::shared_ptr<AIModel> &model, SessionConfig &Sconfig
         }
         // 返回上层的dims不含batch
         m_out.m_tensors[multi_i].m_dimtype = MNNConvertTensorFormat(m_odimstype, rank);
-        m_out.m_tensors[multi_i].m_elementype = Xengine::ElementType::FLOAT32;
+        m_out.m_tensors[multi_i].m_elementype = aisdk::xengine::ElementType::FLOAT32;
         m_out.m_tensors[multi_i].m_elementbyte = sizeof(float);
         m_out.m_tensors[multi_i].m_elementsize = elementsize;
         m_out.m_tensors[multi_i].m_viraddr = (void *)mNetworkOutputBuffer[name].data();
@@ -204,4 +204,4 @@ Status MNN_Session::Forword(ModelInfo &handle) {
     return (MNN::ErrorCode::NO_ERROR == ret) ? Status::SUCCESS : Status::FORWORD_FAILURE;
 }
 
-}  // namespace Xengine
+}  // namespace aisdk::xengine

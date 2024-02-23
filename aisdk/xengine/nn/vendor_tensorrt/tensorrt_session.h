@@ -9,7 +9,7 @@
 #include "nrnn_session.h"
 #include "tensorrt_model.h"
 
-namespace Xengine {
+namespace aisdk::xengine {
 
 class TRT_Session : public Session {
    public:
@@ -25,6 +25,6 @@ class TRT_Session : public Session {
     void *ins_handle = nullptr;
 };
 
-}  // namespace Xengine
+}  // namespace aisdk::xengine
 
 #endif

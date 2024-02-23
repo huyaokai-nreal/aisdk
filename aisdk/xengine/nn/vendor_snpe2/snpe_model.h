@@ -3,7 +3,7 @@
 
 #include "aisdk/xengine/nr_snpe_header.h"
 #include "aisdk/xengine/nrnn_model.h"
-namespace Xengine {
+namespace aisdk::xengine {
 
 class SNPE_AIModel : public AIModel {
    public:
@@ -15,6 +15,6 @@ class SNPE_AIModel : public AIModel {
     // Since update to snpe2 interface, save a temporary config here, model init moved to snpe session
     ModelConfig m_config;
 };
-}  // namespace Xengine
+}  // namespace aisdk::xengine
 
 #endif

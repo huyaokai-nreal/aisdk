@@ -3,7 +3,7 @@
 
 #include "nr_artosyn_header.h"
 #include "nrnn_session.h"
-namespace Xengine {
+namespace aisdk::xengine {
 
 class ARTOSYN_Session : public Session {
    public:
@@ -29,5 +29,5 @@ class ARTOSYN_Session : public Session {
     AR_IMG_SET_S stInImg;
 };
 
-}  // namespace Xengine
+}  // namespace aisdk::xengine
 #endif

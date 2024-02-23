@@ -20,7 +20,7 @@
 
 #include "aisdk/xengine/nn/vendor_xrnn/xrnn_session.h"
 
-namespace Xengine {
+namespace aisdk::xengine {
 
 Inference::Inference(ModelConfig &Mconfig, SessionConfig &Sconfig) {
     m_mconfig = Mconfig;
@@ -44,18 +44,18 @@ Status Inference::Init(std::string &netname) {
         m_netname = new_netname;
         if (m_mconfig.vendor_type == VendorType::MNN) {
 #if defined(HAVE_HAL_MNN)
-            m_sessionimpl = std::make_shared<Xengine::MNN_Session>();
+            m_sessionimpl = std::make_shared<aisdk::xengine::MNN_Session>();
 #endif
         } else if (m_mconfig.vendor_type == VendorType::ROCKCHIP) {
 #if defined(HAVE_HAL_RKNN)
-            m_sessionimpl = std::make_shared<Xengine::RKNN_Session>();
+            m_sessionimpl = std::make_shared<aisdk::xengine::RKNN_Session>();
 #endif
         } else if (m_mconfig.vendor_type == VendorType::SNPE) {
 #if defined(HAVE_HAL_SNPE)
-            m_sessionimpl = std::make_shared<Xengine::SNPE_Session>();
+            m_sessionimpl = std::make_shared<aisdk::xengine::SNPE_Session>();
 #endif
         } else if (m_mconfig.vendor_type == VendorType::XREAL) {
-            m_sessionimpl = std::make_shared<Xengine::XRNN_Session>();
+            m_sessionimpl = std::make_shared<aisdk::xengine::XRNN_Session>();
         }
 
         if (m_sessionimpl) {
@@ -110,4 +110,4 @@ uint32_t Inference::GetOutputTensorIndex(const std::string &tensorname) {
 
 Status Inference::RunNet() { return m_sessionimpl->Forword(m_modelimpl->m_info); }
 
-}  // namespace Xengine
+}  // namespace aisdk::xengine

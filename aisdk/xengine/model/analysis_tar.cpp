@@ -11,7 +11,7 @@
 
 #define MAX_PIPELINE_NUMS_INTAR (12)
 
-namespace Xengine {
+namespace aisdk::xengine {
 
 class DecodeAes {
    public:
@@ -52,14 +52,14 @@ void CleanPipelineConfig(PipelineConfig &configs) {
     for (uint32_t i = 0; i < configs.node_type.size(); i++) {
         if (NodeType::NET_ALGO == configs.node_type[i]) {
             auto &netnode = configs.netnode_config[i];
-            Xengine::ModelConfig &model = std::get<0>(netnode);
+            aisdk::xengine::ModelConfig &model = std::get<0>(netnode);
             if (model.model_mem) {
                 free((void *)model.model_mem);
                 model.model_mem = nullptr;
             }
         } else {
             auto &logicnode = configs.logicnode_config[i];
-            Xengine::LogicAlgoConfig &tmp = std::get<0>(logicnode);
+            aisdk::xengine::LogicAlgoConfig &tmp = std::get<0>(logicnode);
             for (auto &iter : tmp.files) {
                 if (iter.file_mem) {
                     free((void *)iter.file_mem);
@@ -76,22 +76,22 @@ void CleanPipelineConfig(PipelineConfig &configs) {
     configs.logicnode_config.clear();
 }
 
-Xengine::VendorType ConvertVendorType(const std::string &mode) {
+aisdk::xengine::VendorType ConvertVendorType(const std::string &mode) {
     if (mode == std::string("snpe")) {
-        return Xengine::VendorType::SNPE;
+        return aisdk::xengine::VendorType::SNPE;
     } else if (mode == std::string("qnn")) {
-        return Xengine::VendorType::QNN;
+        return aisdk::xengine::VendorType::QNN;
     } else if (mode == std::string("mnn")) {
-        return Xengine::VendorType::MNN;
+        return aisdk::xengine::VendorType::MNN;
     } else if (mode == std::string("rockchip")) {
-        return Xengine::VendorType::ROCKCHIP;
+        return aisdk::xengine::VendorType::ROCKCHIP;
     } else if (mode == std::string("artosyn")) {
-        return Xengine::VendorType::ARTOSYN;
+        return aisdk::xengine::VendorType::ARTOSYN;
     }
-    return Xengine::VendorType::UNKNOWN;
+    return aisdk::xengine::VendorType::UNKNOWN;
 }
 
-bool GenerateLogicAlgoConfig(Json::Value &root, mtar_t &tar, Xengine::LogicAlgoConfig &config) {
+bool GenerateLogicAlgoConfig(Json::Value &root, mtar_t &tar, aisdk::xengine::LogicAlgoConfig &config) {
     (void)tar;
     // 可选参数
     if (root.isMember("files") && root["files"].isArray()) {
@@ -111,8 +111,8 @@ bool GenerateLogicAlgoConfig(Json::Value &root, mtar_t &tar, Xengine::LogicAlgoC
     return true;
 }
 
-bool GenerateModelConfig(Json::Value &root, mtar_t &tar, Xengine::ModelConfig &config,
-                         Xengine::NetAlgoConfig &config1) {
+bool GenerateModelConfig(Json::Value &root, mtar_t &tar, aisdk::xengine::ModelConfig &config,
+                         aisdk::xengine::NetAlgoConfig &config1) {
     if (root.isMember("model_config") && root["model_config"].isObject()) {
         auto &model_config = root["model_config"];
 
@@ -164,35 +164,35 @@ bool GenerateModelConfig(Json::Value &root, mtar_t &tar, Xengine::ModelConfig &c
     return false;
 }
 
-Xengine::PrecisionMode ConvertPrecisionMode(const std::string &mode) {
+aisdk::xengine::PrecisionMode ConvertPrecisionMode(const std::string &mode) {
     if (mode == std::string("float32")) {
-        return Xengine::PrecisionMode::FLOAT32;
+        return aisdk::xengine::PrecisionMode::FLOAT32;
     } else if (mode == std::string("float16")) {
-        return Xengine::PrecisionMode::FLOAT16;
+        return aisdk::xengine::PrecisionMode::FLOAT16;
     } else if (mode == std::string("int8")) {
-        return Xengine::PrecisionMode::INT8;
+        return aisdk::xengine::PrecisionMode::INT8;
     } else if (mode == std::string("int16")) {
-        return Xengine::PrecisionMode::INT16;
+        return aisdk::xengine::PrecisionMode::INT16;
     }
-    return Xengine::PrecisionMode::UNKNOWN;
+    return aisdk::xengine::PrecisionMode::UNKNOWN;
 }
 
-Xengine::RuntimeType ConvertRuntimeType(const std::string &mode) {
+aisdk::xengine::RuntimeType ConvertRuntimeType(const std::string &mode) {
     if (mode == std::string("cpu")) {
-        return Xengine::RuntimeType::CPU;
+        return aisdk::xengine::RuntimeType::CPU;
     } else if (mode == std::string("gpu")) {
-        return Xengine::RuntimeType::GPU;
+        return aisdk::xengine::RuntimeType::GPU;
     } else if (mode == std::string("dsp")) {
-        return Xengine::RuntimeType::DSP;
+        return aisdk::xengine::RuntimeType::DSP;
     } else if (mode == std::string("aip")) {
-        return Xengine::RuntimeType::AIP;
+        return aisdk::xengine::RuntimeType::AIP;
     } else if (mode == std::string("npu")) {
-        return Xengine::RuntimeType::NPU;
+        return aisdk::xengine::RuntimeType::NPU;
     }
-    return Xengine::RuntimeType::UNKNOWN;
+    return aisdk::xengine::RuntimeType::UNKNOWN;
 }
 
-bool GenerateSessionConfig(Json::Value &root, mtar_t &tar, Xengine::SessionConfig &config) {
+bool GenerateSessionConfig(Json::Value &root, mtar_t &tar, aisdk::xengine::SessionConfig &config) {
     if (root.isMember("session_config") && root["session_config"].isObject()) {
         auto &session_config = root["session_config"];
         // 必须参数
@@ -272,7 +272,7 @@ bool GenerateSessionConfig(Json::Value &root, mtar_t &tar, Xengine::SessionConfi
     return false;
 }
 
-bool GenerateNetalgoConfig(Json::Value &root, Xengine::NetAlgoConfig &config) {
+bool GenerateNetalgoConfig(Json::Value &root, aisdk::xengine::NetAlgoConfig &config) {
     if (root.isMember("netalgo_config") && root["netalgo_config"].isObject()) {
         auto &netalgo_config = root["netalgo_config"];
         // 必须参数
@@ -483,16 +483,16 @@ bool AnalysisTar::TarFile(const char *pipeline_tarfile, const char *aeskey) {
     return ret;
 }
 
-}  // namespace Xengine
+}  // namespace aisdk::xengine
 
 extern "C" {
 
-SYM_EXPORT Xengine::AnalysisTar *_ZN2NR200TK7FUNC007E() {
-    Xengine::AnalysisTar *impl = new Xengine::AnalysisTar();
+SYM_EXPORT aisdk::xengine::AnalysisTar *_ZN2NR200TK7FUNC007E() {
+    aisdk::xengine::AnalysisTar *impl = new aisdk::xengine::AnalysisTar();
     return impl;
 }
 
-SYM_EXPORT void _ZN2NR200TK7FUNC008E(Xengine::AnalysisTar *handle) {
+SYM_EXPORT void _ZN2NR200TK7FUNC008E(aisdk::xengine::AnalysisTar *handle) {
     if (handle) {
         delete handle;
     }

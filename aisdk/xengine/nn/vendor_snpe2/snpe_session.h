@@ -12,7 +12,7 @@
 #include "aisdk/xengine/nrnn_model.h"
 #include "aisdk/xengine/nrnn_session.h"
 #include "snpe_wrapper.h"
-namespace Xengine {
+namespace aisdk::xengine {
 
 #define BUFFERTYPE_USER (1)
 // #define BUFFERTYPE_ITENSER (2) // for test
@@ -32,5 +32,5 @@ class SNPE_Session : public Session {
     std::unique_ptr<SNPEWrapper> mSnpeWrapper;
 };
 
-}  // namespace Xengine
+}  // namespace aisdk::xengine
 #endif

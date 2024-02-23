@@ -1,12 +1,12 @@
 #include "cpu_algop_impl.h"
 
-namespace Xengine {
+namespace aisdk::xengine {
 
-Xengine::AlgOpSet CpuAlgOpManager::m_origin_op_set;
-Xengine::TensorAlgOpSet CpuAlgOpManager::m_tensor_op_set;
-std::map<Xengine::AlgOpType, Xengine::AlgOpMeta> CpuAlgOpManager::m_cpu_op_register;
+aisdk::xengine::AlgOpSet CpuAlgOpManager::m_origin_op_set;
+aisdk::xengine::TensorAlgOpSet CpuAlgOpManager::m_tensor_op_set;
+std::map<aisdk::xengine::AlgOpType, aisdk::xengine::AlgOpMeta> CpuAlgOpManager::m_cpu_op_register;
 
-// Status AlgOp::Execute(Xengine::Tensor* input, Xengine::Tensor* output, uint32_t batch_n) {
+// Status AlgOp::Execute(aisdk::xengine::Tensor* input, aisdk::xengine::Tensor* output, uint32_t batch_n) {
 //     if (m_abnormal) return Status::FAILURE;
 
 //     for (uint32_t i = 0; i < batch_n; i++) {
@@ -45,4 +45,4 @@ std::map<Xengine::AlgOpType, Xengine::AlgOpMeta> CpuAlgOpManager::m_cpu_op_regis
 // #endif
 //     {"unkown", {nullptr, false, false}}};
 
-}  // namespace Xengine
+}  // namespace aisdk::xengine

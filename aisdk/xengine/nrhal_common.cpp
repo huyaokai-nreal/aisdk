@@ -28,12 +28,12 @@
 #endif
 #endif  // __APPLE__
 
-void PrintfHalModelConfig(Xengine::ModelConfig& info) {
+void PrintfHalModelConfig(aisdk::xengine::ModelConfig& info) {
     AISDK_LOG_TRACE("[HalModelConfig] model_path={} model_mem={} model_size={} vendor_type={}", info.model_path.c_str(),
                     static_cast<const void*>(info.model_mem), info.model_size, (int)info.vendor_type);
 }
 
-void PrintfHalSessionConfig(Xengine::SessionConfig& info) {
+void PrintfHalSessionConfig(aisdk::xengine::SessionConfig& info) {
     AISDK_LOG_TRACE("[HalSessionConfig] batch={} precision={} threads_num={} runtime_order.size={}", (int)info.batch,
                     (int)info.precision, (int)info.threads_num, (int)info.runtime_order.size());
     for (auto& iter : info.runtime_order) {
@@ -54,7 +54,7 @@ void PrintfHalSessionConfig(Xengine::SessionConfig& info) {
 }
 
 // 像numpy格式化打印tensor
-std::string LoopDumpDims(Xengine::Tensor& info, uint32_t dims_index, float* addr) {
+std::string LoopDumpDims(aisdk::xengine::Tensor& info, uint32_t dims_index, float* addr) {
     if (dims_index < info.m_dims.size() - 1) {
         std::string tmp = "[";
 
@@ -86,39 +86,39 @@ std::string LoopDumpDims(Xengine::Tensor& info, uint32_t dims_index, float* addr
     }
 }
 
-std::string DumpHalTensorMem(Xengine::Tensor& info) { return LoopDumpDims(info, 0, (float*)info.m_viraddr); }
+std::string DumpHalTensorMem(aisdk::xengine::Tensor& info) { return LoopDumpDims(info, 0, (float*)info.m_viraddr); }
 
-const char* Dimtype2Str(Xengine::TensorFormat& dimtype) {
+const char* Dimtype2Str(aisdk::xengine::TensorFormat& dimtype) {
     const char* str = "unknwon";
-    if (dimtype == Xengine::TensorFormat::NCHW) {
+    if (dimtype == aisdk::xengine::TensorFormat::NCHW) {
         str = "NCHW";
-    } else if (dimtype == Xengine::TensorFormat::NHWC) {
+    } else if (dimtype == aisdk::xengine::TensorFormat::NHWC) {
         str = "NHWC";
-    } else if (dimtype == Xengine::TensorFormat::CHW) {
+    } else if (dimtype == aisdk::xengine::TensorFormat::CHW) {
         str = "CHW";
-    } else if (dimtype == Xengine::TensorFormat::HWC) {
+    } else if (dimtype == aisdk::xengine::TensorFormat::HWC) {
         str = "HWC";
-    } else if (dimtype == Xengine::TensorFormat::NHW) {
+    } else if (dimtype == aisdk::xengine::TensorFormat::NHW) {
         str = "NHW";
-    } else if (dimtype == Xengine::TensorFormat::HW) {
+    } else if (dimtype == aisdk::xengine::TensorFormat::HW) {
         str = "HW";
-    } else if (dimtype == Xengine::TensorFormat::NW) {
+    } else if (dimtype == aisdk::xengine::TensorFormat::NW) {
         str = "NW";
-    } else if (dimtype == Xengine::TensorFormat::W) {
+    } else if (dimtype == aisdk::xengine::TensorFormat::W) {
         str = "W";
-    } else if (dimtype == Xengine::TensorFormat::NCDHW) {
+    } else if (dimtype == aisdk::xengine::TensorFormat::NCDHW) {
         str = "NCDHW";
-    } else if (dimtype == Xengine::TensorFormat::NDHWC) {
+    } else if (dimtype == aisdk::xengine::TensorFormat::NDHWC) {
         str = "NDHWC";
-    } else if (dimtype == Xengine::TensorFormat::CDHW) {
+    } else if (dimtype == aisdk::xengine::TensorFormat::CDHW) {
         str = "CDHW";
-    } else if (dimtype == Xengine::TensorFormat::DHWC) {
+    } else if (dimtype == aisdk::xengine::TensorFormat::DHWC) {
         str = "DHWC";
     }
 
     return str;
 }
-void PrintfHalTensor(Xengine::Tensor& info) {
+void PrintfHalTensor(aisdk::xengine::Tensor& info) {
     // clang-format off
     AISDK_LOG_TRACE(
         "[Tensor] m_name={:s} m_rank={:d} dims.size={:d} m_dimtype={:s} m_elementype={:d} m_elementbyte={:d} m_elementsize={:d} m_viraddr={}",
@@ -132,7 +132,7 @@ void PrintfHalTensor(Xengine::Tensor& info) {
     AISDK_LOG_TRACE("[Tensor] dim={:s}", tmpbuffer);
 }
 
-void PrintfHalIoTensors(Xengine::IoTensors& info) {
+void PrintfHalIoTensors(aisdk::xengine::IoTensors& info) {
     // clang-format off
     AISDK_LOG_TRACE("[HalIoTensors] batch={:d} ori_batch={:d} m_multishape_num={:d} m_packed_bybatch={:d} tensors.size={:d}",
                     (int)info.m_batch, (int)info.m_ori_batch, (int)info.m_multishape_num, (int)info.m_packed_bybatch,
@@ -161,7 +161,7 @@ static uint32_t get_sys_info_by_name(const char* type_specifier) {
 
 #endif  // iOS
 
-void supportUpdata(Xengine::PlatformStatus& status) {
+void supportUpdata(aisdk::xengine::PlatformStatus& status) {
 #if defined(__ANDROID__) || defined(__linux__)
     FILE* fp = fopen("/proc/cpuinfo", "rb");
     if (!fp) {
@@ -315,7 +315,7 @@ bool checkHexagonUnsignedPDDSP() {
 }
 #endif
 
-void checkSnapdragonSoc(Xengine::PlatformStatus& status) {
+void checkSnapdragonSoc(aisdk::xengine::PlatformStatus& status) {
     {
         char buffer[128] = {0};
         FILE* piper = popen("cat /sys/devices/soc0/chip_name", "r");
@@ -394,12 +394,12 @@ void checkSnapdragonSoc(Xengine::PlatformStatus& status) {
 }
 #endif
 
-bool CheckEngineSingleBatch(Xengine::VendorType& vendor) {
+bool CheckEngineSingleBatch(aisdk::xengine::VendorType& vendor) {
     (void)vendor;
 #if defined(HAVE_HAL_SNPE)
 #if SNPE_VERSION == SNPE_1660
-    if (vendor == Xengine::VendorType::SNPE) {
-        Xengine::PlatformStatus st = _ZN2NR200TK7FUNC001E();
+    if (vendor == aisdk::xengine::VendorType::SNPE) {
+        aisdk::xengine::PlatformStatus st = _ZN2NR200TK7FUNC001E();
         if (st.is_snapdragon_8Gen1) {
             return true;
         }
@@ -459,8 +459,8 @@ bool CheckEngineSingleBatch(Xengine::VendorType& vendor) {
 
 extern "C" {
 
-SYM_EXPORT Xengine::PlatformStatus* _ZN2NR200TK7FUNC001E() {
-    static Xengine::PlatformStatus ret;
+SYM_EXPORT aisdk::xengine::PlatformStatus* _ZN2NR200TK7FUNC001E() {
+    static aisdk::xengine::PlatformStatus ret;
     static std::once_flag oc;
     std::call_once(oc, [&]() {
         supportUpdata(ret);

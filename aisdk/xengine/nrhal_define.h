@@ -12,7 +12,7 @@
 // #pragma GCC visibility push(default)
 // #pragma GCC visibility pop
 
-namespace Xengine {
+namespace aisdk::xengine {
 
 enum class Status {
     UNKNOWN = 0,
@@ -177,6 +177,6 @@ struct SYM_EXPORT PlatformStatus {
     bool is_artosyn_support = false;
 };
 
-}  // namespace Xengine
+}  // namespace aisdk::xengine
 
 #endif

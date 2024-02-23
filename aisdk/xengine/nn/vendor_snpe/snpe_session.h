@@ -4,7 +4,7 @@
 #include "aisdk/xengine/nr_snpe_header.h"
 #include "aisdk/xengine/nrnn_model.h"
 #include "aisdk/xengine/nrnn_session.h"
-namespace Xengine {
+namespace aisdk::xengine {
 
 #define BUFFERTYPE_USER (1)
 // #define BUFFERTYPE_ITENSER (2) // for test
@@ -31,5 +31,5 @@ class SNPE_Session : public Session {
     zdl::DlSystem::TensorMap mInputTensorMap;
 };
 
-}  // namespace Xengine
+}  // namespace aisdk::xengine
 #endif

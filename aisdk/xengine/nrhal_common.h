@@ -7,13 +7,13 @@
 #include "nrnn_session.h"
 // #include "nrtime.h"
 
-void PrintfHalModelConfig(Xengine::ModelConfig& info);
-void PrintfHalSessionConfig(Xengine::SessionConfig& info);
-std::string DumpHalTensorMem(Xengine::Tensor& info);
-void PrintfHalTensor(Xengine::Tensor& info);
-void PrintfHalIoTensors(Xengine::IoTensors& info);
+void PrintfHalModelConfig(aisdk::xengine::ModelConfig& info);
+void PrintfHalSessionConfig(aisdk::xengine::SessionConfig& info);
+std::string DumpHalTensorMem(aisdk::xengine::Tensor& info);
+void PrintfHalTensor(aisdk::xengine::Tensor& info);
+void PrintfHalIoTensors(aisdk::xengine::IoTensors& info);
 // 检查snpe batch异常的bug
-bool CheckEngineSingleBatch(Xengine::VendorType& vendor);
+bool CheckEngineSingleBatch(aisdk::xengine::VendorType& vendor);
 
 // void HalInitDebugTRecord();
 // NrUtils::TRecord* HalGetDebugTRecord(const char* time_name);
@@ -21,8 +21,8 @@ bool CheckEngineSingleBatch(Xengine::VendorType& vendor);
 
 extern "C" {
 
-typedef Xengine::PlatformStatus* (*GetPlatformStatusFunc)();
-SYM_EXPORT Xengine::PlatformStatus* _ZN2NR200TK7FUNC001E();
+typedef aisdk::xengine::PlatformStatus* (*GetPlatformStatusFunc)();
+SYM_EXPORT aisdk::xengine::PlatformStatus* _ZN2NR200TK7FUNC001E();
 }
 
 #endif

@@ -3,7 +3,7 @@
 
 #include "aisdk/xengine/nr_mnn_header.h"
 #include "aisdk/xengine/nrnn_session.h"
-namespace Xengine {
+namespace aisdk::xengine {
 
 class MNN_Session : public Session {
    public:
@@ -28,5 +28,5 @@ class MNN_Session : public Session {
     MNN::Tensor::DimensionType m_odimstype;
 };
 
-}  // namespace Xengine
+}  // namespace aisdk::xengine
 #endif

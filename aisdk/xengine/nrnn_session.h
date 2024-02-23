@@ -7,7 +7,7 @@
 #include "nrhal_define.h"
 #include "nrnn_model.h"
 
-namespace Xengine {
+namespace aisdk::xengine {
 
 struct CustomizeIoName {
     std::vector<std::string> input_layername;
@@ -68,5 +68,5 @@ class Inference {
     std::shared_ptr<Session> m_sessionimpl;
 };
 
-}  // namespace Xengine
+}  // namespace aisdk::xengine
 #endif
