@@ -177,6 +177,6 @@ struct SYM_EXPORT PlatformStatus {
     bool is_artosyn_support = false;
 };
 
-}  // namespace aisdk::xengine
+}  // namespace Xengine
 
 #endif

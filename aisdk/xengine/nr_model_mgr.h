@@ -15,6 +15,12 @@ enum class NodeType {
     LOGIC_ALGO = 2,
 };
 
+enum class FrameworkType {
+    UNKNOWN = 0,
+    XREAL_SIMPLE_SERIAL = 1,
+    MEDIAPIPE_GRAPH = 2,
+};
+
 struct FileSource {
     std::string file_name;
     const char* file_mem = nullptr;
@@ -47,6 +53,10 @@ struct PipelineRelatedFeature {
 struct PipelineConfig {
     // pipeline名称
     std::string pipeline_name;
+    // framework类型
+    aisdk::xengine::FrameworkType framework_type;
+    // graph 配置
+    std::string graph_config;
     // node名称
     std::vector<std::string> node_name;
     // node类型

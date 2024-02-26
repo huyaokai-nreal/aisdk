@@ -289,19 +289,54 @@ bool GenerateNetalgoConfig(Json::Value &root, aisdk::xengine::NetAlgoConfig &con
     return false;
 }
 
+bool GeneratePipelineMainConfig(Json::Value &root, mtar_t &tar, PipelineConfig &config) {
+    auto &pipeline = root["pipeline"];
+    // 必须参数
+    config.pipeline_name = pipeline["name"].asString();
+    config.related_feature.bind_sensor_orientation = pipeline["feature"]["bind_sensor_orientation"].asString();
+    config.related_feature.bind_runtime = pipeline["feature"]["bind_runtime"].asString();
+
+    // 必须参数
+    if (pipeline.isMember("framework") && pipeline["framework"].isString()) {
+        std::string framework = pipeline["framework"].asString();
+        if (framework == "mediapipe_graph") {
+            config.framework_type = aisdk::xengine::FrameworkType::MEDIAPIPE_GRAPH;
+
+            if (pipeline.isMember("mediapipe_graph_prototxt") && pipeline["mediapipe_graph_prototxt"].isString()) {
+                mtar_header_t h;
+                if (MTAR_ESUCCESS == mtar_find(&tar, pipeline["mediapipe_graph_prototxt"].asCString(), &h)) {
+                    void *p = nullptr;
+                    mtar_mem_read_data(&tar, &p, h.size);
+                    config.graph_config = std::string((const char *)p, h.size);
+                } else {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        } else {
+            config.framework_type = aisdk::xengine::FrameworkType::XREAL_SIMPLE_SERIAL;
+        }
+    } else {
+        config.framework_type = aisdk::xengine::FrameworkType::XREAL_SIMPLE_SERIAL;
+    }
+    // 必须参数
+    return true;
+}
+
 bool GeneratePipelineConfig(Json::Value &root, mtar_t &tar, PipelineConfig &config) {
     // 3个核心关键字检查
     if (root.isMember("pipeline") && root["pipeline"].isObject() && root.isMember("netalgo_node") &&
         root["netalgo_node"].isObject() && root.isMember("logicalgo_node") && root["logicalgo_node"].isObject()) {
+        if (false == GeneratePipelineMainConfig(root, tar, config)) {
+            return false;
+        }
+
         auto &pipeline = root["pipeline"];
         auto &netalgo_node = root["netalgo_node"];
         auto &logicalgo_node = root["logicalgo_node"];
 
         // 遍历node信息
-        config.pipeline_name = pipeline["name"].asString();
-        config.related_feature.bind_sensor_orientation = pipeline["feature"]["bind_sensor_orientation"].asString();
-        config.related_feature.bind_runtime = pipeline["feature"]["bind_runtime"].asString();
-
         if (pipeline.isMember("node") && pipeline["node"].isArray()) {
             auto &node = pipeline["node"];
 

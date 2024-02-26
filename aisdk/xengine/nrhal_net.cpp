@@ -31,6 +31,17 @@ aisdk::xengine::Status BaseNetAlgo::Init(std::string &netname, aisdk::xengine::M
     return ret;
 }
 
+void BaseNetAlgo::SetAlgoParams(const std::string &key, const std::string &value) { m_params[key] = value; }
+
+bool BaseNetAlgo::GetAlgoParams(const std::string &key, std::string &value) {
+    auto iter = m_params.find(key);
+    if (iter != m_params.end()) {
+        value = iter->second;
+        return true;
+    }
+    return false;
+}
+
 aisdk::xengine::IoTensors BaseNetAlgo::GetInputTensors() {
     if (m_impl) {
         return m_impl->GetInputTensors();
