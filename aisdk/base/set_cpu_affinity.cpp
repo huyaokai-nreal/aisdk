@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-void SetThisThreadName(const std::string& name) {
+void SetThisThreadName(const std::string &name) {
     constexpr size_t kMaxAllowedLength = 15;
     const std::string final_name = (name.length() > kMaxAllowedLength ? name.substr(0, kMaxAllowedLength) : name);
     pthread_setname_np(pthread_self(), final_name.c_str());
@@ -39,12 +39,12 @@ int set_sched_affinity(size_t thread_affinity_mask) {
 int get_cpucount() {
     int count = 0;
     // get cpu count from /proc/cpuinfo
-    FILE* fp = fopen("/proc/cpuinfo", "rb");
+    FILE *fp = fopen("/proc/cpuinfo", "rb");
     if (!fp) return 1;
 
     char line[1024];
     while (!feof(fp)) {
-        char* s = fgets(line, 1024, fp);
+        char *s = fgets(line, 1024, fp);
         if (!s) break;
 
         if (memcmp(line, "processor", 9) == 0) {
@@ -69,7 +69,7 @@ int get_max_freq_khz(int cpuid) {
     // first try, for all possible cpu
     char path[256];
     sprintf(path, "/sys/devices/system/cpu/cpufreq/stats/cpu%d/time_in_state", cpuid);
-    FILE* fp = fopen(path, "rb");
+    FILE *fp = fopen(path, "rb");
     if (!fp) {
         // second try, for online cpu
         sprintf(path, "/sys/devices/system/cpu/cpu%d/cpufreq/stats/time_in_state", cpuid);
@@ -117,7 +117,7 @@ int get_max_freq_khz(int cpuid) {
     return max_freq_khz;
 }
 
-void swapSort(std::vector<int>& arr, std::vector<int>& idx, bool reverse) {
+void swapSort(std::vector<int> &arr, std::vector<int> &idx, bool reverse) {
     if (reverse) {
         for (uint32_t i = 0; i < arr.size() - 1; ++i) {
             int maxVal = arr[i];

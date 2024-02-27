@@ -4,7 +4,7 @@
 
 namespace aisdk::base {
 
-std::string _CutParenthesesNTail(std::string&& prettyFuncon) {
+std::string _CutParenthesesNTail(std::string &&prettyFuncon) {
     auto pos = prettyFuncon.find('(');
     if (pos != std::string::npos) prettyFuncon.erase(prettyFuncon.begin() + pos, prettyFuncon.end());
 
@@ -31,13 +31,13 @@ uint64_t TimerBase::durationInUs() {
     return lastTime - last_reset_time_;
 }
 
-NaiveTimer::NaiveTimer(int line, const char* func) : TimerBase() {
+NaiveTimer::NaiveTimer(int line, const char *func) : TimerBase() {
     name_ = strdup(_CutParenthesesNTail(func).c_str());
     line_ = line;
     tag_ = "null";
 }
 
-NaiveTimer::NaiveTimer(int line, const char* func, std::string _tag) : TimerBase() {
+NaiveTimer::NaiveTimer(int line, const char *func, std::string _tag) : TimerBase() {
     name_ = strdup(_CutParenthesesNTail(func).c_str());
     line_ = line;
     tag_ = _tag;
