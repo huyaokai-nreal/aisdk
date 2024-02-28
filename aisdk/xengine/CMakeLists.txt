@@ -1,5 +1,6 @@
 set(XENHINE_LIBRARY_NAME xengine)
 add_library(${XENHINE_LIBRARY_NAME} STATIC
+${CMAKE_CURRENT_SOURCE_DIR}/nrhal_capi_symbol.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/nrhal_backend.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/nrhal_common.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/nrhal_net.cpp
