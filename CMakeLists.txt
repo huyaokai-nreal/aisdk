@@ -61,6 +61,11 @@ find_package(openssl REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(nreal_mnn REQUIRED)
 find_package(snpe REQUIRED)
+find_package(xgraph REQUIRED)
+find_package(abseil REQUIRED)
+find_package(protobuf REQUIRED)
+find_package(glog REQUIRED)
+find_package(gflags REQUIRED)
 find_package(framework CONFIG REQUIRED)
 set_property(TARGET framework::framework
         PROPERTY INTERFACE_COMPILE_OPTIONS
