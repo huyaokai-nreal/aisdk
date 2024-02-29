@@ -38,6 +38,8 @@ ${CMAKE_CURRENT_SOURCE_DIR}/calculator/hand_detection_calculator.cc
 
 ${CMAKE_CURRENT_SOURCE_DIR}/calculator/hand_landmark_calculator.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/func/rsntiny_preprocess/warpaffine.cc
+
+${CMAKE_CURRENT_SOURCE_DIR}/calculator/hand_state_calculator.cc
 )
 
 target_link_libraries(${ALGORITHM_LIBRARY_NAME}
