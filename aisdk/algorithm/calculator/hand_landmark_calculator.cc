@@ -33,7 +33,7 @@ class HandLandmarkCalculator : public CalculatorBase {
 
         cc->Inputs().Tag("IMAGE_INPUT").Set<std::vector<aisdk::algorithm::Image>>();
         cc->Inputs().Tag("BBOX_SMOOTHED_OUTPUT").Set<aisdk::algorithm::DetOutputInternal>();
-        cc->Outputs().Tag("LANDMARK_OUTPUT").Set<Kpt2dInternal>();
+        cc->Outputs().Tag("LANDMARK_OUTPUT").Set<aisdk::algorithm::Kpt2dInternal>();
 
         AISDK_LOG_TRACE("[HandLandmarkCalculator] GetContract complete");
         return absl::OkStatus();
@@ -68,7 +68,7 @@ class HandLandmarkCalculator : public CalculatorBase {
         const auto& image_data = cc->Inputs().Tag("IMAGE_INPUT").Get<std::vector<aisdk::algorithm::Image>>();
         const auto& bbox_data = cc->Inputs().Tag("BBOX_SMOOTHED_OUTPUT").Get<aisdk::algorithm::DetOutputInternal>();
 
-        std::unique_ptr<Kpt2dInternal> output_buffer_ = absl::make_unique<Kpt2dInternal>();
+        std::unique_ptr<aisdk::algorithm::Kpt2dInternal> output_buffer_ = absl::make_unique<aisdk::algorithm::Kpt2dInternal>();
         output_buffer_->clear();
 
         if (bbox_data.lhand_valid) {

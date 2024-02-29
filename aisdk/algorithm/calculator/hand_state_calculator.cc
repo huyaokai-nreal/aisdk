@@ -26,8 +26,8 @@ class HandStateCalculator : public CalculatorBase {
    public:
     static absl::Status GetContract(CalculatorContract* cc) {
         AISDK_LOG_TRACE("[HandStateCalculator] GetContract start.");
-        cc->Inputs().Tag("SCORE_INPUT").Set<Score3dInternal>();
-        cc->Outputs().Tag("OUTPUT").Set<HandStateInternal>();
+        cc->Inputs().Tag("SCORE_INPUT").Set<aisdk::algorithm::Score3dInternal>();
+        cc->Outputs().Tag("OUTPUT").Set<aisdk::algorithm::HandStateInternal>();
         AISDK_LOG_TRACE("[HandStateCalculator] GetContract complete.");
         return absl::OkStatus();
     }
@@ -43,9 +43,10 @@ class HandStateCalculator : public CalculatorBase {
     absl::Status Process(CalculatorContext* cc) final {
         AISDK_LOG_TRACE("[HandStateCalculator] Process start.");
 
-        const auto& score_data = cc->Inputs().Tag("SCORE_INPUT").Get<Score3dInternal>();
+        const auto& score_data = cc->Inputs().Tag("SCORE_INPUT").Get<aisdk::algorithm::Score3dInternal>();
 
-        std::unique_ptr<HandStateInternal> output_buffer_ = absl::make_unique<HandStateInternal>();
+        std::unique_ptr<aisdk::algorithm::HandStateInternal> output_buffer_ =
+            absl::make_unique<aisdk::algorithm::HandStateInternal>();
         output_buffer_->clear();
         // fake process
 

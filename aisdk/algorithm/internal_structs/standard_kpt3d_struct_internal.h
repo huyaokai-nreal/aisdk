@@ -1,4 +1,5 @@
 #pragma once
+
 #include <opencv2/opencv.hpp>
 #include <vector>
 
@@ -6,8 +7,8 @@
 
 namespace aisdk::algorithm {
 
-struct Kpt3dInternal {
-    // Hand 3d output data, a single hand data size should be 21.
+struct StandardKpt3dInternal {
+    // Hand 3d standard output data, a single hand data size should be 23.
     std::vector<cv::Vec3f> lhand;
     std::vector<cv::Vec3f> rhand;
 

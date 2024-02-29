@@ -1,14 +1,15 @@
 #pragma once
+#include <opencv2/opencv.hpp>
 #include <vector>
 
 #include "Eigen/Dense"
-#include <opencv2/opencv.hpp>
 
 #define KPT_NUMS 21
 
-struct Kpt2dInternal {
+namespace aisdk::algorithm {
 
-    Kpt2dInternal(){
+struct Kpt2dInternal {
+    Kpt2dInternal() {
         lhand_lcam.resize(KPT_NUMS);
         lhand_rcam.resize(KPT_NUMS);
         rhand_lcam.resize(KPT_NUMS);
@@ -34,3 +35,5 @@ struct Kpt2dInternal {
         rhand_valid = false;
     }
 };
+
+}  // namespace aisdk::algorithm
