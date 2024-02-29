@@ -1,6 +1,4 @@
-#ifndef _SHARED_QUEUE_H_
-#define _SHARED_QUEUE_H_
-
+#pragma once
 #include <condition_variable>
 #include <memory>
 #include <mutex>
@@ -105,5 +103,3 @@ class SharedQueue {
 };
 
 }  // namespace aisdk::base
-
-#endif

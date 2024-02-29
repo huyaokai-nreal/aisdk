@@ -1,6 +1,4 @@
-#ifndef THREAD_POOL_H
-#define THREAD_POOL_H
-
+#pragma once
 #include <sys/prctl.h>
 
 #include <condition_variable>
@@ -12,7 +10,7 @@
 #include <stdexcept>
 #include <thread>
 #include <vector>
-
+namespace aisdk::base {
 class ThreadPool {
    public:
     ThreadPool(size_t threads, size_t depth = 0, std::string thread_name = "ThreadPool");
@@ -92,4 +90,4 @@ inline ThreadPool::~ThreadPool() {
     for (std::thread& worker : workers) worker.join();
 }
 
-#endif
+}  // namespace aisdk::base

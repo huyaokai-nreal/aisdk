@@ -1,5 +1,4 @@
-#ifndef _PROFILING_H_
-#define _PROFILING_H_
+#pragma  once
 #include <string>
 #define SYM_EXPORT __attribute__((visibility("default")))
 
@@ -47,5 +46,3 @@ extern "C" {
 typedef void (*DebugProfilingOptionFunc)(aisdk::base::ProfilingOption& opt);
 SYM_EXPORT void _ZN2NR200TK7FUNC005E(aisdk::base::ProfilingOption& opt);
 }
-
-#endif

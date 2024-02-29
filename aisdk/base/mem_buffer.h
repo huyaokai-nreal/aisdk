@@ -1,6 +1,4 @@
-#ifndef _XR_MEM_BUFFER_H_
-#define _XR_MEM_BUFFER_H_
-
+#pragma  once
 #include <map>
 #include <memory>
 #include <mutex>
@@ -82,4 +80,3 @@ class FixedMembuffer {
 
 }  // namespace aisdk::base
 
-#endif

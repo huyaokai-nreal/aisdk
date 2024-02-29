@@ -2,6 +2,8 @@
 
 #include <cstdint>
 
+namespace aisdk::base {
+
 void SetThisThreadName(const std::string &name) {
     constexpr size_t kMaxAllowedLength = 15;
     const std::string final_name = (name.length() > kMaxAllowedLength ? name.substr(0, kMaxAllowedLength) : name);
@@ -158,3 +160,4 @@ void swapSort(std::vector<int> &arr, std::vector<int> &idx, bool reverse) {
         }
     }
 }
+}  // namespace aisdk::base
