@@ -1,0 +1,54 @@
+# Registries should be involved. conan can not deal it with -Wl,--whole-archive
+# mediapipe::stream_handler -Wl,--no-whole-archive The generated link.txt drop
+# mediapipe::stream_handler out of the block, why?
+add_library(xgraph_stream_handler_whole_archive INTERFACE)
+target_link_libraries(
+    xgraph_stream_handler_whole_archive
+    INTERFACE -Wl,--whole-archive xgraph::stream_handler -Wl,--no-whole-archive)
+
+add_library(absl_group INTERFACE)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    target_link_libraries(absl_group INTERFACE -Wl,--start-group abseil::abseil
+                                                -Wl,--end-group pthread)
+else()
+    target_link_libraries(absl_group INTERFACE abseil::abseil)
+endif()
+
+set(ALGORITHM_LIBRARY_NAME algorithm)
+add_library(${ALGORITHM_LIBRARY_NAME} STATIC
+${CMAKE_CURRENT_SOURCE_DIR}/model/hand_detect.cc
+${CMAKE_CURRENT_SOURCE_DIR}/func/NR_CV.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/func/netalgo_utils.cpp
+
+${CMAKE_CURRENT_SOURCE_DIR}/model/hand_rsntiny.cc
+${CMAKE_CURRENT_SOURCE_DIR}/func/permute.cc
+${CMAKE_CURRENT_SOURCE_DIR}/func/rsntiny_postprocess/rsntiny_postprocess.cc
+${CMAKE_CURRENT_SOURCE_DIR}/func/rsntiny_postprocess/softmax.cc
+${CMAKE_CURRENT_SOURCE_DIR}/func/rsntiny_postprocess/reducesum.cc
+${CMAKE_CURRENT_SOURCE_DIR}/func/rsntiny_postprocess/elementwise_mul.cc
+
+${CMAKE_CURRENT_SOURCE_DIR}/model/landmark_filter.cc
+
+${CMAKE_CURRENT_SOURCE_DIR}/model/hand_lift.cc
+
+${CMAKE_CURRENT_SOURCE_DIR}/core/nrcore_pipeline.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/core/nrcore_pipeline_mediapipe_service.cpp
+
+${CMAKE_CURRENT_SOURCE_DIR}/calculator/hand_detection_calculator.cc
+)
+
+target_link_libraries(${ALGORITHM_LIBRARY_NAME}
+    PUBLIC
+    base
+    xengine
+    Eigen3::Eigen
+    opencv::opencv
+    xgraph_stream_handler_whole_archive
+    xgraph::graph
+    absl_group
+    glog::glog
+    protobuf::protobuf
+)
+target_compile_options(${ALGORITHM_LIBRARY_NAME} PRIVATE -Wno-error)
+
+add_clang_format_target(${ALGORITHM_LIBRARY_NAME})

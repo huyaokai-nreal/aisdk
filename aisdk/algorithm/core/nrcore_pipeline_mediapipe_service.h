@@ -1,0 +1,86 @@
+#pragma once
+
+#include <map>
+
+#include "aisdk/base/log.h"
+#include "aisdk/base/profiling.h"
+#include "nrcore_pipeline.h"
+#include "aisdk/xengine/nrhal_common.h"
+#include "aisdk/xengine/nrhal_net.h"
+
+namespace mediapipe {
+#ifdef HAVE_HANDTRACKING  // FIXME: 这里的定义变量内部的代码还没保证可用
+void TriggerGloalGraphCalculatorsConstructForHandTracking();
+#endif
+
+void TriggerGloalGraphCalculatorsConstruct();
+}  // namespace aisdk::algorithm
+
+namespace aisdk::algorithm {
+class CalculatorBaseNet;
+class XrMediaServiceUtils {
+   public:
+    // 保存mediapipe的系统配置，主要是和网络算子相关的
+    static int SavePipelineConfig(void* parent_graph, aisdk::xengine::DlSymFuncs& funcs,
+                                  aisdk::xengine::PipelineConfig& config, CameraParams& camera);
+
+    // 获取mediapipe的节点的系统参数
+    static std::string GetPipelineNodeAlgoParam(void* parent_graph, std::string node_name);
+
+    // 创建一个calculator的net算子
+    template <typename T>
+    static std::shared_ptr<T> CreateNetAlgoBase(void* parent_graph, std::string node_name) {
+        static_assert(std::is_base_of<CalculatorBaseNet, T>::value, "T is not derived from CalculatorBaseNet!");
+
+        if (m_pipelineconfig.end() == m_pipelineconfig.find(parent_graph)) {
+            return nullptr;
+        }
+
+        std::shared_ptr<T> handle;
+        auto& config = m_pipelineconfig[parent_graph];
+        for (uint32_t i = 0; i < config.node_name.size(); i++) {
+            if (config.node_name[i] == node_name) {
+                AISDK_LOG_TRACE("XrMediaServiceUtils::CreateNetAlgoBase node_name=%s", node_name.c_str());
+                // netalgo_node的初始化
+                if (aisdk::xengine::NodeType::NET_ALGO == config.node_type[i]) {
+                    auto& algo_tp = config.netnode_config[i];
+                    aisdk::xengine::ModelConfig& pa = std::get<0>(algo_tp);
+                    aisdk::xengine::SessionConfig& pb = std::get<1>(algo_tp);
+                    aisdk::xengine::NetAlgoConfig& pc = std::get<2>(algo_tp);
+                    if (aisdk::base::DebugProfiling::Get().GetOpt().aisdk_init_report) {
+                        AISDK_LOG_TRACE("CreateNetAlgoBase algo_name=%s", pc.algo_name.c_str());
+                    }
+
+                    handle = std::make_shared<T>();
+                    auto net = m_funcs.m_createnetalgo(NULL, NULL, NULL, NULL);
+                    if (nullptr == net) {
+                        AISDK_LOG_TRACE("CreateNetAlgo algo_name=%s Failure !!!", pc.algo_name.c_str());
+                        break;
+                    }
+                    handle->SetBaseNetAlgo(net);
+                    auto ret = handle->Init(pc, pa, pb);
+                    if (ret != aisdk::xengine::Status::SUCCESS) {
+                        handle = nullptr;
+                    }
+
+                    if (nullptr == handle) {
+                        AISDK_LOG_TRACE("CreateNetAlgoBase algo_name=%s Failure !!!", pc.algo_name.c_str());
+                        break;
+                    }
+                }
+            }
+        }
+
+        return handle;
+    }
+
+    // 销毁一个calculator的net算子
+    static void DeleteNetAlgoBase(aisdk::xengine::BaseNetAlgo* net);
+
+   private:
+    static std::map<void*, aisdk::xengine::PipelineConfig> m_pipelineconfig;
+    static aisdk::xengine::DlSymFuncs m_funcs;
+    static CameraParams m_camera_params;
+};
+
+}  // namespace aisdk::algorithm
