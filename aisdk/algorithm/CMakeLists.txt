@@ -35,6 +35,9 @@ ${CMAKE_CURRENT_SOURCE_DIR}/core/nrcore_pipeline.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/core/nrcore_pipeline_mediapipe_service.cpp
 
 ${CMAKE_CURRENT_SOURCE_DIR}/calculator/hand_detection_calculator.cc
+
+${CMAKE_CURRENT_SOURCE_DIR}/calculator/hand_landmark_calculator.cc
+${CMAKE_CURRENT_SOURCE_DIR}/func/rsntiny_preprocess/warpaffine.cc
 )
 
 target_link_libraries(${ALGORITHM_LIBRARY_NAME}
