@@ -1,0 +1,73 @@
+#include <iostream>
+#include <memory>
+
+#include "../internal_structs/kpt3d_struct_internal.h"
+#include "aisdk/base/log.h"
+#include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/port/canonical_errors.h"
+
+const int root_index = 0;
+
+bool block_rule_root_distance(const std::vector<cv::Vec3f>& points_3d) {
+    if (points_3d[root_index][2] > 0.8) {
+        return false;
+    } else {
+        return true;
+    }
+}
+
+namespace mediapipe {
+
+// A calculator blocks 3d keypoint invalid outputs with simple hard rules.
+// Definition:
+// node {
+//   calculator: "BlockHardRulesCalculator"
+//   input_stream: "BLOCK_IN:kpt3d_constrained"
+//   output_stream: "BLOCK_OUT:kpt3d_blocked"
+// }
+
+class BlockHardRulesCalculator : public CalculatorBase {
+   private:
+   public:
+    static absl::Status GetContract(CalculatorContract* cc) {
+        AISDK_LOG_TRACE("[BlockHardRulesCalculator] GetContract start");
+        cc->Inputs().Tag("BLOCK_IN").Set<aisdk::algorithm::Kpt3dInternal>();
+        cc->Outputs().Tag("BLOCK_OUT").Set<aisdk::algorithm::Kpt3dInternal>();
+        AISDK_LOG_TRACE("[BlockHardRulesCalculator] GetContract complete");
+        return absl::OkStatus();
+    }
+
+    absl::Status Open(CalculatorContext* cc) final {
+        AISDK_LOG_TRACE("[BlockHardRulesCalculator] Open start");
+        AISDK_LOG_TRACE("[BlockHardRulesCalculator] Open complete");
+        return absl::OkStatus();
+    }
+
+    absl::Status Process(CalculatorContext* cc) final {
+        AISDK_LOG_TRACE("[BlockHardRulesCalculator] Process start");
+        const auto& input_data = cc->Inputs().Tag("BLOCK_IN").Get<aisdk::algorithm::Kpt3dInternal>();
+
+        std::unique_ptr<aisdk::algorithm::Kpt3dInternal> output_buffer_ =
+            absl::make_unique<aisdk::algorithm::Kpt3dInternal>();
+        output_buffer_->clear();
+
+        if (input_data.lhand_valid) {
+            AISDK_LOG_TRACE("[BlockHardRulesCalculator] Checking left hand");
+            if (block_rule_root_distance(input_data.lhand)) {
+                output_buffer_->lhand_valid = true;
+                output_buffer_->lhand = input_data.lhand;
+            }
+        }
+        if (input_data.rhand_valid) {
+            AISDK_LOG_TRACE("[BlockHardRulesCalculator] Checking right hand");
+            if (block_rule_root_distance(input_data.rhand)) {
+                output_buffer_->rhand_valid = true;
+                output_buffer_->rhand = input_data.rhand;
+            }
+        }
+        AISDK_LOG_TRACE("[BlockHardRulesCalculator] Process complete");
+        return absl::OkStatus();
+    }
+};
+
+}  // namespace mediapipe
