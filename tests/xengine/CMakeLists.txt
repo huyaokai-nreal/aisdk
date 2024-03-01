@@ -1,3 +1,4 @@
 list(APPEND TEST_DEP_LIBS base xengine doctest::doctest)
 ADD_TEST_CASE(${CMAKE_CURRENT_SOURCE_DIR}/test_model_mgr.cpp "" TEST_DEP_LIBS)
 ADD_TEST_CASE(${CMAKE_CURRENT_SOURCE_DIR}/test_create_netalgo.cpp "" TEST_DEP_LIBS)
+ADD_TEST_CASE(${CMAKE_CURRENT_SOURCE_DIR}/test_snpe_forward.cpp "" TEST_DEP_LIBS)
