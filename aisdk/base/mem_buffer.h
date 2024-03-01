@@ -22,7 +22,7 @@ class FixedMembuffer {
     ~FixedMembuffer() {
         std::lock_guard<std::mutex> guard(cache_lock);
         for (auto [k, v] : free_cache) {
-            delete[] v->addr;
+            delete[] (char*)v->addr;
             delete v;
         }
     }

@@ -121,6 +121,9 @@ option(ENABLE_XENGINE_TENSORRT_NN "enable tensorrt nn."  OFF)
 # build aisdk
 include(Project)
 
+# build aisdk interface
+add_subdirectory(interface)
+
 if(BUILD_EXAMPLE)
 message(STATUS "enable build examples")
 add_subdirectory(example)
