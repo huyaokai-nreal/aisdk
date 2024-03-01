@@ -17,23 +17,12 @@ endif()
 set(ALGORITHM_LIBRARY_NAME algorithm)
 add_library(${ALGORITHM_LIBRARY_NAME} STATIC
 ${CMAKE_CURRENT_SOURCE_DIR}/model/hand_detect.cc
-${CMAKE_CURRENT_SOURCE_DIR}/func/NR_CV.cpp
-${CMAKE_CURRENT_SOURCE_DIR}/func/netalgo_utils.cpp
-
 ${CMAKE_CURRENT_SOURCE_DIR}/model/hand_rsntiny.cc
-${CMAKE_CURRENT_SOURCE_DIR}/func/permute.cc
-${CMAKE_CURRENT_SOURCE_DIR}/func/rsntiny_postprocess/rsntiny_postprocess.cc
-${CMAKE_CURRENT_SOURCE_DIR}/func/rsntiny_postprocess/softmax.cc
-${CMAKE_CURRENT_SOURCE_DIR}/func/rsntiny_postprocess/reducesum.cc
-${CMAKE_CURRENT_SOURCE_DIR}/func/rsntiny_postprocess/elementwise_mul.cc
-
 ${CMAKE_CURRENT_SOURCE_DIR}/model/landmark_filter.cc
-
 ${CMAKE_CURRENT_SOURCE_DIR}/model/hand_lift.cc
 
 ${CMAKE_CURRENT_SOURCE_DIR}/pipeline/nrcore_pipeline.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/core/nrcore_pipeline_mediapipe_service.cpp
-
 ${CMAKE_CURRENT_SOURCE_DIR}/calculator/hand_detection_calculator.cc
 
 ${CMAKE_CURRENT_SOURCE_DIR}/calculator/hand_landmark_calculator.cc
@@ -68,3 +57,4 @@ target_link_libraries(${ALGORITHM_LIBRARY_NAME}
 target_compile_options(${ALGORITHM_LIBRARY_NAME} PRIVATE -Wno-error)
 
 add_clang_format_target(${ALGORITHM_LIBRARY_NAME})
+add_subdirectory(func)
