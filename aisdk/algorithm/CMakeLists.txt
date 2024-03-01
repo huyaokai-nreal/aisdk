@@ -42,6 +42,8 @@ ${CMAKE_CURRENT_SOURCE_DIR}/func/hand_rotation.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/pipeline/nrcore_pipeline_mediapipe_graph_impl.cpp
 )
 
+add_subdirectory(func)
+
 target_link_libraries(${ALGORITHM_LIBRARY_NAME}
     PUBLIC
     base
@@ -57,4 +59,3 @@ target_link_libraries(${ALGORITHM_LIBRARY_NAME}
 target_compile_options(${ALGORITHM_LIBRARY_NAME} PRIVATE -Wno-error)
 
 add_clang_format_target(${ALGORITHM_LIBRARY_NAME})
-add_subdirectory(func)
