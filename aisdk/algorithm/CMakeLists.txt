@@ -26,7 +26,6 @@ ${CMAKE_CURRENT_SOURCE_DIR}/core/nrcore_pipeline_mediapipe_service.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/calculator/hand_detection_calculator.cc
 
 ${CMAKE_CURRENT_SOURCE_DIR}/calculator/hand_landmark_calculator.cc
-${CMAKE_CURRENT_SOURCE_DIR}/func/rsntiny_preprocess/warpaffine.cc
 
 ${CMAKE_CURRENT_SOURCE_DIR}/calculator/hand_state_calculator.cc
 
@@ -35,13 +34,13 @@ ${CMAKE_CURRENT_SOURCE_DIR}/calculator/block_hard_rules_calculator.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/common/ofxOneEuroFilter.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/common/NR_Seq_Manager.cpp
 
-${CMAKE_CURRENT_SOURCE_DIR}/func/hand_filters.cpp
-
-${CMAKE_CURRENT_SOURCE_DIR}/func/hand_rotation.cpp
-
 ${CMAKE_CURRENT_SOURCE_DIR}/pipeline/nrcore_pipeline_mediapipe_graph_impl.cpp
 
 ${CMAKE_CURRENT_SOURCE_DIR}/calculator/check_headpose_calculator.cc
+
+${CMAKE_CURRENT_SOURCE_DIR}/common/NR_Transfer.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/calculator/convert_to_world_calculator.cc
+
 )
 
 add_subdirectory(func)
