@@ -42,6 +42,9 @@ ${CMAKE_CURRENT_SOURCE_DIR}/func/rsntiny_preprocess/warpaffine.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/calculator/hand_state_calculator.cc
 
 ${CMAKE_CURRENT_SOURCE_DIR}/calculator/block_hard_rules_calculator.cc
+
+${CMAKE_CURRENT_SOURCE_DIR}/common/ofxOneEuroFilter.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/common/NR_Seq_Manager.cpp
 )
 
 target_link_libraries(${ALGORITHM_LIBRARY_NAME}
