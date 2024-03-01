@@ -1,0 +1,11 @@
+{
+    "perception": {
+        "versions": "diE1v4iRCoXc8G5g",
+        "plugins_64": [
+            {
+                "id": "nr_hand_tracking_id",
+                "path": "/sdcard/Android/data/com.xreal.HandTracking/files/libnr_hand_tracking.so"
+            }
+        ]
+    }
+}
