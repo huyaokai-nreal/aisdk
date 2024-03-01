@@ -31,7 +31,7 @@ ${CMAKE_CURRENT_SOURCE_DIR}/model/landmark_filter.cc
 
 ${CMAKE_CURRENT_SOURCE_DIR}/model/hand_lift.cc
 
-${CMAKE_CURRENT_SOURCE_DIR}/core/nrcore_pipeline.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/pipeline/nrcore_pipeline.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/core/nrcore_pipeline_mediapipe_service.cpp
 
 ${CMAKE_CURRENT_SOURCE_DIR}/calculator/hand_detection_calculator.cc

@@ -4,7 +4,7 @@
 
 #include "aisdk/base/log.h"
 #include "aisdk/base/profiling.h"
-#include "nrcore_pipeline.h"
+#include "../pipeline/nrcore_pipeline.h"
 #include "aisdk/xengine/nrhal_common.h"
 #include "aisdk/xengine/nrhal_net.h"
 
