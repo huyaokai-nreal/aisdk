@@ -40,6 +40,8 @@ ${CMAKE_CURRENT_SOURCE_DIR}/func/hand_filters.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/func/hand_rotation.cpp
 
 ${CMAKE_CURRENT_SOURCE_DIR}/pipeline/nrcore_pipeline_mediapipe_graph_impl.cpp
+
+${CMAKE_CURRENT_SOURCE_DIR}/calculator/check_headpose_calculator.cc
 )
 
 add_subdirectory(func)
