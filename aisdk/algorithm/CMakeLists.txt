@@ -41,6 +41,9 @@ ${CMAKE_CURRENT_SOURCE_DIR}/calculator/check_headpose_calculator.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/common/NR_Transfer.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/calculator/convert_to_world_calculator.cc
 
+${CMAKE_CURRENT_SOURCE_DIR}/common/NR_Predictor.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/common/metrics.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/calculator/hand_detection_track_calculator.cc
 )
 
 add_subdirectory(func)

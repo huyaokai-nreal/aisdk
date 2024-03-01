@@ -1,0 +1,37 @@
+#pragma once
+#include "NR_Predictor.h"
+#include "../internal_structs/kpt3d_struct_internal.h"
+
+namespace aisdk::algorithm {
+
+class GlobalPredictorService {
+   public:
+    static GlobalPredictorService& getInstance() {
+        static GlobalPredictorService instance;
+        return instance;
+    }
+
+    KFPredictor& get_predictor_lhand() { return kfpredictor_lhand; }
+
+    KFPredictor& get_predictor_rhand() { return kfpredictor_rhand; }
+
+    Kpt3dInternal& get_kpt3d_world() { return kpt3d_world; }
+
+   private:
+    KFPredictor kfpredictor_lhand;
+    KFPredictor kfpredictor_rhand;
+
+    Kpt3dInternal kpt3d_world;
+
+    GlobalPredictorService() {
+        kfpredictor_lhand.init();
+        kfpredictor_rhand.init();
+    }
+
+    ~GlobalPredictorService() {}
+
+    GlobalPredictorService(const GlobalPredictorService&) = delete;
+    GlobalPredictorService& operator=(const GlobalPredictorService&) = delete;
+};
+
+}  // namespace aisdk::algorithm
