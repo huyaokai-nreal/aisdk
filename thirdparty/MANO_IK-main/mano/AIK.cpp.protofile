@@ -1,0 +1,285 @@
+#include "AIK.h"
+
+const std::vector<int> kinematic_tree = {2,  3,  4,  6,  7,  8,  10, 11,
+										 12, 14, 15, 16, 18, 19, 20};
+
+const std::vector<int> SNAP_PARENT = {
+	0,  // 0's parent
+	0,  // 1's parent
+	1,  2,  3,
+	0,  // 5's parent
+	5,  6,  7,
+	0,  // 9's parent
+	9,  10, 11,
+	0,  // 13's parent
+	13, 14, 15,
+	0,  // 17's parent
+	17, 18, 19,
+};
+
+const std::map<int, int> ID2ROT = {
+	{2, 13}, {3, 14},  {4, 15},  {6, 1},   {7, 2},  {8, 3},  {10, 4}, {11, 5},
+	{12, 6}, {14, 10}, {15, 11}, {16, 12}, {18, 7}, {19, 8}, {20, 9},
+};
+
+const std::set<int> dof1_indexs = {8, 12, 16, 20};
+const std::set<int> dof2_indexs = {6, 7, 10, 11, 14, 15, 18, 19};
+
+const std::vector<std::vector<int>> finger_index = {
+	{5, 6, 7, 8}, {9, 10, 11, 12}, {13, 14, 15, 16}, {17, 18, 19, 20}};
+const std::map<int, int> plane_index = {
+	{5, 0},  {6, 0},  {7, 0},  {8, 0},  {9, 1},  {10, 1}, {11, 1}, {12, 1},
+	{13, 2}, {14, 2}, {15, 2}, {16, 2}, {17, 3}, {18, 3}, {19, 3}, {20, 3}};
+
+float compute_angle(float cos_alpha, float sin_alpha) {
+	float alpha;
+	if ((cos_alpha <= 0 && sin_alpha <= 0) ||
+		(cos_alpha >= 0 && sin_alpha <= 0)) {
+		alpha = std::acos(cos_alpha);
+		alpha = -alpha;
+	} else if ((cos_alpha >= 0 && sin_alpha >= 0) ||
+			   (cos_alpha <= 0 && sin_alpha >= 0)) {
+		alpha = std::acos(cos_alpha);
+	} else {
+		alpha = 0;
+	}
+	return alpha;
+}
+
+void point_project_to_plane(Eigen::Vector3f&       point_out,
+							const Eigen::Vector3f& point,
+							const Eigen::Vector4f  plane) {
+	//     # point: (x, y, z).
+	//     # plane: Ax+By+Cz+D=0.
+	//     # plane_point: (x, y, z) or None. If plane_point is None, plane_point
+	//     is computerd based on point + plane.
+	float z =
+		(plane(0) * point(0) + plane(1) * point(1) + plane(3)) / (-plane(2));
+	Eigen::Vector3f plane_point;
+	plane_point << point(0), point(1), z;
+	Eigen::Vector3f normal;
+	normal << plane(0), plane(1), plane(2);
+	normal.normalize();
+
+	float t   = (plane_point.dot(normal) - point.dot(normal)) / normal.norm();
+	point_out = point + t * normal;
+}
+
+Eigen::Matrix3f constraint_around_x(std::vector<Eigen::Vector3f> T,
+									Eigen::Vector3f v_p_k_pa, int k, int pa,
+									bool left_hand) {
+	// project v_p_k_pa to plane_t_k_pa_coordz
+	Eigen::Vector3f t_v_0_9     = T[9] - T[0];
+	Eigen::Vector3f t_v_0_5     = T[5] - T[0];
+	Eigen::Vector3f t_v_coord_z = t_v_0_5.cross(t_v_0_9);
+
+	if (left_hand) {
+		t_v_coord_z = -t_v_coord_z;
+	}
+	t_v_coord_z                        = t_v_coord_z.normalized();
+	Eigen::Vector3f t_v_k_pa           = (T[k] - T[pa]);
+	Eigen::Vector3f normal_t_k_pa_papa = t_v_k_pa.cross(t_v_coord_z);
+	normal_t_k_pa_papa                 = normal_t_k_pa_papa.normalized();
+	// std::cout << k << "," << pa << ": " << v_p_k_pa << std::endl;
+
+	// vector to point
+	v_p_k_pa = v_p_k_pa + T[pa];
+	//   t = (np.dot(normal_t_k_pa_papa, T[pa].reshape((3))) -
+	//   np.dot(normal_t_k_pa_papa, v_p_k_pa)) / (
+	//                 np.linalg.norm(normal_t_k_pa_papa, axis=0) + 1e-8)
+	float t =
+		(normal_t_k_pa_papa.dot(T[pa]) - normal_t_k_pa_papa.dot(v_p_k_pa)) /
+		(normal_t_k_pa_papa.norm());  // + 1e-8
+	Eigen::Vector3f v_p_k_pa_proj = v_p_k_pa + t * normal_t_k_pa_papa;
+	// point to vector
+	v_p_k_pa_proj = v_p_k_pa_proj - T[pa];
+	// compute axis and alpha
+	Eigen::Vector3f v_t_k_pa = T[k] - T[pa];
+
+	Eigen::Vector3f delta_t_k = v_t_k_pa;
+	Eigen::Vector3f delta_p_k = v_p_k_pa_proj;
+	delta_t_k                 = delta_t_k.normalized();
+	delta_p_k                 = delta_p_k.normalized();
+
+	Eigen::Vector3f axis = delta_t_k.cross(delta_p_k);
+	axis                 = axis.normalized();
+
+	float cos_alpha =
+		delta_t_k.dot(delta_p_k) / (delta_t_k.norm() * delta_p_k.norm());
+
+	float sin_alpha = delta_t_k.cross(delta_p_k).norm() /
+					  (delta_t_k.norm() * delta_p_k.norm());
+	// direction in the opposite
+	if (delta_t_k.cross(t_v_coord_z).dot(delta_t_k.cross(delta_p_k)) < 0) {
+		sin_alpha = -sin_alpha;
+		axis      = -axis;
+	}
+	float alpha = compute_angle(cos_alpha, sin_alpha);
+
+	// constraint angle
+	// 90 degree
+	if (alpha > M_PI / 2) {
+		alpha = M_PI / 2;
+	}
+	// -15 degree
+	else if (alpha < -(1. / 6.) * M_PI / 2) {
+		alpha = -(1. / 6.) * M_PI / 2;
+	} else {
+	}
+	Eigen::Matrix3f R_x = axisang2mat(axis, alpha);
+
+	return R_x;
+}
+
+Eigen::Matrix3f constraint_around_z(std::vector<Eigen::Vector3f> T,
+									Eigen::Vector3f v_p_k_pa, int k, int pa,
+									bool left_hand) {
+	Eigen::Vector3f t_v_0_9     = T[9] - T[0];
+	Eigen::Vector3f t_v_0_5     = T[5] - T[0];
+	Eigen::Vector3f t_v_coord_z = t_v_0_5.cross(t_v_0_9);
+	if (left_hand) {
+		t_v_coord_z = -t_v_coord_z;
+	}
+	t_v_coord_z = t_v_coord_z.normalized();
+
+	// vector to point
+	v_p_k_pa = v_p_k_pa + T[pa];
+	// project point to plane
+	float t = (t_v_coord_z.dot(T[pa]) - t_v_coord_z.dot(v_p_k_pa)) /
+			  (t_v_coord_z.norm());  // + 1e-8
+	Eigen::Vector3f v_p_k_pa_proj_z = v_p_k_pa + t * t_v_coord_z;
+	// point to vector
+	v_p_k_pa_proj_z = v_p_k_pa_proj_z - T[pa];
+	// compute axis and alpha
+	Eigen::Vector3f v_t_k_pa = (T[k] - T[pa]);
+
+	Eigen::Vector3f delta_t_k = v_t_k_pa;
+	Eigen::Vector3f delta_p_k = v_p_k_pa_proj_z;
+	delta_t_k                 = delta_t_k.normalized();
+	delta_p_k                 = delta_p_k.normalized();
+	Eigen::Vector3f axis      = delta_t_k.cross(delta_p_k);
+	axis                      = axis.normalized();
+
+	float cos_alpha =
+		delta_t_k.dot(delta_p_k) / (delta_t_k.norm() * delta_p_k.norm());
+	float sin_alpha = delta_t_k.cross(delta_p_k).norm() /
+					  (delta_t_k.norm() * delta_p_k.norm());
+	float alpha = compute_angle(cos_alpha, sin_alpha);
+
+	// constraint angle
+	// 15 degree
+	if (alpha > ((1. / 6.) * M_PI / 2)) {
+		alpha = (1. / 6.) * M_PI / 2;
+	}
+	// -15 degree
+	else if (alpha < (-(1. / 6.) * M_PI / 2)) {
+		alpha = -(1. / 6.) * M_PI / 2;
+	} else {
+	}
+	Eigen::Matrix3f R_x = axisang2mat(axis, alpha);
+	return R_x;
+}
+
+Eigen::Matrix3f axisang2mat(Eigen::Vector3f axis, float angle) {
+	axis.normalize();
+	Eigen::Matrix3f rot_mat = Eigen::AngleAxisf(angle, axis).matrix();
+
+	return rot_mat;
+}
+
+std::vector<Eigen::Matrix3f> constraint_IK(std::vector<Eigen::Vector3f> T,
+										   std::vector<Eigen::Vector3f> P,
+										   bool left_hand) {
+	std::vector<Eigen::Matrix3f> R;
+	R.resize(21);
+	std::vector<Eigen::Matrix3f> R_pa_k;
+	R_pa_k.resize(21);
+	std::vector<Eigen::Matrix3f> pose_R;
+	pose_R.resize(16);
+
+	std::vector<Eigen::Vector3f> q;
+	q.resize(T.size());
+
+	q[0] = T[0];
+
+	Eigen::MatrixXf P_0(3, 5);
+	P_0 << P[1] - P[0], P[5] - P[0], P[9] - P[0], P[13] - P[0], P[17] - P[0];
+	Eigen::MatrixXf T_0(3, 5);
+	T_0 << T[1] - T[0], T[5] - T[0], T[9] - T[0], T[13] - T[0], T[17] - T[0];
+
+	Eigen::Matrix3f H = T_0 * P_0.transpose();
+
+	Eigen::JacobiSVD<Eigen::MatrixXf> svd(
+		H, Eigen::ComputeFullV | Eigen::ComputeFullU);
+	Eigen::Matrix3f U = svd.matrixU();
+	Eigen::Matrix3f V = svd.matrixV();
+
+	Eigen::Matrix3f R0 = V * U.transpose();
+
+	Eigen::Matrix3f mod;
+	mod << 1, 0, 0, 0, 1, 0, 0, 0, -1;
+
+	if (R0.determinant() < 0) {
+		R0 = V * mod * U.transpose();
+	}
+
+	R[0] = R0;
+
+	R[1]  = R[0];
+	R[5]  = R[0];
+	R[9]  = R[0];
+	R[13] = R[0];
+	R[17] = R[0];
+
+	// std::cout << "left_hand: " << std::endl;
+	// std::cout << left_hand << std::endl;
+
+	for (auto k : kinematic_tree) {
+		int pa    = SNAP_PARENT[k];
+		int pa_pa = SNAP_PARENT[pa];
+
+		q[pa]                    = R[pa] * (T[pa] - T[pa_pa]) + q[pa_pa];
+		Eigen::Vector3f v_p_k_pa = R[pa].inverse() * (P[k] - q[pa]);
+		// std::cout << k << "," << pa << ": " << R[pa] << std::endl;
+		// std::cout << "K: " << k << std::endl;
+		// std::cout << q[pa] << std::endl;
+
+		if (dof1_indexs.count(k)) {
+			Eigen::Matrix3f R_x =
+				constraint_around_x(T, v_p_k_pa, k, pa, left_hand);
+			R_pa_k[k] = R_x;
+			// std::cout << k << ": " << R_pa_k[k] << std::endl;
+		}
+
+		else if (dof2_indexs.count(k)) {
+			Eigen::Matrix3f R_x =
+				constraint_around_x(T, v_p_k_pa, k, pa, left_hand);
+			v_p_k_pa = R_x.inverse() * v_p_k_pa;
+			Eigen::Matrix3f R_z =
+				constraint_around_z(T, v_p_k_pa, k, pa, left_hand);
+			R_pa_k[k] = R_x * R_z;
+			// std::cout << k << ": " << R_z << std::endl;
+		}
+
+		else {
+			Eigen::Vector3f v_t_k_pa = T[k] - T[pa];
+			Eigen::Vector3f axis     = v_t_k_pa.cross(v_p_k_pa);
+			// std::cout << "K: " << k << std::endl;
+			// std::cout << axis.normalized() << std::endl;
+			axis = axis.normalized();
+			float cos_alpha =
+				v_t_k_pa.dot(v_p_k_pa) / (v_t_k_pa.norm() * v_p_k_pa.norm());
+			float alpha = acos(cos_alpha);
+			R_pa_k[k]   = axisang2mat(axis, alpha);
+			// std::cout << k << ": " << R_pa_k[k] << std::endl;
+		}
+		R[k] = R[pa] * R_pa_k[k];
+	}
+
+	pose_R[0] = R[0];
+
+	for (auto iter = ID2ROT.begin(); iter != ID2ROT.end(); iter++) {
+		pose_R[iter->second] = R_pa_k[iter->first];
+	}
+	return pose_R;
+}
