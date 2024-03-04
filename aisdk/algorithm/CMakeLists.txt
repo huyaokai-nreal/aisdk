@@ -54,6 +54,8 @@ ${CMAKE_CURRENT_SOURCE_DIR}/calculator/kalman_filter_correction_calculator.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/calculator/landmark_filter_calculator.cc
 
 ${CMAKE_CURRENT_SOURCE_DIR}/calculator/standardize_keypoints_calculator.cc
+
+${CMAKE_CURRENT_SOURCE_DIR}/calculator/lift_calculator.cc
 )
 
 add_subdirectory(func)
