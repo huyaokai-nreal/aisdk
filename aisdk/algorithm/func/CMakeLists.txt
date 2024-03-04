@@ -12,6 +12,7 @@ ${CMAKE_CURRENT_SOURCE_DIR}/rsntiny_preprocess/warpaffine.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/rsntiny_preprocess/generate_bbox.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/hand_filters.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/hand_rotation.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/NR_Gesture_v2.cpp
 
 
 
