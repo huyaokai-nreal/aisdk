@@ -48,6 +48,8 @@ ${CMAKE_CURRENT_SOURCE_DIR}/calculator/hand_detection_track_calculator.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/calculator/compute_3dscore_calculator.cc
 
 ${CMAKE_CURRENT_SOURCE_DIR}/calculator/detect_box_smoothing_calculator.cc
+
+${CMAKE_CURRENT_SOURCE_DIR}/calculator/kalman_filter_correction_calculator.cc
 )
 
 add_subdirectory(func)
