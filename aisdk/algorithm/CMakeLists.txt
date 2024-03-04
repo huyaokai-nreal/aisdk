@@ -58,6 +58,9 @@ ${CMAKE_CURRENT_SOURCE_DIR}/calculator/standardize_keypoints_calculator.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/calculator/lift_calculator.cc
 
 ${CMAKE_CURRENT_SOURCE_DIR}/calculator/gesture_recognition_calculator.cc
+
+${CMAKE_CURRENT_SOURCE_DIR}/calculator/pre_constraint_calculator.cc
+${CMAKE_CURRENT_SOURCE_DIR}/calculator/post_constraint_calculator.cc
 )
 
 add_subdirectory(func)
@@ -66,6 +69,7 @@ target_link_libraries(${ALGORITHM_LIBRARY_NAME}
     PUBLIC
     base
     xengine
+    mano
     Eigen3::Eigen
     opencv::opencv
     xgraph_stream_handler_whole_archive
