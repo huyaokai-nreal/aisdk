@@ -2,19 +2,17 @@
 
 #include <map>
 
+#include "../pipeline/nrcore_pipeline.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/profiling.h"
-#include "../pipeline/nrcore_pipeline.h"
 #include "aisdk/xengine/nrhal_common.h"
 #include "aisdk/xengine/nrhal_net.h"
 
 namespace mediapipe {
-#ifdef HAVE_HANDTRACKING  // FIXME: 这里的定义变量内部的代码还没保证可用
 void TriggerGloalGraphCalculatorsConstructForHandTracking();
-#endif
 
 void TriggerGloalGraphCalculatorsConstruct();
-}  // namespace aisdk::algorithm
+}  // namespace mediapipe
 
 namespace aisdk::algorithm {
 class CalculatorBaseNet;

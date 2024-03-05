@@ -10,11 +10,7 @@ namespace mediapipe {
 // 这里是要规避全局类不构造的问题, 以后找到原因解决
 void TriggerGloalGraphCalculatorsConstruct() {
     static std::once_flag oc;
-    std::call_once(oc, [&]() {
-#ifdef HAVE_HANDTRACKING
-        mediapipe::TriggerGloalGraphCalculatorsConstructForHandTracking();
-#endif
-    });
+    std::call_once(oc, [&]() { mediapipe::TriggerGloalGraphCalculatorsConstructForHandTracking(); });
     return;
 }
 

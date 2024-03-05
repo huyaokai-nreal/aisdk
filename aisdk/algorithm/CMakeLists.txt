@@ -61,6 +61,8 @@ ${CMAKE_CURRENT_SOURCE_DIR}/calculator/gesture_recognition_calculator.cc
 
 ${CMAKE_CURRENT_SOURCE_DIR}/calculator/pre_constraint_calculator.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/calculator/post_constraint_calculator.cc
+
+${CMAKE_CURRENT_SOURCE_DIR}/pipeline/handtracking_mediapipe_calculators_register.cpp
 )
 
 add_subdirectory(func)
