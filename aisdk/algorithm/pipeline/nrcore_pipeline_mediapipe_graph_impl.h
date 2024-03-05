@@ -1,5 +1,4 @@
-#ifndef _NRCORE_PIPELINE_MEDIAPIPE_GRAPH_H_
-#define _NRCORE_PIPELINE_MEDIAPIPE_GRAPH_H_
+#pragma once
 
 #include <list>
 #include <mutex>
@@ -20,7 +19,8 @@ class MediaPipeGraph : public PipeGraphImpl {
     MediaPipeGraph() : PipeGraphImpl() {}
     virtual ~MediaPipeGraph() {}
 
-    aisdk::algorithm::Status Init(aisdk::xengine::DlSymFuncs &funcs, aisdk::xengine::PipelineConfig &config, CameraParams &camera);
+    aisdk::algorithm::Status Init(aisdk::xengine::DlSymFuncs &funcs, aisdk::xengine::PipelineConfig &config,
+                                  CameraParams &camera);
     aisdk::algorithm::Status Start();
     aisdk::algorithm::Status Stop();
 
@@ -32,5 +32,3 @@ class MediaPipeGraph : public PipeGraphImpl {
 };
 
 }  // namespace aisdk::algorithm
-
-#endif

@@ -5,10 +5,6 @@
 #include "../core/nrcore_pipeline_mediapipe_service.h"
 #include "aisdk/base/log.h"
 
-#ifdef HAVE_HANDTRACKING
-#include "handtracking_mediapipe_graph.h"
-#endif
-
 namespace aisdk::algorithm {
 
 aisdk::algorithm::Status PipeGraphImpl::Init(aisdk::xengine::DlSymFuncs &funcs, aisdk::xengine::PipelineConfig &config,

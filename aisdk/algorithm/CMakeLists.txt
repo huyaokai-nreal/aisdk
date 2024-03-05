@@ -63,7 +63,11 @@ ${CMAKE_CURRENT_SOURCE_DIR}/calculator/pre_constraint_calculator.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/calculator/post_constraint_calculator.cc
 
 ${CMAKE_CURRENT_SOURCE_DIR}/pipeline/handtracking_mediapipe_calculators_register.cpp
+
+${CMAKE_CURRENT_SOURCE_DIR}/pipeline/handtracking_mediapipe_graph.cpp
 )
+
+target_include_directories(${ALGORITHM_LIBRARY_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/interface/handtracking_sdk)
 
 add_subdirectory(func)
 
@@ -80,6 +84,9 @@ target_link_libraries(${ALGORITHM_LIBRARY_NAME}
     glog::glog
     protobuf::protobuf
 )
-target_compile_options(${ALGORITHM_LIBRARY_NAME} PRIVATE -Wno-error)
+target_compile_options(${ALGORITHM_LIBRARY_NAME}
+    PRIVATE -Wno-error
+    PRIVATE -DNRPLUGIN  # handtracking_sdk需要的宏定义
+)
 
 add_clang_format_target(${ALGORITHM_LIBRARY_NAME})
