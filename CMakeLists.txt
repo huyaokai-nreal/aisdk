@@ -38,7 +38,7 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 option(FORCE_USE_PUSH "build lib for pushing" OFF)
 option(BUILD_HANDTRACKING_STD_SDK "build lib for std sdk" ON)
 option(BUILD_HANDTRACKING_FPTOOL_SDK "build lib for detect fp_tool sdk" OFF)
-option(BUILD_EXAMPLE "Build examples." OFF)
+option(BUILD_EXAMPLE "Build examples." ON)
 option(BUILD_TOOL "Build tools."  OFF)
 option(ENABLE_CLANG_TIDY_CHECK       "Analyze code with clang-tidy."                OFF)
 
