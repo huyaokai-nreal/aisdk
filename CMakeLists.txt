@@ -103,13 +103,13 @@ set(DEFAULT_PIPELINE_TAR_PATH "${CMAKE_CURRENT_SOURCE_DIR}/pipeline_tar/${MODEL_
 set(DEFAULT_PIPELINE_TAR_KEY "${CMAKE_CURRENT_SOURCE_DIR}/pipeline_tar/${MODEL_TAR_NAME}.key")
 file(STRINGS ${DEFAULT_PIPELINE_TAR_KEY} file_content)
 list(GET file_content 2 DEFAULT_PIPELINE_TAR_KEY)
-message(STATUS "MODEL_KEY: ${DEFAULT_PIPELINE_TAR_KEY}") 
+message(STATUS "MODEL_KEY: ${DEFAULT_PIPELINE_TAR_KEY}")
 configure_file (
     "${CMAKE_CURRENT_SOURCE_DIR}/aisdk/xengine/model/models.h.in"
     "${CMAKE_CURRENT_SOURCE_DIR}/aisdk/xengine/model/models.h"
 )
 
-# build xengine nn 
+# build xengine nn
 option(ENABLE_XENGINE_SNPE_NN "enable snpe nn."  ON)
 set(SNPE_VERSION "snpe-2.17.0" CACHE STRING "set snpe version.")
 message(STATUS "SNPE_VERSION=" ${SNPE_VERSION})
@@ -123,6 +123,9 @@ include(Project)
 
 # build aisdk interface
 add_subdirectory(interface)
+
+# build thirdparty
+add_subdirectory(thirdparty)
 
 if(BUILD_EXAMPLE)
 message(STATUS "enable build examples")
