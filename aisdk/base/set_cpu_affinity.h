@@ -18,7 +18,7 @@ int get_max_freq_khz(int cpuid);
 
 void swapSort(std::vector<int> &arr, std::vector<int> &idx, bool reverse = true);
 
-void SetThisThreadName(const std::string &name);
+std::string SetThisThreadName(const std::string &name);
 
 void setCurrentThreadAffinityMask(int);
 }  // namespace aisdk::base

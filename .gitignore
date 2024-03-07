@@ -35,7 +35,7 @@ obfuscate
 install/
 tmp
 pipeline_tar/
-aisdk/xengine/model/model.h
+aisdk/xengine/model/models.h
 
 # Misc
 .idea/

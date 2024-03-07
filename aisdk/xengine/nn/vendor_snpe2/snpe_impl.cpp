@@ -18,6 +18,23 @@ SNPE_AIModel::~SNPE_AIModel() {}
 //     return aisdk::xengine::ElementType::UNKNOWN;
 // }
 
+aisdk::xengine::TensorFormat SNPEConvertTensorFormat(int rank) {
+    // 最高维是固定的batch
+    // 这里只是凭经验实现，可能有误
+    aisdk::xengine::TensorFormat ret = aisdk::xengine::TensorFormat::UNKNOWN;
+    if (5 == rank) {
+        ret = aisdk::xengine::TensorFormat::DHWC;
+    } else if (4 == rank) {
+        ret = aisdk::xengine::TensorFormat::HWC;
+    } else if (3 == rank) {
+        ret = aisdk::xengine::TensorFormat::HW;
+    } else if (2 == rank) {
+        ret = aisdk::xengine::TensorFormat::W;
+    }
+
+    return ret;
+}
+
 SNPE_Session::SNPE_Session() : Session() {}
 SNPE_Session::~SNPE_Session() { mSnpeWrapper->release(); }
 
@@ -86,12 +103,14 @@ Status SNPE_Session::Init(std::shared_ptr<AIModel> &model, SessionConfig &Sconfi
     std::map<std::string, std::vector<size_t>> inputTensorAttrs;
 
     bool is_rebuild = false;
+    uint32_t ori_batch = 0;
     inputTensorAttrs = mSnpeWrapper->getInputTensorAttrs();
     if (!inputTensorAttrs.empty()) {
         for (auto &input : inputTensorAttrs) {
             // auto &name = input.first;
             auto &dims = input.second;
             assert(dims.size() == 4);
+            ori_batch = (unsigned int)dims[0];
             if (Sconfig.batch > dims[0]) {
                 dims = {Sconfig.batch, dims[1], dims[2], dims[3]};
                 is_rebuild = true;
@@ -126,6 +145,7 @@ Status SNPE_Session::Init(std::shared_ptr<AIModel> &model, SessionConfig &Sconfi
     const auto &out_tensornames = mSnpeWrapper->getOutputTensorAttrs();
     if (!in_tensornames.empty()) {
         m_in.m_batch = Sconfig.batch;
+        m_in.m_ori_batch = ori_batch;
         m_in.m_multishape_num = in_tensornames.size();
         m_in.m_packed_bybatch = true;
         m_in.m_tensors.resize(m_in.m_multishape_num);
@@ -146,6 +166,7 @@ Status SNPE_Session::Init(std::shared_ptr<AIModel> &model, SessionConfig &Sconfi
                 m_in.m_tensors[i].m_dims[j - 1] = dims[j];
                 elementsize *= dims[j];
             }
+            m_in.m_tensors[i].m_dimtype = SNPEConvertTensorFormat(dims.size());
             m_in.m_tensors[i].m_elementype = aisdk::xengine::ElementType::FLOAT32;
             m_in.m_tensors[i].m_elementbyte = sizeof(float);
             m_in.m_tensors[i].m_elementsize = elementsize;
@@ -160,6 +181,7 @@ Status SNPE_Session::Init(std::shared_ptr<AIModel> &model, SessionConfig &Sconfi
 
     if (!out_tensornames.empty()) {
         m_out.m_batch = Sconfig.batch;
+        m_out.m_ori_batch = ori_batch;
         m_out.m_multishape_num = out_tensornames.size();
         m_out.m_packed_bybatch = true;
         m_out.m_tensors.resize(m_out.m_multishape_num);
@@ -180,6 +202,7 @@ Status SNPE_Session::Init(std::shared_ptr<AIModel> &model, SessionConfig &Sconfi
                 m_out.m_tensors[i].m_dims[j - 1] = dims[j];
                 elementsize *= dims[j];
             }
+            m_out.m_tensors[i].m_dimtype = SNPEConvertTensorFormat(dims.size());
             m_out.m_tensors[i].m_elementype = aisdk::xengine::ElementType::FLOAT32;
             m_out.m_tensors[i].m_elementbyte = sizeof(float);
             m_out.m_tensors[i].m_elementsize = elementsize;
@@ -198,6 +221,7 @@ Status SNPE_Session::Init(std::shared_ptr<AIModel> &model, SessionConfig &Sconfi
     if (in_tensornames) {
         const zdl::DlSystem::StringList &stringlists = *in_tensornames;
         m_in.m_batch = Sconfig.batch;
+        m_in.m_ori_batch = ori_batch;
         m_in.m_multishape_num = stringlists.size();
         m_in.m_packed_bybatch = true;
         m_in.m_tensors.resize(m_in.m_multishape_num);
@@ -219,6 +243,7 @@ Status SNPE_Session::Init(std::shared_ptr<AIModel> &model, SessionConfig &Sconfi
                 m_in.m_tensors[i].m_dims[j - 1] = inputShape[j];
             }
 
+            m_in.m_tensors[i].m_dimtype = SNPEConvertTensorFormat(dims.size());
             m_in.m_tensors[i].m_elementype = aisdk::xengine::ElementType::FLOAT32;
             m_in.m_tensors[i].m_elementbyte = sizeof(float);
             m_in.m_tensors[i].m_elementsize = mInputinputTensors[i]->getSize() / m_in.m_batch;
@@ -229,6 +254,7 @@ Status SNPE_Session::Init(std::shared_ptr<AIModel> &model, SessionConfig &Sconfi
     if (out_tensornames) {
         const zdl::DlSystem::StringList &stringlists = *out_tensornames;
         m_out.m_batch = Sconfig.batch;
+        m_out.m_ori_batch = ori_batch;
         m_out.m_multishape_num = stringlists.size();
         m_out.m_packed_bybatch = true;
         m_out.m_tensors.resize(m_out.m_multishape_num);
@@ -248,6 +274,7 @@ Status SNPE_Session::Init(std::shared_ptr<AIModel> &model, SessionConfig &Sconfi
                 m_out.m_tensors[i].m_dims[j - 1] = shape[j];
                 elementsize *= shape[j];
             }
+            m_out.m_tensors[i].m_dimtype = SNPEConvertTensorFormat(dims.size());
             m_out.m_tensors[i].m_elementype = aisdk::xengine::ElementType::FLOAT32;
             m_out.m_tensors[i].m_elementbyte = sizeof(float);
             m_out.m_tensors[i].m_elementsize = elementsize;

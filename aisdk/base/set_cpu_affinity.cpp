@@ -4,10 +4,13 @@
 
 namespace aisdk::base {
 
-void SetThisThreadName(const std::string &name) {
+std::string SetThisThreadName(const std::string &name) {
     constexpr size_t kMaxAllowedLength = 15;
+    char origin_name[kMaxAllowedLength + 1] = {0};
+    pthread_getname_np(pthread_self(), origin_name, sizeof(origin_name));  // 获取线程名称
     const std::string final_name = (name.length() > kMaxAllowedLength ? name.substr(0, kMaxAllowedLength) : name);
     pthread_setname_np(pthread_self(), final_name.c_str());
+    return std::string(origin_name, kMaxAllowedLength);
 }
 
 #if ((defined(ANDROID) || defined(__ANDROID__)) && defined(USE_THREAD_AFFINITY))

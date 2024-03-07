@@ -11,6 +11,7 @@
 
 #include "aisdk/base/log.h"
 #include "aisdk/base/profiling.h"
+#include "aisdk/base/set_cpu_affinity.h"
 
 #if defined(HAVE_HAL_SNPE)
 #include "nr_snpe_header.h"
@@ -465,6 +466,9 @@ SYM_EXPORT aisdk::xengine::PlatformStatus* _ZN2NR200TK7FUNC001E() {
     std::call_once(oc, [&]() {
         supportUpdata(ret);
 #if defined(HAVE_HAL_SNPE)
+        // 这里是将SNPE内部的线程名单独指定出来
+        std::string ori_name = aisdk::base::SetThisThreadName(std::string("snpe_workers"));
+        AISDK_LOG_TRACE("ori_name= {}", ori_name.c_str());
 #if (defined(ANDROID) || defined(__ANDROID__))
         // if (checkSnapDragonAdspPath()) {
         {
@@ -492,7 +496,7 @@ SYM_EXPORT aisdk::xengine::PlatformStatus* _ZN2NR200TK7FUNC001E() {
 #elif defined(__linux__)
         ret.is_snpe_support = true;
 #endif
-
+        aisdk::base::SetThisThreadName(ori_name);
 #endif
         auto& profcnf = aisdk::base::DebugProfiling::Get().GetOpt();
         if (profcnf.loglevel_trace) {
