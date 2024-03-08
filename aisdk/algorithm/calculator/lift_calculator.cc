@@ -109,7 +109,6 @@ class LiftCalculator : public CalculatorBase {
             float lhand_lcam_bbox_f[4] = {lhand_lcam_bbox.x, lhand_lcam_bbox.y, lhand_lcam_bbox.width,
                                           lhand_lcam_bbox.height};
 
-
             leftcam_crop_resize_matrix.at<float>(0, 0) = 128. / lhand_lcam_bbox_f[2];
             leftcam_crop_resize_matrix.at<float>(1, 1) = 128. / lhand_lcam_bbox_f[3];
             leftcam_crop_resize_matrix.at<float>(0, 2) = (-lhand_lcam_bbox_f[0] * 128.) / lhand_lcam_bbox_f[2];
@@ -117,7 +116,6 @@ class LiftCalculator : public CalculatorBase {
             leftcam_crop_resize_matrix.at<float>(2, 2) = 1.0;
 
             cv::Mat leftcam_cam_matrix = leftcam_crop_resize_matrix * cam_info.lcam_intrinsics;
-
 
             cam_info_liftnet.lcam_intrinsics = leftcam_cam_matrix;
             // Only for re-init

@@ -12,6 +12,7 @@
 #include <functional>
 #include <iostream>
 #include <map>
+#include <mutex>
 
 namespace aisdk::algorithm {
 

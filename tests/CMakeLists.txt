@@ -1,4 +1,5 @@
 message(STATUS "ENABLE BUILD TESTS")
+add_definitions(-DTEST_DATA_ROOT="${CMAKE_CURRENT_SOURCE_DIR}/test_data/")
 set(CMAKE_CXX_CLANG_TIDY)
 find_package(doctest REQUIRED)
 include(test_macro)

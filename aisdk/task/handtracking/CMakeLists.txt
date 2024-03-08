@@ -14,3 +14,4 @@ install(
   DESTINATION
   ${AISDK_INCLUDE_INSTALL_DIR}/task/handtracking
 )
+target_compile_options(handtracking PRIVATE -Wno-error)
