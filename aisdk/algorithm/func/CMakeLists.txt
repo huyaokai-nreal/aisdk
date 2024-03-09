@@ -14,6 +14,4 @@ ${CMAKE_CURRENT_SOURCE_DIR}/hand_filters.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/hand_rotation.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/NR_Gesture_v2.cpp
 
-
-
 )

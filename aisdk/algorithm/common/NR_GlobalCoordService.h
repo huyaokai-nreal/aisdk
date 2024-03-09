@@ -3,8 +3,7 @@
 #include <Eigen/Dense>
 #include <opencv2/core/core.hpp>
 #include <vector>
-
-#include "coord_transform_service.h"
+#include "aisdk/base/coord_transform_service.h"
 
 enum class XrealCoordSystem { CV_LEFT_CAM, GL_LEFT_CAM, GL_HEAD, GL_RIGHT_CAM, CV_RIGHT_CAM, COORD_MAX_COUNT = 5 };
 
@@ -56,5 +55,5 @@ class GlobalCoordService {
    private:
     GlobalCoordService() = default;
 
-    CoordTransformService<CoordinateSystemEnum, CoordSystemSize, TransformDataType> service;
+    aisdk::base::CoordTransformService<CoordinateSystemEnum, CoordSystemSize, TransformDataType> service;
 };

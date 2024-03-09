@@ -16,60 +16,22 @@ endif()
 
 set(ALGORITHM_LIBRARY_NAME algorithm)
 add_library(${ALGORITHM_LIBRARY_NAME} STATIC
-${CMAKE_CURRENT_SOURCE_DIR}/model/hand_detect.cc
-${CMAKE_CURRENT_SOURCE_DIR}/model/hand_rsntiny.cc
-${CMAKE_CURRENT_SOURCE_DIR}/model/landmark_filter.cc
-${CMAKE_CURRENT_SOURCE_DIR}/model/hand_lift.cc
-
 ${CMAKE_CURRENT_SOURCE_DIR}/pipeline/nrcore_pipeline.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/core/nrcore_pipeline_mediapipe_service.cpp
-${CMAKE_CURRENT_SOURCE_DIR}/calculator/hand_detection_calculator.cc
-
-${CMAKE_CURRENT_SOURCE_DIR}/calculator/hand_landmark_calculator.cc
-
-${CMAKE_CURRENT_SOURCE_DIR}/calculator/hand_state_calculator.cc
-
-${CMAKE_CURRENT_SOURCE_DIR}/calculator/block_hard_rules_calculator.cc
-
-${CMAKE_CURRENT_SOURCE_DIR}/common/ofxOneEuroFilter.cpp
-${CMAKE_CURRENT_SOURCE_DIR}/common/NR_Seq_Manager.cpp
-
 ${CMAKE_CURRENT_SOURCE_DIR}/pipeline/nrcore_pipeline_mediapipe_graph_impl.cpp
-
-${CMAKE_CURRENT_SOURCE_DIR}/calculator/check_headpose_calculator.cc
-
 ${CMAKE_CURRENT_SOURCE_DIR}/common/NR_Transfer.cpp
-${CMAKE_CURRENT_SOURCE_DIR}/calculator/convert_to_world_calculator.cc
-
 ${CMAKE_CURRENT_SOURCE_DIR}/common/NR_Predictor.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/common/metrics.cpp
-${CMAKE_CURRENT_SOURCE_DIR}/calculator/hand_detection_track_calculator.cc
-
-${CMAKE_CURRENT_SOURCE_DIR}/calculator/compute_3dscore_calculator.cc
-
-${CMAKE_CURRENT_SOURCE_DIR}/calculator/detect_box_smoothing_calculator.cc
-
-${CMAKE_CURRENT_SOURCE_DIR}/calculator/kalman_filter_correction_calculator.cc
-
-${CMAKE_CURRENT_SOURCE_DIR}/calculator/landmark_filter_calculator.cc
-
-${CMAKE_CURRENT_SOURCE_DIR}/calculator/standardize_keypoints_calculator.cc
-
-${CMAKE_CURRENT_SOURCE_DIR}/calculator/lift_calculator.cc
-
-${CMAKE_CURRENT_SOURCE_DIR}/calculator/gesture_recognition_calculator.cc
-
-${CMAKE_CURRENT_SOURCE_DIR}/calculator/pre_constraint_calculator.cc
-${CMAKE_CURRENT_SOURCE_DIR}/calculator/post_constraint_calculator.cc
-
+${CMAKE_CURRENT_SOURCE_DIR}/common/NR_Seq_Manager.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/pipeline/handtracking_mediapipe_calculators_register.cpp
-
 ${CMAKE_CURRENT_SOURCE_DIR}/pipeline/handtracking_mediapipe_graph.cpp
 )
 
 target_include_directories(${ALGORITHM_LIBRARY_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/interface/handtracking_sdk)
-
+add_subdirectory(common)
 add_subdirectory(func)
+add_subdirectory(model)
+add_subdirectory(calculator)
 
 target_link_libraries(${ALGORITHM_LIBRARY_NAME}
     PUBLIC
