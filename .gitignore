@@ -52,3 +52,4 @@ developer*
 offline*
 .cache
 work_dir
+*.pb.*

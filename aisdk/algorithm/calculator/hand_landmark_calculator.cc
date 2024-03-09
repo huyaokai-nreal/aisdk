@@ -3,10 +3,11 @@
 #include <opencv2/core/matx.hpp>
 #include <vector>
 
-#include "../func/rsntiny_preprocess/warpaffine.h"
-#include "../internal_structs/det_struct_internal.h"
-#include "../internal_structs/kpt2d_struct_internal.h"
-#include "../model/hand_rsntiny.h"
+#include "aisdk/algorithm/calculator/hand_landmark_calculator.pb.h"
+#include "aisdk/algorithm/func/rsntiny_preprocess/warpaffine.h"
+#include "aisdk/algorithm/internal_structs/det_struct_internal.h"
+#include "aisdk/algorithm/internal_structs/kpt2d_struct_internal.h"
+#include "aisdk/algorithm/model/hand_rsntiny.h"
 #include "aisdk/base/log.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/canonical_errors.h"
@@ -20,12 +21,19 @@ namespace mediapipe {
 //   input_stream: "BBOX_SMOOTHED_OUTPUT:detection_smoothed_output"
 //   input_stream: "IMAGE_INPUT:image"
 //   output_stream: "LANDMARK_OUTPUT:kpt2d"
+//   node_options: {
+//   [type.googleapis.com/aisdk.HandLandmarkCalculatorOptions] {
+//           input_height: 128
+//           input_width: 128
+//    }
 // }
 
 class HandLandmarkCalculator : public CalculatorBase {
    private:
     // RSNTiny algo instance
     std::shared_ptr<aisdk::algorithm::RSNTiny> netalgo;
+    int32_t input_width_;
+    int32_t input_height_;
 
    public:
     static absl::Status GetContract(CalculatorContract* cc) {
@@ -41,6 +49,9 @@ class HandLandmarkCalculator : public CalculatorBase {
 
     absl::Status Open(CalculatorContext* cc) final {
         AISDK_LOG_TRACE("[HandLandmarkCalculator] Open start");
+        auto options = cc->Options<aisdk::HandLandmarkCalculatorOptions>();
+        input_height_ = options.input_height();
+        input_width_ = options.input_width();
         netalgo = aisdk::algorithm::XrMediaServiceUtils::CreateNetAlgoBase<aisdk::algorithm::RSNTiny>((void*)0x202310,
                                                                                                       "2d_rsntiny");
         if (!netalgo) {
@@ -62,8 +73,8 @@ class HandLandmarkCalculator : public CalculatorBase {
 
         // float rsn_w = (float)m_netop_handel.rsn_model_input_width;
         // float rsn_h = (float)m_netop_handel.rsn_model_input_height;
-        float rsn_w = 128.;
-        float rsn_h = 128.;
+        int rsn_w = input_width_;
+        int rsn_h = input_height_;
 
         const auto& image_data = cc->Inputs().Tag("IMAGE_INPUT").Get<std::vector<aisdk::algorithm::Image>>();
         const auto& bbox_data = cc->Inputs().Tag("BBOX_SMOOTHED_OUTPUT").Get<aisdk::algorithm::DetOutputInternal>();

@@ -1,0 +1,8 @@
+syntax = "proto2";
+
+package aisdk;
+
+message HandLandmarkCalculatorOptions  {
+  optional int32 input_width = 1 [default = 128];
+  optional int32 input_height = 2 [default = 128];
+}

@@ -13,7 +13,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 else()
     target_link_libraries(absl_group INTERFACE abseil::abseil)
 endif()
-
+## generate protobufs
 set(ALGORITHM_LIBRARY_NAME algorithm)
 add_library(${ALGORITHM_LIBRARY_NAME} STATIC
 ${CMAKE_CURRENT_SOURCE_DIR}/pipeline/nrcore_pipeline.cpp
