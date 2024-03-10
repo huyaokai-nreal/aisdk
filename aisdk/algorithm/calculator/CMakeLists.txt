@@ -24,6 +24,7 @@ ${CMAKE_CURRENT_SOURCE_DIR}/hand_landmark_calculator.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/hand_landmark_calculator.pb.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/hand_state_calculator.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/block_hard_rules_calculator.cc
+${CMAKE_CURRENT_SOURCE_DIR}/block_hard_rules_calculator.pb.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/check_headpose_calculator.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/convert_to_world_calculator.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/hand_detection_track_calculator.cc

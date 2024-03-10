@@ -2,14 +2,15 @@
 #include <memory>
 
 #include "../internal_structs/kpt3d_struct_internal.h"
+#include "aisdk/algorithm/calculator/block_hard_rules_calculator.pb.h"
 #include "aisdk/base/log.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 
-const int root_index = 0;
+constexpr int root_index = 0;
 
-bool block_rule_root_distance(const std::vector<cv::Vec3f>& points_3d) {
-    if (points_3d[root_index][2] > 0.8) {
+bool block_rule_root_distance(const std::vector<cv::Vec3f>& points_3d, float max_depth) {
+    if (points_3d[root_index][2] > max_depth) {
         return false;
     } else {
         return true;
@@ -28,6 +29,8 @@ namespace mediapipe {
 
 class BlockHardRulesCalculator : public CalculatorBase {
    private:
+    float max_root_depth_;
+
    public:
     static absl::Status GetContract(CalculatorContract* cc) {
         AISDK_LOG_TRACE("[BlockHardRulesCalculator] GetContract start");
@@ -39,6 +42,8 @@ class BlockHardRulesCalculator : public CalculatorBase {
 
     absl::Status Open(CalculatorContext* cc) final {
         AISDK_LOG_TRACE("[BlockHardRulesCalculator] Open start");
+        const auto& options = cc->Options<aisdk::BlockHardRulesCalculatorOptions>();
+        max_root_depth_ = options.max_root_depth();
         AISDK_LOG_TRACE("[BlockHardRulesCalculator] Open complete");
         return absl::OkStatus();
     }
@@ -53,21 +58,23 @@ class BlockHardRulesCalculator : public CalculatorBase {
 
         if (input_data.lhand_valid) {
             AISDK_LOG_TRACE("[BlockHardRulesCalculator] Checking left hand");
-            if (block_rule_root_distance(input_data.lhand)) {
+            if (block_rule_root_distance(input_data.lhand, max_root_depth_)) {
                 output_buffer_->lhand_valid = true;
                 output_buffer_->lhand = input_data.lhand;
             }
         }
         if (input_data.rhand_valid) {
             AISDK_LOG_TRACE("[BlockHardRulesCalculator] Checking right hand");
-            if (block_rule_root_distance(input_data.rhand)) {
+            if (block_rule_root_distance(input_data.rhand, max_root_depth_)) {
                 output_buffer_->rhand_valid = true;
                 output_buffer_->rhand = input_data.rhand;
             }
         }
+        cc->Outputs().Tag("BLOCK_OUT").Add(output_buffer_.release(), cc->InputTimestamp());
         AISDK_LOG_TRACE("[BlockHardRulesCalculator] Process complete");
         return absl::OkStatus();
     }
 };
+REGISTER_CALCULATOR(BlockHardRulesCalculator);  // ok!
 
 }  // namespace mediapipe

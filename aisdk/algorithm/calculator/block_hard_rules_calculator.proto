@@ -1,0 +1,6 @@
+syntax = "proto3";
+
+package aisdk;
+message BlockHardRulesCalculatorOptions  {
+  float max_root_depth = 1;
+}
