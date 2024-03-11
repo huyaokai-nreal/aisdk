@@ -5,11 +5,11 @@
 #include <mediapipe/framework/deps/status.h>
 #include <mediapipe/framework/packet.h>
 #include <mediapipe/framework/timestamp.h>
-#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
-#include <doctest/doctest.h>
 
 #include "mediapipe/framework/calculator_runner.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include <doctest/doctest.h>
 using namespace mediapipe;
 using namespace aisdk;
 TEST_CASE("testing block hard rule calculator in graph") {
