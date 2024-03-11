@@ -11,6 +11,11 @@ namespace aisdk::base {
 
 class Logger : public framework::util::Singleton<Logger> {
    public:
+    Logger() {
+#if defined(ENABLE_LOG_LEVEL_ALL)
+        SetLogAllLevel(true);
+#endif 
+    }
     bool IsLogAllLevel() const { return log_all_level_; }
     void SetLogAllLevel(bool value) {
         log_all_level_ = value;

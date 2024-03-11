@@ -6,6 +6,10 @@ string(STRIP ${GIT_LAST_COMMIT} GIT_LAST_COMMIT)
 message("Current Branch: ${GIT_CURRENT_BRANCH}")
 message("Last Commit: ${GIT_LAST_COMMIT}")
 
+if(FORCE_USE_PUSH_XENGINE_SHARED_LIB)
+    add_definitions(-DFORCE_USE_PUSH=ON)
+endif()
+
 if(BUILD_HANDTRACKING_STD_SDK)
     add_subdirectory(handtracking_sdk)
 endif()

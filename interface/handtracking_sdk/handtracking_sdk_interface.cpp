@@ -13,12 +13,13 @@
 #include <Eigen/Dense>
 #include <opencv2/opencv.hpp>
 
+#include "aisdk/algorithm/pipeline/handtracking_mediapipe_graph.h"
 #include "aisdk/base/dlutil.h"
 #include "framework/util/android_globals.h"
 #include "framework/util/fileutil.h"
 #include "framework/util/os_time.h"
 
-#if defined(FORCE_USE_PUSH)
+#if defined(XENGINE_SHARED_LIB) && defined(FORCE_USE_PUSH)
 // 生产so库，手动强制推so库
 #define USE_EXTRA_PUSH_LIB
 #endif
@@ -37,7 +38,10 @@ std::string apk_copydir = "./handTracking/";
 
 std::string dlopen_with_classloader_dir = "";
 const std::string default_libdir = "./handTracking/";
-const std::string netalgo_so_name = NetAlgoLibName;
+
+#if defined(XENGINE_SHARED_LIB)
+const std::string netalgo_so_name = XENGINE_LIB_NAME;
+#endif
 
 HandTracking::~HandTracking() { UnLoadDlsym(true); }
 
@@ -91,42 +95,42 @@ NRPluginResult HandTracking::GetHandData(NRPluginHandle handle, uint64_t hmd_tim
         AISDK_LOG_TRACE("HandTracking: GetHandData handle error!");
         return NR_PLUGIN_RESULT_FAILURE;
     }
-    // auto* ins = Plugin::GetInstance();
-    // auto& pipeline = ins->GetPipeline();
+    auto* ins = Plugin::GetInstance();
+    auto& pipeline = ins->GetPipeline();
+    if (ins->pipeline_name == "handtracking_bino_graph_v1.0.0") {
+        std::shared_ptr<aisdk::algorithm::HandTrackingMediaPipeGraph> impl =
+            std::dynamic_pointer_cast<aisdk::algorithm::HandTrackingMediaPipeGraph>(pipeline.Impl());
+        aisdk::algorithm::Status status = impl->PopResult(hmd_time_nanos, out_hand_num, out_hand_array);
+        if (status == aisdk::algorithm::Status::SUCCESS) {
+            return NR_PLUGIN_RESULT_SUCCESS;
+            AISDK_LOG_TRACE("HandTracking: pop result success!");
+        } else {
+            *out_hand_num = 0;
+            AISDK_LOG_TRACE("HandTracking: pop result failed!");
+        }
+    }
 
-    // std::shared_ptr<NrCore::PipelineResult> result = std::make_shared<NrCore::PipelineResult>();
-    // result->hmd_time_nanos = hmd_time_nanos;
-    // result->hand_data = out_hand_array;
-    // result->hand_num = out_hand_num;
-    // std::shared_ptr<NrCore::BasePipelineIoData> tmp = std::dynamic_pointer_cast<NrCore::BasePipelineIoData>(result);
-    // NrCore::Status status = pipeline.PopResult(tmp);
-
-    // if (status == NrCore::Status::SUCCESS) {
-    //     return NR_PLUGIN_RESULT_SUCCESS;
-    //     AISDK_LOG_TRACE("HandTracking: pop result success!");
-    // } else {
-    //     *out_hand_num = 0;
-    //     AISDK_LOG_TRACE("HandTracking: pop result failed!");
-    // }
     return NR_PLUGIN_RESULT_FAILURE;
 }
 
 int HandTracking::GetHandTrackingMidExecInfo(ProfilingInfo* info) {
     (void)info;
-    // auto* ins = Plugin::GetInstance();
-    // auto& pipline = ins->GetPipeline();
-    // std::shared_ptr<NrCore::PipelineMidExecInfo> result = std::make_shared<NrCore::PipelineMidExecInfo>();
-    // std::shared_ptr<NrCore::BasePipelineIoData> tmp = std::dynamic_pointer_cast<NrCore::BasePipelineIoData>(result);
-    // NrCore::Status status = pipline.PopExecInfo(tmp);
-    // if (status == NrCore::Status::SUCCESS) {
-    //     info->timestamp = result->timestamp;
-    //     uint32_t lens = result->noderesult_jsonstring.size();
-    //     // 使用者释放
-    //     info->noderesult_jsonstring = (char*)malloc(lens + 1);
-    //     memcpy(info->noderesult_jsonstring, result->noderesult_jsonstring.data(), lens);
-    //     info->noderesult_jsonstring[lens] = '\0';
-    //     return 0;
-    // }
+    auto* ins = Plugin::GetInstance();
+    auto& pipline = ins->GetPipeline();
+    if (ins->pipeline_name == "handtracking_bino_graph_v1.0.0") {
+        std::shared_ptr<aisdk::algorithm::HandTrackingMediaPipeGraph> impl =
+            std::dynamic_pointer_cast<aisdk::algorithm::HandTrackingMediaPipeGraph>(pipline.Impl());
+        // NrCore::Status status = impl->PopExecInfo(tmp);
+        // if (status == NrCore::Status::SUCCESS) {
+        //     info->timestamp = result->timestamp;
+        //     uint32_t lens = result->noderesult_jsonstring.size();
+        //     // 使用者释放
+        //     info->noderesult_jsonstring = (char*)malloc(lens + 1);
+        //     memcpy(info->noderesult_jsonstring, result->noderesult_jsonstring.data(), lens);
+        //     info->noderesult_jsonstring[lens] = '\0';
+        //     return 0;
+        // }
+    }
     return -1;
 }
 
@@ -301,11 +305,6 @@ bool HandTracking::GetApkStorePath() {
             return false;
         }
         mSharedLibCopyDir = jni_env->GetStringUTFChars(jstring(j_path), 0);
-#if defined(HANDTRACKING_SHARED_LIBS)
-#if defined(FORCE_USE_PUSH)
-        AISDK_LOG_TRACE("HandTracking: using extra push lib {:s}!", (apk_copydir + netalgo_so_name).c_str());
-#endif
-#endif
 
 #if defined(USE_EXTRA_PUSH_LIB)
         AISDK_LOG_TRACE("HandTracking: netalgo_so_name={:s}", netalgo_so_name.c_str());
@@ -380,6 +379,7 @@ bool HandTracking::GetApkStorePath() {
     AISDK_LOG_TRACE("HandTracking: GetApkStorePath apk_copydir={:s}", apk_copydir.c_str());
     SetAdspLibraryPath(mNativeLibDir);
 
+#if defined(XENGINE_SHARED_LIB)
     // 动态加载so，并获取核心接口
     bool ret = false;
 #if defined(FORCE_USE_PUSH)
@@ -406,6 +406,16 @@ bool HandTracking::GetApkStorePath() {
             return false;
         }
     }
+#endif
+
+#if defined(XENGINE_STATIC_LIB)
+    m_funcs = *aisdk::xengine::GetXengineCapiStaticSymbol();
+    if (!(m_funcs.m_getplatform && m_funcs.m_createnetalgo && m_funcs.m_destorynetalgo && m_funcs.m_createanalysistar &&
+          m_funcs.m_destoryanalysistar && m_funcs.m_syncdebugprofiling && m_funcs.m_gethalbackend)) {
+        AISDK_LOG_ERROR("HandTracking: GetXengineCapiStaticSymbol error!");
+        return false;
+    }
+#endif
 
     return true;
 }
@@ -544,8 +554,8 @@ NRPluginResult HandTracking::ParseAllCameraData(const NRGrayscaleCameraFrameData
     // uint32_t camera_raw_data_size[4];
     // const uint8_t* camera_raw_data_[2];
     uint64_t nano_time_[2];
-    // NRTransform head_pose;
-    // DevicePose headpose_proto;
+    NRTransform head_pose;
+    DevicePose headpose_proto;
     NRPluginResult errorcode = NR_PLUGIN_RESULT_SUCCESS;
 
     // We only use cam0 and cam1 now (coresponding to leftcam and rightcam on Light/Air Pro)
@@ -583,29 +593,58 @@ NRPluginResult HandTracking::ParseAllCameraData(const NRGrayscaleCameraFrameData
         }
     }
     (void)nano_time_;
-    // NrHal::Image d1(image[0], leftmem);
-    // NrHal::Image d2(image[1], rightmem);
+    aisdk::algorithm::Image d1(image[0], leftmem);
+    aisdk::algorithm::Image d2(image[1], rightmem);
 
-    // AISDK_LOG_TRACE("ParseAllCameraData input rcam size: {}, {}", d1.m_mat.rows, d1.m_mat.cols);
-    // AISDK_LOG_TRACE("ParseAllCameraData input rcam size: {}, {}", d2.m_mat.rows, d2.m_mat.cols);
+    AISDK_LOG_TRACE("ParseAllCameraData input rcam size: h={}, w={}", d1.m_mat.rows, d1.m_mat.cols);
+    AISDK_LOG_TRACE("ParseAllCameraData input rcam size: h={}, w={}", d2.m_mat.rows, d2.m_mat.cols);
 
-    // // left or right timestamp should be the same
-    // errorcode = ins->m_handtracking.m_interface->GetDevicePose(ins->GetHandle(), &headpose_proto, nano_time_[0]);
-    // head_pose = headpose_proto.transform;
+    // left or right timestamp should be the same
+    errorcode = ins->m_handtracking.m_interface->GetDevicePose(ins->GetHandle(), &headpose_proto, nano_time_[0]);
+    head_pose = headpose_proto.transform;
 
-    // auto& pipeline = ins->GetPipeline();
-    // std::shared_ptr<NrCore::PipelineInputData> pipeline_input_data = std::make_shared<NrCore::PipelineInputData>();
-    // pipeline_input_data->cam_type = NrCore::CamType::BINO;
-    // pipeline_input_data->image.emplace_back(std::move(d1));
-    // pipeline_input_data->image.emplace_back(std::move(d2));
-    // pipeline_input_data->timestamp.emplace_back(nano_time_[0]);
-    // pipeline_input_data->timestamp.emplace_back(nano_time_[1]);
-    // pipeline_input_data->headpose = head_pose;
-    // pipeline_input_data->is_headpose_valid = isHeadPoseValid(head_pose);
+    // 赋值相机参数
+    aisdk::algorithm::CamInfo input_cam_info;
 
-    // std::shared_ptr<NrCore::BasePipelineIoData> tmp =
-    //     std::dynamic_pointer_cast<NrCore::BasePipelineIoData>(pipeline_input_data);
-    // pipeline.PushData(tmp);
+    auto cam_param = ins->m_hmd.m_cam_param.m_params;
+
+    // 1. cvL_T_cvR
+    input_cam_info.cvL_T_cvR = Eigen::Isometry3f::Identity();
+
+    Eigen::Map<Eigen::Matrix<float, 3, 3, Eigen::RowMajor>> rotate_matrix(
+        cam_param["lcam_rcam_extristic_rotation"].data());
+    Eigen::Quaternionf rotate_quaternion(rotate_matrix);
+    input_cam_info.cvL_T_cvR.rotate(rotate_quaternion);
+    input_cam_info.cvL_T_cvR.pretranslate(Eigen::Vector3f(cam_param["lcam_rcam_extristic_translation"][0],
+                                                          cam_param["lcam_rcam_extristic_translation"][1],
+                                                          cam_param["lcam_rcam_extristic_translation"][2]));
+
+    // 2. 左目内参 lcam_intrinsics
+    cv::Mat l_K = cv::Mat::eye(3, 3, CV_32FC1);
+    l_K.at<float>(0, 0) = cam_param["cam_l_fc"][0];
+    l_K.at<float>(1, 1) = cam_param["cam_l_fc"][1];
+    l_K.at<float>(0, 2) = cam_param["cam_l_cc"][0];
+    l_K.at<float>(1, 2) = cam_param["cam_l_cc"][1];
+    input_cam_info.lcam_intrinsics = l_K;
+
+    // 3. 右目内参 rcam_intrinsics
+    cv::Mat r_K = cv::Mat::eye(3, 3, CV_32FC1);
+    r_K.at<float>(0, 0) = cam_param["cam_r_fc"][0];
+    r_K.at<float>(1, 1) = cam_param["cam_r_fc"][1];
+    r_K.at<float>(0, 2) = cam_param["cam_r_cc"][0];
+    r_K.at<float>(1, 2) = cam_param["cam_r_cc"][1];
+    input_cam_info.rcam_intrinsics = r_K;
+
+    auto& pipeline = ins->GetPipeline();
+    if (ins->pipeline_name == "handtracking_bino_graph_v1.0.0") {
+        std::shared_ptr<aisdk::algorithm::HandTrackingMediaPipeGraph> impl =
+            std::dynamic_pointer_cast<aisdk::algorithm::HandTrackingMediaPipeGraph>(pipeline.Impl());
+        std::vector<aisdk::algorithm::Image> tmp;
+        tmp.emplace_back(std::move(d1));
+        tmp.emplace_back(std::move(d2));
+        impl->PushData(nano_time_[0], tmp, head_pose, input_cam_info);
+        AISDK_LOG_TRACE("interface HandTrackingMediaPipeGraph::PushData");
+    }
 
     return errorcode;
 }
@@ -673,7 +712,7 @@ bool Plugin::Init(NRPluginHandle handle, NRInterfaces* interfaces) {
 
         bool ret = m_ins->m_handtracking.GetApkStorePath();
         if (false == ret) {
-            AISDK_LOG_TRACE("Plugin::Initialize dlopen {} error!!!", netalgo_so_name.c_str());
+            AISDK_LOG_TRACE("Plugin::Initialize GetApkStorePath error!!!");
             return false;
         }
 
@@ -697,17 +736,16 @@ bool Plugin::Init(NRPluginHandle handle, NRInterfaces* interfaces) {
     return false;
 }
 
-// NrCore::Pipeline& Plugin::GetPipeline() {
-//     if (nullptr == m_pipeline) {
-//         m_pipeline = std::make_unique<NrCore::Pipeline>();
-//     }
-//     return *m_pipeline;
-// }
-
-void Plugin::ReleasePipeline() {  // m_pipeline = nullptr;
+aisdk::algorithm::Pipeline& Plugin::GetPipeline() {
+    if (nullptr == m_pipeline) {
+        m_pipeline = std::make_unique<aisdk::algorithm::Pipeline>();
+    }
+    return *m_pipeline;
 }
 
-bool AnalysisTar() {
+void Plugin::ReleasePipeline() { m_pipeline = nullptr; }
+
+bool Plugin::AnalysisTar() {
     bool is_ok = false;
     auto ins = Plugin::GetInstance();
     std::string tar_name(NAME_TO_STRING(DEFAULT_PIPELINE_TAR_NAME));
@@ -718,17 +756,18 @@ bool AnalysisTar() {
     if (ins->m_load_external_modeltar) {
         AISDK_LOG_TRACE("AnalysisTar::TarFile = {:s}", external_modeltar_path.c_str());
         if (aisdk::base::IsFileExist(external_modeltar_path.c_str())) {
-            // is_ok = NrCore::AnalysisTar::TarFile(external_modeltar_path.c_str());
-            // AISDK_LOG_TRACE("AnalysisTar::TarFile = {:s} is_ok={}", external_modeltar_path.c_str(), is_ok);
+            m_tar_handle = ins->m_handtracking.m_funcs.m_createanalysistar();
+            is_ok = m_tar_handle->TarFile(external_modeltar_path.c_str());
+            AISDK_LOG_TRACE("AnalysisTar::TarFile = {:s} is_ok={}", external_modeltar_path.c_str(), is_ok);
         }
     }
 #endif
 
     // 默认情况下
     if (false == is_ok) {
-        (void)ins;
-        // is_ok = NrCore::AnalysisTar::TarMem(tar_name.c_str(), ins->m_handtracking.m_funcs);
-        // AISDK_LOG_TRACE("AnalysisTar::TarMem = {:s} is_ok={}", tar_name.c_str(), is_ok);
+        m_tar_handle = ins->m_handtracking.m_funcs.m_createanalysistar();
+        is_ok = m_tar_handle->TarMem(tar_name.c_str());
+        AISDK_LOG_TRACE("AnalysisTar::TarMem = {:s} is_ok={}", tar_name.c_str(), is_ok);
     }
 
     return is_ok;
@@ -808,10 +847,8 @@ NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
                 if (root["sdk"].isMember("log_level")) {
                     std::string log_level = root["sdk"]["log_level"].asString();
                     if (log_level == "1") {
-#ifdef BUILD_PRODUCTION
-                        AISDK_logs::Logger::GetInstance()->SetLogAllLevel(true);
-                        NrUtils::DebugProfiling::Get().GetOpt().loglevel_trace = true;
-#endif
+                        aisdk::base::Logger::GetInstance()->SetLogAllLevel(true);
+                        aisdk::base::DebugProfiling::Get().GetOpt().loglevel_trace = true;
                         AISDK_LOG_INFO("HandTracking: Loglevel set to All");
                     }
                 }
@@ -877,11 +914,10 @@ NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
 
     AISDK_LOG_TRACE("HandTracking: AnalysisTar");
     // 解析pipeline_tar包
-    bool is_ok = AnalysisTar();
+    bool is_ok = ins->AnalysisTar();
     if (is_ok) {
         // 多条pipeline的项目，这里需要指定pipeline的运行策略
-        std::vector<aisdk::xengine::PipelineConfig> tmp;
-        // = NrCore::AnalysisTar::GetPipelineConfig();
+        std::vector<aisdk::xengine::PipelineConfig> tmp = ins->m_tar_handle->GetPipelineConfig();
         AISDK_LOG_TRACE("HandTracking: pipeline size={}", tmp.size());
         if (tmp.size() > 0) {
             aisdk::xengine::PlatformStatus* plat = ins->m_handtracking.m_funcs.m_getplatform();
@@ -896,16 +932,24 @@ NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
                 if (pipeline_index < tmp.size()) {
                     AISDK_LOG_TRACE("Plugin::Initialize pipline.Init index={} pipline.name={:s}", pipeline_index,
                                     tmp[pipeline_index].pipeline_name.c_str());
-                    // auto& pipline = ins->GetPipeline();
-                    // NrCore::Status status =
-                    //     pipline.Init(ins->m_handtracking.m_funcs, tmp[pipeline_index], ins->m_hmd.m_cam_param);
-                    // if (status == NrCore::Status::SUCCESS) {
-                    //     AISDK_LOG_INFO("HandTracking: Initialized!");
-                    //     return NR_PLUGIN_RESULT_SUCCESS;
-                    // } else {
-                    //     AISDK_LOG_ERROR("HandTracking: init failed since NrCore::Status: {}!",
-                    //                     static_cast<int>(status));
-                    // }
+                    auto& pipline = ins->GetPipeline();
+                    // 需要指定具体的实现
+                    aisdk::algorithm::Status status;
+                    if (tmp[pipeline_index].pipeline_name == "handtracking_bino_graph_v1.0.0") {
+                        status = pipline.Init<aisdk::algorithm::HandTrackingMediaPipeGraph>(
+                            ins->m_handtracking.m_funcs, tmp[pipeline_index], ins->m_hmd.m_cam_param);
+                    } else {
+                        AISDK_LOG_INFO("HandTracking: not found MediaPipeGraph!");
+                        continue;
+                    }
+                    if (status == aisdk::algorithm::Status::SUCCESS) {
+                        ins->pipeline_name = tmp[pipeline_index].pipeline_name;
+                        AISDK_LOG_INFO("HandTracking: Initialized!");
+                        return NR_PLUGIN_RESULT_SUCCESS;
+                    } else {
+                        AISDK_LOG_ERROR("HandTracking: init failed since NrCore::Status: {}!",
+                                        static_cast<int>(status));
+                    }
                 } else {
                     AISDK_LOG_TRACE("Plugin::Initialize error: pipeline_index={} < tmp.size={}", pipeline_index,
                                     tmp.size());
@@ -926,11 +970,14 @@ NRPluginResult Plugin::Start(NRPluginHandle handle) {
     }
     AISDK_LOG_INFO("HandTracking: Start");
     auto ins = Plugin::GetInstance();
-    // auto& pipeline = ins->GetPipeline();
-    // pipeline.Start();
+    auto pipeline = ins->GetPipeline().Impl();
+    auto ret = pipeline->Start();
+    if (ret != aisdk::algorithm::Status::SUCCESS) {
+        AISDK_LOG_INFO("HandTracking: Started Failure");
+        return NR_PLUGIN_RESULT_FAILURE;
+    }
     ins->Start();
     AISDK_LOG_INFO("HandTracking: Started");
-
     return NR_PLUGIN_RESULT_SUCCESS;
 }
 
@@ -950,9 +997,8 @@ NRPluginResult Plugin::Pause(NRPluginHandle handle) {
     AISDK_LOG_INFO("Plugin::Pause");
     AISDK_LOG_INFO("HandTracking: Pause");
     auto ins = Plugin::GetInstance();
-
-    // auto& pipline = ins->GetPipeline();
-    // pipline.Stop();
+    auto pipline = ins->GetPipeline().Impl();
+    pipline->Stop();
     ins->Stop();
     AISDK_LOG_INFO("HandTracking: Paused");
     return NR_PLUGIN_RESULT_SUCCESS;
@@ -965,11 +1011,14 @@ NRPluginResult Plugin::Resume(NRPluginHandle handle) {
     }
     AISDK_LOG_INFO("HandTracking: Resume");
     auto ins = Plugin::GetInstance();
-    // auto& pipline = ins->GetPipeline();
-    // pipline.Start();
+    auto pipline = ins->GetPipeline().Impl();
+    auto ret = pipline->Start();
+    if (ret != aisdk::algorithm::Status::SUCCESS) {
+        AISDK_LOG_INFO("HandTracking: Resume Failure");
+        return NR_PLUGIN_RESULT_FAILURE;
+    }
     ins->Start();
     AISDK_LOG_INFO("HandTracking: Resumed");
-
     return NR_PLUGIN_RESULT_SUCCESS;
 }
 
@@ -980,12 +1029,10 @@ NRPluginResult Plugin::Stop(NRPluginHandle handle) {
     }
     AISDK_LOG_INFO("HandTracking: Stop");
     auto ins = Plugin::GetInstance();
-
-    // auto& pipline = ins->GetPipeline();
-    // pipline.Stop();
+    auto pipline = ins->GetPipeline().Impl();
+    pipline->Stop();
     ins->Stop();
     AISDK_LOG_INFO("HandTracking: Stoped");
-
     return NR_PLUGIN_RESULT_SUCCESS;
 }
 
@@ -997,10 +1044,11 @@ NRPluginResult Plugin::Release(NRPluginHandle handle) {
     AISDK_LOG_INFO("HandTracking: Release");
     auto ins = Plugin::GetInstance();
     ins->ReleasePipeline();
+#if defined(XENGINE_SHARED_LIB)
     ins->m_handtracking.UnLoadDlsym(false);
+#endif
     ins->m_picbuf = nullptr;
     AISDK_LOG_INFO("HandTracking: Released");
-
     return NR_PLUGIN_RESULT_SUCCESS;
 }
 

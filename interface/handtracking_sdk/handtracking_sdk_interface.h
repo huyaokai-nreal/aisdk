@@ -10,7 +10,7 @@
 
 #include "aisdk/base/mem_buffer.h"
 #include "aisdk/xengine/nrhal_capi_symbol.h"
-#include "aisdk/algorithm/pipeline/nrcore_define.h"
+#include "aisdk/algorithm/pipeline/nrcore_pipeline.h"
 
 // #include "version.h"
 
@@ -100,7 +100,7 @@ class Plugin {
     static Plugin* GetInstance();
     static void DestoryInstance();
     bool Init(NRPluginHandle handle, NRInterfaces* interfaces);
-    // aisdk::algorithm::Pipeline& GetPipeline();
+    aisdk::algorithm::Pipeline& GetPipeline();
     void ReleasePipeline();
     NRPluginHandle GetHandle() { return m_handle; }
     void SetHandle(NRPluginHandle handle) { m_handle = handle; }
@@ -128,7 +128,7 @@ class Plugin {
     ~Plugin();
     static Plugin* m_ins;
 
-    // std::unique_ptr<aisdk::algorithm::Pipeline> m_pipeline;
+    std::unique_ptr<aisdk::algorithm::Pipeline> m_pipeline;
     NRPluginHandle m_handle;
 
     bool m_is_start = false;
@@ -141,6 +141,10 @@ class Plugin {
     Generic m_generic;
     std::unique_ptr<aisdk::base::FixedMembuffer> m_picbuf;
     bool m_load_external_modeltar = false;
+    std::string pipeline_name;
+    // model_tar
+    bool AnalysisTar();
+    aisdk::xengine::AnalysisTar *m_tar_handle = nullptr;
 };
 
 }  // namespace aisdk::interface
