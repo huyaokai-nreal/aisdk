@@ -70,7 +70,13 @@ class BlockHardRulesCalculator : public CalculatorBase {
                 output_buffer_->rhand = input_data.rhand;
             }
         }
-        cc->Outputs().Tag("BLOCK_OUT").Add(output_buffer_.release(), cc->InputTimestamp());
+
+        if (output_buffer_->lhand_valid || output_buffer_->rhand_valid) {
+            cc->Outputs().Tag("BLOCK_OUT").Add(output_buffer_.release(), cc->InputTimestamp());
+        } else {
+            AISDK_LOG_TRACE("[BlockHardRulesCalculator] No valid hand, truncated here");
+        }
+
         AISDK_LOG_TRACE("[BlockHardRulesCalculator] Process complete");
         return absl::OkStatus();
     }
