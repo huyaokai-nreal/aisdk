@@ -496,6 +496,12 @@ void processDevice(CameraDevice &device, const Json::Value &meta, const std::str
             device.kc[i] = std::atof(ss[i].c_str());
         }
     }
+
+    for (uint32_t i = 0; i < 3; i++) {
+        device.imu_p_cam[i] = 0.0f;
+        device.imu_q_cam[i] = 0.0f;
+    }
+    device.imu_q_cam[3] = 1.0f;
 }
 
 int HandTrackingSdk::CameraParamsParse(std::string &json_string) {

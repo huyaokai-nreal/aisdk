@@ -38,7 +38,6 @@ aisdk::algorithm::Status HandTrackingMediaPipeGraph::PushData(uint64_t timestamp
                                                               std::vector<aisdk::algorithm::Image>& in_image,
                                                               NRTransform headpose,
                                                               aisdk::algorithm::CamInfo cam_info) {
-    std::cout << "HandTrackingMediaPipeGraph::PushData" << std::endl;
     auto image_packet = mediapipe::MakePacket<std::vector<aisdk::algorithm::Image>>(std::move(in_image));
     auto headpose_packet = mediapipe::MakePacket<HeadPoseInternal>(headpose);
 
@@ -58,8 +57,6 @@ aisdk::algorithm::Status HandTrackingMediaPipeGraph::PushData(uint64_t timestamp
 
 aisdk::algorithm::Status HandTrackingMediaPipeGraph::PopResult(uint64_t hmd_time_nanos, uint32_t* hand_num,
                                                                HandData* out_hand_array) {
-    std::cout << "HandTrackingMediaPipeGraph::PopResult" << std::endl;
-
     std::shared_ptr<OutputCache> outlist = m_output_stream_cache["hand_result"];
     if (outlist->m_packs.size()) {
         auto hand_data_packet = outlist->m_packs.front();

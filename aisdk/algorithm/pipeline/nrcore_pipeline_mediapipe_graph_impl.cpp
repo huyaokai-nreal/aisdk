@@ -2,6 +2,7 @@
 
 #include "../core/nrcore_pipeline_mediapipe_service.h"
 #include "aisdk/base/log.h"
+#include "aisdk/base/set_cpu_affinity.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/map_util.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
@@ -41,6 +42,9 @@ aisdk::algorithm::Status MediaPipeGraph::Stop() {
 
 aisdk::algorithm::Status MediaPipeGraph::Init(aisdk::xengine::DlSymFuncs &funcs, aisdk::xengine::PipelineConfig &config,
                                               CameraParams &camera) {
+    std::string graph_thread_name = std::string("xr_aisdk_graph");
+    std::string ori_name = aisdk::base::SetThisThreadName(graph_thread_name);
+
     mediapipe::TriggerGloalGraphCalculatorsConstruct();
 
     PipeGraphImpl::Init(funcs, config, camera);
@@ -94,6 +98,7 @@ aisdk::algorithm::Status MediaPipeGraph::Init(aisdk::xengine::DlSymFuncs &funcs,
         MP_RETURN_IF_ERROR_WITH_LOG(m_calculator_graph->ObserveOutputStream(k, callback));
     }
 
+    aisdk::base::SetThisThreadName(ori_name);
     return aisdk::algorithm::Status::SUCCESS;
 }
 

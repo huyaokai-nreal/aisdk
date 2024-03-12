@@ -142,6 +142,7 @@ Status SNPE_Session::Init(std::shared_ptr<AIModel> &model, SessionConfig &Sconfi
         return Status::SESSION_INIT_FAILURE;
     }
 
+    uint32_t ori_batch = 0;
     if (true) {
         zdl::DlSystem::TensorShapeMap inputShapeMap;
         bool is_rebuild = false;
@@ -153,6 +154,7 @@ Status SNPE_Session::Init(std::shared_ptr<AIModel> &model, SessionConfig &Sconfi
                 auto name = stringlists.at(i);
                 auto dims = m_engine->getInputOutputBufferAttributes(name)->getDims();
                 assert(dims.rank() == 4);
+                ori_batch = (unsigned int)dims[0];
                 if (Sconfig.batch > dims[0]) {
                     inputShapeMap.add(name, {Sconfig.batch, dims[1], dims[2], dims[3]});
                     is_rebuild = true;
@@ -186,6 +188,7 @@ Status SNPE_Session::Init(std::shared_ptr<AIModel> &model, SessionConfig &Sconfi
     if (in_tensornames) {
         const zdl::DlSystem::StringList &stringlists = *in_tensornames;
         m_in.m_batch = Sconfig.batch;
+        m_in.m_ori_batch = ori_batch;
         m_in.m_multishape_num = stringlists.size();
         m_in.m_packed_bybatch = true;
         m_in.m_tensors.resize(m_in.m_multishape_num);
@@ -218,6 +221,7 @@ Status SNPE_Session::Init(std::shared_ptr<AIModel> &model, SessionConfig &Sconfi
     if (out_tensornames) {
         const zdl::DlSystem::StringList &stringlists = *out_tensornames;
         m_out.m_batch = Sconfig.batch;
+        m_out.m_ori_batch = ori_batch;
         m_out.m_multishape_num = stringlists.size();
         m_out.m_packed_bybatch = true;
         m_out.m_tensors.resize(m_out.m_multishape_num);
@@ -252,6 +256,7 @@ Status SNPE_Session::Init(std::shared_ptr<AIModel> &model, SessionConfig &Sconfi
     if (in_tensornames) {
         const zdl::DlSystem::StringList &stringlists = *in_tensornames;
         m_in.m_batch = Sconfig.batch;
+        m_in.m_ori_batch = ori_batch;
         m_in.m_multishape_num = stringlists.size();
         m_in.m_packed_bybatch = true;
         m_in.m_tensors.resize(m_in.m_multishape_num);
@@ -283,6 +288,7 @@ Status SNPE_Session::Init(std::shared_ptr<AIModel> &model, SessionConfig &Sconfi
     if (out_tensornames) {
         const zdl::DlSystem::StringList &stringlists = *out_tensornames;
         m_out.m_batch = Sconfig.batch;
+        m_out.m_ori_batch = ori_batch;
         m_out.m_multishape_num = stringlists.size();
         m_out.m_packed_bybatch = true;
         m_out.m_tensors.resize(m_out.m_multishape_num);

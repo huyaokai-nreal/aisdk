@@ -106,7 +106,7 @@ NRPluginResult HandTracking::GetHandData(NRPluginHandle handle, uint64_t hmd_tim
             AISDK_LOG_TRACE("HandTracking: pop result success!");
         } else {
             *out_hand_num = 0;
-            AISDK_LOG_TRACE("HandTracking: pop result failed!");
+            // AISDK_LOG_TRACE("HandTracking: pop result failed!");
         }
     }
 
