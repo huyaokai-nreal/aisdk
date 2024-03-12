@@ -592,7 +592,7 @@ NRPluginResult HandTracking::ParseAllCameraData(const NRGrayscaleCameraFrameData
                    image_buffer + data->cameras[cam_id].step * row, data->cameras[cam_id].width);
         }
     }
-    (void)nano_time_;
+
     aisdk::algorithm::Image d1(image[0], leftmem);
     aisdk::algorithm::Image d2(image[1], rightmem);
 
@@ -611,13 +611,11 @@ NRPluginResult HandTracking::ParseAllCameraData(const NRGrayscaleCameraFrameData
     // 1. cvL_T_cvR
     input_cam_info.cvL_T_cvR = Eigen::Isometry3f::Identity();
 
-    Eigen::Map<Eigen::Matrix<float, 3, 3, Eigen::RowMajor>> rotate_matrix(
-        cam_param["lcam_rcam_extristic_rotation"].data());
+    Eigen::Map<Eigen::Matrix<float, 3, 3, Eigen::RowMajor>> rotate_matrix(cam_param["glL_R_glR"].data());
     Eigen::Quaternionf rotate_quaternion(rotate_matrix);
     input_cam_info.cvL_T_cvR.rotate(rotate_quaternion);
-    input_cam_info.cvL_T_cvR.pretranslate(Eigen::Vector3f(cam_param["lcam_rcam_extristic_translation"][0],
-                                                          cam_param["lcam_rcam_extristic_translation"][1],
-                                                          cam_param["lcam_rcam_extristic_translation"][2]));
+    input_cam_info.cvL_T_cvR.pretranslate(
+        Eigen::Vector3f(cam_param["glL_t_glR"][0], cam_param["glL_t_glR"][1], cam_param["glL_t_glR"][2]));
 
     // 2. 左目内参 lcam_intrinsics
     cv::Mat l_K = cv::Mat::eye(3, 3, CV_32FC1);
@@ -634,6 +632,21 @@ NRPluginResult HandTracking::ParseAllCameraData(const NRGrayscaleCameraFrameData
     r_K.at<float>(0, 2) = cam_param["cam_r_cc"][0];
     r_K.at<float>(1, 2) = cam_param["cam_r_cc"][1];
     input_cam_info.rcam_intrinsics = r_K;
+
+    input_cam_info.lcam_dist_coeffs = cv::Mat::eye(1, 12, CV_32FC1);
+    for (uint32_t k = 0; k < cam_param["cam_l_kc"].size(); k++) {
+        input_cam_info.lcam_dist_coeffs.at<float>(0, k) = cam_param["cam_l_kc"][k];
+    }
+
+    input_cam_info.rcam_dist_coeffs = cv::Mat::eye(1, 12, CV_32FC1);
+    for (uint32_t k = 0; k < cam_param["cam_r_kc"].size(); k++) {
+        input_cam_info.rcam_dist_coeffs.at<float>(0, k) = cam_param["cam_r_kc"][k];
+    }
+
+    input_cam_info.camera_type = (int)cam_param["camera_model"][0];
+
+    input_cam_info.video_width = (uint32_t)cam_param["cam_resolution"][0];
+    input_cam_info.video_height = (uint32_t)cam_param["cam_resolution"][1];
 
     auto& pipeline = ins->GetPipeline();
     if (ins->pipeline_name == "handtracking_bino_graph_v1.0.0") {
