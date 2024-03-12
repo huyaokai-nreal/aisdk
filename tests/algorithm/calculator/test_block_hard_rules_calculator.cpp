@@ -1,6 +1,7 @@
 #include <absl/memory/memory.h>
 #include <absl/status/status.h>
 #include <aisdk/algorithm/internal_structs/kpt3d_struct_internal.h>
+#include <aisdk/algorithm/core/nrcore_pipeline_mediapipe_service.h>
 #include <mediapipe/framework/calculator.pb.h>
 #include <mediapipe/framework/deps/status.h>
 #include <mediapipe/framework/packet.h>
@@ -13,6 +14,7 @@
 using namespace mediapipe;
 using namespace aisdk;
 TEST_CASE("testing block hard rule calculator in graph") {
+    TriggerGloalGraphCalculatorsConstruct();
     constexpr char kTestGraphConfig[] = R"(
         input_stream: "in"
         output_stream: "out"
@@ -40,6 +42,7 @@ TEST_CASE("testing block hard rule calculator in graph") {
 }
 
 TEST_CASE("test block hard rule calculator") {
+    TriggerGloalGraphCalculatorsConstruct();
     constexpr char kTestGraphConfig[] = R"(
           calculator: "BlockHardRulesCalculator"
           input_stream: "BLOCK_IN:in"

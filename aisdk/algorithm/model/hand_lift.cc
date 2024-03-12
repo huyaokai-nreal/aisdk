@@ -64,7 +64,7 @@ void GMLPLiftNet::PreProcess(const LiftNetInputs &inputs, const CamInfo &cam_inf
 
         int mem_size = height * width * channels * element_byte;
         char *mem = (char *)itensor.m_tensors[multi_i].m_viraddr + batch_i * mem_size;
-        // printf("PreProcess: %d, %d, %d, %d\n", height, width,
+        // printf("PreProcess: {}, {}, {}, {}\n", height, width,
         // channels, element_byte);
         float *temp = (float *)mem;
 
@@ -239,7 +239,7 @@ void SeqGMLPLiftNet::PreProcess(const LiftNetInputs &inputs, const CamInfo &cam_
 
         int mem_size = height * width * channels * element_byte;
         char *mem = (char *)itensor.m_tensors[multi_i].m_viraddr + batch_i * mem_size;
-        // printf("PreProcess: %d, %d, %d, %d\n", height, width,
+        // printf("PreProcess: {}, {}, {}, {}\n", height, width,
         // channels, element_byte);
         float *temp = (float *)mem;
 
@@ -418,16 +418,16 @@ void GMLPLiftNet3::PreProcess(const LiftNetInputs &inputs, const CamInfo &cam_in
     float *temp = (float *)mem;
 
     auto l_K = m_cam_info.lcam_intrinsics;
-    AISDK_LOG_TRACE("[GMLPLiftNet3] lcam 00=%f, 02=%f, 11=%f, 12=%f", l_K.at<float>(0, 0), l_K.at<float>(0, 2),
+    AISDK_LOG_TRACE("[GMLPLiftNet3] lcam 00={}, 02={}, 11={}, 12={}", l_K.at<float>(0, 0), l_K.at<float>(0, 2),
                     l_K.at<float>(1, 1), l_K.at<float>(1, 2));
     auto r_K = m_cam_info.rcam_intrinsics;
-    AISDK_LOG_TRACE("[GMLPLiftNet3] rcam 00=%f, 02=%f, 11=%f, 12=%f", r_K.at<float>(0, 0), r_K.at<float>(0, 2),
+    AISDK_LOG_TRACE("[GMLPLiftNet3] rcam 00={}, 02={}, 11={}, 12={}", r_K.at<float>(0, 0), r_K.at<float>(0, 2),
                     r_K.at<float>(1, 1), r_K.at<float>(1, 2));
 
     for (int idx = 0; idx < KPT_NUM; idx++) {
-        AISDK_LOG_TRACE("[GMLPLiftNet3] lkpt(%d): 0=%f, 1=%f", idx, inputs.input_kpt_lcam[idx][0],
+        AISDK_LOG_TRACE("[GMLPLiftNet3] lkpt({}): 0={}, 1={}", idx, inputs.input_kpt_lcam[idx][0],
                         inputs.input_kpt_lcam[idx][1]);
-        AISDK_LOG_TRACE("[GMLPLiftNet3] rkpt(%d): 0=%f, 1=%f", idx, inputs.input_kpt_lcam[idx][0],
+        AISDK_LOG_TRACE("[GMLPLiftNet3] rkpt({}): 0={}, 1={}", idx, inputs.input_kpt_lcam[idx][0],
                         inputs.input_kpt_lcam[idx][1]);
 
         m_leftcam_x[idx] = (inputs.input_kpt_lcam[idx][0] - m_cam_info.lcam_intrinsics.at<float>(0, 2)) /
@@ -450,19 +450,19 @@ void GMLPLiftNet3::PreProcess(const LiftNetInputs &inputs, const CamInfo &cam_in
         buffer_x[i * 2] = m_leftcam_x[i];
         buffer_x[i * 2 + 1] = m_leftcam_y[i];
 
-        AISDK_LOG_TRACE("[GMLPLiftNet3] buffer_x, %d: %f, %d: %f", i * 2, buffer_x[i * 2], i * 2 + 1,
+        AISDK_LOG_TRACE("[GMLPLiftNet3] buffer_x, {}: {}, {}: {}", i * 2, buffer_x[i * 2], i * 2 + 1,
                         buffer_x[i * 2 + 1]);
     }
     buffer_x[42] = inputs.is_left;
     for (int i = 0; i < KPT_NUM; i++) {
         buffer_y[i * 2] = m_rightcam_x[i];
         buffer_y[i * 2 + 1] = m_rightcam_y[i];
-        AISDK_LOG_TRACE("[GMLPLiftNet3] buffer_y, %d: %f, %d: %f", i * 2, buffer_y[i * 2], i * 2 + 1,
+        AISDK_LOG_TRACE("[GMLPLiftNet3] buffer_y, {}: {}, {}: {}", i * 2, buffer_y[i * 2], i * 2 + 1,
                         buffer_y[i * 2 + 1]);
     }
     buffer_y[42] = inputs.is_left;
 
-    AISDK_LOG_TRACE("[GMLPLiftNet3] buffer_x[42]=%f, buffer_y[42]=%f", buffer_x[42], buffer_y[42]);
+    AISDK_LOG_TRACE("[GMLPLiftNet3] buffer_x[42]={}, buffer_y[42]={}", buffer_x[42], buffer_y[42]);
 
     int index_mem = this->m_net->GetInputTensorIndex("mem_in");
     int mem_channels = itensor.m_tensors[index_mem].m_dims[0];
@@ -490,7 +490,7 @@ void GMLPLiftNet3::PreProcess(const LiftNetInputs &inputs, const CamInfo &cam_in
     }
 
     for (int i = 0; i < mem_size; i++) {
-        AISDK_LOG_TRACE("[GMLPLiftNet3] mem_hand[%d] = %f", i, mem_hand[i]);
+        AISDK_LOG_TRACE("[GMLPLiftNet3] mem_hand[{}] = {}", i, mem_hand[i]);
     }
 }
 

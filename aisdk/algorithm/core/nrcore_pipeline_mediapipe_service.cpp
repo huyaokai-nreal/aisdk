@@ -43,14 +43,14 @@ std::string XrMediaServiceUtils::GetPipelineNodeAlgoParam(void *parent_graph, st
                 auto &algo_tp = config.netnode_config[i];
                 aisdk::xengine::NetAlgoConfig &pc = std::get<2>(algo_tp);
                 if (pc.has_param) {
-                    AISDK_LOG_TRACE("GetPipelineNodeAlgoParam algo_param=%s", pc.algo_param.c_str());
+                    AISDK_LOG_TRACE("GetPipelineNodeAlgoParam algo_param={}", pc.algo_param.c_str());
                     params = pc.algo_param;
                 }
             } else {
                 auto &logicnode_tp = config.logicnode_config[i];
                 aisdk::xengine::LogicAlgoConfig pa = std::get<0>(logicnode_tp);
                 if (pa.has_param) {
-                    AISDK_LOG_TRACE("GetPipelineNodeAlgoParam algo_param=%s", pa.algo_param.c_str());
+                    AISDK_LOG_TRACE("GetPipelineNodeAlgoParam algo_param={}", pa.algo_param.c_str());
                     params = pa.algo_param;
                 }
             }
@@ -59,6 +59,8 @@ std::string XrMediaServiceUtils::GetPipelineNodeAlgoParam(void *parent_graph, st
 
     return params;
 }
+
+CameraParams &XrMediaServiceUtils::GetCameraParams() { return m_camera_params; }
 
 void XrMediaServiceUtils::DeleteNetAlgoBase(aisdk::xengine::BaseNetAlgo *net) { m_funcs.m_destorynetalgo(net); }
 

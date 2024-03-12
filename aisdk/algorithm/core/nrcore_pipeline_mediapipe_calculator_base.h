@@ -38,9 +38,9 @@ class CalculatorBaseNet {
             }
 
             itensor = m_net->GetInputTensors();
-            AISDK_LOG_TRACE("itensor.m_tensors size: %d", itensor.m_tensors.size());
+            AISDK_LOG_TRACE("itensor.m_tensors size: {}", itensor.m_tensors.size());
             otensor = m_net->GetOutputTensors();
-            AISDK_LOG_TRACE("otensor.m_tensors size: %d", otensor.m_tensors.size());
+            AISDK_LOG_TRACE("otensor.m_tensors size: {}", otensor.m_tensors.size());
             if (aisdk::base::DebugProfiling::Get().GetOpt().aisdk_init_report) {
                 PrintfHalIoTensors(itensor);
                 PrintfHalIoTensors(otensor);

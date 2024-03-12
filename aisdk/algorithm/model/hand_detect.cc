@@ -48,7 +48,7 @@ aisdk::xengine::Status HandDetectNet::Init(aisdk::xengine::NetAlgoConfig &algo, 
 
     auto &prof = aisdk::base::DebugProfiling::Get().GetOpt();
     export_netalgo_exec_info = prof.export_pipeline_exec_info_jsonstring;
-    AISDK_LOG_TRACE("HandDetectNet::Inference  export_netalgo_exec_info=%d", export_netalgo_exec_info);
+    AISDK_LOG_TRACE("HandDetectNet::Inference  export_netalgo_exec_info={}", export_netalgo_exec_info);
     return aisdk::xengine::Status::SUCCESS;
 }
 
@@ -77,7 +77,7 @@ void HandDetectNet::PreProcess(const std::vector<Image> &net_input) {
 
         int mem_size = height * width * channels * element_byte;
         char *mem = (char *)itensor.m_tensors[multi_i].m_viraddr + batch_i * mem_size;
-        // printf("PreProcess: %d, %d, %d, %d\n", height, width,
+        // printf("PreProcess: {}, {}, {}, {}\n", height, width,
         // channels, element_byte);
         float _mean = 0.0f;
         float _norm = 255.0f;
@@ -185,7 +185,7 @@ void HandDetectNet::PostProcess(DetOutputInternal &result) {
                 }
             }
 
-            AISDK_LOG_TRACE("tmp_result.size(): %d", tmp_result.size());
+            AISDK_LOG_TRACE("tmp_result.size(): {}", tmp_result.size());
 
             auto &lhand_rect = result.images_lhand_rects[batch_i];
             auto &rhand_rect = result.images_rhand_rects[batch_i];
@@ -218,7 +218,7 @@ void HandDetectNet::PostProcess(DetOutputInternal &result) {
                 auto h = std::round(iter.h / min_ratio);
                 if (true == iter.is_left && lhand_rect.size() == 0) {
                     cv::Rect tmp_bbox = add_bbox_margin(x, y, x + w, y + h, origin_img_width, origin_img_height);
-                    AISDK_LOG_TRACE("push lhand rect: %d", tmp_bbox.x);
+                    AISDK_LOG_TRACE("push lhand rect: {}", tmp_bbox.x);
                     lhand_rect.push_back(tmp_bbox);
                     if (export_netalgo_exec_info) {
                         DetectRect tmp = iter;
@@ -230,7 +230,7 @@ void HandDetectNet::PostProcess(DetOutputInternal &result) {
                     }
                 } else if (false == iter.is_left && rhand_rect.size() == 0) {
                     cv::Rect tmp_bbox = add_bbox_margin(x, y, x + w, y + h, origin_img_width, origin_img_height);
-                    AISDK_LOG_TRACE("push rhand rect: %d", tmp_bbox.x);
+                    AISDK_LOG_TRACE("push rhand rect: {}", tmp_bbox.x);
                     rhand_rect.push_back(tmp_bbox);
                     if (export_netalgo_exec_info) {
                         DetectRect tmp = iter;
@@ -271,7 +271,7 @@ void HandDetectNet::PreProcessSingle(const std::vector<Image> &net_input, uint32
 
         int mem_size = height * width * channels * element_byte;
         char *mem = (char *)itensor.m_tensors[multi_i].m_viraddr + batch_i * mem_size;
-        // printf("PreProcess: %d, %d, %d, %d\n", height, width,
+        // printf("PreProcess: {}, {}, {}, {}\n", height, width,
         // channels, element_byte);
         float _mean = 0.0f;
         float _norm = 255.0f;
@@ -456,13 +456,13 @@ aisdk::xengine::Status HandDetectNet::Inference(const std::vector<Image> &basein
         if (ret == aisdk::xengine::Status::SUCCESS) {
             PostProcess(baseresult);
 
-            AISDK_LOG_TRACE("baseresult.images_lhand_rects[0].size(): %d", baseresult.images_lhand_rects[0].size());
-            AISDK_LOG_TRACE("baseresult.images_lhand_rects[1].size(): %d", baseresult.images_lhand_rects[1].size());
-            AISDK_LOG_TRACE("baseresult.images_rhand_rects[0].size(): %d", baseresult.images_rhand_rects[0].size());
-            AISDK_LOG_TRACE("baseresult.images_rhand_rects[1].size(): %d", baseresult.images_rhand_rects[1].size());
+            AISDK_LOG_TRACE("baseresult.images_lhand_rects[0].size(): {}", baseresult.images_lhand_rects[0].size());
+            AISDK_LOG_TRACE("baseresult.images_lhand_rects[1].size(): {}", baseresult.images_lhand_rects[1].size());
+            AISDK_LOG_TRACE("baseresult.images_rhand_rects[0].size(): {}", baseresult.images_rhand_rects[0].size());
+            AISDK_LOG_TRACE("baseresult.images_rhand_rects[1].size(): {}", baseresult.images_rhand_rects[1].size());
 
             auto box = baseresult.images_rhand_rects[0][0];
-            AISDK_LOG_TRACE("baseresult x: %d, y: %d, w: %d, h: %d", box.x, box.y, box.width, box.height);
+            AISDK_LOG_TRACE("baseresult x: {}, y: {}, w: {}, h: {}", box.x, box.y, box.width, box.height);
         } else {
             baseresult.images_lhand_rects.resize(otensor.m_batch);
             baseresult.images_rhand_rects.resize(otensor.m_batch);
@@ -519,7 +519,7 @@ aisdk::xengine::Status HandDetectNetv2::Init(aisdk::xengine::NetAlgoConfig &algo
 
     auto &prof = aisdk::base::DebugProfiling::Get().GetOpt();
     export_netalgo_exec_info = prof.export_pipeline_exec_info_jsonstring;
-    AISDK_LOG_TRACE("HandDetectNetv2::Inference  export_netalgo_exec_info=%d", export_netalgo_exec_info);
+    AISDK_LOG_TRACE("HandDetectNetv2::Inference  export_netalgo_exec_info={}", export_netalgo_exec_info);
     return aisdk::xengine::Status::SUCCESS;
 }
 
@@ -550,13 +550,13 @@ aisdk::xengine::Status HandDetectNetv2::Inference(const std::vector<Image> &base
         if (ret == aisdk::xengine::Status::SUCCESS) {
             PostProcess(baseresult);
 
-            AISDK_LOG_TRACE("baseresult.images_lhand_rects[0].size(): %d", baseresult.images_lhand_rects[0].size());
-            AISDK_LOG_TRACE("baseresult.images_lhand_rects[1].size(): %d", baseresult.images_lhand_rects[1].size());
-            AISDK_LOG_TRACE("baseresult.images_rhand_rects[0].size(): %d", baseresult.images_rhand_rects[0].size());
-            AISDK_LOG_TRACE("baseresult.images_rhand_rects[1].size(): %d", baseresult.images_rhand_rects[1].size());
+            AISDK_LOG_TRACE("baseresult.images_lhand_rects[0].size(): {}", baseresult.images_lhand_rects[0].size());
+            AISDK_LOG_TRACE("baseresult.images_lhand_rects[1].size(): {}", baseresult.images_lhand_rects[1].size());
+            AISDK_LOG_TRACE("baseresult.images_rhand_rects[0].size(): {}", baseresult.images_rhand_rects[0].size());
+            AISDK_LOG_TRACE("baseresult.images_rhand_rects[1].size(): {}", baseresult.images_rhand_rects[1].size());
 
             auto box = baseresult.images_rhand_rects[0][0];
-            AISDK_LOG_TRACE("baseresult x: %d, y: %d, w: %d, h: %d", box.x, box.y, box.width, box.height);
+            AISDK_LOG_TRACE("baseresult x: {}, y: {}, w: {}, h: {}", box.x, box.y, box.width, box.height);
         } else {
             baseresult.images_lhand_rects.resize(otensor.m_batch);
             baseresult.images_rhand_rects.resize(otensor.m_batch);
@@ -630,8 +630,8 @@ void HandDetectNetv2::PostProcess(DetOutputInternal &result) {
 
         AISDK_LOG_TRACE("HandDetectNetv2::Get Results");
         AISDK_LOG_TRACE(
-            "HandDetectNetv2:: cls_c: %d, cls_h: %d, cls_w: %d, box_c: "
-            "%d, box_h: %d, bow_w: %d",
+            "HandDetectNetv2:: cls_c: {}, cls_h: {}, cls_w: {}, box_c: "
+            "{}, box_h: {}, bow_w: {}",
             cls_c, cls_h, cls_w, box_c, box_h, box_w);
 
         std::vector<DetectRect> tmp_result;
@@ -682,7 +682,7 @@ void HandDetectNetv2::PostProcess(DetOutputInternal &result) {
             }
         }
 
-        AISDK_LOG_TRACE("HandDetectNetv2::tmp_result size(before nms): %d", tmp_result.size());
+        AISDK_LOG_TRACE("HandDetectNetv2::tmp_result size(before nms): {}", tmp_result.size());
 
         auto &lhand_rect = result.images_lhand_rects[batch_i];
         auto &rhand_rect = result.images_rhand_rects[batch_i];
@@ -691,7 +691,7 @@ void HandDetectNetv2::PostProcess(DetOutputInternal &result) {
         // nms
         nms(tmp_result, iou_threshold);
 
-        AISDK_LOG_TRACE("HandDetectNetv2::tmp_result size(after nms): %d", tmp_result.size());
+        AISDK_LOG_TRACE("HandDetectNetv2::tmp_result size(after nms): {}", tmp_result.size());
 
         // scale_coords
         int height, width;
@@ -716,7 +716,7 @@ void HandDetectNetv2::PostProcess(DetOutputInternal &result) {
             auto h = std::round(iter.h / min_ratio);
             if (true == iter.is_left && lhand_rect.size() == 0) {
                 cv::Rect tmp_bbox = add_bbox_margin(x, y, x + w, y + h, origin_img_width, origin_img_height);
-                AISDK_LOG_TRACE("push lhand rect: %d", tmp_bbox.x);
+                AISDK_LOG_TRACE("push lhand rect: {}", tmp_bbox.x);
                 lhand_rect.push_back(tmp_bbox);
                 if (export_netalgo_exec_info) {
                     DetectRect tmp = iter;
@@ -728,7 +728,7 @@ void HandDetectNetv2::PostProcess(DetOutputInternal &result) {
                 }
             } else if (false == iter.is_left && rhand_rect.size() == 0) {
                 cv::Rect tmp_bbox = add_bbox_margin(x, y, x + w, y + h, origin_img_width, origin_img_height);
-                AISDK_LOG_TRACE("push rhand rect: %d", tmp_bbox.x);
+                AISDK_LOG_TRACE("push rhand rect: {}", tmp_bbox.x);
                 rhand_rect.push_back(tmp_bbox);
                 if (export_netalgo_exec_info) {
                     DetectRect tmp = iter;

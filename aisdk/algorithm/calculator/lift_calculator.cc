@@ -122,7 +122,7 @@ class LiftCalculator : public CalculatorBase {
             auto& res2d_f_left = undistort_uv_lcam;
 
             for (int i = 0; i < KPT_NUM; i++) {
-                AISDK_LOG_TRACE("[LiftCalculator] i: %d, leftcam_mod_uv: %d, res2d_f_left: %d", i,
+                AISDK_LOG_TRACE("[LiftCalculator] i: {}, leftcam_mod_uv: {}, res2d_f_left: {}", i,
                                 leftcam_mod_uv.size(), res2d_f_left.size());
                 leftcam_mod_uv[i][0] = (res2d_f_left[i][0] - lhand_lcam_bbox_f[0]) * 128. / lhand_lcam_bbox_f[2];
                 leftcam_mod_uv[i][1] = (res2d_f_left[i][1] - lhand_lcam_bbox_f[1]) * 128. / lhand_lcam_bbox_f[3];

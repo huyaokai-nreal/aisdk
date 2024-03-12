@@ -68,7 +68,7 @@ void LandmarkFilter::PreProcess(const std::vector<std::vector<cv::Vec2f>> &net_i
 
         int mem_size = height * width * channels * element_byte;
         char *mem = (char *)itensor.m_tensors[multi_i].m_viraddr + batch_i * mem_size;
-        // printf("PreProcess: %d, %d, %d, %d\n", height, width,
+        // printf("PreProcess: {}, {}, {}, {}\n", height, width,
         // channels, element_byte);
         float *temp = (float *)mem;
 

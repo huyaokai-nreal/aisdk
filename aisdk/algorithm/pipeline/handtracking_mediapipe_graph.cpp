@@ -68,14 +68,14 @@ aisdk::algorithm::Status HandTrackingMediaPipeGraph::PopResult(uint64_t hmd_time
 
         AISDK_LOG_TRACE("[PopResult] lhand begin");
         for (int i = 0; i < 21; i++) {
-            AISDK_LOG_TRACE("%f, %f, %f", hand_data_internal.lhand_kpt[i][0], hand_data_internal.lhand_kpt[i][1],
+            AISDK_LOG_TRACE("{}, {}, {}", hand_data_internal.lhand_kpt[i][0], hand_data_internal.lhand_kpt[i][1],
                             hand_data_internal.lhand_kpt[i][2]);
         }
         AISDK_LOG_TRACE("[PopResult] lhand end");
 
         AISDK_LOG_TRACE("[PopResult] rhand begin");
         for (int i = 0; i < 21; i++) {
-            AISDK_LOG_TRACE("%f, %f, %f", hand_data_internal.rhand_kpt[i][0], hand_data_internal.rhand_kpt[i][1],
+            AISDK_LOG_TRACE("{}, {}, {}", hand_data_internal.rhand_kpt[i][0], hand_data_internal.rhand_kpt[i][1],
                             hand_data_internal.rhand_kpt[i][2]);
         }
         AISDK_LOG_TRACE("[PopResult] rhand end");
@@ -139,8 +139,8 @@ aisdk::algorithm::Status HandTrackingMediaPipeGraph::PopResult(uint64_t hmd_time
                         predict_scale * (hmd_time_nanos - hand_data_internal.timestamp) + hand_data_internal.timestamp;
                 }
 
-                AISDK_LOG_TRACE("predict_len: %f", (hmd_time_nanos - hand_data_internal.timestamp) / 1e9f);
-                AISDK_LOG_TRACE("%d, %d, %d, %f, %f, %f", hmd_time_nanos, hand_data_internal.timestamp,
+                AISDK_LOG_TRACE("predict_len: {}", (hmd_time_nanos - hand_data_internal.timestamp) / 1e9f);
+                AISDK_LOG_TRACE("{}, {}, {}, {}, {}, {}", hmd_time_nanos, hand_data_internal.timestamp,
                                 target_timestamp, root_meas[0], root_meas[1], root_meas[2]);
 
                 if (i == 0) {
@@ -165,7 +165,7 @@ aisdk::algorithm::Status HandTrackingMediaPipeGraph::PopResult(uint64_t hmd_time
                 compute_joint_rotation(predicted_points, (i == 0), rotations_world, rotations_local);
             }
 
-            AISDK_LOG_TRACE("[PopResult Predict] %d hand begin", i);
+            AISDK_LOG_TRACE("[PopResult Predict] {} hand begin", i);
             for (int j = 0; j < EZXR_DEFINED_JOINTS; j++) {
                 out_hand_array[i].hand_joint_data[xreal_2_clay[j]].hand_joint_type =
                     static_cast<HandJointType>(xreal_2_clay[j]);
@@ -173,7 +173,7 @@ aisdk::algorithm::Status HandTrackingMediaPipeGraph::PopResult(uint64_t hmd_time
                 _handjoint_pose_tmp.position.x = predicted_points[j][0];
                 _handjoint_pose_tmp.position.y = predicted_points[j][1];
                 _handjoint_pose_tmp.position.z = predicted_points[j][2];
-                AISDK_LOG_TRACE("%f, %f, %f / %f, %f, %f", ontracked_points[i][j][0], ontracked_points[i][j][1],
+                AISDK_LOG_TRACE("{}, {}, {} / {}, {}, {}", ontracked_points[i][j][0], ontracked_points[i][j][1],
                                 ontracked_points[i][j][2], predicted_points[j][0], predicted_points[j][1],
                                 predicted_points[j][2]);
 
@@ -183,7 +183,7 @@ aisdk::algorithm::Status HandTrackingMediaPipeGraph::PopResult(uint64_t hmd_time
 
                 out_hand_array[i].hand_joint_data[xreal_2_clay[j]].hand_joint_pose = _handjoint_pose_tmp;
             }
-            AISDK_LOG_TRACE("[PopResult Predict] %d hand end", i);
+            AISDK_LOG_TRACE("[PopResult Predict] {} hand end", i);
             out_hand_array[i].image_timestamp_nanos = hand_data_internal.timestamp;
         }
 

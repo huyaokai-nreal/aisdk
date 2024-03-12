@@ -195,8 +195,8 @@ class HandLandmarkCalculator : public CalculatorBase {
         }
         if (output_buffer_->lhand_valid || output_buffer_->rhand_valid) {
             AISDK_LOG_TRACE(
-                "[HandLandmarkCalculator] lhand_valid: %d, lhand_lcam: %d, lhand_rcam: %d / rhand_valid: %d, "
-                "rhand_lcam: %d, rhand_rcam: %d",
+                "[HandLandmarkCalculator] lhand_valid: {}, lhand_lcam: {}, lhand_rcam: {} / rhand_valid: {}, "
+                "rhand_lcam: {}, rhand_rcam: {}",
                 output_buffer_->lhand_valid, output_buffer_->lhand_lcam.size(), output_buffer_->lhand_rcam.size(),
                 output_buffer_->rhand_valid, output_buffer_->rhand_lcam.size(), output_buffer_->rhand_rcam.size());
             cc->Outputs().Tag("LANDMARK_OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());

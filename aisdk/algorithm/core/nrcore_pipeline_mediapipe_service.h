@@ -25,6 +25,9 @@ class XrMediaServiceUtils {
     // 获取mediapipe的节点的系统参数
     static std::string GetPipelineNodeAlgoParam(void* parent_graph, std::string node_name);
 
+    // 获取相机参数CameraParams
+    CameraParams& GetCameraParams();
+    
     // 创建一个calculator的net算子
     template <typename T>
     static std::shared_ptr<T> CreateNetAlgoBase(void* parent_graph, std::string node_name) {
@@ -38,7 +41,7 @@ class XrMediaServiceUtils {
         auto& config = m_pipelineconfig[parent_graph];
         for (uint32_t i = 0; i < config.node_name.size(); i++) {
             if (config.node_name[i] == node_name) {
-                AISDK_LOG_TRACE("XrMediaServiceUtils::CreateNetAlgoBase node_name=%s", node_name.c_str());
+                AISDK_LOG_TRACE("XrMediaServiceUtils::CreateNetAlgoBase node_name={}", node_name.c_str());
                 // netalgo_node的初始化
                 if (aisdk::xengine::NodeType::NET_ALGO == config.node_type[i]) {
                     auto& algo_tp = config.netnode_config[i];
@@ -46,13 +49,13 @@ class XrMediaServiceUtils {
                     aisdk::xengine::SessionConfig& pb = std::get<1>(algo_tp);
                     aisdk::xengine::NetAlgoConfig& pc = std::get<2>(algo_tp);
                     if (aisdk::base::DebugProfiling::Get().GetOpt().aisdk_init_report) {
-                        AISDK_LOG_TRACE("CreateNetAlgoBase algo_name=%s", pc.algo_name.c_str());
+                        AISDK_LOG_TRACE("CreateNetAlgoBase algo_name={}", pc.algo_name.c_str());
                     }
 
                     handle = std::make_shared<T>();
                     auto net = m_funcs.m_createnetalgo(NULL, NULL, NULL, NULL);
                     if (nullptr == net) {
-                        AISDK_LOG_TRACE("CreateNetAlgo algo_name=%s Failure !!!", pc.algo_name.c_str());
+                        AISDK_LOG_TRACE("CreateNetAlgo algo_name={} Failure !!!", pc.algo_name.c_str());
                         break;
                     }
                     handle->SetBaseNetAlgo(net);
@@ -62,7 +65,7 @@ class XrMediaServiceUtils {
                     }
 
                     if (nullptr == handle) {
-                        AISDK_LOG_TRACE("CreateNetAlgoBase algo_name=%s Failure !!!", pc.algo_name.c_str());
+                        AISDK_LOG_TRACE("CreateNetAlgoBase algo_name={} Failure !!!", pc.algo_name.c_str());
                         break;
                     }
                 }

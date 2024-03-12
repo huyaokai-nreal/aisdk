@@ -63,7 +63,7 @@ class HandDetectionCalculator : public CalculatorBase {
         // detnet inference
         netalgo->Inference(image_data, result);
 
-        AISDK_LOG_TRACE("[HandDetectionCalculator], lhand size : %d, rhand size : %d", result.images_lhand_rects.size(),
+        AISDK_LOG_TRACE("[HandDetectionCalculator], lhand size : {}, rhand size : {}", result.images_lhand_rects.size(),
                         result.images_rhand_rects.size());
 
         // check stereo det bbox pair valid
@@ -94,20 +94,20 @@ class HandDetectionCalculator : public CalculatorBase {
         // result.images_rhand_rects[0][0] = {212, 240, 147, 147};
         // result.images_rhand_rects[1][0] = {112, 245, 135, 135};
 
-        AISDK_LOG_TRACE("[HandDetectionCalculator], rhand valid: %d", result.rhand_valid);
+        AISDK_LOG_TRACE("[HandDetectionCalculator], rhand valid: {}", result.rhand_valid);
 
         auto lcam_lhand = result.images_lhand_rects[0][0];
-        AISDK_LOG_TRACE("[HandDetectionCalculator] left hand + left cam: x: %d, y: %d, w: %d, h: %d", lcam_lhand.x,
+        AISDK_LOG_TRACE("[HandDetectionCalculator] left hand + left cam: x: {}, y: {}, w: {}, h: {}", lcam_lhand.x,
                         lcam_lhand.y, lcam_lhand.width, lcam_lhand.height);
         auto rcam_lhand = result.images_lhand_rects[1][0];
-        AISDK_LOG_TRACE("[HandDetectionCalculator] left hand + right cam: x: %d, y: %d, w: %d, h: %d", rcam_lhand.x,
+        AISDK_LOG_TRACE("[HandDetectionCalculator] left hand + right cam: x: {}, y: {}, w: {}, h: {}", rcam_lhand.x,
                         rcam_lhand.y, rcam_lhand.width, rcam_lhand.height);
 
         auto lcam_rhand = result.images_rhand_rects[0][0];
-        AISDK_LOG_TRACE("[HandDetectionCalculator] right hand + left cam: x: %d, y: %d, w: %d, h: %d", lcam_rhand.x,
+        AISDK_LOG_TRACE("[HandDetectionCalculator] right hand + left cam: x: {}, y: {}, w: {}, h: {}", lcam_rhand.x,
                         lcam_rhand.y, lcam_rhand.width, lcam_rhand.height);
         auto rcam_rhand = result.images_rhand_rects[1][0];
-        AISDK_LOG_TRACE("[HandDetectionCalculator] right hand + right cam: x: %d, y: %d, w: %d, h: %d", rcam_rhand.x,
+        AISDK_LOG_TRACE("[HandDetectionCalculator] right hand + right cam: x: {}, y: {}, w: {}, h: {}", rcam_rhand.x,
                         rcam_rhand.y, rcam_rhand.width, rcam_rhand.height);
 
         if (output_buffer_->lhand_valid || output_buffer_->rhand_valid) {

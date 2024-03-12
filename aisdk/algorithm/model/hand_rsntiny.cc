@@ -29,9 +29,9 @@ aisdk::xengine::Status RSNTiny::Init(aisdk::xengine::NetAlgoConfig &algo, aisdk:
     {
         itensor_format = aisdk::xengine::TensorFormat::CHW;
 
-        AISDK_LOG_TRACE("itensor.m_tensors size: %d", itensor.m_tensors.size());
-        AISDK_LOG_TRACE("itensor.m_tensors[0].m_dims: %d", itensor.m_tensors[0].m_dims.size());
-        AISDK_LOG_TRACE(" itensor.m_tensors[0].m_rank: %d", itensor.m_tensors[0].m_rank);
+        AISDK_LOG_TRACE("itensor.m_tensors size: {}", itensor.m_tensors.size());
+        AISDK_LOG_TRACE("itensor.m_tensors[0].m_dims: {}", itensor.m_tensors[0].m_dims.size());
+        AISDK_LOG_TRACE(" itensor.m_tensors[0].m_rank: {}", itensor.m_tensors[0].m_rank);
         // 这里应该从打包传入dims
         std::vector<uint32_t> iexpect{1, 128, 128};
         if (false == checkshapeformat(itensor.m_tensors[0].m_rank, itensor.m_tensors[0].m_dims, iexpect)) {

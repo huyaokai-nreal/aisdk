@@ -81,6 +81,5 @@ class BlockHardRulesCalculator : public CalculatorBase {
         return absl::OkStatus();
     }
 };
-REGISTER_CALCULATOR(BlockHardRulesCalculator);  // ok!
 
 }  // namespace mediapipe
