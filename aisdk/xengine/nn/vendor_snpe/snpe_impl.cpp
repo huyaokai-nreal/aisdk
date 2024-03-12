@@ -1,5 +1,7 @@
+#include <cassert>
+
 #include "CreateUserBuffer.h"
-// #include "log.h"
+#include "aisdk/base/log.h"
 #include "aisdk/xengine/nrhal_common.h"
 #include "snpe_model.h"
 #include "snpe_session.h"
@@ -10,7 +12,7 @@ SNPE_AIModel::SNPE_AIModel(ModelConfig &config) : AIModel() {
     m_container = zdl::DlContainer::IDlContainer::open((const uint8_t *)config.model_mem, config.model_size);
     if (m_container == nullptr) {
         std::string err = "load model error : " + std::string(zdl::DlSystem::getLastErrorString());
-        std::cout << err << std::endl;
+        AISDK_LOG_TRACE("{}", err.c_str());
         m_success = false;
     } else {
         m_info.handle = (uint64_t)m_container.get();
@@ -21,7 +23,7 @@ SNPE_AIModel::SNPE_AIModel(ModelConfig &config) : AIModel() {
 SNPE_AIModel::~SNPE_AIModel() { m_container = nullptr; }
 
 aisdk::xengine::ElementType ConvertElementType(zdl::DlSystem::UserBufferEncoding::ElementType_t type) {
-#if SNPE_VERSION == SNPE_1550
+#if SNPE_VERSION == SNPE_1550 || SNPE_VERSION == SNPE_1610
     if (type == zdl::DlSystem::UserBufferEncoding::ElementType_t::FLOAT) {
         return aisdk::xengine::ElementType::FLOAT32;
     } else if (type == zdl::DlSystem::UserBufferEncoding::ElementType_t::TF8) {
@@ -29,7 +31,7 @@ aisdk::xengine::ElementType ConvertElementType(zdl::DlSystem::UserBufferEncoding
     } else if (type == zdl::DlSystem::UserBufferEncoding::ElementType_t::TF16) {
         return aisdk::xengine::ElementType::TF16;
     }
-#elif SNPE_VERSION == SNPE_1660
+#elif SNPE_VERSION == SNPE_1660 || SNPE_VERSION == SNPE_1680
     if (type == zdl::DlSystem::UserBufferEncoding::ElementType_t::FLOAT) {
         return aisdk::xengine::ElementType::FLOAT32;
     } else if (type == zdl::DlSystem::UserBufferEncoding::ElementType_t::FLOAT16) {
@@ -69,10 +71,9 @@ SNPE_Session::~SNPE_Session() {}
 
 Status SNPE_Session::Init(std::shared_ptr<AIModel> &model, SessionConfig &Sconfig) {
     auto aimodel = std::dynamic_pointer_cast<SNPE_AIModel>(model);
-    aisdk::xengine::PlatformStatus platorm = _ZN2NR200TK7FUNC001E();
-
+    aisdk::xengine::PlatformStatus *platorm = _ZN2NR200TK7FUNC001E();
 #if (defined(ANDROID) || defined(__ANDROID__))
-    if (false == platorm.is_hexagon_dsp && false == platorm.is_hexagon_unsignedPD_dsp) {
+    if (false == platorm->is_hexagon_dsp && false == platorm->is_hexagon_unsignedPD_dsp) {
         return Status::PLATFORM_NO_SUPPORT;
     }
 #endif
@@ -126,7 +127,7 @@ Status SNPE_Session::Init(std::shared_ptr<AIModel> &model, SessionConfig &Sconfi
     }
     snpe_builder.setOutputTensors(outtensorlist);
 
-    if (false == platorm.is_hexagon_dsp && true == platorm.is_hexagon_unsignedPD_dsp) {
+    if (false == platorm->is_hexagon_dsp && true == platorm->is_hexagon_unsignedPD_dsp) {
         zdl::DlSystem::PlatformConfig platformConfig;
         std::string PlatformOptions = "unsignedPD:ON";
         platformConfig.setPlatformOptions(PlatformOptions);
@@ -145,7 +146,7 @@ Status SNPE_Session::Init(std::shared_ptr<AIModel> &model, SessionConfig &Sconfi
         zdl::DlSystem::TensorShapeMap inputShapeMap;
         bool is_rebuild = false;
         const auto &in_names = m_engine->getInputTensorNames();
-        const auto &out_names = m_engine->getOutputTensorNames();
+        // const auto &out_names = m_engine->getOutputTensorNames();
         if (in_names) {
             auto stringlists = *in_names;
             for (unsigned int i = 0; i < stringlists.size(); i++) {
@@ -314,6 +315,7 @@ Status SNPE_Session::Init(std::shared_ptr<AIModel> &model, SessionConfig &Sconfi
 }
 
 Status SNPE_Session::Forword(ModelInfo &handle) {
+    (void)handle;
 #ifdef BUFFERTYPE_USER
     bool ret = m_engine->execute(mInputMap, mOutputMap);
     if (false == ret) {

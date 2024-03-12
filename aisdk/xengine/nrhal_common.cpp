@@ -467,7 +467,7 @@ SYM_EXPORT aisdk::xengine::PlatformStatus* _ZN2NR200TK7FUNC001E() {
         supportUpdata(ret);
 #if defined(HAVE_HAL_SNPE)
         // 这里是将SNPE内部的线程名单独指定出来
-        std::string ori_name = aisdk::base::SetThisThreadName(std::string("snpe_workers"));
+        std::string ori_name = aisdk::base::SetThisThreadName(std::string("snpe_clients"));
         AISDK_LOG_TRACE("ori_name= {}", ori_name.c_str());
 #if (defined(ANDROID) || defined(__ANDROID__))
         // if (checkSnapDragonAdspPath()) {

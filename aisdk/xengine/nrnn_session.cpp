@@ -1,6 +1,7 @@
 #include "nrnn_session.h"
 
 #include "aisdk/base/log.h"
+#include "aisdk/base/set_cpu_affinity.h"
 
 #if defined(HAVE_HAL_MNN)
 #include "aisdk/xengine/nn/vendor_mnn/mnn_session.h"
@@ -39,27 +40,34 @@ Inference::~Inference() {
 
 Status Inference::Init(std::string &netname) {
     std::string new_netname = netname;
+    std::string nn_thread_name;
     m_modelimpl = CreateModelPtr(new_netname, m_mconfig);
     if (m_modelimpl) {
         m_netname = new_netname;
         if (m_mconfig.vendor_type == VendorType::MNN) {
 #if defined(HAVE_HAL_MNN)
+            nn_thread_name = std::string("mnn_forwards");
             m_sessionimpl = std::make_shared<aisdk::xengine::MNN_Session>();
 #endif
         } else if (m_mconfig.vendor_type == VendorType::ROCKCHIP) {
 #if defined(HAVE_HAL_RKNN)
+            nn_thread_name = std::string("rockchip_forwards");
             m_sessionimpl = std::make_shared<aisdk::xengine::RKNN_Session>();
 #endif
         } else if (m_mconfig.vendor_type == VendorType::SNPE) {
 #if defined(HAVE_HAL_SNPE)
+            nn_thread_name = std::string("snpe_forwards");
             m_sessionimpl = std::make_shared<aisdk::xengine::SNPE_Session>();
 #endif
         } else if (m_mconfig.vendor_type == VendorType::XREAL) {
+            nn_thread_name = std::string("xreal_forwards");
             m_sessionimpl = std::make_shared<aisdk::xengine::XRNN_Session>();
         }
 
         if (m_sessionimpl) {
+            std::string ori_name = aisdk::base::SetThisThreadName(nn_thread_name);
             auto ret = m_sessionimpl->Init(m_modelimpl, m_sconfig);
+            aisdk::base::SetThisThreadName(ori_name);
             return ret;
         } else {
             return Status::MODEL_INIT_FAILURE;

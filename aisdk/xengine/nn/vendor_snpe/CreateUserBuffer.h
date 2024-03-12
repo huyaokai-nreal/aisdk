@@ -10,7 +10,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "nr_snpe_header.h"
+#include "aisdk/xengine/nr_snpe_header.h"
 
 typedef unsigned int GLuint;
 

@@ -2,6 +2,7 @@
 #define __NR_SNPE_HEADER__
 
 #define SNPE_1550 (1550)
+#define SNPE_1610 (1610)
 #define SNPE_1660 (1660)
 #define SNPE_1680 (1680)
 #define SNPE_2070 (2070)
