@@ -120,7 +120,7 @@ int main(int argc, char **argv) {
     while (loop < loopn) {
         std::shared_ptr<StreamData> testdata = std::make_shared<StreamData>();
         testdata->frame_id = loop;
-        testdata->nano_time = loop * 33;
+        testdata->nano_time = loop * 33333332;
 
         std::cout << "----------------------------" << loop << std::endl;
         std::cout << "frame_id=" << loop << std::endl;
@@ -168,7 +168,7 @@ int main(int argc, char **argv) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(33));
                 loop++;
                 testdata->frame_id = loop;
-                testdata->nano_time = loop * 33;
+                testdata->nano_time = loop * 33333332;
             }
         } else {
             handle->SendStream(testdata);

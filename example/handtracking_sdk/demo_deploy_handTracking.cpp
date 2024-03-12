@@ -433,6 +433,71 @@ HandTrackingSdk::~HandTrackingSdk() {
     std::cout << "dlclose HandTrackingSdk over" << std::endl;
 }
 
+std::vector<std::string> SplitString(const std::string &str, const std::string &pattern) {
+    std::vector<std::string> resultVec;
+    uint32_t prestart = 0;
+    uint32_t start = 0;
+    uint32_t end = 0;
+    for (start = 0; start < str.size();) {
+        end = start + pattern.size();
+        if (end <= str.size()) {
+            if (str.substr(start, end - start) == pattern) {
+                resultVec.push_back(str.substr(prestart, start - prestart));
+                prestart = start = end;
+                continue;
+            } else {
+                start++;
+                end = start + pattern.size();
+            }
+        }
+
+        if (start == str.size() || end >= str.size()) {
+            resultVec.push_back(str.substr(prestart));
+            break;
+        }
+    }
+
+    return resultVec;
+};
+
+void processDevice(CameraDevice &device, const Json::Value &meta, const std::string &K_key, const std::string &D_key) {
+    // camera_model
+    auto &camera_model = meta["camera_model"];
+    if (camera_model.asString() == "radial") {
+        device.camera_model = 1;
+    } else if (camera_model.asString() == "fisheye") {
+        device.camera_model = 2;
+    } else if (camera_model.asString() == "fisheye624") {
+        device.camera_model = 3;
+    }
+
+    // resolution
+    auto &resolution = meta["resolution"];
+    device.resolution[0] = resolution[0].asInt();
+    device.resolution[1] = resolution[1].asInt();
+
+    // K -> fc cc
+    if (meta.isMember(K_key) && meta[K_key].isString()) {
+        auto &K = meta[K_key];
+        std::vector<std::string> ss = SplitString(K.asString(), ",");
+
+        device.fc[0] = std::atof(ss[0].c_str());
+        device.fc[1] = std::atof(ss[4].c_str());
+
+        device.cc[0] = std::atof(ss[2].c_str());
+        device.cc[1] = std::atof(ss[5].c_str());
+    }
+
+    // D -> kc
+    if (meta.isMember(D_key) && meta[D_key].isString()) {
+        auto &D = meta[D_key];
+        std::vector<std::string> ss = SplitString(D.asString(), ",");
+        for (uint32_t i = 0; i < ss.size() && i < 12; i++) {
+            device.kc[i] = std::atof(ss[i].c_str());
+        }
+    }
+}
+
 int HandTrackingSdk::CameraParamsParse(std::string &json_string) {
     Json::Value root;
     Json::Reader reader;
@@ -496,7 +561,8 @@ int HandTrackingSdk::CameraParamsParse(std::string &json_string) {
             }
 
             if (kc.isArray()) {
-                for (uint32_t i = 0; i < kc.size(); i++) m_camera_params.device1.kc[i] = (float)kc[i].asDouble();
+                for (uint32_t i = 0; i < kc.size() && i < 12; i++)
+                    m_camera_params.device1.kc[i] = (float)kc[i].asDouble();
             }
 
             if (resolution.isArray() && resolution.size() == 2) {
@@ -542,7 +608,8 @@ int HandTrackingSdk::CameraParamsParse(std::string &json_string) {
             }
 
             if (kc.isArray()) {
-                for (uint32_t i = 0; i < kc.size(); i++) m_camera_params.device2.kc[i] = (float)kc[i].asDouble();
+                for (uint32_t i = 0; i < kc.size() && i < 12; i++)
+                    m_camera_params.device2.kc[i] = (float)kc[i].asDouble();
             }
 
             if (resolution.isArray() && resolution.size() == 2) {
@@ -598,6 +665,32 @@ int HandTrackingSdk::CameraParamsParse(std::string &json_string) {
             m_camera_params.leftcam_q_rightcam[2] = quaternion.z();
             m_camera_params.leftcam_q_rightcam[3] = quaternion.w();
         }
+    } else if (root.isMember("meta") && root["meta"].isObject()) {
+        auto &meta = root["meta"];
+
+        // num_of_cameras
+        m_camera_params.num_of_cameras = meta["num_of_cameras"].asInt();
+
+        // leftcam_q_rightcam (R 4d)
+        if (meta.isMember("leftcam_q_rightcam") && meta["leftcam_q_rightcam"].isString()) {
+            auto &leftcam_q_rightcam = meta["leftcam_q_rightcam"];
+            std::vector<std::string> ss = SplitString(leftcam_q_rightcam.asString(), ",");
+            for (uint32_t j = 0; j < 4; j++) {
+                m_camera_params.leftcam_q_rightcam[j] = std::atof(ss[j].c_str());
+            }
+        }
+
+        // leftcam_p_rightcam (t 3d)
+        if (meta.isMember("leftcam_p_rightcam") && meta["leftcam_p_rightcam"].isString()) {
+            auto &leftcam_p_rightcam = meta["leftcam_p_rightcam"];
+            std::vector<std::string> ss = SplitString(leftcam_p_rightcam.asString(), ",");
+            for (uint32_t j = 0; j < 3; j++) {
+                m_camera_params.leftcam_p_rightcam[j] = std::atof(ss[j].c_str());
+            }
+        }
+
+        processDevice(m_camera_params.device1, meta, "cam0_K", "cam0_D");
+        processDevice(m_camera_params.device2, meta, "cam1_K", "cam1_D");
     }
 
     g_camera_params = m_camera_params;
@@ -643,7 +736,7 @@ int HandTrackingSdk::StartSdk(std::map<std::string, std::string> &config_params)
         return -1;
     }
 
-    memset(&m_profiling_option, 0, sizeof(ProfilingOption));
+    // memset(&m_profiling_option, 0, sizeof(ProfilingOption));
     m_profiling_option.struct_bytes = 0;
     m_profiling_option.aisdk_init_report = 1;
     m_profiling_option.pipeline_debug = 1;
