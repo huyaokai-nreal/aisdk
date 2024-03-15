@@ -70,12 +70,8 @@ class HandLandmarkCalculator : public CalculatorBase {
                 "[HandLandmarkCalculator] IMAGE_INPUT/BBOX_SMOOTHED_OUTPUT lost, this loop terminated here!");
             return absl::OkStatus();
         }
-
-        // float rsn_w = (float)m_netop_handel.rsn_model_input_width;
-        // float rsn_h = (float)m_netop_handel.rsn_model_input_height;
         int rsn_w = input_width_;
         int rsn_h = input_height_;
-
         const auto& image_data = cc->Inputs().Tag("IMAGE_INPUT").Get<std::vector<aisdk::algorithm::Image>>();
         const auto& bbox_data = cc->Inputs().Tag("BBOX_SMOOTHED_OUTPUT").Get<aisdk::algorithm::DetOutputInternal>();
 

@@ -72,11 +72,6 @@ cv::Mat generate_roi_image(const cv::Mat& input_img, std::vector<float> input_bb
     float center[2], scale[2];
     float shift[2] = {0., 0.};
     bbox_to_center_and_scale(input_bbox.data(), center, scale);
-
-    // float scale_max = std::max(scale[0], scale[1]) * 1.25;
-    // scale[0] = scale_max;
-    // scale[1] = scale_max;
-
     cv::Mat warp_matrix = get_affine_transform(center, scale, shift, 0., 128, 128, false);
 
     cv::Mat result;
