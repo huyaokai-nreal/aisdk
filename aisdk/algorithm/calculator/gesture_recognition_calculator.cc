@@ -89,7 +89,8 @@ class GestureRecognitionCalculator : public CalculatorBase {
             output_buffer_->lhand_gesture = gesture_res;
             // now rotation will be computed at prediction thread
             // output_buffer_->lhand_rot.resize(23);
-            AISDK_LOG_TRACE("[GestureRecognitionCalculator] process left hand complete.");
+            AISDK_LOG_TRACE("[GestureRecognitionCalculator] process left hand complete. {}",
+                            output_buffer_->lhand_gesture);
         }
         if (kpt3d_data.rhand_valid && state_data.rhand_valid) {
             // process left hand
@@ -107,7 +108,8 @@ class GestureRecognitionCalculator : public CalculatorBase {
             output_buffer_->rhand_kpt = kpt3d_data.rhand;
             output_buffer_->rhand_gesture = gesture_res;
             // output_buffer_->rhand_rot.resize(23);
-            AISDK_LOG_TRACE("[GestureRecognitionCalculator] process right hand complete.");
+            AISDK_LOG_TRACE("[GestureRecognitionCalculator] process right hand complete. {}",
+                            output_buffer_->rhand_gesture);
         }
 
         auto& global_kpt3d = aisdk::algorithm::GlobalPredictorService::getInstance().get_kpt3d_world();
