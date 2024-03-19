@@ -504,15 +504,21 @@ void Hmd::GetCamerasInformation() {
     m_interface->GetComponentExtrinsic(handle, NR_COMPONENT_GRAYSCALE_CAMERA_LEFT, NR_COMPONENT_GRAYSCALE_CAMERA_RIGHT,
                                        &extrinsics_lr);
 
-    m_cam_param.m_params["glL_R_glR"] = {extrinsics_lr.rotation.qw, extrinsics_lr.rotation.qx,
-                                         extrinsics_lr.rotation.qy, extrinsics_lr.rotation.qz};
+    Eigen::Matrix3f extrinsic_lr_rot = Eigen::Quaternionf(extrinsics_lr.rotation.qw, extrinsics_lr.rotation.qx,
+                                                          extrinsics_lr.rotation.qy, extrinsics_lr.rotation.qz)
+                                           .toRotationMatrix();
+    m_cam_param.m_params["glL_R_glR"] = {
+        extrinsic_lr_rot(0, 0), extrinsic_lr_rot(0, 1), extrinsic_lr_rot(0, 2),
+        extrinsic_lr_rot(1, 0), extrinsic_lr_rot(1, 1), extrinsic_lr_rot(1, 2),
+        extrinsic_lr_rot(2, 0), extrinsic_lr_rot(2, 1), extrinsic_lr_rot(2, 2),
+    };
     m_cam_param.m_params["glL_t_glR"] = {extrinsics_lr.position.x, extrinsics_lr.position.y, extrinsics_lr.position.z};
 
-    AISDK_LOG_TRACE("glL_R_glR q: {}, {}, {}, {}", extrinsics_lr.rotation.qw, extrinsics_lr.rotation.qx,
-                    extrinsics_lr.rotation.qy, extrinsics_lr.rotation.qz);
+    // AISDK_LOG_TRACE("glL_R_glR q: {}, {}, {}, {}", extrinsics_lr.rotation.qw, extrinsics_lr.rotation.qx,
+    //                 extrinsics_lr.rotation.qy, extrinsics_lr.rotation.qz);
 
-    AISDK_LOG_TRACE("glL_R_glR p: {}, {}, {}", extrinsics_lr.position.x, extrinsics_lr.position.y,
-                    extrinsics_lr.position.z);
+    // AISDK_LOG_TRACE("glL_R_glR p: {}, {}, {}", extrinsics_lr.position.x, extrinsics_lr.position.y,
+    //                 extrinsics_lr.position.z);
 
     m_interface->GetComponentExtrinsic(handle, NR_COMPONENT_HEAD, NR_COMPONENT_GRAYSCALE_CAMERA_LEFT, &extrinsics_lh);
 
