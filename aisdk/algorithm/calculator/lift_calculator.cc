@@ -87,9 +87,11 @@ class LiftCalculator : public CalculatorBase {
             std::vector<cv::Vec2f> undistort_uv_lcam, undistort_uv_rcam;
             if (cam_info.camera_type == 2) {
                 cv::fisheye::undistortPoints(input_uv_lcam, undistort_uv_lcam, cam_info.lcam_intrinsics,
-                                             cam_info.lcam_dist_coeffs, cv::noArray(), cam_info.lcam_intrinsics);
+                                             cam_info.lcam_dist_coeffs.colRange(0, 4), cv::noArray(),
+                                             cam_info.lcam_intrinsics);
                 cv::fisheye::undistortPoints(input_uv_rcam, undistort_uv_rcam, cam_info.rcam_intrinsics,
-                                             cam_info.rcam_dist_coeffs, cv::noArray(), cam_info.rcam_intrinsics);
+                                             cam_info.rcam_dist_coeffs.colRange(0, 4), cv::noArray(),
+                                             cam_info.rcam_intrinsics);
             } else {
                 undistort_uv_lcam = input_uv_lcam;
                 undistort_uv_rcam = input_uv_rcam;
@@ -192,9 +194,11 @@ class LiftCalculator : public CalculatorBase {
 
             if (cam_info.camera_type == 2) {  // flora
                 cv::fisheye::undistortPoints(input_uv_lcam, undistort_uv_lcam, cam_info.lcam_intrinsics,
-                                             cam_info.lcam_dist_coeffs, cv::noArray(), cam_info.lcam_intrinsics);
+                                             cam_info.lcam_dist_coeffs.colRange(0, 4), cv::noArray(),
+                                             cam_info.lcam_intrinsics);
                 cv::fisheye::undistortPoints(input_uv_rcam, undistort_uv_rcam, cam_info.rcam_intrinsics,
-                                             cam_info.rcam_dist_coeffs, cv::noArray(), cam_info.rcam_intrinsics);
+                                             cam_info.rcam_dist_coeffs.colRange(0, 4), cv::noArray(),
+                                             cam_info.rcam_intrinsics);
             } else {  // ella
                 undistort_uv_lcam = input_uv_lcam;
                 undistort_uv_rcam = input_uv_rcam;
