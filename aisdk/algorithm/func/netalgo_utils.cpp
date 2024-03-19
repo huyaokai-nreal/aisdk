@@ -161,34 +161,39 @@ aisdk::xengine::TensorFormat checkshapeformat(aisdk::xengine::VendorType& vendor
     return ret;
 }
 
-Eigen::Matrix3f from_two_vectors(const Eigen::Vector3f& src_vec, const Eigen::Vector3f& dst_vec) {
-    Eigen::Vector3f norm_src_vec = src_vec.normalized();
-    Eigen::Vector3f norm_dst_vec = dst_vec.normalized();
-    Eigen::Vector3f direction = norm_src_vec.cross(norm_dst_vec);
+Eigen::Matrix3d from_two_vectors(const Eigen::Vector3d& src_vec, const Eigen::Vector3d& dst_vec) {
+    Eigen::Vector3d norm_src_vec = src_vec.normalized();
+    Eigen::Vector3d norm_dst_vec = dst_vec.normalized();
+    Eigen::Vector3d direction = norm_src_vec.cross(norm_dst_vec);
     float scale = direction.norm();
     float angle = norm_src_vec.dot(norm_dst_vec);
-    Eigen::Matrix3f v_mat;
+    Eigen::Matrix3d v_mat;
     v_mat << 0, -direction(2), direction(1), direction(2), 0, -direction(0), -direction(1), direction(0), 0;
-    Eigen::Matrix3f rot =
-        Eigen::Matrix3f::Identity() + v_mat + v_mat * v_mat * (1 - angle) / std::max(scale * scale, 1e-15f);
+    Eigen::Matrix3d rot =
+        Eigen::Matrix3d::Identity() + v_mat + v_mat * v_mat * (1 - angle) / std::max(scale * scale, 1e-15f);
     return rot;
 }
 
-std::tuple<Eigen::Matrix3f, Eigen::Matrix3f, float> get_rotations_for_standard_stereo(Eigen::Matrix4f T) {
-    Eigen::Matrix4f left_T = Eigen::Matrix4f::Identity();
-    Eigen::Matrix4f right_T = T;
-    Eigen::Vector3f baseline_vec = T.block<3, 1>(0, 3);
-    Eigen::Vector3f left_x;
-    left_x << 1, 0, 0;
-    Eigen::Matrix3f R_left = from_two_vectors(left_x, baseline_vec);
-    Eigen::Matrix4f virtual_left_T = left_T;
+std::tuple<Eigen::Matrix3d, Eigen::Matrix3d, float> get_rotations_for_standard_stereo(const Eigen::Matrix4d& T) {
+    Eigen::Matrix4d left_T = Eigen::Matrix4d::Identity();
+    Eigen::Matrix4d right_T = T;
+    Eigen::Vector3d baseline_vec = T.block<3, 1>(0, 3);
+    Eigen::Vector3d left_x{1, 0, 0};
+    Eigen::Matrix3d R_left = from_two_vectors(left_x, baseline_vec);
+    Eigen::Matrix4d virtual_left_T = left_T;
     virtual_left_T.block<3, 3>(0, 0) = R_left * left_T.block<3, 3>(0, 0);
-    Eigen::Vector3f right_x = right_T.block<3, 3>(0, 0) * left_x + right_T.block<3, 1>(0, 3) - baseline_vec;
-    Eigen::Matrix3f R_right = from_two_vectors(right_x, baseline_vec);
-    Eigen::Matrix4f virtual_right_T = right_T;
+    Eigen::Vector3d right_x = right_T.block<3, 3>(0, 0) * left_x + right_T.block<3, 1>(0, 3) - baseline_vec;
+    Eigen::Matrix3d R_right = from_two_vectors(right_x, baseline_vec);
+    Eigen::Matrix4d virtual_right_T = right_T;
     virtual_right_T.block<3, 3>(0, 0) = R_right * right_T.block<3, 3>(0, 0);
-    Eigen::Matrix3f left_R = (virtual_left_T.inverse() * left_T).block<3, 3>(0, 0);
-    Eigen::Matrix3f right_R = (virtual_right_T.inverse() * right_T).block<3, 3>(0, 0);
+    Eigen::Vector3d left_z{0, 0, 1};
+    Eigen::Vector3d left_cam_z = virtual_left_T.block<3, 3>(0, 0) * left_z + virtual_left_T.block<3, 1>(0, 3);
+    Eigen::Vector3d right_cam_z =
+        virtual_right_T.block<3, 3>(0, 0) * left_z + virtual_right_T.block<3, 1>(0, 3) - baseline_vec;
+    Eigen::Matrix3d R_right_z = from_two_vectors(right_cam_z, left_cam_z);
+    virtual_right_T.block<3, 3>(0, 0).noalias() = R_right_z * virtual_right_T.block<3, 3>(0, 0);
+    Eigen::Matrix3d left_R = (virtual_left_T.inverse() * left_T).block<3, 3>(0, 0);
+    Eigen::Matrix3d right_R = (virtual_right_T.inverse() * right_T).block<3, 3>(0, 0);
     float baseline = baseline_vec.norm();
     return {left_R, right_R, baseline};
 }

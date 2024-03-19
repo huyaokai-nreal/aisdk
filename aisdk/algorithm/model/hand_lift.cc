@@ -384,11 +384,12 @@ void GMLPLiftNet3::transfer_to_standard_stereo_input() {
 aisdk::xengine::Status GMLPLiftNet3::SetCamInfo(const CamInfo &cam_info) {
     m_cam_info = cam_info;
     if (!init_camera_info_) {
-        auto [rot_left, rot_right, baseline] = get_rotations_for_standard_stereo(cam_info.cvL_T_cvR.matrix());
-        rot_left_ = rot_left;
-        rot_right_ = rot_right;
-        baseline_scale_ = baseline / standard_baseline_;
+        auto [rot_left, rot_right, baseline] =
+            get_rotations_for_standard_stereo(cam_info.cvL_T_cvR.matrix().cast<double>());
+        rot_left_ = rot_left.cast<float>();
+        rot_right_ = rot_right.cast<float>();
         init_camera_info_ = true;
+        baseline_scale_ = baseline;
 
         std::cout << "cam_info lcam intr:" << cam_info.lcam_intrinsics << std::endl;
         std::cout << "rot_left:" << rot_left_ << std::endl;
