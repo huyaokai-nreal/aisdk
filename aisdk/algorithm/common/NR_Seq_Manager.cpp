@@ -217,11 +217,11 @@ bool DynamicFilter3D::getDynamicFilterHandData(std::vector<cv::Vec3f>& kpt_3d) {
             float current_weight_y = var_y / hand_norm < 1.0 ? var_y / hand_norm : 1.0;
             float current_weight_z = var_z / hand_norm < 1.0 ? var_z / hand_norm : 1.0;
 
-            AISDK_LOG_INFO("current_weight_3d_x var: %f, hand_norm: %f, current_weight: %f", var_x, hand_norm,
+            AISDK_LOG_INFO("current_weight_3d_x var: {}, hand_norm: {}, current_weight: {}", var_x, hand_norm,
                            current_weight_x);
-            AISDK_LOG_INFO("current_weight_3d_y var: %f, hand_norm: %f, current_weight: %f", var_y, hand_norm,
+            AISDK_LOG_INFO("current_weight_3d_y var: {}, hand_norm: {}, current_weight: {}", var_y, hand_norm,
                            current_weight_y);
-            AISDK_LOG_INFO("current_weight_3d_z var: %f, hand_norm: %f, current_weight: %f", var_z, hand_norm,
+            AISDK_LOG_INFO("current_weight_3d_z var: {}, hand_norm: {}, current_weight: {}", var_z, hand_norm,
                            current_weight_z);
 
             kpt_3d[i][0] = kpt_3d[i][0] * current_weight_x + mPreData[i][0] * (1 - current_weight_x);
@@ -320,9 +320,9 @@ bool DynamicFilter2D::getDynamicFilterHandData(std::vector<cv::Vec2f>& kpt_2d) {
             float current_weight_x = var_x / hand_norm < 1.0 ? var_x / hand_norm : 1.0;
             float current_weight_y = var_y / hand_norm < 1.0 ? var_y / hand_norm : 1.0;
 
-            // AISDK_LOG_INFO("current_weight_2d_x length: %f, %f, %f",
+            // AISDK_LOG_INFO("current_weight_2d_x length: {}, {}, {}",
             // var_x, hand_norm, current_weight_x);
-            // AISDK_LOG_INFO("current_weight_2d_y length: %f, %f, %f",
+            // AISDK_LOG_INFO("current_weight_2d_y length: {}, {}, {}",
             // var_y, hand_norm, current_weight_y);
 
             kpt_2d[i][0] = kpt_2d[i][0] * current_weight_x + mPreData[i][0] * (1 - current_weight_x);

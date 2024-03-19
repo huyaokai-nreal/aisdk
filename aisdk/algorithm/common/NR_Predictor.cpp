@@ -107,15 +107,15 @@ PredictorState KFPredictor::predict(uint64_t target_ts) {
     // m_time_ts = target_ts;
     int sign = (target_ts < m_time_ts) ? -1 : 1;
 
-    // AISDK_LOG_INFO("sign: %d", sign);
+    // AISDK_LOG_INFO("sign: {}", sign);
 
     double dt_seconds = (double(sign * (target_ts - m_time_ts))) / 1000000000.;
 
-    // AISDK_LOG_INFO("target_ts_1: %ld, m_time_ts: %ld, dt: %f", target_ts, m_time_ts, dt_seconds);
-    // AISDK_LOG_INFO("long: %ld", target_ts - m_time_ts);
-    // AISDK_LOG_INFO("double cast: %f", static_cast<double>(sign * (target_ts - m_time_ts)));
-    // AISDK_LOG_INFO("double: %f", double(sign * (target_ts - m_time_ts)));
-    // AISDK_LOG_INFO("target_ts_2: %ld, m_time_ts: %ld, dt: %f", target_ts, m_time_ts, dt_seconds);
+    // AISDK_LOG_INFO("target_ts_1: {}, m_time_ts: {}, dt: {}", target_ts, m_time_ts, dt_seconds);
+    // AISDK_LOG_INFO("long: {}", target_ts - m_time_ts);
+    // AISDK_LOG_INFO("double cast: {}", static_cast<double>(sign * (target_ts - m_time_ts)));
+    // AISDK_LOG_INFO("double: {}", double(sign * (target_ts - m_time_ts)));
+    // AISDK_LOG_INFO("target_ts_2: {}, m_time_ts: {}, dt: {}", target_ts, m_time_ts, dt_seconds);
 
     m_kf_impl->transitionMatrix.at<float>(S_X, S_VX) = sign * dt_seconds;
     m_kf_impl->transitionMatrix.at<float>(S_Y, S_VY) = sign * dt_seconds;
@@ -131,7 +131,7 @@ PredictorState KFPredictor::predict(uint64_t target_ts) {
 
     m_kf_impl->predict();
 
-    AISDK_LOG_INFO("predict state: %f, %f, %f, %f, %f, %f", m_kf_impl->statePre.at<float>(S_X),
+    AISDK_LOG_INFO("predict state: {}, {}, {}, {}, {}, {}", m_kf_impl->statePre.at<float>(S_X),
                    m_kf_impl->statePre.at<float>(S_Y), m_kf_impl->statePre.at<float>(S_Z),
                    m_kf_impl->statePre.at<float>(S_VX), m_kf_impl->statePre.at<float>(S_VY),
                    m_kf_impl->statePre.at<float>(S_VZ));
@@ -173,9 +173,9 @@ PredictorState KFPredictor::correct(uint64_t target_ts, PredictorState meas, boo
         meas_mat.at<float>(M_VY) = meas.vec[1];
         meas_mat.at<float>(M_VZ) = meas.vec[2];
 
-        // AISDK_LOG_INFO("meas target_ts: %ld, m_time_ts: %ld, dt: %f", m_time_ts, m_time_ts_last, dt_seconds);
+        // AISDK_LOG_INFO("meas target_ts: {}, m_time_ts: {}, dt: {}", m_time_ts, m_time_ts_last, dt_seconds);
 
-        // AISDK_LOG_INFO("meas state 1: %f, %f, %f, %f, %f, %f", meas.pos[0], meas.pos[1], meas.pos[2],
+        // AISDK_LOG_INFO("meas state 1: {}, {}, {}, {}, {}, {}", meas.pos[0], meas.pos[1], meas.pos[2],
         //                       meas.vec[0], meas.vec[1], meas.vec[2]);
 
         m_kf_impl->transitionMatrix.at<float>(S_X, S_VX) = sign * dt_seconds;
@@ -192,13 +192,13 @@ PredictorState KFPredictor::correct(uint64_t target_ts, PredictorState meas, boo
 
         m_kf_impl->correct(meas_mat);
 
-        // AISDK_LOG_INFO("meas state 2: %f, %f, %f, %f, %f, %f", m_kf_impl->statePost.at<float>(M_X),
+        // AISDK_LOG_INFO("meas state 2: {}, {}, {}, {}, {}, {}", m_kf_impl->statePost.at<float>(M_X),
         //                       m_kf_impl->statePost.at<float>(M_Y), m_kf_impl->statePost.at<float>(M_Z),
         //                       m_kf_impl->statePost.at<float>(M_VX), m_kf_impl->statePost.at<float>(M_VY),
         //                       m_kf_impl->statePost.at<float>(M_VZ));
     }
 
-    // AISDK_LOG_INFO("meas predicted a: %f, %f, %f", m_kf_impl->statePost.at<float>(S_AX),
+    // AISDK_LOG_INFO("meas predicted a: {}, {}, {}", m_kf_impl->statePost.at<float>(S_AX),
     //                       m_kf_impl->statePost.at<float>(S_AY), m_kf_impl->statePost.at<float>(S_AZ));
 
     auto pred_pos = cv::Vec3f{m_kf_impl->statePost.at<float>(S_X), m_kf_impl->statePost.at<float>(S_Y),

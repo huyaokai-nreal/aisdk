@@ -154,8 +154,8 @@ std::pair<HandRawFeature, HandFeature> GestureRecognitionV2::extract_hand_featur
     raw_features.hand_angle = hand_angle;
     raw_features.is_thumb_up = (keypoints3d[0][4](1) - keypoints3d[0][2](1)) < 0.f;
 
-    // AISDK_LOG_TRACE("keypoints3d[0][4]: %f, %f, %f", keypoints3d[0][4](0), keypoints3d[0][4](1),
-    // keypoints3d[0][4](2)); AISDK_LOG_TRACE("keypoints3d[0][2]: %f, %f, %f", keypoints3d[0][2](0),
+    // AISDK_LOG_TRACE("keypoints3d[0][4]: {}, {}, {}", keypoints3d[0][4](0), keypoints3d[0][4](1),
+    // keypoints3d[0][4](2)); AISDK_LOG_TRACE("keypoints3d[0][2]: {}, {}, {}", keypoints3d[0][2](0),
     // keypoints3d[0][2](1), keypoints3d[0][2](2));
 
     return {raw_features, feature_updator->update(fingure_angles, abduction_angles, opposition_distances, hand_angle)};
