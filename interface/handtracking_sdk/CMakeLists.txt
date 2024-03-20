@@ -4,18 +4,19 @@ add_library(${HANDTRACKING_INTERFACE_LIBRARY_NAME} SHARED
 ${CMAKE_CURRENT_SOURCE_DIR}/handtracking_sdk_interface.cpp
 )
 
-# add target include. not fix exteral xxx.h 
+# add target include. not fix exteral xxx.h
 target_include_directories(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PRIVATE "./")
 
-target_compile_options(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PRIVATE 
--DHANDTRACKING_SHARED_LIBS 
--DNRPLUGIN 
+target_compile_options(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PRIVATE
+-DHANDTRACKING_SHARED_LIBS
+-DNRPLUGIN
 -DAISK_GIT_VERSION="${GIT_CURRENT_BRANCH}:${GIT_LAST_COMMIT}"
+PRIVATE -Wno-error
 )
 
 if(ENABLE_XENGINE_SNPE_NN)
     target_compile_options(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PRIVATE -DHAVE_HAL_SNPE)
-    
+
     if(SNPE_VERSION STREQUAL "snpe-1.55.0")
         target_compile_options(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PRIVATE -DSNPE_VERSION=1550)
     endif()
