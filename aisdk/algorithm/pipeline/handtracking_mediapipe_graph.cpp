@@ -64,16 +64,20 @@ aisdk::algorithm::Status HandTrackingMediaPipeGraph::PopResult(uint64_t hmd_time
         outlist->m_packs.pop_front();
 
         AISDK_LOG_TRACE("[PopResult] lhand begin");
-        for (int i = 0; i < 21; i++) {
-            AISDK_LOG_TRACE("{}, {}, {}", hand_data_internal.lhand_kpt[i][0], hand_data_internal.lhand_kpt[i][1],
-                            hand_data_internal.lhand_kpt[i][2]);
+        if (hand_data_internal.lhand_valid) {
+            for (int i = 0; i < 21; i++) {
+                AISDK_LOG_TRACE("{}, {}, {}", hand_data_internal.lhand_kpt[i][0], hand_data_internal.lhand_kpt[i][1],
+                                hand_data_internal.lhand_kpt[i][2]);
+            }
         }
         AISDK_LOG_TRACE("[PopResult] lhand end");
 
         AISDK_LOG_TRACE("[PopResult] rhand begin");
-        for (int i = 0; i < 21; i++) {
-            AISDK_LOG_TRACE("{}, {}, {}", hand_data_internal.rhand_kpt[i][0], hand_data_internal.rhand_kpt[i][1],
-                            hand_data_internal.rhand_kpt[i][2]);
+        if (hand_data_internal.rhand_valid) {
+            for (int i = 0; i < 21; i++) {
+                AISDK_LOG_TRACE("{}, {}, {}", hand_data_internal.rhand_kpt[i][0], hand_data_internal.rhand_kpt[i][1],
+                                hand_data_internal.rhand_kpt[i][2]);
+            }
         }
         AISDK_LOG_TRACE("[PopResult] rhand end");
 
@@ -162,25 +166,27 @@ aisdk::algorithm::Status HandTrackingMediaPipeGraph::PopResult(uint64_t hmd_time
                 compute_joint_rotation(predicted_points, (i == 0), rotations_world, rotations_local);
             }
 
-            AISDK_LOG_TRACE("[PopResult Predict] {} hand begin", i);
-            for (int j = 0; j < EZXR_DEFINED_JOINTS; j++) {
-                out_hand_array[i].hand_joint_data[xreal_2_clay[j]].hand_joint_type =
-                    static_cast<HandJointType>(xreal_2_clay[j]);
+            if (out_hand_array[i].is_tracked) {
+                AISDK_LOG_TRACE("[PopResult Predict] {} hand begin", i);
+                for (int j = 0; j < EZXR_DEFINED_JOINTS; j++) {
+                    out_hand_array[i].hand_joint_data[xreal_2_clay[j]].hand_joint_type =
+                        static_cast<HandJointType>(xreal_2_clay[j]);
 
-                _handjoint_pose_tmp.position.x = predicted_points[j][0];
-                _handjoint_pose_tmp.position.y = predicted_points[j][1];
-                _handjoint_pose_tmp.position.z = predicted_points[j][2];
-                AISDK_LOG_TRACE("{}, {}, {} / {}, {}, {}", ontracked_points[i][j][0], ontracked_points[i][j][1],
-                                ontracked_points[i][j][2], predicted_points[j][0], predicted_points[j][1],
-                                predicted_points[j][2]);
+                    _handjoint_pose_tmp.position.x = predicted_points[j][0];
+                    _handjoint_pose_tmp.position.y = predicted_points[j][1];
+                    _handjoint_pose_tmp.position.z = predicted_points[j][2];
+                    AISDK_LOG_TRACE("{}, {}, {} / {}, {}, {}", ontracked_points[i][j][0], ontracked_points[i][j][1],
+                                    ontracked_points[i][j][2], predicted_points[j][0], predicted_points[j][1],
+                                    predicted_points[j][2]);
 
-                Eigen::Quaterniond q(rotations_world[j]);
+                    Eigen::Quaterniond q(rotations_world[j]);
 
-                _handjoint_pose_tmp.rotation = {q.x(), q.y(), q.z(), q.w()};
+                    _handjoint_pose_tmp.rotation = {(float)q.x(), (float)q.y(), (float)q.z(), (float)q.w()};
 
-                out_hand_array[i].hand_joint_data[xreal_2_clay[j]].hand_joint_pose = _handjoint_pose_tmp;
+                    out_hand_array[i].hand_joint_data[xreal_2_clay[j]].hand_joint_pose = _handjoint_pose_tmp;
+                }
+                AISDK_LOG_TRACE("[PopResult Predict] {} hand end", i);
             }
-            AISDK_LOG_TRACE("[PopResult Predict] {} hand end", i);
             out_hand_array[i].image_timestamp_nanos = hand_data_internal.timestamp;
         }
 

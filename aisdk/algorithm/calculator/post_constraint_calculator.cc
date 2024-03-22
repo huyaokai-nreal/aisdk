@@ -10,7 +10,7 @@
 #define KPT_NUMS 21
 
 static std::vector<cv::Vec3f> constrain_func_post(const std::vector<cv::Vec3f>& input_kpt3d, bool is_left) {
-    std::vector<cv::Vec3f> output_kpt3d(KPT_NUMS);
+    std::vector<cv::Vec3f> output_kpt3d(KPT_NUMS + 2);
     std::vector<Eigen::Vector3f> res3d_mano_input(KPT_NUMS), res3d_mano_output(KPT_NUMS);
     for (int i = 0; i < KPT_NUMS; i++) {
         res3d_mano_input[i][0] = input_kpt3d[i][0];

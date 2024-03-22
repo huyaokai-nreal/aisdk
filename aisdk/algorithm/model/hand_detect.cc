@@ -555,8 +555,6 @@ aisdk::xengine::Status HandDetectNetv2::Inference(const std::vector<Image> &base
             AISDK_LOG_TRACE("baseresult.images_rhand_rects[0].size(): {}", baseresult.images_rhand_rects[0].size());
             AISDK_LOG_TRACE("baseresult.images_rhand_rects[1].size(): {}", baseresult.images_rhand_rects[1].size());
 
-            auto box = baseresult.images_rhand_rects[0][0];
-            AISDK_LOG_TRACE("baseresult x: {}, y: {}, w: {}, h: {}", box.x, box.y, box.width, box.height);
         } else {
             baseresult.images_lhand_rects.resize(otensor.m_batch);
             baseresult.images_rhand_rects.resize(otensor.m_batch);
