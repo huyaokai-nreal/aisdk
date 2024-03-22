@@ -89,7 +89,6 @@ aisdk::algorithm::Status MediaPipeGraph::Init(aisdk::xengine::DlSymFuncs &funcs,
         auto outlist = v;
 
         auto callback = [=](const mediapipe::Packet &packet) -> ::absl::Status {
-            std::cout << "hand_result callback" << std::endl;
             std::lock_guard<std::mutex> guard(outlist->m_lock);
             outlist->m_packs.emplace_back(std::move(packet));
             return absl::OkStatus();
