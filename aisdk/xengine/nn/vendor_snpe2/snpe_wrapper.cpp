@@ -92,6 +92,11 @@ bool SNPEWrapper::init(const std::string& model_path, const std::string& runtime
         return false;
     }
 
+    // 接口正确性
+    if (!snpe2_capi.Snpe_Util_IsRuntimeAvailable) {
+        return false;
+    }
+
     if (!snpe2_capi.Snpe_Util_IsRuntimeAvailable(m_runtime)) {
         AISDK_LOG_ERROR("Selected runtime not supported. Falling back to CPU.");
         // m_runtime = SNPE_RUNTIME_CPU;
@@ -226,6 +231,11 @@ bool SNPEWrapper::init(const uint8_t* buffer, const size_t size, const std::stri
         return false;
     }
     AISDK_LOG_TRACE("setting runtime: {}", m_runtime);
+
+    // 接口正确性
+    if (!snpe2_capi.Snpe_Util_IsRuntimeAvailable) {
+        return false;
+    }
 
     if (!snpe2_capi.Snpe_Util_IsRuntimeAvailable(m_runtime)) {
         AISDK_LOG_ERROR("Selected runtime not supported. Falling back to CPU.");

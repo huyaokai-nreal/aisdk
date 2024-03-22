@@ -308,6 +308,9 @@ bool GeneratePipelineMainConfig(Json::Value &root, mtar_t &tar, PipelineConfig &
                     void *p = nullptr;
                     mtar_mem_read_data(&tar, &p, h.size);
                     config.graph_config = std::string((const char *)p, h.size);
+                    if (aisdk::base::DebugProfiling::Get().GetOpt().aisdk_init_report) {
+                        AISDK_LOG_TRACE("\n\n{}\n\n", config.graph_config.c_str());
+                    }
                 } else {
                     return false;
                 }

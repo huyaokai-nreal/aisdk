@@ -93,19 +93,21 @@ Status MNN_Session::Init(std::shared_ptr<AIModel> &model, SessionConfig &Sconfig
     m_in.m_packed_bybatch = true;
     m_in.m_tensors.resize(m_in.m_multishape_num);
     int multi_i = 0;
+    uint32_t ori_batch = 0;
     for (auto &iter : allInput) {
         std::string name = iter.first;
         MNN::Tensor *input = iter.second;
         int rank = input->dimensions();
         auto dims = input->shape();
         m_idimstype = input->getDimensionType();
+        ori_batch = (unsigned int)dims[0];
         if (Sconfig.batch > (unsigned int)dims[0]) {
             dims[0] = Sconfig.batch;
         } else {
             Sconfig.batch = dims[0];
         }
         m_in.m_batch = Sconfig.batch;
-
+        m_in.m_ori_batch = ori_batch;
         // printf("name =%s rank=%d m_dimstype=%d   %d,%d,%d,%d \n", name.c_str(),
         // rank, (int)m_idimstype, dims[0],
         //        dims[1], dims[2], dims[3]);
@@ -140,6 +142,7 @@ Status MNN_Session::Init(std::shared_ptr<AIModel> &model, SessionConfig &Sconfig
 
     const std::map<std::string, MNN::Tensor *> &allOutput = network->getSessionOutputAll(mSession);
     m_out.m_batch = Sconfig.batch;
+    m_out.m_ori_batch = ori_batch;
     m_out.m_multishape_num = allOutput.size();
     m_out.m_packed_bybatch = true;
     m_out.m_tensors.resize(m_out.m_multishape_num);
