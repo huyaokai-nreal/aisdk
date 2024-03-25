@@ -504,21 +504,16 @@ void Hmd::GetCamerasInformation() {
     m_interface->GetComponentExtrinsic(handle, NR_COMPONENT_GRAYSCALE_CAMERA_LEFT, NR_COMPONENT_GRAYSCALE_CAMERA_RIGHT,
                                        &extrinsics_lr);
 
-    Eigen::Matrix3f extrinsic_lr_rot = Eigen::Quaternionf(extrinsics_lr.rotation.qw, extrinsics_lr.rotation.qx,
-                                                          extrinsics_lr.rotation.qy, extrinsics_lr.rotation.qz)
-                                           .toRotationMatrix();
-    m_cam_param.m_params["glL_R_glR"] = {
-        extrinsic_lr_rot(0, 0), extrinsic_lr_rot(0, 1), extrinsic_lr_rot(0, 2),
-        extrinsic_lr_rot(1, 0), extrinsic_lr_rot(1, 1), extrinsic_lr_rot(1, 2),
-        extrinsic_lr_rot(2, 0), extrinsic_lr_rot(2, 1), extrinsic_lr_rot(2, 2),
-    };
+    m_cam_param.m_params["glL_R_glR"] = {extrinsics_lr.rotation.qw, extrinsics_lr.rotation.qx,
+                                         extrinsics_lr.rotation.qy, extrinsics_lr.rotation.qz};
+
     m_cam_param.m_params["glL_t_glR"] = {extrinsics_lr.position.x, extrinsics_lr.position.y, extrinsics_lr.position.z};
 
-    // AISDK_LOG_TRACE("glL_R_glR q: {}, {}, {}, {}", extrinsics_lr.rotation.qw, extrinsics_lr.rotation.qx,
-    //                 extrinsics_lr.rotation.qy, extrinsics_lr.rotation.qz);
+    AISDK_LOG_TRACE("glL_R_glR q: {}, {}, {}, {}", extrinsics_lr.rotation.qw, extrinsics_lr.rotation.qx,
+                    extrinsics_lr.rotation.qy, extrinsics_lr.rotation.qz);
 
-    // AISDK_LOG_TRACE("glL_R_glR p: {}, {}, {}", extrinsics_lr.position.x, extrinsics_lr.position.y,
-    //                 extrinsics_lr.position.z);
+    AISDK_LOG_TRACE("glL_R_glR p: {}, {}, {}", extrinsics_lr.position.x, extrinsics_lr.position.y,
+                    extrinsics_lr.position.z);
 
     m_interface->GetComponentExtrinsic(handle, NR_COMPONENT_HEAD, NR_COMPONENT_GRAYSCALE_CAMERA_LEFT, &extrinsics_lh);
 
@@ -615,13 +610,22 @@ NRPluginResult HandTracking::ParseAllCameraData(const NRGrayscaleCameraFrameData
     auto cam_param = ins->m_hmd.m_cam_param.m_params;
 
     // 1. cvL_T_cvR
-    input_cam_info.cvL_T_cvR = Eigen::Isometry3f::Identity();
-
-    Eigen::Map<Eigen::Matrix<float, 3, 3, Eigen::RowMajor>> rotate_matrix(cam_param["glL_R_glR"].data());
-    Eigen::Quaternionf rotate_quaternion(rotate_matrix);
-    input_cam_info.cvL_T_cvR.rotate(rotate_quaternion);
-    input_cam_info.cvL_T_cvR.pretranslate(
+    Eigen::Isometry3f glL_T_glR = Eigen::Isometry3f::Identity();
+    glL_T_glR.rotate(Eigen::Quaternionf(cam_param["glL_R_glR"][0], cam_param["glL_R_glR"][1], cam_param["glL_R_glR"][2],
+                                        cam_param["glL_R_glR"][3]));
+    glL_T_glR.pretranslate(
         Eigen::Vector3f(cam_param["glL_t_glR"][0], cam_param["glL_t_glR"][1], cam_param["glL_t_glR"][2]));
+    if (ins->m_hmd.m_generate_method == 1) {
+        // 输入是GL系
+        Eigen::Matrix3f gl_R_cv;
+        gl_R_cv << 1, 0, 0, 0, -1, 0, 0, 0, -1;
+        Eigen::Isometry3f gl_T_cv = Eigen::Isometry3f::Identity();
+        gl_T_cv.rotate(gl_R_cv);
+        input_cam_info.cvL_T_cvR = gl_T_cv * glL_T_glR * gl_T_cv;
+    } else {
+        // 输入是cv系
+        input_cam_info.cvL_T_cvR = glL_T_glR;
+    }
 
     // 2. 左目内参 lcam_intrinsics
     cv::Mat l_K = cv::Mat::eye(3, 3, CV_32FC1);
@@ -639,6 +643,7 @@ NRPluginResult HandTracking::ParseAllCameraData(const NRGrayscaleCameraFrameData
     r_K.at<float>(1, 2) = cam_param["cam_r_cc"][1];
     input_cam_info.rcam_intrinsics = r_K;
 
+    // 4. 全部按照最多的参数存储
     input_cam_info.lcam_dist_coeffs = cv::Mat::eye(1, 12, CV_32FC1);
     for (uint32_t k = 0; k < cam_param["cam_l_kc"].size(); k++) {
         input_cam_info.lcam_dist_coeffs.at<float>(0, k) = cam_param["cam_l_kc"][k];
