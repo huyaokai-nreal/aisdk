@@ -1,6 +1,7 @@
 #pragma once
 #include <string_view>
 namespace aisdk::base {
+bool CreateDir(std::string path);
 bool RemoveDir(const std::string_view& path);
 bool IsFileExist(const std::string_view& path);
 bool ReadFromFile(const std::string& file_name, std::string& content);

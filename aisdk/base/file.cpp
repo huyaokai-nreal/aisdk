@@ -1,6 +1,7 @@
 #include "aisdk/base/file.h"
 
 #include <dirent.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include <cstring>
@@ -10,6 +11,20 @@
 
 namespace aisdk::base {
 bool IsFileExist(const std::string_view &path) { return access(path.data(), F_OK) == 0; }
+
+bool CreateDir(std::string path) {
+    const char *dir = path.c_str();
+    if (0 == access(dir, 0)) {
+        return true;
+    } else {
+        if (0 == mkdir(dir, 0777)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+}
+
 bool RemoveDir(const std::string_view &path) {
     if (!IsFileExist(path)) {
         return true;

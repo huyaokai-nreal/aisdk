@@ -116,7 +116,7 @@ int main(int argc, char **argv) {
     int loop = 0;
     auto liter = l_file_map.begin();
     auto riter = r_file_map.begin();
-    bool test_case1 = true;
+    bool test_case1 = false;
     while (loop < loopn) {
         std::shared_ptr<StreamData> testdata = std::make_shared<StreamData>();
         testdata->frame_id = loop;

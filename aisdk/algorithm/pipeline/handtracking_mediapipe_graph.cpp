@@ -1,7 +1,11 @@
 #include "handtracking_mediapipe_graph.h"
 
+#include <string>
+
 #include "../common/NR_GlobalPredictorService.h"
+#include "aisdk/base/file.h"
 #include "aisdk/base/log.h"
+#include "aisdk/base/profiling.h"
 
 #define JOINTS_COUNT 25
 #define EZXR_DEFINED_JOINTS 23
@@ -28,9 +32,38 @@ std::map<std::string, int> gesture_map = {
 
 namespace aisdk::algorithm {
 
+template <typename... Args>
+std::string string_sprintf(const char* format, Args... args) {
+    int length = std::snprintf(nullptr, 0, format, args...);
+    assert(length >= 0);
+
+    char* buf = new char[length + 1];
+    std::snprintf(buf, length + 1, format, args...);
+
+    std::string str(buf);
+    delete[] buf;
+    // return std::move(str);
+    return str;
+}
+
+#define record_test (0)
+std::string lcam_local_record_rootpath;
+std::string rcam_local_record_rootpath;
+
 HandTrackingMediaPipeGraph::HandTrackingMediaPipeGraph() : MediaPipeGraph() {
     m_post_filter = std::make_shared<HandFilters>();
     m_post_filter->init();
+
+    if (record_test) {
+        auto& prof = aisdk::base::DebugProfiling::Get().GetOpt();
+        std::string root_path = prof.local_data_record_rootpath + "/" + "developer_test";
+        aisdk::base::CreateDir(root_path);
+
+        lcam_local_record_rootpath = root_path + "/" + "leftcam_raw";
+        rcam_local_record_rootpath = root_path + "/" + "rightcam_raw";
+        aisdk::base::CreateDir(lcam_local_record_rootpath);
+        aisdk::base::CreateDir(rcam_local_record_rootpath);
+    }
 }
 HandTrackingMediaPipeGraph::~HandTrackingMediaPipeGraph() {}
 
@@ -50,6 +83,18 @@ aisdk::algorithm::Status HandTrackingMediaPipeGraph::PushData(uint64_t timestamp
         mediapipe::MakePacket<aisdk::algorithm::CamInfo>(cam_info).At(mediapipe::Timestamp(m_increase_timestep))));
     MP_RETURN_IF_ERROR_WITH_LOG(m_calculator_graph->AddPacketToInputStream(
         "timestamp", mediapipe::MakePacket<uint64_t>(timestamp).At(mediapipe::Timestamp(m_increase_timestep))));
+
+    if (record_test) {
+        std::string lcam_pic_name =
+            lcam_local_record_rootpath + "/seq_" + string_sprintf("%010d", m_increase_timestep) + "_detect.jpg";
+        std::string rcam_pic_name =
+            rcam_local_record_rootpath + "/seq_" + string_sprintf("%010d", m_increase_timestep) + "_detect.jpg";
+        cv::Mat lcam = in_image[0].m_mat;
+        cv::Mat rcam = in_image[1].m_mat;
+
+        cv::imwrite(lcam_pic_name, lcam);
+        cv::imwrite(rcam_pic_name, rcam);
+    }
 
     m_increase_timestep++;
     return aisdk::algorithm::Status::SUCCESS;
