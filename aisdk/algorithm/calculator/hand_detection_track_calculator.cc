@@ -197,6 +197,7 @@ class HandDetTrackCalculator : public CalculatorBase {
             cc->Outputs().Tag("DET_BBOX_OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
             AISDK_LOG_TRACE("[HandDetTrackCalculator] At least single hand valid, pass");
         } else {
+            cc->Outputs().Tag("DET_BBOX_OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
             AISDK_LOG_TRACE("[HandDetTrackCalculator] No valid hand, truncated here");
         }
 

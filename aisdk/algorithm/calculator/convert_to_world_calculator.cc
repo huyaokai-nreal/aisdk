@@ -76,6 +76,7 @@ class ConvertToWorldCalculator : public CalculatorBase {
                 cc->Outputs().Tag("OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
             } else {
                 AISDK_LOG_TRACE("[ConvertToWorldCalculator] No valid hand, truncated here.");
+                cc->Outputs().Tag("OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
             }
 
         } else {

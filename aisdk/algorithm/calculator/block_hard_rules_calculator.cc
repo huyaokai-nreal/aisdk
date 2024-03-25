@@ -74,6 +74,7 @@ class BlockHardRulesCalculator : public CalculatorBase {
         if (output_buffer_->lhand_valid || output_buffer_->rhand_valid) {
             cc->Outputs().Tag("BLOCK_OUT").Add(output_buffer_.release(), cc->InputTimestamp());
         } else {
+            cc->Outputs().Tag("BLOCK_OUT").Add(output_buffer_.release(), cc->InputTimestamp());
             AISDK_LOG_TRACE("[BlockHardRulesCalculator] No valid hand, truncated here");
         }
 

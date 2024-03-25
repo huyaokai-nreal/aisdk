@@ -201,6 +201,7 @@ class HandLandmarkCalculator : public CalculatorBase {
                 output_buffer_->rhand_valid, output_buffer_->rhand_lcam.size(), output_buffer_->rhand_rcam.size());
             cc->Outputs().Tag("LANDMARK_OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
         } else {
+            cc->Outputs().Tag("LANDMARK_OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
             AISDK_LOG_TRACE("[HandLandmarkCalculator] No valid hand, truncated here");
         }
 

@@ -290,6 +290,7 @@ class LiftCalculator : public CalculatorBase {
         if (output_buffer_->lhand_valid || output_buffer_->rhand_valid) {
             cc->Outputs().Tag("LIFT_OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
         } else {
+            cc->Outputs().Tag("LIFT_OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
             AISDK_LOG_TRACE("[LiftCalculator] No valid hand, truncated here");
         }
         AISDK_LOG_TRACE("[LiftCalculator] Process complete");

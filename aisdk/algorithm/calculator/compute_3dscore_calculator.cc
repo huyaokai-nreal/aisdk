@@ -73,6 +73,7 @@ class Compute3DScoreCalculator : public CalculatorBase {
         if (kpt3d_data.lhand_valid || kpt3d_data.rhand_valid) {
             cc->Outputs().Tag("OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
         } else {
+            cc->Outputs().Tag("OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
             AISDK_LOG_TRACE("[Compute3DScoreCalculator] No valid hand, truncated here");
         }
 

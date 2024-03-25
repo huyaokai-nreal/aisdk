@@ -132,6 +132,8 @@ class GestureRecognitionCalculator : public CalculatorBase {
             output_buffer_->timestamp = timestamp;
             cc->Outputs().Tag("GR_OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
         } else {
+            output_buffer_->timestamp = timestamp;
+            cc->Outputs().Tag("GR_OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
             AISDK_LOG_TRACE("[GestureRecognitionCalculator] No valid hand, truncated here.");
         }
 
