@@ -53,8 +53,8 @@ class HandStateCalculator : public CalculatorBase {
         m_state_lhand->handle_score(score_data.lhand_score);
         m_state_rhand->handle_score(score_data.rhand_score);
 
-        output_buffer_->lhand_valid = (m_state_lhand->get_current_state() == aisdk::algorithm::HandState::Tracking);
-        output_buffer_->rhand_valid = (m_state_rhand->get_current_state() == aisdk::algorithm::HandState::Tracking);
+        output_buffer_->lhand_valid = score_data.lhand_score > 0.6;
+        output_buffer_->rhand_valid = score_data.rhand_score > 0.6;
 
         cc->Outputs().Tag("OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
 
