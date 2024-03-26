@@ -96,6 +96,7 @@ class LandmarkFilterCalculator : public CalculatorBase {
         if (output_buffer_->lhand_valid || output_buffer_->rhand_valid) {
             cc->Outputs().Tag("LANDMARK_OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
         } else {
+            cc->Outputs().Tag("LANDMARK_OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
             AISDK_LOG_TRACE("[LandmarkFilterCalculator] No valid hand, truncated here");
         }
 
