@@ -135,8 +135,7 @@ class HandDetTrackCalculator : public CalculatorBase {
             output_buffer_->images_lhand_rects.resize(2);
             output_buffer_->images_rhand_rects.resize(2);
 
-            // if (lastframe_kpt3d.lhand_valid) {
-            if (false) {
+            if (lastframe_kpt3d.lhand_valid) {
                 cv::Rect proj_bbox_lcam_lhand, proj_bbox_rcam_lhand;
                 std::vector<cv::Vec3f> lhand_predict_frame = lastframe_kpt3d.lhand;
                 cv::Vec3f root_kf_predicted;
