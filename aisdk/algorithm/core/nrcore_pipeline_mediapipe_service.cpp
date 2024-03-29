@@ -11,7 +11,6 @@ namespace mediapipe {
 void TriggerGloalGraphCalculatorsConstruct() {
     static std::once_flag oc;
     std::call_once(oc, [&]() { mediapipe::TriggerGloalGraphCalculatorsConstructForHandTracking(); });
-    return;
 }
 
 }  // namespace mediapipe
