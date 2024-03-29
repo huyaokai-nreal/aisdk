@@ -152,6 +152,22 @@ std::vector<cv::Vec2f> cv_to_uv_fisheye(std::shared_ptr<aisdk::base::OpenCVFishe
     return uv_res;
 }
 
+std::vector<cv::Vec2f> cv_to_uv_fisheye624(std::shared_ptr<aisdk::base::Fisheye624CameraModel> cam_model,
+                                           const std::vector<cv::Vec3f>& points3d_cv) {
+    std::vector<cv::Vec2f> uv_res;
+    std::vector<Eigen::Vector3f> points3d_eigen_internal;
+    uv_res.resize(REPROJ_POINT_NUM);
+    points3d_eigen_internal.resize(REPROJ_POINT_NUM);
+    for (size_t i = 0; i < REPROJ_POINT_NUM; i++) {
+        points3d_eigen_internal[i] = {points3d_cv[i][0], points3d_cv[i][1], points3d_cv[i][2]};
+    }
+    auto projected_2d_internal = cam_model->eye_to_window(points3d_eigen_internal);
+    for (size_t i = 0; i < REPROJ_POINT_NUM; i++) {
+        uv_res[i] = {projected_2d_internal[i](0), projected_2d_internal[i](1)};
+    }
+    return uv_res;
+}
+
 void reproj_bbox_with_new_headpose(cv::Mat intrinsics_lcam, cv::Mat intrinsics_rcam, NRTransform extrinsics_world,
                                    const std::vector<cv::Vec3f>& points_3d, cv::Rect& proj_bbox_lcam,
                                    cv::Rect& proj_bbox_rcam) {
@@ -195,6 +211,23 @@ void reproj_bbox_with_new_headpose_flora(std::shared_ptr<aisdk::base::OpenCVFish
 
     auto kpt2d_lcam = cv_to_uv_fisheye(lcam_model, kpt3d_cv_lcam);
     auto kpt2d_rcam = cv_to_uv_fisheye(rcam_model, kpt3d_cv_rcam);
+
+    proj_bbox_lcam = generate_bbox(479, 639, kpt2d_lcam);
+    proj_bbox_rcam = generate_bbox(479, 639, kpt2d_rcam);
+
+    return;
+}
+
+void reproj_bbox_with_new_headpose_flora624(std::shared_ptr<aisdk::base::Fisheye624CameraModel> lcam_model,
+                                            std::shared_ptr<aisdk::base::Fisheye624CameraModel> rcam_model,
+                                            NRTransform extrinsics_world, const std::vector<cv::Vec3f>& points_3d,
+                                            cv::Rect& proj_bbox_lcam, cv::Rect& proj_bbox_rcam) {
+    auto kpt3d_cv_lcam = recal_lcam_kpt3d_cv_with_new_headpose(extrinsics_world, points_3d);
+
+    auto kpt3d_cv_rcam = lcam_cv_to_rcam_cv(kpt3d_cv_lcam);
+
+    auto kpt2d_lcam = cv_to_uv_fisheye624(lcam_model, kpt3d_cv_lcam);
+    auto kpt2d_rcam = cv_to_uv_fisheye624(rcam_model, kpt3d_cv_rcam);
 
     proj_bbox_lcam = generate_bbox(479, 639, kpt2d_lcam);
     proj_bbox_rcam = generate_bbox(479, 639, kpt2d_rcam);

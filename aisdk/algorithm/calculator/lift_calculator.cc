@@ -33,6 +33,8 @@ namespace mediapipe {
 
 //     int camera_type;
 // };
+std::pair<std::shared_ptr<aisdk::base::Fisheye624CameraModel>, std::shared_ptr<aisdk::base::Fisheye624CameraModel>>
+format_fisheye624_camera_model(const aisdk::algorithm::CamInfo& cam_info);
 
 class LiftCalculator : public CalculatorBase {
    private:
@@ -70,6 +72,10 @@ class LiftCalculator : public CalculatorBase {
         const auto& kpt2d = cc->Inputs().Tag("LANDMARK_INPUT").Get<aisdk::algorithm::Kpt2dInternal>();
         const auto& cam_info = cc->Inputs().Tag("CAM_INFO_INPUT").Get<aisdk::algorithm::CamInfo>();
 
+        auto camera_model = format_fisheye624_camera_model(cam_info);
+        auto lcam_model = camera_model.first;
+        auto rcam_model = camera_model.second;
+
         std::unique_ptr<aisdk::algorithm::Kpt3dInternal> output_buffer_ =
             absl::make_unique<aisdk::algorithm::Kpt3dInternal>();
         output_buffer_->clear();
@@ -92,6 +98,30 @@ class LiftCalculator : public CalculatorBase {
                 cv::fisheye::undistortPoints(input_uv_rcam, undistort_uv_rcam, cam_info.rcam_intrinsics,
                                              cam_info.rcam_dist_coeffs.colRange(0, 4), cv::noArray(),
                                              cam_info.rcam_intrinsics);
+            } else if (cam_info.camera_type == 3) {
+                std::vector<Eigen::Vector2f> points2ds_eigen;
+                std::vector<Eigen::Vector2f> res_points2ds_eigen;
+                points2ds_eigen.resize(input_uv_lcam.size());
+
+                // 左目
+                undistort_uv_lcam.resize(input_uv_lcam.size());
+                for (size_t i = 0; i < input_uv_lcam.size(); i++) {
+                    points2ds_eigen[i] = {input_uv_lcam[i][0], input_uv_lcam[i][1]};
+                }
+                res_points2ds_eigen = lcam_model->undistort(points2ds_eigen);
+                for (size_t i = 0; i < input_uv_lcam.size(); i++) {
+                    undistort_uv_lcam[i] = {res_points2ds_eigen[i][0], res_points2ds_eigen[i][1]};
+                }
+
+                // 右目
+                undistort_uv_rcam.resize(input_uv_rcam.size());
+                for (size_t i = 0; i < input_uv_rcam.size(); i++) {
+                    points2ds_eigen[i] = {input_uv_rcam[i][0], input_uv_rcam[i][1]};
+                }
+                res_points2ds_eigen = rcam_model->undistort(points2ds_eigen);
+                for (size_t i = 0; i < input_uv_rcam.size(); i++) {
+                    undistort_uv_rcam[i] = {res_points2ds_eigen[i][0], res_points2ds_eigen[i][1]};
+                }
             } else {
                 undistort_uv_lcam = input_uv_lcam;
                 undistort_uv_rcam = input_uv_rcam;
@@ -199,7 +229,31 @@ class LiftCalculator : public CalculatorBase {
                 cv::fisheye::undistortPoints(input_uv_rcam, undistort_uv_rcam, cam_info.rcam_intrinsics,
                                              cam_info.rcam_dist_coeffs.colRange(0, 4), cv::noArray(),
                                              cam_info.rcam_intrinsics);
-            } else {  // ella
+            } else if (cam_info.camera_type == 3) {
+                std::vector<Eigen::Vector2f> points2ds_eigen;
+                std::vector<Eigen::Vector2f> res_points2ds_eigen;
+                points2ds_eigen.resize(input_uv_lcam.size());
+
+                // 左目
+                undistort_uv_lcam.resize(input_uv_lcam.size());
+                for (size_t i = 0; i < input_uv_lcam.size(); i++) {
+                    points2ds_eigen[i] = {input_uv_lcam[i][0], input_uv_lcam[i][1]};
+                }
+                res_points2ds_eigen = lcam_model->undistort(points2ds_eigen);
+                for (size_t i = 0; i < input_uv_lcam.size(); i++) {
+                    undistort_uv_lcam[i] = {res_points2ds_eigen[i][0], res_points2ds_eigen[i][1]};
+                }
+
+                // 右目
+                undistort_uv_rcam.resize(input_uv_rcam.size());
+                for (size_t i = 0; i < input_uv_rcam.size(); i++) {
+                    points2ds_eigen[i] = {input_uv_rcam[i][0], input_uv_rcam[i][1]};
+                }
+                res_points2ds_eigen = rcam_model->undistort(points2ds_eigen);
+                for (size_t i = 0; i < input_uv_rcam.size(); i++) {
+                    undistort_uv_rcam[i] = {res_points2ds_eigen[i][0], res_points2ds_eigen[i][1]};
+                }
+            } else {
                 undistort_uv_lcam = input_uv_lcam;
                 undistort_uv_rcam = input_uv_rcam;
             }

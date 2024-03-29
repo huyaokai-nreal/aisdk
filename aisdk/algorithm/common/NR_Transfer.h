@@ -34,6 +34,10 @@ void reproj_bbox_with_new_headpose_flora(std::shared_ptr<aisdk::base::OpenCVFish
                                          std::shared_ptr<aisdk::base::OpenCVFisheyeCameraModel> rcam_model,
                                          NRTransform extrinsics_world, const std::vector<cv::Vec3f>& points_3d,
                                          cv::Rect& proj_bbox_lcam, cv::Rect& proj_bbox_rcam);
+void reproj_bbox_with_new_headpose_flora624(std::shared_ptr<aisdk::base::Fisheye624CameraModel> lcam_model,
+                                            std::shared_ptr<aisdk::base::Fisheye624CameraModel> rcam_model,
+                                            NRTransform extrinsics_world, const std::vector<cv::Vec3f>& points_3d,
+                                            cv::Rect& proj_bbox_lcam, cv::Rect& proj_bbox_rcam);
 
 }  // namespace aisdk::algorithm
 
