@@ -5,6 +5,7 @@
 #include "../internal_structs/kpt2d_struct_internal.h"
 #include "../internal_structs/kpt3d_struct_internal.h"
 #include "../model/hand_lift.h"
+#include "aisdk/base/camera_model.h"
 #include "aisdk/base/log.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/canonical_errors.h"
