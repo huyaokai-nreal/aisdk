@@ -30,8 +30,8 @@ class XrMediaServiceUtils {
     
     // 创建一个calculator的net算子
     template <typename T>
-    static std::shared_ptr<T> CreateNetAlgoBase(void* parent_graph, std::string node_name) {
-        static_assert(std::is_base_of<CalculatorBaseNet, T>::value, "T is not derived from CalculatorBaseNet!");
+    static std::shared_ptr<T> CreateNetAlgoBase(void* parent_graph, const std::string& node_name) {
+        static_assert(std::is_base_of_v<CalculatorBaseNet, T>, "T is not derived from CalculatorBaseNet!");
 
         if (m_pipelineconfig.end() == m_pipelineconfig.find(parent_graph)) {
             return nullptr;

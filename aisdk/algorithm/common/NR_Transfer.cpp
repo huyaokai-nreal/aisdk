@@ -1,7 +1,7 @@
 #include "NR_Transfer.h"
 
-#include "../func/rsntiny_preprocess/generate_bbox.h"
 #include "NR_GlobalCoordService.h"
+#include "aisdk/algorithm/func/generate_bbox.h"
 
 namespace aisdk::algorithm {
 

@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "aisdk/algorithm/calculator/hand_landmark_calculator.pb.h"
-#include "aisdk/algorithm/func/rsntiny_preprocess/warpaffine.h"
+#include "aisdk/algorithm/func/warpaffine.h"
 #include "aisdk/algorithm/internal_structs/det_struct_internal.h"
 #include "aisdk/algorithm/internal_structs/kpt2d_struct_internal.h"
 #include "aisdk/algorithm/model/hand_rsntiny.h"
@@ -49,14 +49,13 @@ class HandLandmarkCalculator : public CalculatorBase {
 
     absl::Status Open(CalculatorContext* cc) final {
         AISDK_LOG_TRACE("[HandLandmarkCalculator] Open start");
-        auto options = cc->Options<aisdk::HandLandmarkCalculatorOptions>();
+        const auto& options = cc->Options<aisdk::HandLandmarkCalculatorOptions>();
         input_height_ = options.input_height();
         input_width_ = options.input_width();
         netalgo = aisdk::algorithm::XrMediaServiceUtils::CreateNetAlgoBase<aisdk::algorithm::RSNTiny>((void*)0x202310,
                                                                                                       "2d_rsntiny");
         if (!netalgo) {
-            return absl::Status(absl::StatusCode::kInvalidArgument,
-                                "[HandLandmarkCalculator] CreateNetAlgoBase nodename error");
+            return {absl::StatusCode::kInvalidArgument, "[HandLandmarkCalculator] CreateNetAlgoBase nodename error"};
         }
         AISDK_LOG_TRACE("[HandLandmarkCalculator] Open complete");
         return absl::OkStatus();
@@ -87,8 +86,8 @@ class HandLandmarkCalculator : public CalculatorBase {
             const cv::Rect& lhand_lcam_rect = bbox_data.images_lhand_rects[0][0];
             const cv::Rect& lhand_rcam_rect = bbox_data.images_lhand_rects[1][0];
 
-            cv::Mat lhand_lcam_roi = generate_roi_image(lcam_proto_image.m_mat, lhand_lcam_rect);
-            cv::Mat lhand_rcam_roi = generate_roi_image(rcam_proto_image.m_mat, lhand_rcam_rect);
+            cv::Mat lhand_lcam_roi = generate_roi_image(lcam_proto_image.m_mat, lhand_lcam_rect, rsn_w, rsn_h);
+            cv::Mat lhand_rcam_roi = generate_roi_image(rcam_proto_image.m_mat, lhand_rcam_rect, rsn_w, rsn_h);
 
             cv::Mat lhand_lcam_flipped_roi;
             cv::Mat lhand_rcam_flipped_roi;
@@ -97,8 +96,8 @@ class HandLandmarkCalculator : public CalculatorBase {
 
             std::vector<aisdk::algorithm::Image> lhand_cropped_rois;
 
-            lhand_cropped_rois.emplace_back(std::move(aisdk::algorithm::Image(lhand_lcam_flipped_roi)));
-            lhand_cropped_rois.emplace_back(std::move(aisdk::algorithm::Image(lhand_rcam_flipped_roi)));
+            lhand_cropped_rois.emplace_back(lhand_lcam_flipped_roi);
+            lhand_cropped_rois.emplace_back(lhand_rcam_flipped_roi);
 
             aisdk::algorithm::RSNResult rsn_result;
 
@@ -144,13 +143,13 @@ class HandLandmarkCalculator : public CalculatorBase {
             const cv::Rect& rhand_lcam_rect = bbox_data.images_rhand_rects[0][0];
             const cv::Rect& rhand_rcam_rect = bbox_data.images_rhand_rects[1][0];
 
-            cv::Mat rhand_lcam_roi = generate_roi_image(lcam_proto_image.m_mat, rhand_lcam_rect);
-            cv::Mat rhand_rcam_roi = generate_roi_image(rcam_proto_image.m_mat, rhand_rcam_rect);
+            cv::Mat rhand_lcam_roi = generate_roi_image(lcam_proto_image.m_mat, rhand_lcam_rect, rsn_w, rsn_h);
+            cv::Mat rhand_rcam_roi = generate_roi_image(rcam_proto_image.m_mat, rhand_rcam_rect, rsn_w, rsn_h);
 
             std::vector<aisdk::algorithm::Image> rhand_cropped_rois;
 
-            rhand_cropped_rois.emplace_back(std::move(aisdk::algorithm::Image(rhand_lcam_roi)));
-            rhand_cropped_rois.emplace_back(std::move(aisdk::algorithm::Image(rhand_rcam_roi)));
+            rhand_cropped_rois.emplace_back(rhand_lcam_roi);
+            rhand_cropped_rois.emplace_back(rhand_rcam_roi);
 
             aisdk::algorithm::RSNResult rsn_result;
 

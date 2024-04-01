@@ -2,7 +2,7 @@
 
 #include "../func/NR_CV.h"
 #include "../func/permute.h"
-#include "../func/rsntiny_postprocess/rsntiny_postprocess.h"
+#include "../func/rsntiny_postprocess.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/profiling.h"
 

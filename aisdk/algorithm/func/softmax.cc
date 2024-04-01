@@ -9,7 +9,7 @@
 #include <float.h>
 #include <math.h>
 
-#include "../NR_CV.h"
+#include "NR_CV.h"
 
 void softmax_single_lane_inplace(float* input, float* output, int size) {
     float max = -FLT_MAX;

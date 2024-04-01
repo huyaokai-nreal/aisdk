@@ -39,6 +39,4 @@ void rsntiny_postprocess(float* __restrict input_hm, float* __restrict kpt_x_out
 
     reduce_sum_w(hm_reduce_col_row.data(), kpt_x_out, 21, 1, 32);
     reduce_sum_h(hm_reduce_row_col.data(), kpt_y_out, 21, 32, 1);
-
-    return;
 }
