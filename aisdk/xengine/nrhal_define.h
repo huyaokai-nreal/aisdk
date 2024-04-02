@@ -95,24 +95,43 @@ enum class ImageCategory {
 };
 
 struct Tensor {
+    // tensor的名称
     std::string m_name;
+    // tensor的秩
     uint32_t m_rank = 0;
+    // tensor的dims
     // m_dims,不含Batch和Multi-In/Out维度
     // m_dims,从0到N-1,分别代表高维到低维
+    // 举例: [c,h,w]=[1,128,123]
     std::vector<uint32_t> m_dims;
+    // tensor的layout，这是个经验值，仅参考
     TensorFormat m_dimtype = TensorFormat::UNKNOWN;
+    // 每个元素的数据类型
     ElementType m_elementype = ElementType::UNKNOWN;
+    // 每个元素的字节大小
     uint32_t m_elementbyte = 0;
+    // 全部元素的数量
     uint32_t m_elementsize = 0;
+    // 保留
     uint64_t m_phyaddr = 0;
+    // 对应模型的输入或者输出内存地址
+    // 注意: 如果m_packed_bybatch=true, 这个是起始地址，用户读写数据请注意偏移
+    // 偏移字节 mem = (char*)m_viraddr + batch_n * m_elementsize * m_elementbyte;
     void *m_viraddr = nullptr;
 };
 
+// 描述模型整个输入或输出的tensor信息
 struct IoTensors {
-    uint32_t m_batch = 0;      // user
-    uint32_t m_ori_batch = 0;  // ori_model
+    // 实际创建的batch值，可用户期望变更，应该是m_ori_batch的整数倍
+    uint32_t m_batch = 0;
+    // 模型本身的batch值
+    uint32_t m_ori_batch = 0;
+    // 模型多输入或多输出的tensor数，应该和m_tensors.size()是一致的
     uint32_t m_multishape_num = 0;
+    // 提示batch的tensor的内存是否packed
+    // 目前我们遇到的基本都是packed的，也就是说单个teneor的batch是连续的
     bool m_packed_bybatch = false;
+    // tensor细节
     std::vector<Tensor> m_tensors;
 };
 
