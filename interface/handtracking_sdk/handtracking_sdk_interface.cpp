@@ -707,7 +707,7 @@ Plugin* Plugin::GetInstance() {
 
 void Plugin::DestoryInstance() {
     if (m_ins) {
-        delete m_ins;
+        // delete m_ins;
         m_ins = nullptr;
     }
 }
