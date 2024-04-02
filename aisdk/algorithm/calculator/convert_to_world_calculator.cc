@@ -6,6 +6,7 @@
 #include "../internal_structs/headpose_struct_internal.h"
 #include "../internal_structs/kpt3d_struct_internal.h"
 #include "aisdk/base/log.h"
+#include "aisdk/base/time.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 
@@ -50,6 +51,9 @@ class ConvertToWorldCalculator : public CalculatorBase {
     }
 
     absl::Status Process(CalculatorContext* cc) final {
+#if defined(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
+        TIMER_ONCE_WITH_TAG(ConvertToWorldCalculator::Process);
+#endif
         AISDK_LOG_TRACE("[ConvertToWorldCalculator] Process start.");
 
         if (!cc->Inputs().Tag("HEADPOSE").IsEmpty() && !cc->Inputs().Tag("INPUT").IsEmpty()) {

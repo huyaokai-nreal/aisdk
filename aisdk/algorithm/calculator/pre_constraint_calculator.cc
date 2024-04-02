@@ -3,6 +3,7 @@
 
 #include "../internal_structs/kpt3d_struct_internal.h"
 #include "aisdk/base/log.h"
+#include "aisdk/base/time.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 #include "thirdparty/MANO_IK-main/mano/AIK.h"
@@ -56,6 +57,9 @@ class PreConstrainCalculator : public CalculatorBase {
     }
 
     absl::Status Process(CalculatorContext* cc) final {
+#if defined(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
+        TIMER_ONCE_WITH_TAG(PreConstrainCalculator::Process);
+#endif
         AISDK_LOG_TRACE("[PreConstrainCalculator] Process start");
         const auto& input_data = cc->Inputs().Tag("INPUT").Get<aisdk::algorithm::Kpt3dInternal>();
 

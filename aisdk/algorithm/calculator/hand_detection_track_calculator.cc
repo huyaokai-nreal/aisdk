@@ -9,6 +9,7 @@
 #include "../model/hand_detect.h"
 #include "aisdk/base/camera_model.h"
 #include "aisdk/base/log.h"
+#include "aisdk/base/time.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 
@@ -127,6 +128,9 @@ class HandDetTrackCalculator : public CalculatorBase {
     }
 
     absl::Status Process(CalculatorContext *cc) final {
+#if defined(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
+        TIMER_ONCE_WITH_TAG(HandDetTrackCalculator::Process);
+#endif
         AISDK_LOG_TRACE("[HandDetTrackCalculator] Process start");
 
         const auto &timestamp = cc->Inputs().Tag("TIMESTAMP").Get<uint64_t>();

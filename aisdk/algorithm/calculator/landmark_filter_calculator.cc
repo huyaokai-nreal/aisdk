@@ -5,6 +5,7 @@
 #include "../internal_structs/kpt2d_struct_internal.h"
 #include "../model/landmark_filter.h"
 #include "aisdk/base/log.h"
+#include "aisdk/base/time.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 
@@ -58,6 +59,9 @@ class LandmarkFilterCalculator : public CalculatorBase {
     }
 
     absl::Status Process(CalculatorContext* cc) final {
+#if defined(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
+        TIMER_ONCE_WITH_TAG(LandmarkFilterCalculator::Process);
+#endif
         AISDK_LOG_TRACE("[LandmarkFilterCalculator] Process start");
         const auto& input_data = cc->Inputs().Tag("LANDMARK_INPUT").Get<aisdk::algorithm::Kpt2dInternal>();
 

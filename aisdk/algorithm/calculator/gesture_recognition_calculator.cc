@@ -9,6 +9,7 @@
 #include "../internal_structs/score_3d_struct_internal.h"
 #include "../internal_structs/standard_kpt3d_struct_internal.h"
 #include "aisdk/base/log.h"
+#include "aisdk/base/time.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 
@@ -54,6 +55,9 @@ class GestureRecognitionCalculator : public CalculatorBase {
     }
 
     absl::Status Process(CalculatorContext* cc) final {
+#if defined(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
+        TIMER_ONCE_WITH_TAG(GestureRecognitionCalculator::Process);
+#endif
         AISDK_LOG_TRACE("[GestureRecognitionCalculator] Process start.");
 
         if (cc->Inputs().Tag("GR_KPT_INPUT").IsEmpty() || cc->Inputs().Tag("GR_SCORE_INPUT").IsEmpty() ||

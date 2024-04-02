@@ -48,10 +48,10 @@ aisdk::algorithm::Status MediaPipeGraph::SetInputStreamCache(uint64_t graph_stre
     stream->timestamp = timestamp;
     stream->m_output_packs_sum = m_output_stream_name.size();
     stream->m_output_packs.resize(stream->m_output_packs_sum);
-    if (inference_time_test) {
-        stream->m_stream_time = std::make_shared<aisdk::base::NaiveTimer>(__LINE__, "MediaPipeGraph",
-                                                                          std::string("MediaPipeGraph::inference"));
-    }
+#if defined(ENABLE_ALGORITHM_GRAPH_STREAM_EVAL_TIME)
+    stream->m_stream_time =
+        std::make_shared<aisdk::base::NaiveTimer>(__LINE__, "MediaPipeGraph", std::string("MediaPipeGraph::inference"));
+#endif
 
     std::lock_guard<std::mutex> guard(m_inference_lock);
     auto insert_result = m_inference_stream_cache.insert(std::make_pair(graph_stream_stamp, stream));
@@ -70,10 +70,10 @@ aisdk::algorithm::Status MediaPipeGraph::ClearInputStreamCache(uint64_t graph_st
 }
 
 bool MediaPipeGraph::MoveOutputCahce(std::shared_ptr<StreamCache> &stream) {
-    if (inference_time_test) {
-        // 销毁计时器，打印耗时
-        stream->m_stream_time = nullptr;
-    }
+#if defined(ENABLE_ALGORITHM_GRAPH_STREAM_EVAL_TIME)
+    // 销毁计时器，打印耗时
+    stream->m_stream_time = nullptr;
+#endif
 
     {
         std::lock_guard<std::mutex> guard(m_output_lock);

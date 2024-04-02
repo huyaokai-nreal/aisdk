@@ -9,6 +9,7 @@
 #include "aisdk/algorithm/internal_structs/kpt2d_struct_internal.h"
 #include "aisdk/algorithm/model/hand_rsntiny.h"
 #include "aisdk/base/log.h"
+#include "aisdk/base/time.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 
@@ -62,6 +63,9 @@ class HandLandmarkCalculator : public CalculatorBase {
     }
 
     absl::Status Process(CalculatorContext* cc) final {
+#if defined(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
+        TIMER_ONCE_WITH_TAG(HandLandmarkCalculator::Process);
+#endif
         AISDK_LOG_TRACE("[HandLandmarkCalculator] Process start");
 
         if (cc->Inputs().Tag("IMAGE_INPUT").IsEmpty() || cc->Inputs().Tag("BBOX_SMOOTHED_OUTPUT").IsEmpty()) {

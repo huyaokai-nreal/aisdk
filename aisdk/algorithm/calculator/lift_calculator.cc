@@ -7,6 +7,7 @@
 #include "../model/hand_lift.h"
 #include "aisdk/base/camera_model.h"
 #include "aisdk/base/log.h"
+#include "aisdk/base/time.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 
@@ -67,6 +68,9 @@ class LiftCalculator : public CalculatorBase {
     }
 
     absl::Status Process(CalculatorContext* cc) final {
+#if defined(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
+        TIMER_ONCE_WITH_TAG(LiftCalculator::Process);
+#endif
         AISDK_LOG_TRACE("[LiftCalculator] Process start");
 
         const auto& bbox = cc->Inputs().Tag("BBOX_INPUT").Get<aisdk::algorithm::DetOutputInternal>();

@@ -5,6 +5,7 @@
 #include "../internal_structs/hand_state_struct_internal.h"
 #include "../internal_structs/standard_kpt3d_struct_internal.h"
 #include "aisdk/base/log.h"
+#include "aisdk/base/time.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 
@@ -43,6 +44,9 @@ class KalmanFilterCorrectionCalculator : public CalculatorBase {
     }
 
     absl::Status Process(CalculatorContext* cc) final {
+#if defined(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
+        TIMER_ONCE_WITH_TAG(KalmanFilterCorrectionCalculator::Process);
+#endif
         AISDK_LOG_TRACE("[KalmanFilterCorrectionCalculator] Process start.");
         const auto& kpt3d_world = cc->Inputs().Tag("INPUT").Get<aisdk::algorithm::StandardKpt3dInternal>();
         const auto& hand_state = cc->Inputs().Tag("STATE").Get<aisdk::algorithm::HandStateInternal>();

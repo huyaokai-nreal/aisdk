@@ -4,6 +4,7 @@
 #include "../common/NR_Seq_Manager.h"
 #include "../internal_structs/det_struct_internal.h"
 #include "aisdk/base/log.h"
+#include "aisdk/base/time.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 
@@ -48,6 +49,9 @@ class DetectBoxSmoothingCalculator : public CalculatorBase {
     }
 
     absl::Status Process(CalculatorContext* cc) final {
+#if defined(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
+        TIMER_ONCE_WITH_TAG(DetectBoxSmoothingCalculator::Process);
+#endif
         AISDK_LOG_TRACE("[DetectBoxSmoothingCalculator] Process start");
         const auto& input_data = cc->Inputs().Tag("BBOX_INPUT").Get<aisdk::algorithm::DetOutputInternal>();
 

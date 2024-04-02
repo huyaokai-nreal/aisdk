@@ -3,6 +3,7 @@
 
 #include "../internal_structs/headpose_struct_internal.h"
 #include "aisdk/base/log.h"
+#include "aisdk/base/time.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 
@@ -37,6 +38,9 @@ class CheckHeadposeCalculator : public CalculatorBase {
     }
 
     absl::Status Process(CalculatorContext* cc) final {
+#if defined(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
+        TIMER_ONCE_WITH_TAG(CheckHeadposeCalculator::Process);
+#endif
         AISDK_LOG_TRACE("[CheckHeadposeCalculator] Process start.");
         const auto& input_data = cc->Inputs().Tag("INPUT").Get<aisdk::algorithm::HeadPoseInternal>();
         std::unique_ptr<aisdk::algorithm::HeadPoseInternal> output_buffer_ =

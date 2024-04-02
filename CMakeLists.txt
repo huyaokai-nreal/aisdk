@@ -103,6 +103,10 @@ if(ENABLE_CLANG_TIDY_CHECK)
   set(CMAKE_CXX_CLANG_TIDY clang-tidy -format-style=file)
 endif()
 
+# build algorithm
+option(ENABLE_ALGORITHM_GRAPH_STREAM_EVAL_TIME "enable algorithm mediapipe graph stream eval time."  OFF)
+option(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME "enable algorithm mediapipe calculator process eval time."  OFF)
+
 # build xengine model package
 set(MODEL_TAR_NAME "handtracking_pipeline_v1.0.0.tar")
 set(DEFAULT_PIPELINE_TAR_PATH "${CMAKE_CURRENT_SOURCE_DIR}/pipeline_tar/${MODEL_TAR_NAME}.enc")

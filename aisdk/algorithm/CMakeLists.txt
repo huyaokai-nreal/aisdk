@@ -46,9 +46,18 @@ target_link_libraries(${ALGORITHM_LIBRARY_NAME}
     glog::glog
     protobuf::protobuf
 )
+
 target_compile_options(${ALGORITHM_LIBRARY_NAME}
     PRIVATE -Wno-error
     PRIVATE -DNRPLUGIN  # handtracking_sdk需要的宏定义
 )
+
+if(ENABLE_ALGORITHM_GRAPH_STREAM_EVAL_TIME)
+    target_compile_options(${ALGORITHM_LIBRARY_NAME} PRIVATE -DENABLE_ALGORITHM_GRAPH_STREAM_EVAL_TIME)
+endif()
+
+if(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
+    target_compile_options(${ALGORITHM_LIBRARY_NAME} PRIVATE -DENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
+endif()
 
 add_clang_format_target(${ALGORITHM_LIBRARY_NAME})

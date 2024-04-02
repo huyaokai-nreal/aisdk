@@ -4,6 +4,7 @@
 #include "../internal_structs/det_struct_internal.h"
 #include "../model/hand_detect.h"
 #include "aisdk/base/log.h"
+#include "aisdk/base/time.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 
@@ -50,6 +51,9 @@ class HandDetectionCalculator : public CalculatorBase {
     }
 
     absl::Status Process(CalculatorContext *cc) final {
+#if defined(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
+        TIMER_ONCE_WITH_TAG(HandDetectionCalculator::Process);
+#endif
         AISDK_LOG_TRACE("[HandDetectionCalculator] Process start");
 
         const auto &image_data = cc->Inputs().Tag("IMAGE_INPUT").Get<std::vector<aisdk::algorithm::Image>>();

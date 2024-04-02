@@ -5,6 +5,7 @@
 #include "../internal_structs/hand_state_struct_internal.h"
 #include "../internal_structs/score_3d_struct_internal.h"
 #include "aisdk/base/log.h"
+#include "aisdk/base/time.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 
@@ -41,6 +42,9 @@ class HandStateCalculator : public CalculatorBase {
     }
 
     absl::Status Process(CalculatorContext* cc) final {
+#if defined(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
+        TIMER_ONCE_WITH_TAG(HandStateCalculator::Process);
+#endif
         AISDK_LOG_TRACE("[HandStateCalculator] Process start.");
 
         const auto& score_data = cc->Inputs().Tag("SCORE_INPUT").Get<aisdk::algorithm::Score3dInternal>();

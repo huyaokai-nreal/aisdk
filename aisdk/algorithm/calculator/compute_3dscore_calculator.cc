@@ -7,6 +7,7 @@
 #include "../internal_structs/kpt3d_struct_internal.h"
 #include "../internal_structs/score_3d_struct_internal.h"
 #include "aisdk/base/log.h"
+#include "aisdk/base/time.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 
@@ -50,6 +51,9 @@ class Compute3DScoreCalculator : public CalculatorBase {
     }
 
     absl::Status Process(CalculatorContext* cc) final {
+#if defined(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
+        TIMER_ONCE_WITH_TAG(Compute3DScoreCalculator::Process);
+#endif
         AISDK_LOG_TRACE("[Compute3DScoreCalculator] Process start");
         const auto& cam_info = cc->Inputs().Tag("CAM_INFO_INPUT").Get<aisdk::algorithm::CamInfo>();
         const auto& kpt2d_data = cc->Inputs().Tag("LANDMARK_INPUT").Get<aisdk::algorithm::Kpt2dInternal>();

@@ -4,6 +4,7 @@
 #include "../internal_structs/kpt3d_struct_internal.h"
 #include "../internal_structs/standard_kpt3d_struct_internal.h"
 #include "aisdk/base/log.h"
+#include "aisdk/base/time.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 
@@ -49,6 +50,9 @@ class StandardizeKeypointsCalculator : public CalculatorBase {
     }
 
     absl::Status Process(CalculatorContext* cc) final {
+#if defined(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
+        TIMER_ONCE_WITH_TAG(StandardizeKeypointsCalculator::Process);
+#endif
         AISDK_LOG_TRACE("[StandardizeKeypointsCalculator] Process start.");
         const auto& input_data = cc->Inputs().Tag("INPUT").Get<aisdk::algorithm::Kpt3dInternal>();
 

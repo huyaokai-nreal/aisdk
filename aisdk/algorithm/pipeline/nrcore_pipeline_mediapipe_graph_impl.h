@@ -8,8 +8,6 @@
 #include "nrcore_pipeline.h"
 #include "aisdk/base/time.h"
 
-#define inference_time_test (0)
-
 namespace aisdk::algorithm {
 
 class StreamCache {

@@ -4,6 +4,7 @@
 #include "../internal_structs/kpt3d_struct_internal.h"
 #include "aisdk/algorithm/calculator/block_hard_rules_calculator.pb.h"
 #include "aisdk/base/log.h"
+#include "aisdk/base/time.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 
@@ -49,6 +50,9 @@ class BlockHardRulesCalculator : public CalculatorBase {
     }
 
     absl::Status Process(CalculatorContext* cc) final {
+#if defined(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
+        TIMER_ONCE_WITH_TAG(BlockHardRulesCalculator::Process);
+#endif
         AISDK_LOG_TRACE("[BlockHardRulesCalculator] Process start");
         const auto& input_data = cc->Inputs().Tag("BLOCK_IN").Get<aisdk::algorithm::Kpt3dInternal>();
 
