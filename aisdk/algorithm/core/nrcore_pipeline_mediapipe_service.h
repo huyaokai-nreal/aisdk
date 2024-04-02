@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <map>
 
 #include "../pipeline/nrcore_pipeline.h"
@@ -15,6 +16,7 @@ void TriggerGloalGraphCalculatorsConstruct();
 }  // namespace mediapipe
 
 namespace aisdk::algorithm {
+using BaseNetAlgoPtr = std::unique_ptr<aisdk::xengine::BaseNetAlgo,std::function<void(aisdk::xengine::BaseNetAlgo*)>>;
 class CalculatorBaseNet;
 class XrMediaServiceUtils {
    public:
@@ -58,7 +60,9 @@ class XrMediaServiceUtils {
                         AISDK_LOG_TRACE("CreateNetAlgo algo_name={} Failure !!!", pc.algo_name.c_str());
                         break;
                     }
-                    handle->SetBaseNetAlgo(net);
+                    AISDK_LOG_TRACE("CreateNetAlgoBase: {}", (void *)net);
+                    BaseNetAlgoPtr net_ptr(net, XrMediaServiceUtils::DeleteNetAlgoBase);
+                    handle->SetBaseNetAlgo(net_ptr);
                     auto ret = handle->Init(pc, pa, pb);
                     if (ret != aisdk::xengine::Status::SUCCESS) {
                         handle = nullptr;

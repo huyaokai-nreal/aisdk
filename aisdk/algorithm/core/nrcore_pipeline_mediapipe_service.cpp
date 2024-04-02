@@ -61,6 +61,9 @@ std::string XrMediaServiceUtils::GetPipelineNodeAlgoParam(void *parent_graph, st
 
 CameraParams &XrMediaServiceUtils::GetCameraParams() { return m_camera_params; }
 
-void XrMediaServiceUtils::DeleteNetAlgoBase(aisdk::xengine::BaseNetAlgo *net) { m_funcs.m_destorynetalgo(net); }
+void XrMediaServiceUtils::DeleteNetAlgoBase(aisdk::xengine::BaseNetAlgo *net) {
+    AISDK_LOG_TRACE("DeleteNetAlgoBase: {}", (void *)net);
+    m_funcs.m_destorynetalgo(net);
+}
 
 }  // namespace aisdk::algorithm

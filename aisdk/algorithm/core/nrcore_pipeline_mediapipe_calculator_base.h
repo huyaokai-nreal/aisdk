@@ -15,13 +15,9 @@ namespace aisdk::algorithm {
 class CalculatorBaseNet {
    public:
     CalculatorBaseNet() {}
-    ~CalculatorBaseNet() {
-        if (m_net) {
-            XrMediaServiceUtils::DeleteNetAlgoBase(m_net);
-        }
-    }
+    ~CalculatorBaseNet() {}
 
-    void SetBaseNetAlgo(aisdk::xengine::BaseNetAlgo* net) { m_net = net; }
+    void SetBaseNetAlgo(BaseNetAlgoPtr& net) { m_net = std::move(net); }
 
     aisdk::xengine::Status Init(aisdk::xengine::NetAlgoConfig& algo, aisdk::xengine::ModelConfig& model,
                                 aisdk::xengine::SessionConfig& session) {
@@ -53,7 +49,7 @@ class CalculatorBaseNet {
     }
 
    public:
-    aisdk::xengine::BaseNetAlgo* m_net = nullptr;
+    BaseNetAlgoPtr m_net = nullptr;
     aisdk::xengine::IoTensors itensor;
     aisdk::xengine::IoTensors otensor;
 };
