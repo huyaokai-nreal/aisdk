@@ -51,7 +51,6 @@ TEST_CASE("testing create netalgo") {
                 aisdk::xengine::BaseNetAlgo* basealgo = _ZN2NR200TK7FUNC002E(nullptr, nullptr, nullptr, nullptr);
                 CHECK(basealgo);
 
-                detect_handle->SetBaseNetAlgo(basealgo);
                 auto ret = detect_handle->Init(pc, pa, pb);
                 if (ret == aisdk::xengine::Status::SUCCESS) {
                     aisdk::xengine::IoTensors iots = basealgo->GetInputTensors();
