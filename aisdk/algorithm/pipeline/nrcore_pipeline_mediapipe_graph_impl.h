@@ -1,17 +1,24 @@
 #pragma once
 
+#include <cstdint>
 #include <list>
 #include <mutex>
 
 #include "mediapipe/framework/calculator_framework.h"
 #include "nrcore_pipeline.h"
+#include "aisdk/base/time.h"
+
+#define inference_time_test (0)
 
 namespace aisdk::algorithm {
 
-class OutputCache {
+class StreamCache {
    public:
     std::mutex m_lock;
-    std::list<mediapipe::Packet> m_packs;
+    uint64_t timestamp;
+    uint32_t m_output_packs_sum;
+    std::vector<mediapipe::Packet> m_output_packs;
+    std::shared_ptr<aisdk::base::NaiveTimer> m_stream_time;
 };
 
 class MediaPipeGraph : public PipeGraphImpl {
@@ -23,12 +30,31 @@ class MediaPipeGraph : public PipeGraphImpl {
                                   CameraParams &camera);
     aisdk::algorithm::Status Start();
     aisdk::algorithm::Status Stop();
+    // 登记已经push到grapgh中的stream，后续我们将graph输出的stream结果做匹配。
+    aisdk::algorithm::Status SetInputStreamCache(uint64_t graph_stream_stamp, uint64_t timestamp);
+    // graph添加stream失败，主动删除SetInputStreamCache登记的stream
+    aisdk::algorithm::Status ClearInputStreamCache(uint64_t graph_stream_stamp);
+    // 获取最新的stream结果，如果不被调用，也不会阻塞graph运行。MoveOutputCahce函数将会将超过m_max_output_cahce_num的stream结果删除
+    std::shared_ptr<StreamCache> GetOutputStreamCache();
+    // 内部函数，graph将多输出的packet合并到StreamCache中。
+    bool CallBackInferenceResult(const mediapipe::Packet &packet, uint64_t output_packs_order);
 
    public:
     std::unique_ptr<mediapipe::CalculatorGraph> m_calculator_graph;
     std::vector<std::string> m_input_stream_name;
     std::vector<std::string> m_output_stream_name;
-    std::map<std::string, std::shared_ptr<OutputCache>> m_output_stream_cache;
+    
+    private:
+    std::mutex m_inference_lock;
+    std::map<uint64_t, std::shared_ptr<StreamCache>> m_inference_stream_cache;
+    
+    private:
+    std::mutex m_output_lock;
+    uint32_t m_max_output_cahce_num = 3;
+    // 假设graph可以正常按时间戳顺序输出
+    std::list<std::shared_ptr<StreamCache>> m_output_stream_cache;
+    // 删除缓存中最旧的stream
+    bool MoveOutputCahce(std::shared_ptr<StreamCache>& stream);
 };
 
 }  // namespace aisdk::algorithm

@@ -131,10 +131,10 @@ PredictorState KFPredictor::predict(uint64_t target_ts) {
 
     m_kf_impl->predict();
 
-    AISDK_LOG_INFO("predict state: {}, {}, {}, {}, {}, {}", m_kf_impl->statePre.at<float>(S_X),
-                   m_kf_impl->statePre.at<float>(S_Y), m_kf_impl->statePre.at<float>(S_Z),
-                   m_kf_impl->statePre.at<float>(S_VX), m_kf_impl->statePre.at<float>(S_VY),
-                   m_kf_impl->statePre.at<float>(S_VZ));
+    // AISDK_LOG_INFO("predict state: {}, {}, {}, {}, {}, {}", m_kf_impl->statePre.at<float>(S_X),
+    //                m_kf_impl->statePre.at<float>(S_Y), m_kf_impl->statePre.at<float>(S_Z),
+    //                m_kf_impl->statePre.at<float>(S_VX), m_kf_impl->statePre.at<float>(S_VY),
+    //                m_kf_impl->statePre.at<float>(S_VZ));
 
     return {cv::Vec3f{m_kf_impl->statePre.at<float>(S_X), m_kf_impl->statePre.at<float>(S_Y),
                       m_kf_impl->statePre.at<float>(S_Z)},

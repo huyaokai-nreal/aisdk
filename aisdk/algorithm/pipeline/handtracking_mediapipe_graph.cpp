@@ -1,5 +1,7 @@
 #include "handtracking_mediapipe_graph.h"
 
+#include <cstddef>
+#include <mutex>
 #include <string>
 
 #include "../common/NR_GlobalPredictorService.h"
@@ -74,6 +76,11 @@ aisdk::algorithm::Status HandTrackingMediaPipeGraph::PushData(uint64_t timestamp
     auto image_packet = mediapipe::MakePacket<std::vector<aisdk::algorithm::Image>>(std::move(in_image));
     auto headpose_packet = mediapipe::MakePacket<HeadPoseInternal>(headpose);
 
+    // 先登记需要缓存的stream帧信息
+    bool push_failure = false;
+    SetInputStreamCache(m_increase_timestep, timestamp);
+
+    // 这里根据stream输入的返回值做
     MP_RETURN_IF_ERROR_WITH_LOG(m_calculator_graph->AddPacketToInputStream(
         "image", image_packet.At(mediapipe::Timestamp(m_increase_timestep))));
     MP_RETURN_IF_ERROR_WITH_LOG(m_calculator_graph->AddPacketToInputStream(
@@ -83,6 +90,11 @@ aisdk::algorithm::Status HandTrackingMediaPipeGraph::PushData(uint64_t timestamp
         mediapipe::MakePacket<aisdk::algorithm::CamInfo>(cam_info).At(mediapipe::Timestamp(m_increase_timestep))));
     MP_RETURN_IF_ERROR_WITH_LOG(m_calculator_graph->AddPacketToInputStream(
         "timestamp", mediapipe::MakePacket<uint64_t>(timestamp).At(mediapipe::Timestamp(m_increase_timestep))));
+
+    // 若push失败，清除cahce
+    if (push_failure) {
+        ClearInputStreamCache(m_increase_timestep);
+    }
 
     if (record_test) {
         std::string lcam_pic_name =
@@ -102,11 +114,10 @@ aisdk::algorithm::Status HandTrackingMediaPipeGraph::PushData(uint64_t timestamp
 
 aisdk::algorithm::Status HandTrackingMediaPipeGraph::PopResult(uint64_t hmd_time_nanos, uint32_t* hand_num,
                                                                HandData* out_hand_array) {
-    std::shared_ptr<OutputCache> outlist = m_output_stream_cache["hand_result"];
-    if (outlist->m_packs.size()) {
-        auto hand_data_packet = outlist->m_packs.front();
+    std::shared_ptr<StreamCache> outlist = GetOutputStreamCache();
+    if (outlist) {
+        auto& hand_data_packet = outlist->m_output_packs[0];
         auto& hand_data_internal = hand_data_packet.Get<HandOutputInternal>();
-        outlist->m_packs.pop_front();
 
         AISDK_LOG_TRACE("[PopResult] lhand begin");
         if (hand_data_internal.lhand_valid) {
