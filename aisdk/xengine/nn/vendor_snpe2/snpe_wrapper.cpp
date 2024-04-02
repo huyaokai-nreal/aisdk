@@ -105,7 +105,7 @@ bool SNPEWrapper::init(const std::string& model_path, const std::string& runtime
 
     m_container = snpe2_capi.Snpe_DlContainer_Open(model_path.c_str());
     Snpe_SNPEBuilder_Handle_t snpeBuilderHandle = snpe2_capi.Snpe_SNPEBuilder_Create(m_container);
-    Snpe_PerformanceProfile_t profile = SNPE_PERFORMANCE_PROFILE_BURST;
+    Snpe_PerformanceProfile_t profile = SNPE_PERFORMANCE_PROFILE_DEFAULT;
     if (nullptr == m_runtimeList) m_runtimeList = snpe2_capi.Snpe_RuntimeList_Create();
     snpe2_capi.Snpe_RuntimeList_Add(m_runtimeList, m_runtime);
     // Snpe_RuntimeList_Add(m_runtimeList, SNPE_RUNTIME_CPU);
@@ -254,7 +254,7 @@ bool SNPEWrapper::init(const uint8_t* buffer, const size_t size, const std::stri
     AISDK_LOG_TRACE("model open success! ");
     Snpe_SNPEBuilder_Handle_t snpeBuilderHandle = snpe2_capi.Snpe_SNPEBuilder_Create(m_container);
     AISDK_LOG_TRACE("builder create success! ");
-    Snpe_PerformanceProfile_t profile = SNPE_PERFORMANCE_PROFILE_BURST;
+    Snpe_PerformanceProfile_t profile = SNPE_PERFORMANCE_PROFILE_DEFAULT;
     if (nullptr == m_runtimeList) m_runtimeList = snpe2_capi.Snpe_RuntimeList_Create();
     snpe2_capi.Snpe_RuntimeList_Add(m_runtimeList, m_runtime);
     // Snpe_RuntimeList_Add(m_runtimeList, SNPE_RUNTIME_CPU);
