@@ -30,6 +30,7 @@
 #endif  // __APPLE__
 
 void PrintfHalModelConfig(aisdk::xengine::ModelConfig& info) {
+    (void)info;
     AISDK_LOG_TRACE("[HalModelConfig] model_path={} model_mem={} model_size={} vendor_type={}", info.model_path.c_str(),
                     static_cast<const void*>(info.model_mem), info.model_size, (int)info.vendor_type);
 }
@@ -38,18 +39,23 @@ void PrintfHalSessionConfig(aisdk::xengine::SessionConfig& info) {
     AISDK_LOG_TRACE("[HalSessionConfig] batch={} precision={} threads_num={} runtime_order.size={}", (int)info.batch,
                     (int)info.precision, (int)info.threads_num, (int)info.runtime_order.size());
     for (auto& iter : info.runtime_order) {
+        (void)iter;
         AISDK_LOG_TRACE("[HalSessionConfig] runtime_order={}", (int)iter);
     }
     for (auto& iter : info.customize_ioname.input_layername) {
+        (void)iter;
         AISDK_LOG_TRACE("[HalSessionConfig] input_layername={}", iter.c_str());
     }
     for (auto& iter : info.customize_ioname.input_tensorname) {
+        (void)iter;
         AISDK_LOG_TRACE("[HalSessionConfig] input_tensorname={}", iter.c_str());
     }
     for (auto& iter : info.customize_ioname.output_layername) {
+        (void)iter;
         AISDK_LOG_TRACE("[HalSessionConfig] output_layername={}", iter.c_str());
     }
     for (auto& iter : info.customize_ioname.output_tensorname) {
+        (void)iter;
         AISDK_LOG_TRACE("[HalSessionConfig] output_tensorname={}", iter.c_str());
     }
 }

@@ -12,7 +12,7 @@ namespace aisdk::base {
 class Logger : public framework::util::Singleton<Logger> {
    public:
     Logger() {
-#if defined(ENABLE_LOG_LEVEL_ALL)
+#if !defined(ENABLE_LOG_LEVEL_RELEASE) && defined(ENABLE_LOG_LEVEL_ALL)
         SetLogAllLevel(true);
 #endif 
     }
@@ -32,6 +32,8 @@ class Logger : public framework::util::Singleton<Logger> {
 };
 
 }  // namespace aisdk::base
+
+#if !defined(ENABLE_LOG_LEVEL_RELEASE)
 #define AISDK_LOG_TRACE(format, ...)                        \
     if (aisdk::base::Logger::GetInstance()->IsLogAllLevel()) \
         aisdk::base::Logger::GetInstance()->GetLogger()->trace(format, ##__VA_ARGS__);
@@ -45,6 +47,13 @@ class Logger : public framework::util::Singleton<Logger> {
         AISDK_LOGs::Logger::GetInstance()->GetLogger()->trace(format.c_str(), ##__VA_ARGS__); \
     }
 #define AISDK_LOG_INFO(format, ...) aisdk::base::Logger::GetInstance()->GetLogger()->info(format, ##__VA_ARGS__);
+#else
+#define AISDK_LOG_TRACE(...) 
+#define AISDK_LOG_DEBUG(...) 
+#define AISDK_LOG_TRACE2(...) 
+#define AISDK_LOG_INFO(...) 
+#endif 
+
 #define AISDK_LOG_WARN(format, ...) aisdk::base::Logger::GetInstance()->GetLogger()->warn(format, ##__VA_ARGS__);
 #define AISDK_LOG_ERROR(format, ...) \
     aisdk::base::Logger::GetInstance()->GetLogger()->error(format, ##__VA_ARGS__);
