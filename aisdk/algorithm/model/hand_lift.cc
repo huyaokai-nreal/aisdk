@@ -13,25 +13,8 @@ aisdk::xengine::Status GMLPLiftNet::Init(aisdk::xengine::NetAlgoConfig &algo, ai
         return ret;
     }
 
-    // 简单实现
-    {
-        itensor_format = aisdk::xengine::TensorFormat::CHW;
-        // 这里应该从打包传入dims
-        std::vector<uint32_t> iexpect{256, 1, 1};
-        if (false == checkshapeformat(itensor.m_tensors[0].m_rank, itensor.m_tensors[0].m_dims, iexpect)) {
-            itensor_format = aisdk::xengine::TensorFormat::HWC;
-        }
-    }
-
-    {
-        otensor_format = aisdk::xengine::TensorFormat::CHW;
-        // 这里应该从打包传入dims
-        std::vector<uint32_t> oexpect{42, 1, 1};
-        if (false == checkshapeformat(otensor.m_tensors[0].m_rank, otensor.m_tensors[0].m_dims, oexpect)) {
-            otensor_format = aisdk::xengine::TensorFormat::HWC;
-        }
-    }
-
+    itensor_format = checkshapeformat(model.vendor_type, itensor.m_tensors[0].m_rank);
+    otensor_format = checkshapeformat(model.vendor_type, otensor.m_tensors[0].m_rank);
     m_leftcam_x.resize(KPT_NUM);
     m_leftcam_y.resize(KPT_NUM);
     m_rightcam_x.resize(KPT_NUM);
@@ -187,26 +170,8 @@ aisdk::xengine::Status SeqGMLPLiftNet::Init(aisdk::xengine::NetAlgoConfig &algo,
     if (ret != aisdk::xengine::Status::SUCCESS) {
         return ret;
     }
-
-    // 简单实现
-    {
-        itensor_format = aisdk::xengine::TensorFormat::CHW;
-        // 这里应该从打包传入dims
-        std::vector<uint32_t> iexpect{110, 1, 1};
-        if (false == checkshapeformat(itensor.m_tensors[0].m_rank, itensor.m_tensors[0].m_dims, iexpect)) {
-            itensor_format = aisdk::xengine::TensorFormat::HWC;
-        }
-    }
-
-    {
-        otensor_format = aisdk::xengine::TensorFormat::CHW;
-        // 这里应该从打包传入dims
-        std::vector<uint32_t> oexpect{42, 1, 1};
-        if (false == checkshapeformat(otensor.m_tensors[0].m_rank, otensor.m_tensors[0].m_dims, oexpect)) {
-            otensor_format = aisdk::xengine::TensorFormat::HWC;
-        }
-    }
-
+    itensor_format = checkshapeformat(model.vendor_type, itensor.m_tensors[0].m_rank);
+    otensor_format = checkshapeformat(model.vendor_type, otensor.m_tensors[0].m_rank);
     m_leftcam_x.resize(KPT_NUM);
     m_leftcam_y.resize(KPT_NUM);
     m_rightcam_x.resize(KPT_NUM);

@@ -4,5 +4,6 @@ ${CMAKE_CURRENT_SOURCE_DIR}/ofxOneEuroFilter.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/NR_Transfer.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/NR_Predictor.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/metrics.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/math.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/NR_Seq_Manager.cpp
 )

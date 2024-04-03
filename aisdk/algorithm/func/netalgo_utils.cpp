@@ -128,14 +128,7 @@ void nms(std::vector<DetectRect>& rect, float iou_threshold) {
     }
 }
 
-bool checkshapeformat(uint32_t rank, std::vector<uint32_t>& reality, std::vector<uint32_t>& expect) {
-    if (rank == reality.size() && rank == expect.size()) {
-        return std::equal(reality.begin(), reality.end(), expect.begin());
-    }
-    return false;
-}
-
-aisdk::xengine::TensorFormat checkshapeformat(aisdk::xengine::VendorType& vendor, uint32_t m_rank, bool in_or_out) {
+aisdk::xengine::TensorFormat checkshapeformat(aisdk::xengine::VendorType& vendor, uint32_t m_rank) {
     aisdk::xengine::TensorFormat ret = aisdk::xengine::TensorFormat::UNKNOWN;
     if (vendor == aisdk::xengine::VendorType::SNPE) {
         if (m_rank == 1) {

@@ -2,6 +2,7 @@
 
 #include "../func/NR_CV.h"
 #include "../func/permute.h"
+#include "aisdk/algorithm/func/netalgo_utils.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/profiling.h"
 
@@ -20,26 +21,8 @@ aisdk::xengine::Status LandmarkFilter::Init(aisdk::xengine::NetAlgoConfig &algo,
         PrintfHalIoTensors(itensor);
         PrintfHalIoTensors(otensor);
     }
-
-    // 简单实现
-    {
-        itensor_format = aisdk::xengine::TensorFormat::CHW;
-        // 这里应该从打包传入dims
-        std::vector<uint32_t> iexpect{252, 1, 1};
-        if (false == checkshapeformat(itensor.m_tensors[0].m_rank, itensor.m_tensors[0].m_dims, iexpect)) {
-            itensor_format = aisdk::xengine::TensorFormat::HWC;
-        }
-    }
-
-    {
-        otensor_format = aisdk::xengine::TensorFormat::CHW;
-        // 这里应该从打包传入dims
-        std::vector<uint32_t> oexpect{42, 1, 1};
-        if (false == checkshapeformat(otensor.m_tensors[0].m_rank, otensor.m_tensors[0].m_dims, oexpect)) {
-            otensor_format = aisdk::xengine::TensorFormat::HWC;
-        }
-    }
-
+    itensor_format = checkshapeformat(model.vendor_type, itensor.m_tensors[0].m_rank);
+    otensor_format = checkshapeformat(model.vendor_type, otensor.m_tensors[0].m_rank);
     abs_scale.resize(42);
     return aisdk::xengine::Status::SUCCESS;
 }

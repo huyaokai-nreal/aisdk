@@ -20,7 +20,7 @@ aisdk::xengine::Status HandDetectNet::Init(aisdk::xengine::NetAlgoConfig &algo, 
 
     // 简单实现
     {
-        itensor_format = checkshapeformat(model.vendor_type, itensor.m_tensors[0].m_rank, true);
+        itensor_format = checkshapeformat(model.vendor_type, itensor.m_tensors[0].m_rank);
         int height, width;
         if (itensor_format == aisdk::xengine::TensorFormat::CHW) {
             height = itensor.m_tensors[0].m_dims[1];
@@ -34,7 +34,7 @@ aisdk::xengine::Status HandDetectNet::Init(aisdk::xengine::NetAlgoConfig &algo, 
         grid_w = width / grid_stride;
     }
 
-    { otensor_format = checkshapeformat(model.vendor_type, otensor.m_tensors[0].m_rank, false); }
+    { otensor_format = checkshapeformat(model.vendor_type, otensor.m_tensors[0].m_rank); }
 
     grid_anchor.resize(grid_h * grid_w);
     for (auto i = 0; i < grid_h; i++) {
@@ -491,7 +491,7 @@ aisdk::xengine::Status HandDetectNetv2::Init(aisdk::xengine::NetAlgoConfig &algo
 
     // 简单实现
     {
-        itensor_format = checkshapeformat(model.vendor_type, itensor.m_tensors[0].m_rank, true);
+        itensor_format = checkshapeformat(model.vendor_type, itensor.m_tensors[0].m_rank);
         int height, width;
         if (itensor_format == aisdk::xengine::TensorFormat::CHW) {
             height = itensor.m_tensors[0].m_dims[1];
@@ -505,7 +505,7 @@ aisdk::xengine::Status HandDetectNetv2::Init(aisdk::xengine::NetAlgoConfig &algo
         grid_w = width / grid_stride;
     }
 
-    { otensor_format = checkshapeformat(model.vendor_type, otensor.m_tensors[0].m_rank, false); }
+    { otensor_format = checkshapeformat(model.vendor_type, otensor.m_tensors[0].m_rank); }
 
     grid_anchor.resize(grid_h * grid_w);
     for (auto i = 0; i < grid_h; i++) {

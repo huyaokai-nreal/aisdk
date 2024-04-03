@@ -2,7 +2,6 @@ target_sources(${ALGORITHM_LIBRARY_NAME}
 PRIVATE
 ${CMAKE_CURRENT_SOURCE_DIR}/permute.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/pose_solver.cpp
-${CMAKE_CURRENT_SOURCE_DIR}/rsntiny_postprocess.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/softmax.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/reducesum.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/elementwise_mul.cc
