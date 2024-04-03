@@ -13,6 +13,7 @@
 #include <vector>
 namespace aisdk::base {
 int get_cpucount();
+size_t get_sched_affinity();
 int set_sched_affinity(size_t thread_affinity_mask);
 int get_max_freq_khz(int cpuid);
 

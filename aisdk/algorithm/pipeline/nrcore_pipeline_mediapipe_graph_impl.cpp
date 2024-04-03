@@ -128,8 +128,13 @@ std::shared_ptr<StreamCache> MediaPipeGraph::GetOutputStreamCache() {
 
 aisdk::algorithm::Status MediaPipeGraph::Init(aisdk::xengine::DlSymFuncs &funcs, aisdk::xengine::PipelineConfig &config,
                                               CameraParams &camera) {
+    // 读取原始线程的名称
     std::string graph_thread_name = std::string("xr_aisdk_graph");
+    size_t ori_affinity = aisdk::base::get_sched_affinity();
+    // 设置本线程名称和亲和性，是为了让mediagraph内部的threadpool的线程继承该属性
     std::string ori_name = aisdk::base::SetThisThreadName(graph_thread_name);
+    AISDK_LOG_TRACE("MediaPipeGraph::Init ori_affinity={} name={}", ori_affinity, ori_name.c_str());
+    aisdk::base::set_sched_affinity(0xF0);  //绑4个大核
 
     mediapipe::TriggerGloalGraphCalculatorsConstruct();
 
@@ -180,7 +185,9 @@ aisdk::algorithm::Status MediaPipeGraph::Init(aisdk::xengine::DlSymFuncs &funcs,
         MP_RETURN_IF_ERROR_WITH_LOG(m_calculator_graph->ObserveOutputStream(m_output_stream_name[order], callback));
     }
 
+    // 还原原始线程的相关属性
     aisdk::base::SetThisThreadName(ori_name);
+    aisdk::base::set_sched_affinity((ori_affinity != 0) ? ori_affinity : 0xFF);  // 失败就全绑，等于默认没绑
     return aisdk::algorithm::Status::SUCCESS;
 }
 

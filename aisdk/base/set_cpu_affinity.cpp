@@ -23,6 +23,36 @@ void setCurrentThreadAffinityMask(int mask) {
 void setCurrentThreadAffinityMask(int) {}
 #endif
 
+size_t get_sched_affinity() {
+#ifdef __GLIBC__
+    pid_t pid = syscall(SYS_gettid);
+#else
+#ifdef PI3
+    pid_t pid = getpid();
+#else
+    pid_t pid = gettid();
+#endif
+#endif
+
+    size_t ret = 0;
+    cpu_set_t mask;
+    CPU_ZERO(&mask);
+    int syscallret = syscall(__NR_sched_getaffinity, pid, sizeof(mask), &mask);
+    if (syscallret) {
+        fprintf(stderr, "get_sched_affinity syscall error %d\n", syscallret);
+        // 实测会报错, mask被添加成任意值
+        for (int i = 0; i < 8; i++) {
+            if (CPU_ISSET(i, &mask)) {
+                ret |= (1 << i);
+            }
+        }
+        printf("CPU affinity mask = %d\n", ret);
+        return 0;
+    }
+
+    return ret;
+}
+
 int set_sched_affinity(size_t thread_affinity_mask) {
 #ifdef __GLIBC__
     pid_t pid = syscall(SYS_gettid);
