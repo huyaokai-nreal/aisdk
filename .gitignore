@@ -53,3 +53,5 @@ offline*
 .cache
 work_dir
 *.pb.*
+*.enc 
+*.key

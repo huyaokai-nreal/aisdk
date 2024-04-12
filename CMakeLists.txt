@@ -108,9 +108,9 @@ option(ENABLE_ALGORITHM_GRAPH_STREAM_EVAL_TIME "enable algorithm mediapipe graph
 option(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME "enable algorithm mediapipe calculator process eval time."  OFF)
 
 # build xengine model package
-set(MODEL_TAR_NAME "handtracking_pipeline_v1.0.0.tar")
-set(DEFAULT_PIPELINE_TAR_PATH "${CMAKE_CURRENT_SOURCE_DIR}/pipeline_tar/${MODEL_TAR_NAME}.enc")
-set(DEFAULT_PIPELINE_TAR_KEY "${CMAKE_CURRENT_SOURCE_DIR}/pipeline_tar/${MODEL_TAR_NAME}.key")
+set(MODEL_TAR_NAME "handtracking_pipeline_v2.0.0.tar")
+set(DEFAULT_PIPELINE_TAR_PATH "${CMAKE_CURRENT_SOURCE_DIR}/build/${MODEL_TAR_NAME}.enc")
+set(DEFAULT_PIPELINE_TAR_KEY "${CMAKE_CURRENT_SOURCE_DIR}/build/${MODEL_TAR_NAME}.key")
 file(STRINGS ${DEFAULT_PIPELINE_TAR_KEY} file_content)
 list(GET file_content 2 DEFAULT_PIPELINE_TAR_KEY)
 message(STATUS "MODEL_KEY: ${DEFAULT_PIPELINE_TAR_KEY}")
