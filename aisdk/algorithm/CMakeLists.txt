@@ -15,17 +15,7 @@ else()
 endif()
 ## generate protobufs
 set(ALGORITHM_LIBRARY_NAME algorithm)
-add_library(${ALGORITHM_LIBRARY_NAME} STATIC
-${CMAKE_CURRENT_SOURCE_DIR}/pipeline/nrcore_pipeline.cpp
-${CMAKE_CURRENT_SOURCE_DIR}/core/nrcore_pipeline_mediapipe_service.cpp
-${CMAKE_CURRENT_SOURCE_DIR}/pipeline/nrcore_pipeline_mediapipe_graph_impl.cpp
-${CMAKE_CURRENT_SOURCE_DIR}/common/NR_Transfer.cpp
-${CMAKE_CURRENT_SOURCE_DIR}/common/NR_Predictor.cpp
-${CMAKE_CURRENT_SOURCE_DIR}/common/metrics.cpp
-${CMAKE_CURRENT_SOURCE_DIR}/common/NR_Seq_Manager.cpp
-${CMAKE_CURRENT_SOURCE_DIR}/pipeline/handtracking_mediapipe_calculators_register.cpp
-${CMAKE_CURRENT_SOURCE_DIR}/pipeline/handtracking_mediapipe_graph.cpp
-)
+add_library(${ALGORITHM_LIBRARY_NAME} STATIC)
 
 target_include_directories(${ALGORITHM_LIBRARY_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/interface/handtracking_sdk)
 add_subdirectory(common)
@@ -49,12 +39,8 @@ target_link_libraries(${ALGORITHM_LIBRARY_NAME}
 
 target_compile_options(${ALGORITHM_LIBRARY_NAME}
     PRIVATE -Wno-error
-    PRIVATE -DNRPLUGIN  # handtracking_sdk需要的宏定义
 )
 
-if(ENABLE_ALGORITHM_GRAPH_STREAM_EVAL_TIME)
-    target_compile_options(${ALGORITHM_LIBRARY_NAME} PRIVATE -DENABLE_ALGORITHM_GRAPH_STREAM_EVAL_TIME)
-endif()
 
 if(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
     target_compile_options(${ALGORITHM_LIBRARY_NAME} PRIVATE -DENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)

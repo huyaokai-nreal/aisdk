@@ -19,6 +19,7 @@ if(BUILD_PROTO_FILES)
     ENDFOREACH()
 endif()
 target_sources(${ALGORITHM_LIBRARY_NAME} PRIVATE
+${CMAKE_CURRENT_SOURCE_DIR}/nrcore_pipeline_mediapipe_service.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/hand_detection_calculator.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/hand_landmark_calculator.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/hand_landmark_calculator.pb.cc

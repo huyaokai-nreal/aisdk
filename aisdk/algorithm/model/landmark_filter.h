@@ -2,7 +2,7 @@
 
 #include <cstdlib>
 
-#include "../core/nrcore_pipeline_mediapipe_calculator_base.h"
+#include "calculator_basenet.h"
 #include "../func/netalgo_utils.h"
 
 namespace aisdk::algorithm {

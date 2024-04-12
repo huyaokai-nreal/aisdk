@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../core/nrcore_pipeline_mediapipe_calculator_base.h"
+#include "calculator_basenet.h"
 #include "../func/NR_CV.h"
 #include "../func/netalgo_utils.h"
 #include "../internal_structs/det_struct_internal.h"

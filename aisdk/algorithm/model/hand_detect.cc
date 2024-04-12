@@ -1,6 +1,6 @@
 #include "hand_detect.h"
 
-#include "../core/nrnet_define.h"
+#include "aisdk/algorithm/common/nrnet_define.h"
 #include "aisdk/base/profiling.h"
 
 namespace aisdk::algorithm {

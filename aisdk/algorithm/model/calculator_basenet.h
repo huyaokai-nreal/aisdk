@@ -1,16 +1,11 @@
 #pragma once
-
-#include <list>
-#include <mutex>
-
 #include "aisdk/base/log.h"
 #include "aisdk/base/profiling.h"
 #include "aisdk/xengine/nr_model_mgr.h"
 #include "aisdk/xengine/nrhal_net.h"
-#include "nrcore_pipeline_mediapipe_service.h"
 
 namespace aisdk::algorithm {
-
+using BaseNetAlgoPtr = std::unique_ptr<aisdk::xengine::BaseNetAlgo,std::function<void(aisdk::xengine::BaseNetAlgo*)>>;
 // 公有继承 CalculatorBaseNet
 class CalculatorBaseNet {
    public:

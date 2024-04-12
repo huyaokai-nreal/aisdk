@@ -2,10 +2,10 @@
 #include <memory>
 
 #include "../common/metrics.h"
-#include "../core/nrnet_define.h"
 #include "../internal_structs/kpt2d_struct_internal.h"
 #include "../internal_structs/kpt3d_struct_internal.h"
 #include "../internal_structs/score_3d_struct_internal.h"
+#include "aisdk/algorithm/common/nrnet_define.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/time.h"
 #include "mediapipe/framework/calculator_framework.h"

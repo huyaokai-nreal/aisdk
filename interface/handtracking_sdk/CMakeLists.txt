@@ -38,7 +38,7 @@ else()
     target_compile_options(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PRIVATE -DXENGINE_STATIC_LIB)
 endif()
 
-target_link_libraries(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PUBLIC base algorithm jsoncpp Eigen3::Eigen opencv::opencv)
+target_link_libraries(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PUBLIC base algorithm handtracking jsoncpp Eigen3::Eigen opencv::opencv)
 
 install(TARGETS ${HANDTRACKING_INTERFACE_LIBRARY_NAME}
             LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}

@@ -3,10 +3,10 @@
 #include <cstdint>
 #include <cstdlib>
 
-#include "../core/nrcore_pipeline_mediapipe_calculator_base.h"
+#include "calculator_basenet.h"
 #include "../func/netalgo_utils.h"
 #include "aisdk/xengine/nrhal_define.h"
-#include "../core/nrnet_define.h"
+#include "aisdk/algorithm/common/nrnet_define.h"
 
 #define KPT_NUM 21
 

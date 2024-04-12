@@ -4,7 +4,7 @@
 #include <mutex>
 #include <string>
 
-#include "../common/NR_GlobalPredictorService.h"
+#include "aisdk/algorithm/common/NR_GlobalPredictorService.h"
 #include "aisdk/base/file.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/profiling.h"

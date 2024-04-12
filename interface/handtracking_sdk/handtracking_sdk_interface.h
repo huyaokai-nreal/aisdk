@@ -10,7 +10,7 @@
 
 #include "aisdk/base/mem_buffer.h"
 #include "aisdk/xengine/nrhal_capi_symbol.h"
-#include "aisdk/algorithm/pipeline/nrcore_pipeline.h"
+#include "aisdk/task/handtracking/nrcore_pipeline.h"
 
 // #include "version.h"
 

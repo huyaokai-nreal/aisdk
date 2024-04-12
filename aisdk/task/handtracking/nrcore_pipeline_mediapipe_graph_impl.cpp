@@ -3,7 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 
-#include "../core/nrcore_pipeline_mediapipe_service.h"
+#include "handtracking_mediapipe_calculators_register.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/set_cpu_affinity.h"
 #include "mediapipe/framework/port/file_helpers.h"

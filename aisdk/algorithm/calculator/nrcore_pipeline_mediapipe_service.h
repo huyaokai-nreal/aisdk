@@ -3,17 +3,13 @@
 #include <functional>
 #include <map>
 
-#include "../pipeline/nrcore_pipeline.h"
+#include "aisdk/algorithm/common/nrcore_define.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/profiling.h"
 #include "aisdk/xengine/nrhal_common.h"
 #include "aisdk/xengine/nrhal_net.h"
+#include "aisdk/xengine/nrhal_capi_symbol.h"
 
-namespace mediapipe {
-void TriggerGloalGraphCalculatorsConstructForHandTracking();
-
-void TriggerGloalGraphCalculatorsConstruct();
-}  // namespace mediapipe
 
 namespace aisdk::algorithm {
 using BaseNetAlgoPtr = std::unique_ptr<aisdk::xengine::BaseNetAlgo,std::function<void(aisdk::xengine::BaseNetAlgo*)>>;

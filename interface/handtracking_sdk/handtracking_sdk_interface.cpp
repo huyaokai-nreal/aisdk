@@ -13,8 +13,8 @@
 #include <Eigen/Dense>
 #include <opencv2/opencv.hpp>
 
-#include "aisdk/algorithm/pipeline/handtracking_mediapipe_graph.h"
 #include "aisdk/base/dlutil.h"
+#include "aisdk/task/handtracking/handtracking_mediapipe_graph.h"
 #include "framework/util/android_globals.h"
 #include "framework/util/fileutil.h"
 #include "framework/util/os_time.h"

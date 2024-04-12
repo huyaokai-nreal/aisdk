@@ -1,5 +1,5 @@
 #pragma once
-#include "aisdk/algorithm/core/nrcore_pipeline_mediapipe_calculator_base.h"
+#include "calculator_basenet.h"
 #include "aisdk/algorithm/func/netalgo_utils.h"
 
 namespace aisdk::algorithm {

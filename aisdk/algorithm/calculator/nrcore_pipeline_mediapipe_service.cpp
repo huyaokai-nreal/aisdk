@@ -5,16 +5,6 @@
 
 #include "aisdk/xengine/nr_model_mgr.h"
 
-namespace mediapipe {
-
-// 这里是要规避全局类不构造的问题, 以后找到原因解决
-void TriggerGloalGraphCalculatorsConstruct() {
-    static std::once_flag oc;
-    std::call_once(oc, [&]() { mediapipe::TriggerGloalGraphCalculatorsConstructForHandTracking(); });
-}
-
-}  // namespace mediapipe
-
 namespace aisdk::algorithm {
 
 std::map<void *, aisdk::xengine::PipelineConfig> XrMediaServiceUtils::m_pipelineconfig;

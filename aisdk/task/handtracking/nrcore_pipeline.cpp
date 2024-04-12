@@ -2,7 +2,7 @@
 
 #include <type_traits>
 
-#include "../core/nrcore_pipeline_mediapipe_service.h"
+#include "aisdk/algorithm/calculator/nrcore_pipeline_mediapipe_service.h"
 #include "aisdk/algorithm/common/NR_GlobalCoordService.h"
 #include "aisdk/base/log.h"
 

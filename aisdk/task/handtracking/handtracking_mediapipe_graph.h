@@ -1,10 +1,10 @@
 #pragma once
 
-#include "../core/nrnet_define.h"
-#include "../func/hand_filters.h"
-#include "../func/hand_rotation.h"
-#include "../internal_structs/hand_output_struct_internal.h"
-#include "../internal_structs/headpose_struct_internal.h"
+#include "aisdk/algorithm/common/nrnet_define.h"
+#include "aisdk/algorithm/func/hand_filters.h"
+#include "aisdk/algorithm/func/hand_rotation.h"
+#include "aisdk/algorithm/internal_structs/hand_output_struct_internal.h"
+#include "aisdk/algorithm/internal_structs/headpose_struct_internal.h"
 #include "nrcore_pipeline_mediapipe_graph_impl.h"
 #include "perception/nr_perception_hand_tracking.h"
 

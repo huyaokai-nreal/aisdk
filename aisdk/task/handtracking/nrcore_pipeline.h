@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "aisdk/xengine/nr_model_mgr.h"
-#include "nrcore_define.h"
+#include "aisdk/algorithm/common/nrcore_define.h"
 #include "aisdk/base/profiling.h"
 #include "aisdk/xengine/nrhal_capi_symbol.h"
 

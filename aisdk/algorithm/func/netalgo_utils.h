@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "aisdk/xengine/nrhal_common.h"
-#include "../core/nrnet_define.h"
+#include "aisdk/algorithm/common/nrnet_define.h"
 
 namespace aisdk::algorithm {
 

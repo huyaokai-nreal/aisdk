@@ -7,6 +7,7 @@
 #include "aisdk/base/time.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/canonical_errors.h"
+#include "nrcore_pipeline_mediapipe_service.h"
 
 // TODO: update codes in batch=1 branch
 

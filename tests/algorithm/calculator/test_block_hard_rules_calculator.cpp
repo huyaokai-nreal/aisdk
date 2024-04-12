@@ -1,7 +1,7 @@
 #include <absl/memory/memory.h>
 #include <absl/status/status.h>
 #include <aisdk/algorithm/internal_structs/kpt3d_struct_internal.h>
-#include <aisdk/algorithm/core/nrcore_pipeline_mediapipe_service.h>
+#include <aisdk/algorithm/calculator/nrcore_pipeline_mediapipe_service.h>
 #include <mediapipe/framework/calculator.pb.h>
 #include <mediapipe/framework/deps/status.h>
 #include <mediapipe/framework/packet.h>
@@ -9,6 +9,7 @@
 
 #include "mediapipe/framework/calculator_runner.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
+#include "aisdk/task/handtracking/handtracking_mediapipe_calculators_register.h"
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include <doctest/doctest.h>
 using namespace mediapipe;
