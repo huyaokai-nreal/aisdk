@@ -1,0 +1,116 @@
+{
+    "pipeline": {
+        "name": "handtracking_bino_graph_v1.0.0",
+        "framework": "mediapipe_graph",
+        "mediapipe_graph_prototxt": "graph/graph_flora.txt",
+        "node": [
+            "detect",
+            "2d_rsntiny",
+            "2d_filter",
+            "3d_lift",
+            "3d_mano",
+            "transfer",
+            "globalfilter",
+            "gesture"
+        ],
+        "feature": {
+            "bind_sensor_orientation": "vertical",
+            "bind_runtime": "snpe_dsp"
+        }
+    },
+    "netalgo_node": {
+        "detect": {
+            "model_config": {
+                "file_name": "models/hand_detect_231213_bs2_h2_int8.dlc",
+                "vendor": "snpe"
+            },
+            "session_config": {
+                "batch": 2,
+                "precision": "int8",
+                "thread_num": 1,
+                "runtime": "dsp",
+                "output_tensors": [
+                    "output_box",
+                    "output_cls"
+                ]
+            },
+            "netalgo_config": {
+                "name": "handdetect_v2.0.0",
+                "params": {
+                    "iou_threshod": 0.45,
+                    "score_threshod": 0.5
+                }
+            }
+        },
+        "2d_rsntiny": {
+            "model_config": {
+                "file_name": "models/rsntiny_affine_scale_25d_bs2_231215_c6574b_int8.dlc",
+                "vendor": "snpe"
+            },
+            "session_config": {
+                "batch": 2,
+                "precision": "int8",
+                "thread_num": 1,
+                "runtime": "dsp",
+                "output_tensors": [
+                    "feat"
+                ]
+            },
+            "netalgo_config": {
+                "name": "rsntiny_v1.0.0"
+            }
+        },
+        "2d_filter": {
+            "model_config": {
+                "file_name": "models/FilterNet_20220307_linux.enc",
+                "aes_key": "4D 3A B1 19 F0 2A 4A 41 C1 7F 82 0F 30 30 D4 0D 9C 0C 78 E0 A9 98 3C 74 FA 5F 8B 34 A4 CF B8 80",
+                "vendor": "mnn"
+            },
+            "session_config": {
+                "batch": 1,
+                "precision": "float32",
+                "thread_num": 1,
+                "runtime": "cpu"
+            },
+            "netalgo_config": {
+                "name": "hand2dfilter_v1.0.0"
+            }
+        },
+        "3d_lift": {
+            "model_config": {
+                "file_name": "models/hand_liftv2_stdv2_convrnn_240110_36e988.mnn",
+                "vendor": "mnn"
+            },
+            "session_config": {
+                "batch": 1,
+                "precision": "float32",
+                "thread_num": 1,
+                "runtime": "cpu"
+            },
+            "input_tensors": [
+                "feat",
+                "mem_in"
+            ],
+            "output_tensors": [
+                "kpt",
+                "mem_out"
+            ],
+            "netalgo_config": {
+                "name": "gmlplift_v3.0.0"
+            }
+        }
+    },
+    "logicalgo_node": {
+        "3d_mano": {
+            "params": {
+                "3dscore_threshod": 0.2
+            }
+        },
+        "gesture": {
+            "params": {
+                "exitPinchDisntace": 0.03,
+                "enterPinchDistance": 0.025
+            }
+        }
+    }
+}

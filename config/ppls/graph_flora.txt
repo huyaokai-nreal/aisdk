@@ -1,0 +1,124 @@
+input_stream: "IMAGE:image"
+input_stream: "HEADPOSE:head_pose"
+input_stream: "CAM_INFO:cam_info"
+input_stream: "TIMESTAMP:timestamp"
+output_stream: "ALL_RESULTS:hand_result"
+
+num_threads: 1
+
+node {
+	name: "CheckHeadpose"
+	calculator: "CheckHeadposeCalculator"
+	input_stream: "INPUT:head_pose"
+	output_stream: "OUTPUT:head_pose_checked"
+}
+node {
+  name: "HandDetectionTrack"
+  calculator: "HandDetTrackCalculator"
+  input_stream: "IMAGE_INPUT:image"
+  input_stream: "TIMESTAMP:timestamp"
+  input_stream: "CAM_INFO_INPUT:cam_info"
+  input_stream: "HEADPOSE:head_pose_checked"
+  output_stream: "DET_BBOX_OUTPUT:detection_output"
+}
+node {
+  name: "DetBoxSmoothing"
+  calculator: "DetectBoxSmoothingCalculator"
+  input_stream: "BBOX_INPUT:detection_output"
+  output_stream: "BBOX_SMOOTHED_OUTPUT:detection_smoothed_output"
+}
+node {
+  name: "HandLandmark_2D"
+  calculator: "HandLandmarkCalculator"
+  input_stream: "BBOX_SMOOTHED_OUTPUT:detection_smoothed_output"
+  input_stream: "IMAGE_INPUT:image"
+  output_stream: "LANDMARK_OUTPUT:kpt2d"
+  node_options: {
+    [type.googleapis.com/aisdk.HandLandmarkCalculatorOptions] {
+      input_height: 128
+      input_width: 128
+    }
+  }
+}
+node {
+  name: "LandmarkFilter"
+  calculator: "LandmarkFilterCalculator"
+  input_stream: "LANDMARK_INPUT:kpt2d"
+  output_stream: "LANDMARK_OUTPUT:kpt2d_filter"
+}
+node {
+  name: "LiftNet_3D"
+  calculator: "LiftCalculator"
+  input_stream: "CAM_INFO_INPUT:cam_info"
+  input_stream: "LANDMARK_INPUT:kpt2d_filter"
+  input_stream: "BBOX_INPUT:detection_smoothed_output"
+  output_stream: "LIFT_OUTPUT:kpt3d"
+}
+node {
+  name: "PreConstraint_3D"
+  calculator: "PreConstrainCalculator"
+  input_stream: "INPUT:kpt3d"
+  output_stream: "OUTPUT:kpt3d_constrained"
+}
+node {
+  name: "BlockHardRules"
+  calculator: "BlockHardRulesCalculator"
+  input_stream: "BLOCK_IN:kpt3d_constrained"
+  output_stream: "BLOCK_OUT:kpt3d_blocked"
+  node_options: {
+    [type.googleapis.com/aisdk.BlockHardRulesCalculatorOptions] { 
+      max_root_depth: 0.8
+    }
+  }
+}
+node {
+  name: "Compute3DScore"
+  calculator: "Compute3DScoreCalculator"
+  input_stream: "CAM_INFO_INPUT:cam_info"
+  input_stream: "LANDMARK_INPUT:kpt2d_filter"
+  input_stream: "KPT3D_INPUT:kpt3d_blocked"
+  output_stream: "OUTPUT:hand_score"
+}
+node {
+  name: "HandState"
+  calculator: "HandStateCalculator"
+  input_stream: "SCORE_INPUT:hand_score"
+  output_stream: "OUTPUT:hand_state"
+}
+node {
+  name: "ConvertToWorld"
+  calculator: "ConvertToWorldCalculator"
+  input_stream: "INPUT:kpt3d_blocked"
+  input_stream: "STATE_INPUT:hand_state"
+  input_stream: "HEADPOSE:head_pose_checked"
+  output_stream: "OUTPUT:kpt3d_world"
+}
+node {
+  name: "KalmanFilterCorrection"
+  calculator: "KalmanFilterCorrectionCalculator"
+  input_stream: "INPUT:kpt3d_standard"
+  input_stream: "STATE:hand_state"
+  input_stream: "TIMESTAMP:timestamp"
+  output_stream: "OUTPUT:kpt3d_filtered"
+}
+node {
+  name: "PostConstraint_3D"
+  calculator: "PostConstrainCalculator"
+  input_stream: "INPUT:kpt3d_filtered"
+  output_stream: "OUTPUT:kpt3d_post_constrained"
+}
+node {
+  name: "StandardizeKeypoints"
+  calculator: "StandardizeKeypointsCalculator"
+  input_stream: "INPUT:kpt3d_world"
+  output_stream: "OUTPUT:kpt3d_standard"
+}
+node {
+  name: "GestureRecognition"
+  calculator: "GestureRecognitionCalculator"
+  input_stream: "GR_KPT_INPUT:kpt3d_post_constrained"
+  input_stream: "GR_SCORE_INPUT:hand_score"
+  input_stream: "GR_STATE_INPUT:hand_state"
+  input_stream: "GR_TS_INPUT:timestamp"
+  output_stream: "GR_OUTPUT:hand_result"
+}
