@@ -7,7 +7,25 @@ const std::vector<int> lev1_index = {1, 5, 9, 13, 22};
 const std::vector<int> lev2_index = {2, 6, 10, 14, 17};
 const std::vector<int> lev3_index = {3, 7, 11, 15, 18};
 const std::vector<int> lev4_index = {4, 8, 12, 16, 19};
+std::vector<cv::Vec3f> get_metacarpal_joints_v1(const std::vector<cv::Vec3f>& joints) {
+    const auto& root_joint = joints[0];
+    auto little_vec = (root_joint - joints[9]) + (root_joint - joints[17]);
+    little_vec /= cv::norm(little_vec, cv::NORM_L2);
+    auto little_metacarpal = joints[17] + 0.6667 * cv::norm(joints[0], joints[17]) * little_vec;
 
+    auto ring_vec = (root_joint - joints[9]) + (root_joint - joints[13]);
+    ring_vec /= cv::norm(ring_vec, cv::NORM_L2);
+    auto ring_metacarpal = joints[13] + 0.6667 * cv::norm(joints[0], joints[13]) * ring_vec;
+
+    auto middle_vec = (root_joint - joints[9]);
+    middle_vec /= cv::norm(middle_vec, cv::NORM_L2);
+    auto middle_metacarpal = joints[9] + 0.6667 * cv::norm(joints[0], joints[9]) * middle_vec;
+
+    auto index_vec = 2 * middle_vec - ring_vec;
+    index_vec /= cv::norm(index_vec, cv::NORM_L2);
+    auto index_metacarpal = joints[5] + 0.6667 * cv::norm(joints[0], joints[5]) * index_vec;
+    return {index_metacarpal, middle_metacarpal, ring_metacarpal, little_metacarpal};
+}
 bool compute_joint_rotation(const std::vector<cv::Vec3f>& joint, bool left_hand,
                             std::vector<Eigen::Matrix3d>& rotations_world,
                             std::vector<Eigen::Matrix3d>& rotations_local) {
