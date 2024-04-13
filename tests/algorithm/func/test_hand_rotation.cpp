@@ -32,9 +32,5 @@ TEST_CASE("testing the pose svd solver") {
     CHECK(ring_meta.isApprox(Eigen::Vector3f{1.78547145, -11.20192062, -123.08335293}));
     Eigen::Vector3f little_meta {metacarpal_joints[3][0], metacarpal_joints[3][1], metacarpal_joints[3][2]};
     CHECK(little_meta.isApprox(Eigen::Vector3f{-3.63650955, -21.68715163, -126.79463752}));
-    std::cout << metacarpal_joints[0] << "\n";
-    std::cout << metacarpal_joints[1] << "\n";
-    std::cout << metacarpal_joints[2] << "\n";
-    std::cout << metacarpal_joints[3] << "\n";
 
     };

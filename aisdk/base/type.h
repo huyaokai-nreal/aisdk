@@ -6,13 +6,10 @@ namespace aisdk {
 // it is not directly available on Visual C++ (although _USE_MATH_DEFINES does exist).
 #define M_PI 3.14159265358979323846
 #endif
-template<size_t R>
-using VecR_t = Eigen::Matrix<double, R, 1>;
-using Vec2_t = Eigen::Vector2f;
-using Vec4_t = Eigen::Vector4f;
-template<size_t R, size_t C>
-using MatRC_t = Eigen::Matrix<float, R, C>;
-using  Mat21_2_t =  MatRC_t<21, 2>;
-using  Mat21_3_t =  MatRC_t<21, 3>;
-
+template<size_t R, typename T>
+using VecR_t = Eigen::Matrix<T, R, 1>;
+using Vec2f_t = Eigen::Vector2f;
+using Vec4f_t = Eigen::Vector4f;
+using  Mat21_2f_t =  Eigen::Matrix<float,21, 2>;
+using  Mat21_3f_t =  Eigen::Matrix<float,21, 3>;
 }

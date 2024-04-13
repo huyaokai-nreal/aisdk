@@ -15,7 +15,7 @@ void get_3rd_point(const cv::Point2f& a, const cv::Point2f& b, cv::Point2f& out)
     out.y = b.y + a.x - b.x;
 }
 
-cv::Mat get_affine_transform(const aisdk::Vec4_t& bbox_cs, const aisdk::Vec2_t& shift, float rot, int output_h,
+cv::Mat get_affine_transform(const aisdk::Vec4f_t& bbox_cs, const aisdk::Vec2f_t& shift, float rot, int output_h,
                              int output_w, bool inv) {
     float rot_rad = rot * M_PI / 180.;
     const auto& center = bbox_cs.block<2, 1>(0, 0);
@@ -43,7 +43,7 @@ cv::Mat get_affine_transform(const aisdk::Vec4_t& bbox_cs, const aisdk::Vec2_t& 
 }
 
 cv::Mat generate_roi_image(const cv::Mat& input_img, cv::Rect input_bbox, int output_width, int output_hight) {
-    aisdk::Vec4_t bbox_cs =
+    aisdk::Vec4f_t bbox_cs =
         aisdk::algorithm::bbox_xywh2cs({input_bbox.x, input_bbox.y, input_bbox.width, input_bbox.height});
     cv::Mat warp_matrix = get_affine_transform(bbox_cs, {0, 0}, 0., output_hight, output_width, false);
     cv::Mat result;

@@ -9,13 +9,13 @@ struct ResultBase {
 
 };
 struct HandKeypoint2DResult:public ResultBase {
-    std::array<Mat21_2_t, 2> lhand_keypoints;
-    std::array<Mat21_2_t, 2> rhand_keypoints;
+    std::array<Mat21_2f_t, 2> lhand_keypoints;
+    std::array<Mat21_2f_t, 2> rhand_keypoints;
 };
 
 struct HandDetTrackResult: public ResultBase {
     struct DetectResult {
-        Vec4_t bbox;
+        Vec4f_t bbox;
         float score;
     };
     std::array<DetectResult, 2> lhand_bbox;
