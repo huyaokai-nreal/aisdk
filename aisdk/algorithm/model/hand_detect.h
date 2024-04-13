@@ -1,9 +1,9 @@
 #pragma once
 
-#include "calculator_basenet.h"
 #include "../func/netalgo_utils.h"
 #include "../internal_structs/det_struct_internal.h"
 #include "aisdk/xengine/nr_model_mgr.h"
+#include "calculator_basenet.h"
 
 #define FEATURE_NUM 7
 
@@ -11,10 +11,18 @@ namespace aisdk::algorithm {
 
 class HandDetectNet : public CalculatorBaseNet {
    public:
+    struct GridAnchor {
+        float grid_x;
+        float grid_y;
+        float anchor_rw;
+        float anchor_rh;
+    };
+
     HandDetectNet() : CalculatorBaseNet(){};
     ~HandDetectNet(){};
 
-    aisdk::xengine::Status Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::ModelConfig &model, aisdk::xengine::SessionConfig &session);
+    aisdk::xengine::Status Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::ModelConfig &model,
+                                aisdk::xengine::SessionConfig &session);
     void PreProcess(const std::vector<Image> &net_input);
     void PostProcess(DetOutputInternal &result);
     void PreProcessSingle(const std::vector<Image> &net_input, uint32_t batchn);
@@ -52,7 +60,8 @@ class HandDetectNetv2 : public HandDetectNet {
     HandDetectNetv2() : HandDetectNet(){};
     ~HandDetectNetv2(){};
 
-    aisdk::xengine::Status Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::ModelConfig &model, aisdk::xengine::SessionConfig &session);
+    aisdk::xengine::Status Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::ModelConfig &model,
+                                aisdk::xengine::SessionConfig &session);
     aisdk::xengine::Status Inference(const std::vector<Image> &baseinput, DetOutputInternal &baseresult);
     void PostProcess(DetOutputInternal &result);
     // void PostProcessSingle(DetOutputInternal &result, uint32_t batchn);  // TODO: develop中的 PostProcessSingle

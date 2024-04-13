@@ -412,7 +412,6 @@ void warpaffine_bilinear_c1_tab(const unsigned char *src, int srcw, int srch, in
 #undef SATURATE_CAST_SHORT
 #undef SATURATE_CAST_INT
 }
-#endif
 
 void warpaffine_bilinear_c1(const unsigned char *src, int srcw, int srch, unsigned char *dst, int w, int h, double *tm,
                             int type, unsigned int v) {
@@ -437,4 +436,5 @@ void warpaffine_bilinear_c1(const unsigned char *src, int srcw, int srch, unsign
     }
     return warpaffine_bilinear_c1_tab(src, srcw, srch, srcw, dst, w, h, w, tm, wtab, type, v);
 }
+#endif
 }  // namespace aisdk::xengine
