@@ -2,6 +2,7 @@
 
 #include "aisdk/algorithm/common/nrnet_define.h"
 #include "aisdk/base/profiling.h"
+#include "aisdk/xengine/cv/xr_cv.h"
 
 namespace aisdk::algorithm {
 
@@ -91,8 +92,8 @@ void HandDetectNet::PreProcess(const std::vector<Image> &net_input) {
         if ((wratio - 0.4f) < 1e-5 && (hratio - 0.4f) < 1e-5) {
             cv::Mat image_resized(cv::Size(width, height), CV_32FC1, mem);
             // 仅支持等比例缩小2.5倍
-            aisdk::algorithm::NrResize((unsigned char *)img.data, (float *)image_resized.data, height, width, 1.f,
-                                       _mean, _norm);
+            aisdk::xengine::NrResize((unsigned char *)img.data, (float *)image_resized.data, height, width, 1.f, _mean,
+                                     _norm);
         } else
 #endif
         {
@@ -285,8 +286,8 @@ void HandDetectNet::PreProcessSingle(const std::vector<Image> &net_input, uint32
         if ((wratio - 0.4f) < 1e-5 && (hratio - 0.4f) < 1e-5) {
             cv::Mat image_resized(cv::Size(width, height), CV_32FC1, mem);
             // 仅支持等比例缩小2.5倍
-            aisdk::algorithm::NrResize((unsigned char *)img.data, (float *)image_resized.data, height, width, 1.f,
-                                       _mean, _norm);
+            aisdk::xengine::NrResize((unsigned char *)img.data, (float *)image_resized.data, height, width, 1.f, _mean,
+                                     _norm);
         } else
 #endif
         {

@@ -9,7 +9,9 @@
 #include <float.h>
 #include <math.h>
 
-#include "NR_CV.h"
+#include <array>
+
+#include "aisdk/xengine/cv/xr_cv.h"
 
 void softmax_single_lane_inplace(float* input, float* output, int size) {
     float max = -FLT_MAX;
@@ -28,25 +30,19 @@ void softmax_single_lane_inplace(float* input, float* output, int size) {
     }
 }
 
-void softmax_last_dim_naive(float* input, float* output, const std::vector<int> dims) {
-    if (dims.size() != 3) {
-        return;
-    }
-
+void softmax_last_dim_naive(float* input, float* output, const std::array<int, 3>& dims) {
     int prior_dims = dims[0] * dims[1];
     int last_dim = dims[2];
-
     for (int prior_idx = 0; prior_idx < prior_dims; prior_idx++) {
         float* input_ptr = &input[prior_idx * last_dim];
         float* output_ptr = &output[prior_idx * last_dim];
         softmax_single_lane_inplace(input_ptr, output_ptr, last_dim);
     }
-    return;
 }
 
-void softmax_last_dim(float* input, float* output, const std::vector<int> dims) {
+void softmax_last_dim(float* input, float* output, const std::array<int, 3>& dims) {
 #if __aarch64__
-    aisdk::algorithm::softmax_last_dim_asm(input, output, dims);
+    aisdk::xengine::softmax_last_dim_asm(input, output, dims);
 #else
     softmax_last_dim_naive(input, output, dims);
 #endif

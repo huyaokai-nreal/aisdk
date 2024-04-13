@@ -1,4 +1,4 @@
-target_sources(${XENHINE_LIBRARY_NAME} PRIVATE
+target_sources(${XENGINE_LIBRARY_NAME} PRIVATE
 ${CMAKE_CURRENT_SOURCE_DIR}/aes.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/analysis_tar.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/microtar.c

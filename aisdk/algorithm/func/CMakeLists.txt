@@ -5,7 +5,6 @@ ${CMAKE_CURRENT_SOURCE_DIR}/pose_solver.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/softmax.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/reducesum.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/elementwise_mul.cc
-${CMAKE_CURRENT_SOURCE_DIR}/NR_CV.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/netalgo_utils.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/warpaffine.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/generate_bbox.cc

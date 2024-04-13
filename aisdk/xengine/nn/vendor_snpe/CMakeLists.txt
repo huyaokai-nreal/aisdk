@@ -1,5 +1,5 @@
-target_sources(${XENHINE_LIBRARY_NAME} PRIVATE
+target_sources(${XENGINE_LIBRARY_NAME} PRIVATE
 ${CMAKE_CURRENT_SOURCE_DIR}/snpe_impl.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/CreateUserBuffer.cpp
 )
-target_link_libraries(${XENHINE_LIBRARY_NAME} PUBLIC SNPE)
+target_link_libraries(${XENGINE_LIBRARY_NAME} PUBLIC SNPE)

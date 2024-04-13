@@ -6,6 +6,6 @@
  */
 #pragma once
 
-#include <vector>
+#include <array>
 
-void softmax_last_dim(float* input, float* output, const std::vector<int> dims);
+void softmax_last_dim(float* input, float* output, const std::array<int, 3>& dims);

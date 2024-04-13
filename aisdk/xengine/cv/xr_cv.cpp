@@ -1,4 +1,6 @@
-#include "NR_CV.h"
+#include "xr_cv.h"
+
+#include <array>
 
 #include "aisdk/base/log.h"
 #include "aisdk/xengine/nrhal_common.h"
@@ -1289,7 +1291,7 @@
 #define LOGTAB_SCALE 8
 #define LOGTAB_MASK ((1 << LOGTAB_SCALE) - 1)
 
-namespace aisdk::algorithm {
+namespace aisdk::xengine {
 
 static const double ln_2 = 0.69314718055994530941723212145818;
 
@@ -1816,7 +1818,7 @@ void softmax_single_lane_asm(float *input, float *output, int size) {
     }
 }
 
-void softmax_last_dim_asm(float *input, float *output, const std::vector<int> dims) {
+void softmax_last_dim_asm(float *input, float *output, const std::array<int, 3> &dims) {
     if (dims.size() != 3) {
         return;
     }
@@ -2048,4 +2050,4 @@ void NrResize(unsigned char *src, float *dst, int drows, int dcols, float _alpha
 }
 #endif
 
-}  // namespace aisdk::algorithm
+}  // namespace aisdk::xengine
