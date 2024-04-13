@@ -1,9 +1,9 @@
-
 #include <aisdk/base/type.h>
 #include <glog/logging.h>
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include <doctest/doctest.h>
 #include "aisdk/algorithm/common/math.h"
+#include "aisdk/algorithm/func/netalgo_utils.h"
 using namespace aisdk;
 bool vectorsAreEqual(const std::vector<double>& vec1, const std::vector<double>& vec2) {
     // 首先比较两个向量的size，如果不等，直接返回false
@@ -19,7 +19,7 @@ bool vectorsAreEqual(const std::vector<double>& vec1, const std::vector<double>&
     // 所有元素都相等，返回true
     return true;
 }
-TEST_CASE("testing bbox format transform"){
+TEST_CASE("testing linspace"){
     auto coeff = algorithm::linspace<double>(0,1,32, false);
     std::vector<double> gt_coeff = {0,    0.03125, 0.0625, 0.09375, 0.125, 0.15625, 0.1875, 0.21875,
                                     0.25, 0.28125, 0.3125, 0.34375, 0.375, 0.40625, 0.4375, 0.46875,
