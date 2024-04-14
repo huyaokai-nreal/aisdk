@@ -6,7 +6,7 @@
 #include "aisdk/algorithm/common/NR_GlobalCoordService.h"
 #include "aisdk/base/log.h"
 
-namespace aisdk::algorithm {
+namespace aisdk::task {
 
 void SetGlobalCameraParams(CameraParams &camera) {
     Eigen::Matrix3f gl_R_cv;
@@ -64,4 +64,4 @@ Pipeline::~Pipeline() {
     }
 }
 
-}  // namespace aisdk::algorithm
+}  // namespace aisdk::task

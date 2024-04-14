@@ -66,7 +66,7 @@ class HandTracking {
 
     bool never_dlopen_so = true;
     void* m_dlhandle = nullptr;
-    aisdk::xengine::DlSymFuncs m_funcs;
+    xengine::DlSymFuncs m_funcs;
 };
 
 class Hmd {
@@ -80,7 +80,7 @@ class Hmd {
     uint32_t m_camera_model = 1;
     // 1: nrsdk_api for real_camera  2: nreal_studio/slam_raw_config for test
     uint32_t m_generate_method = 1;
-    aisdk::algorithm::CameraParams m_cam_param;
+    algorithm::CameraParams m_cam_param;
     bool cam_is_horizontal = true;
 };
 
@@ -100,7 +100,7 @@ class Plugin {
     static Plugin* GetInstance();
     static void DestoryInstance();
     bool Init(NRPluginHandle handle, NRInterfaces* interfaces);
-    aisdk::algorithm::Pipeline& GetPipeline();
+    task::Pipeline& GetPipeline();
     void ReleasePipeline();
     NRPluginHandle GetHandle() { return m_handle; }
     void SetHandle(NRPluginHandle handle) { m_handle = handle; }
@@ -128,7 +128,7 @@ class Plugin {
     ~Plugin();
     static Plugin* m_ins;
 
-    std::unique_ptr<aisdk::algorithm::Pipeline> m_pipeline;
+    std::unique_ptr<task::Pipeline> m_pipeline;
     NRPluginHandle m_handle;
 
     bool m_is_start = false;
@@ -139,12 +139,12 @@ class Plugin {
     Hmd m_hmd;
     // GrayscaleCamera m_grayscale;
     Generic m_generic;
-    std::unique_ptr<aisdk::base::FixedMembuffer> m_picbuf;
+    std::unique_ptr<base::FixedMembuffer> m_picbuf;
     bool m_load_external_modeltar = false;
     std::string pipeline_name;
     // model_tar
     bool AnalysisTar();
-    aisdk::xengine::AnalysisTar *m_tar_handle = nullptr;
+    xengine::AnalysisTar *m_tar_handle = nullptr;
 };
 
 }  // namespace aisdk::interface

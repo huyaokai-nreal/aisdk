@@ -1,6 +1,6 @@
 {
     "pipeline": {
-        "name": "handtracking_bino_graph_v1.0.0",
+        "name": "handtracking_bino_graph_v2.0.0",
         "framework": "mediapipe_graph",
         "mediapipe_graph_prototxt": "graph_flora.txt",
         "node": [

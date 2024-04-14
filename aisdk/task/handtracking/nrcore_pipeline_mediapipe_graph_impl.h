@@ -4,12 +4,12 @@
 #include <list>
 #include <mutex>
 
+#include "aisdk/algorithm/common/nrcore_define.h"
+#include "aisdk/base/time.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "nrcore_pipeline.h"
-#include "aisdk/base/time.h"
 
-namespace aisdk::algorithm {
-
+namespace aisdk::task {
 class StreamCache {
    public:
     std::mutex m_lock;
@@ -41,18 +41,18 @@ class MediaPipeGraph : public PipeGraphImpl {
     std::unique_ptr<mediapipe::CalculatorGraph> m_calculator_graph;
     std::vector<std::string> m_input_stream_name;
     std::vector<std::string> m_output_stream_name;
-    
-    private:
+
+   private:
     std::mutex m_inference_lock;
     std::map<uint64_t, std::shared_ptr<StreamCache>> m_inference_stream_cache;
-    
-    private:
+
+   private:
     std::mutex m_output_lock;
     uint32_t m_max_output_cahce_num = 3;
     // 假设graph可以正常按时间戳顺序输出
     std::list<std::shared_ptr<StreamCache>> m_output_stream_cache;
     // 删除缓存中最旧的stream
-    bool MoveOutputCahce(std::shared_ptr<StreamCache>& stream);
+    bool MoveOutputCahce(std::shared_ptr<StreamCache> &stream);
 };
 
-}  // namespace aisdk::algorithm
+}  // namespace aisdk::task

@@ -4,17 +4,19 @@
 #include <tuple>
 #include <vector>
 
-#include "aisdk/xengine/nr_model_mgr.h"
 #include "aisdk/algorithm/common/nrcore_define.h"
 #include "aisdk/base/profiling.h"
+#include "aisdk/xengine/nr_model_mgr.h"
 #include "aisdk/xengine/nrhal_capi_symbol.h"
 
-namespace aisdk::algorithm {
+namespace aisdk::task {
+using CameraParams = algorithm::CameraParams;
 class PipeGraphImpl {
    public:
     PipeGraphImpl() {}
     virtual ~PipeGraphImpl() {}
-    virtual aisdk::algorithm::Status Init(aisdk::xengine::DlSymFuncs &funcs, aisdk::xengine::PipelineConfig &config, CameraParams &camera);
+    virtual aisdk::algorithm::Status Init(aisdk::xengine::DlSymFuncs &funcs, aisdk::xengine::PipelineConfig &config,
+                                          CameraParams &camera);
     virtual aisdk::algorithm::Status Start();
     virtual aisdk::algorithm::Status Stop();
 };
@@ -25,7 +27,8 @@ class Pipeline {
     ~Pipeline();
 
     template <typename T>
-    aisdk::algorithm::Status Init(aisdk::xengine::DlSymFuncs &funcs, aisdk::xengine::PipelineConfig &config, CameraParams &camera) {
+    aisdk::algorithm::Status Init(aisdk::xengine::DlSymFuncs &funcs, aisdk::xengine::PipelineConfig &config,
+                                  CameraParams &camera) {
         static_assert(std::is_base_of<PipeGraphImpl, T>::value, "T is not derived from PipeGraphImpl!");
 
         if (config.framework_type == aisdk::xengine::FrameworkType::MEDIAPIPE_GRAPH) {
@@ -50,4 +53,4 @@ class Pipeline {
     std::shared_ptr<PipeGraphImpl> m_graph_impl = nullptr;
 };
 
-}  // namespace aisdk::algorithm
+}  // namespace aisdk::task

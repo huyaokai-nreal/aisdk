@@ -1,8 +1,8 @@
 #include "handtracking_mediapipe_graph.h"
-
-#include <cstddef>
-#include <mutex>
 #include <string>
+#include "aisdk/algorithm/func/hand_rotation.h"
+#include "aisdk/algorithm/internal_structs/hand_output_struct_internal.h"
+#include "aisdk/algorithm/internal_structs/headpose_struct_internal.h"
 
 #include "aisdk/algorithm/common/NR_GlobalPredictorService.h"
 #include "aisdk/base/file.h"
@@ -32,7 +32,7 @@ std::map<std::string, int> gesture_map = {
         }                                              \
     } while (0)
 
-namespace aisdk::algorithm {
+namespace aisdk::task {
 
 template <typename... Args>
 std::string string_sprintf(const char* format, Args... args) {
@@ -74,7 +74,7 @@ aisdk::algorithm::Status HandTrackingMediaPipeGraph::PushData(uint64_t timestamp
                                                               NRTransform headpose,
                                                               aisdk::algorithm::CamInfo cam_info) {
     auto image_packet = mediapipe::MakePacket<std::vector<aisdk::algorithm::Image>>(std::move(in_image));
-    auto headpose_packet = mediapipe::MakePacket<HeadPoseInternal>(headpose);
+    auto headpose_packet = mediapipe::MakePacket<algorithm::HeadPoseInternal>(headpose);
 
     // 先登记需要缓存的stream帧信息
     bool push_failure = false;
@@ -117,7 +117,7 @@ aisdk::algorithm::Status HandTrackingMediaPipeGraph::PopResult(uint64_t hmd_time
     std::shared_ptr<StreamCache> outlist = GetOutputStreamCache();
     if (outlist) {
         auto& hand_data_packet = outlist->m_output_packs[0];
-        auto& hand_data_internal = hand_data_packet.Get<HandOutputInternal>();
+        auto& hand_data_internal = hand_data_packet.Get<algorithm::HandOutputInternal>();
 
         AISDK_LOG_TRACE("[PopResult] lhand begin");
         if (hand_data_internal.lhand_valid) {

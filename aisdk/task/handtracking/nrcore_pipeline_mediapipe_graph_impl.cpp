@@ -3,9 +3,9 @@
 #include <cstddef>
 #include <cstdint>
 
-#include "handtracking_mediapipe_calculators_register.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/set_cpu_affinity.h"
+#include "handtracking_mediapipe_calculators_register.h"
 #include "mediapipe/framework/port/file_helpers.h"
 #include "mediapipe/framework/port/map_util.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
@@ -23,7 +23,7 @@
         }                                              \
     } while (0)
 
-namespace aisdk::algorithm {
+namespace aisdk::task {
 
 aisdk::algorithm::Status MediaPipeGraph::Start() {
     if (m_calculator_graph) {
@@ -134,7 +134,7 @@ aisdk::algorithm::Status MediaPipeGraph::Init(aisdk::xengine::DlSymFuncs &funcs,
     // 设置本线程名称和亲和性，是为了让mediagraph内部的threadpool的线程继承该属性
     std::string ori_name = aisdk::base::SetThisThreadName(graph_thread_name);
     AISDK_LOG_TRACE("MediaPipeGraph::Init ori_affinity={} name={}", ori_affinity, ori_name.c_str());
-    aisdk::base::set_sched_affinity(0xF0);  //绑4个大核
+    aisdk::base::set_sched_affinity(0xF0);  // 绑4个大核
 
     mediapipe::TriggerGloalGraphCalculatorsConstruct();
 
@@ -191,4 +191,4 @@ aisdk::algorithm::Status MediaPipeGraph::Init(aisdk::xengine::DlSymFuncs &funcs,
     return aisdk::algorithm::Status::SUCCESS;
 }
 
-}  // namespace aisdk::algorithm
+}  // namespace aisdk::task
