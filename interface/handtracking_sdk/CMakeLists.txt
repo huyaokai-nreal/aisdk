@@ -13,6 +13,13 @@ target_compile_options(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PRIVATE
 -DAISK_GIT_VERSION="${GIT_CURRENT_BRANCH}:${GIT_LAST_COMMIT}"
 PRIVATE -Wno-error
 )
+add_custom_command(
+    TARGET ${HANDTRACKING_INTERFACE_LIBRARY_NAME}  
+    POST_BUILD                         # 在目标构建完成后执行
+    COMMAND rm ${DEFAULT_PIPELINE_TAR_KEY_PATH} && rm ${DEFAULT_PIPELINE_TAR_PATH} 
+    COMMENT "rm temperal model packages"
+    VERBATIM                           # 保持命令原样传递给shell
+)
 
 if(ENABLE_XENGINE_SNPE_NN)
     target_compile_options(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PRIVATE -DHAVE_HAL_SNPE)

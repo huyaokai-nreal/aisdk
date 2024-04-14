@@ -1,12 +1,16 @@
 #!/bin/bash
-
+output_dir="${1:-"build"}"
 pp=$(pwd)
-# linux x86_64
 aes_tools=${pp}/tool/aes_encrypt_tools
 tar_path=${pp}/config/ppls
-tar_out=${pp}/build/handtracking_pipeline_v2.0.0.tar
+tar_out=${output_dir}/handtracking_pipeline_v2.0.0.tar
+model_src_path=${pp}/thirdparty/ai_model_zoo/hand_tracking
+# 复制模型文件
+cp -r ${model_src_path} ${tar_path}/models
 # 需要进入目录后打包
 cd ${tar_path}
-tar -cvf ${tar_out} *_pipeline_config.json *.txt -h models
+tar -cvf ${tar_out} *_pipeline_config.json *.txt models
 ${aes_tools} ${tar_out} ${tar_out}.enc enc > ${tar_out}.key
+# 删除中间文件
 rm ${tar_out}
+rm -r ${tar_path}/models

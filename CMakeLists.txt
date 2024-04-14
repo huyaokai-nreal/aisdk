@@ -106,12 +106,19 @@ endif()
 # build algorithm
 option(ENABLE_ALGORITHM_GRAPH_STREAM_EVAL_TIME "enable algorithm mediapipe graph stream eval time."  OFF)
 option(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME "enable algorithm mediapipe calculator process eval time."  OFF)
-
+# build model package
+execute_process(
+    COMMAND bash tool/tar_pipeline.sh ${CMAKE_CURRENT_BINARY_DIR}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}   # 可选：指定工作目录
+    RESULT_VARIABLE result_code                     # 可选：捕获退出状态码
+    OUTPUT_VARIABLE output                          # 可选：捕获标准输出
+    ERROR_VARIABLE error                            # 可选：捕获标准错误
+)
 # build xengine model package
 set(MODEL_TAR_NAME "handtracking_pipeline_v2.0.0.tar")
-set(DEFAULT_PIPELINE_TAR_PATH "${CMAKE_CURRENT_SOURCE_DIR}/build/${MODEL_TAR_NAME}.enc")
-set(DEFAULT_PIPELINE_TAR_KEY "${CMAKE_CURRENT_SOURCE_DIR}/build/${MODEL_TAR_NAME}.key")
-file(STRINGS ${DEFAULT_PIPELINE_TAR_KEY} file_content)
+set(DEFAULT_PIPELINE_TAR_PATH "${CMAKE_CURRENT_BINARY_DIR}/${MODEL_TAR_NAME}.enc")
+set(DEFAULT_PIPELINE_TAR_KEY_PATH "${CMAKE_CURRENT_BINARY_DIR}/${MODEL_TAR_NAME}.key")
+file(STRINGS ${DEFAULT_PIPELINE_TAR_KEY_PATH} file_content)
 list(GET file_content 2 DEFAULT_PIPELINE_TAR_KEY)
 message(STATUS "MODEL_KEY: ${DEFAULT_PIPELINE_TAR_KEY}")
 configure_file (
@@ -153,3 +160,4 @@ endif()
 
 # Set git hook
 execute_process(COMMAND git config core.hooksPath external/project/githook)
+
