@@ -3,7 +3,7 @@
  * @Date: 2023-04-10 05:29:03
  * @LastEditors: jszhang jszhang@nreal.ai
  * @LastEditTime: 2023-04-14 02:57:52
- * @FilePath: /SNPE_demo/src/snpe/snpe_lib_wrapper.cc
+ * @FilePath: /SNPE_demo/src/snpe/snpe_lib_wrapper.cpp
  */
 #include "snpe_lib_wrapper.h"
 

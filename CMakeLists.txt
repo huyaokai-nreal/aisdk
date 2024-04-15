@@ -43,7 +43,18 @@ option(BUILD_TOOL "Build tools."  OFF)
 option(ENABLE_CLANG_TIDY_CHECK       "Analyze code with clang-tidy."                OFF)
 option(ENABLE_LOG_LEVEL_RELEASE  "enable log level for release" ON)
 option(ENABLE_LOG_LEVEL_ALL "enable trace log level" OFF)
-
+# build algorithm
+option(ENABLE_ALGORITHM_GRAPH_STREAM_EVAL_TIME "enable algorithm mediapipe graph stream eval time."  OFF)
+option(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME "enable algorithm mediapipe calculator process eval time."  OFF)
+# build xengine nn
+option(ENABLE_XENGINE_SHARED_LIB "enable xengine shared lib."  OFF)
+option(ENABLE_XENGINE_SNPE_NN "enable snpe nn."  ON)
+set(SNPE_VERSION "snpe-2.17.0" CACHE STRING "set snpe version.")
+message(STATUS "SNPE_VERSION=" ${SNPE_VERSION})
+option(ENABLE_HEXAGON_DSP_OP "enable hexagon dsp op."  OFF)
+option(ENABLE_XENGINE_MNN_NN "enable mnn nn."  ON)
+option(ENABLE_XENGINE_ARTOSYN_NN "enable artosyn nn."  OFF)
+option(ENABLE_XENGINE_TENSORRT_NN "enable tensorrt nn."  OFF)
 if(ENABLE_LOG_LEVEL_RELEASE)
     add_definitions(-DENABLE_LOG_LEVEL_RELEASE)
 endif()
@@ -103,9 +114,6 @@ if(ENABLE_CLANG_TIDY_CHECK)
   set(CMAKE_CXX_CLANG_TIDY clang-tidy -format-style=file)
 endif()
 
-# build algorithm
-option(ENABLE_ALGORITHM_GRAPH_STREAM_EVAL_TIME "enable algorithm mediapipe graph stream eval time."  OFF)
-option(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME "enable algorithm mediapipe calculator process eval time."  OFF)
 # build model package
 execute_process(
     COMMAND bash tool/tar_pipeline.sh ${CMAKE_CURRENT_BINARY_DIR}
@@ -126,15 +134,6 @@ configure_file (
     "${CMAKE_CURRENT_SOURCE_DIR}/aisdk/xengine/model/models.h"
 )
 
-# build xengine nn
-option(ENABLE_XENGINE_SHARED_LIB "enable xengine shared lib."  OFF)
-option(ENABLE_XENGINE_SNPE_NN "enable snpe nn."  ON)
-set(SNPE_VERSION "snpe-2.17.0" CACHE STRING "set snpe version.")
-message(STATUS "SNPE_VERSION=" ${SNPE_VERSION})
-option(ENABLE_HEXAGON_DSP_OP "enable hexagon dsp op."  OFF)
-option(ENABLE_XENGINE_MNN_NN "enable mnn nn."  ON)
-option(ENABLE_XENGINE_ARTOSYN_NN "enable artosyn nn."  OFF)
-option(ENABLE_XENGINE_TENSORRT_NN "enable tensorrt nn."  OFF)
 
 # build aisdk
 include(Project)

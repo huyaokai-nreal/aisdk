@@ -3,7 +3,7 @@
  * @Date: 2023-03-10 07:53:29
  * @LastEditors: jszhang jszhang@nreal.ai
  * @LastEditTime: 2023-03-10 08:06:23
- * @FilePath: /nreal_hand_demo_android/src/core/netalgo/impl/functions/permute.cc
+ * @FilePath: /nreal_hand_demo_android/src/core/netalgo/impl/functions/permute.cpp
  */
 
 #include "permute.h"
