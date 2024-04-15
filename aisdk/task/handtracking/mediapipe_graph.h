@@ -52,7 +52,7 @@ class MediaPipeGraph : public PipeGraphImpl {
     // 假设graph可以正常按时间戳顺序输出
     std::list<std::shared_ptr<StreamCache>> m_output_stream_cache;
     // 删除缓存中最旧的stream
-    bool MoveOutputCahce(std::shared_ptr<StreamCache> &stream);
+    bool MoveOutputCache(std::shared_ptr<StreamCache> &stream);
 };
 
 }  // namespace aisdk::task

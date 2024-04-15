@@ -2,7 +2,7 @@
 
 #include "aisdk/algorithm/common/nrnet_define.h"
 #include "aisdk/algorithm/func/hand_filters.h"
-#include "nrcore_pipeline_mediapipe_graph_impl.h"
+#include "mediapipe_graph.h"
 #include "perception/nr_perception_hand_tracking.h"
 
 namespace aisdk::task {

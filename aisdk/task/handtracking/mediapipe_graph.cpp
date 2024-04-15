@@ -1,4 +1,4 @@
-#include "nrcore_pipeline_mediapipe_graph_impl.h"
+#include "mediapipe_graph.h"
 #include <absl/strings/str_split.h>
 #include <absl/strings/string_view.h>
 
@@ -66,7 +66,7 @@ aisdk::algorithm::Status MediaPipeGraph::ClearInputStreamCache(uint64_t graph_st
     return aisdk::algorithm::Status::SUCCESS;
 }
 
-bool MediaPipeGraph::MoveOutputCahce(std::shared_ptr<StreamCache> &stream) {
+bool MediaPipeGraph::MoveOutputCache(std::shared_ptr<StreamCache> &stream) {
 #if defined(ENABLE_ALGORITHM_GRAPH_STREAM_EVAL_TIME)
     // 销毁计时器，打印耗时
     stream->m_stream_time = nullptr;
@@ -107,7 +107,7 @@ bool MediaPipeGraph::CallBackInferenceResult(const mediapipe::Packet &packet, ui
     }
 
     if (cache && is_move) {
-        MoveOutputCahce(cache);
+        MoveOutputCache(cache);
     }
 
     return ret;
