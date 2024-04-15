@@ -3,11 +3,12 @@
 #include <string>
 
 #include "../common/NR_GlobalPredictorService.h"
-#include "../func/NR_Gesture_v2.h"
+#include "../func/gesture_recognition_v2.h"
 #include "../internal_structs/hand_output_struct_internal.h"
 #include "../internal_structs/hand_state_struct_internal.h"
 #include "../internal_structs/score_3d_struct_internal.h"
 #include "../internal_structs/standard_kpt3d_struct_internal.h"
+#include "aisdk/algorithm/internal_structs/kpt2d_struct_internal.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/time.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -23,6 +24,7 @@ namespace mediapipe {
 //   name: "GestureRecognition"
 //   calculator: "GestureRecognitionCalculator"
 //   input_stream: "GR_KPT_INPUT:kpt3d_post_constrained"
+//   input_stream: "GR_KPT2D_INPUT:kpt2d_filter"
 //   input_stream: "GR_SCORE_INPUT:hand_score"
 //   input_stream: "GR_STATE_INPUT:hand_state"
 //   input_stream: "GR_TS_INPUT:timestamp"
@@ -38,6 +40,7 @@ class GestureRecognitionCalculator : public CalculatorBase {
     static absl::Status GetContract(CalculatorContract* cc) {
         AISDK_LOG_TRACE("[GestureRecognitionCalculator] GetContract start.");
         cc->Inputs().Tag("GR_KPT_INPUT").Set<aisdk::algorithm::StandardKpt3dInternal>();
+        cc->Inputs().Tag("GR_KPT2D_INPUT").Set<aisdk::algorithm::Kpt2dInternal>();
         cc->Inputs().Tag("GR_SCORE_INPUT").Set<aisdk::algorithm::Score3dInternal>();
         cc->Inputs().Tag("GR_STATE_INPUT").Set<aisdk::algorithm::HandStateInternal>();
         cc->Inputs().Tag("GR_TS_INPUT").Set<uint64_t>();
@@ -70,6 +73,7 @@ class GestureRecognitionCalculator : public CalculatorBase {
         const auto& score3d_data = cc->Inputs().Tag("GR_SCORE_INPUT").Get<aisdk::algorithm::Score3dInternal>();
         const auto& state_data = cc->Inputs().Tag("GR_STATE_INPUT").Get<aisdk::algorithm::HandStateInternal>();
         const auto& timestamp = cc->Inputs().Tag("GR_TS_INPUT").Get<uint64_t>();
+        const auto& kpt2d_data = cc->Inputs().Tag("GR_KPT2D_INPUT").Get<aisdk::algorithm::Kpt2dInternal>();
 
         std::unique_ptr<aisdk::algorithm::HandOutputInternal> output_buffer_ =
             absl::make_unique<aisdk::algorithm::HandOutputInternal>();
@@ -85,7 +89,8 @@ class GestureRecognitionCalculator : public CalculatorBase {
             for (int p = 0; p < STANDARDIZE_TARGET_POINTS; p++) {
                 points3d_in[p] = {kpt3d_data.lhand[p][0], kpt3d_data.lhand[p][1], kpt3d_data.lhand[p][2]};
             }
-            std::tie(gesture_res, std::ignore) = m_gesture_classifier_lhand->predict_with_keypoints3d(points3d_in);
+            std::tie(gesture_res, std::ignore) =
+                m_gesture_classifier_lhand->predict_with_keypoints3d(points3d_in, kpt2d_data.lhand_lcam, true);
 
             output_buffer_->lhand_valid = true;
             output_buffer_->lhand_score = score3d_data.lhand_score;
@@ -105,7 +110,8 @@ class GestureRecognitionCalculator : public CalculatorBase {
             for (int p = 0; p < STANDARDIZE_TARGET_POINTS; p++) {
                 points3d_in[p] = {kpt3d_data.rhand[p][0], kpt3d_data.rhand[p][1], kpt3d_data.rhand[p][2]};
             }
-            std::tie(gesture_res, std::ignore) = m_gesture_classifier_rhand->predict_with_keypoints3d(points3d_in);
+            std::tie(gesture_res, std::ignore) =
+                m_gesture_classifier_rhand->predict_with_keypoints3d(points3d_in, kpt2d_data.rhand_rcam, false);
 
             output_buffer_->rhand_valid = true;
             output_buffer_->rhand_score = score3d_data.rhand_score;

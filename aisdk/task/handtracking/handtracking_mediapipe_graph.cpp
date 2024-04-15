@@ -31,7 +31,7 @@ std::map<std::string, int> gesture_map = {
     do {                                               \
         const ::absl::Status _status = (expr);         \
         if (!_status.ok()) {                           \
-            AISDK_LOG_TRACE(_status.message().data()); \
+            AISDK_LOG_ERROR(_status.message().data()); \
             return aisdk::algorithm::Status::FAILURE;  \
         }                                              \
     } while (0)
@@ -42,7 +42,7 @@ namespace aisdk::task {
 std::string lcam_local_record_rootpath;
 std::string rcam_local_record_rootpath;
 
-HandTrackingMediaPipeGraph::HandTrackingMediaPipeGraph() : MediaPipeGraph() {
+HandTrackingMediaPipeGraph::HandTrackingMediaPipeGraph() {
     m_post_filter = std::make_shared<HandFilters>();
     m_post_filter->init();
 

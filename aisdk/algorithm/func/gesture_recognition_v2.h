@@ -2,15 +2,12 @@
 
 #include <Eigen/Dense>
 #include <array>
-#include <cmath>
-#include <iostream>
-#include <map>
 #include <memory>
 #include <vector>
+#include <opencv2/core.hpp>
 
 namespace aisdk::algorithm {
-
-enum class FingureState { UNKNOWN = 0, OPEN, NEUTRAL, CLOSED };
+    enum class FingureState { UNKNOWN = 0, OPEN, NEUTRAL, CLOSED };
 
 enum class HandOrientation { UNKNOWN = 0, HORIZONTAL, VERTICAL, OTHER };
 
@@ -101,17 +98,17 @@ struct HandRawFeature {
 class HandFeatureUpdator {
    public:
     HandFeatureUpdator() : cur_hand_feature(std::make_unique<HandFeature>()) {}
-    void reset() {
-        cur_hand_feature = std::make_unique<HandFeature>();
-        return;
-    }
+    void reset_feature() { cur_hand_feature = std::make_unique<HandFeature>(); }
 
     HandFeature update(const std::vector<Eigen::Vector3f> &fingure_angles, std::vector<float> &abduction_angles,
-                       const std::vector<float> &distances, float hand_angle) {
+                       const std::vector<float> &distances, float hand_angle, bool release_th_flag,
+                       bool is_pinch_masked) {
         update_curl_feature(fingure_angles);
         update_flexion_feature(fingure_angles);
         update_abduction_feature(abduction_angles);
-        update_opposition_feature(distances);
+        if (!is_pinch_masked) {
+            update_opposition_feature(distances, release_th_flag);
+        }
         update_hand_orientation(hand_angle);
 
         return *cur_hand_feature;
@@ -122,7 +119,7 @@ class HandFeatureUpdator {
     void update_curl_feature(const std::vector<Eigen::Vector3f> &angles);
     void update_flexion_feature(const std::vector<Eigen::Vector3f> &angles);
     void update_abduction_feature(const std::vector<float> &angles);
-    void update_opposition_feature(const std::vector<float> &distances);
+    void update_opposition_feature(const std::vector<float> &distances, bool relax_th_flag);
     void update_hand_orientation(float hand_angle);
 
    private:
@@ -143,13 +140,13 @@ class HandFeatureUpdator {
     float abduction_thumb_closed_th = 20;
     float abduction_other_open_th = 12;
     float abduction_other_closed_th = 10;
-
-    // 0.04 0.025
-
-    float opposition_closed_th = 0.0325;  // 3.25cm
-    float opposition_open_th = 0.08;      // 8cm
-    float opposition_th_width = 0.015;    // 1.5cm
-
+    // in 1.5cm, out 3.5 cm
+    float opposition_closed_th = 0.0275;  // 2.5 cm
+    float opposition_open_th = 0.08;      // 8 cm
+    float opposition_th_width = 0.015;    // 1.5 cm
+    // pinch relax th, in 2cm, out 3.5 cm
+    float opposition_relax_closed_th = 0.0275 + 0.0025;  // 2 cm
+    float opposition_relax_th_width = 0.015 - 0.005;     // 1 cm
     std::unique_ptr<HandFeature> cur_hand_feature;
 };
 
@@ -176,9 +173,9 @@ class GestureMatchRule {
         auto [thumb_flexion, index_flexion, middle_flexion, ring_flexion, pinky_flexion] =
             hand_feature.flexion_features();
 
-        return thumb_curl == FingureState::OPEN && index_curl == FingureState::OPEN &&
+        return thumb_curl == FingureState::OPEN && index_curl != FingureState::CLOSED &&
                middle_curl == FingureState::OPEN && ring_curl == FingureState::OPEN &&
-               pinky_curl == FingureState::OPEN && index_flexion == FingureState::OPEN &&
+               pinky_curl == FingureState::OPEN && index_flexion != FingureState::CLOSED &&
                middle_flexion == FingureState::OPEN && ring_flexion == FingureState::OPEN &&
                pinky_flexion == FingureState::OPEN;
     }
@@ -189,12 +186,12 @@ class GestureMatchRule {
     }
 
     static bool Victory(const HandFeature &hand_feature, const HandRawFeature &raw_feature) {
-        auto [_, index_curl, middle_curl, ring_curl, pinky_curl] = hand_feature.curl_features();
+        auto [thum_curl, index_curl, middle_curl, ring_curl, pinky_curl] = hand_feature.curl_features();
         auto [__, index_abduction, ___, ____, _____] = hand_feature.abduction_features();
 
         return index_curl == FingureState::OPEN && middle_curl == FingureState::OPEN &&
                ring_curl == FingureState::CLOSED && pinky_curl != FingureState::OPEN &&
-               index_abduction == FingureState::OPEN;
+               index_abduction == FingureState::OPEN && thum_curl != FingureState::OPEN;
     }
 
     static bool Call(const HandFeature &hand_feature, const HandRawFeature &raw_feature) {
@@ -234,20 +231,27 @@ class GestureRecognitionV2 {
    public:
     GestureRecognitionV2()
         : feature_updator(std::make_unique<HandFeatureUpdator>()),
-          gesture_list({"Click", "Grab", "Pinch", "ThumbUp", "OpenHand", "Victory", "Call", "Home"}) {}
+          gesture_list({"Click", "Pinch", "Grab", "ThumbUp", "OpenHand", "Victory", "Call", "Home"}) {}
 
-    void reset() {
-        feature_updator = std::make_unique<HandFeatureUpdator>();
-        return;
+    void reset_feature() {
+        feature_updator->reset_feature();
+        last_gesture_ = "Invalid";
     }
 
     std::pair<HandRawFeature, HandFeature> extract_hand_feature(
-        const std::vector<std::vector<Eigen::Vector3f>> &keypoints3d);
-    std::pair<std::string, HandRawFeature> predict_with_keypoints3d(const std::vector<Eigen::Vector3f> &keypoints3d);
+        const std::vector<std::vector<Eigen::Vector3f>> &keypoints3d, const std::vector<cv::Vec2f> &keypoints2d,
+        bool is_left_hand);
+    std::pair<std::string, HandRawFeature> predict_with_keypoints3d(const std::vector<Eigen::Vector3f> &keypoints3d,
+                                                                    const std::vector<cv::Vec2f> &keypoints2d,
+                                                                    bool is_left_hand);
 
    private:
+    bool is_face_to_head(const std::vector<std::vector<Eigen::Vector3f>> &keypoints3d, bool is_left_hand);
+    bool is_ok_pinch(const std::vector<std::vector<Eigen::Vector3f>> &keypoints3d);
+    bool is_pinch_masked(const std::vector<cv::Vec2f> &keypoints2d, bool is_face_to_head);
     std::unique_ptr<HandFeatureUpdator> feature_updator;
     std::vector<std::string> gesture_list;
+    float std_hand_length_ = 0.08;  // 8cm
+    std::string last_gesture_ = "Invalid";
 };
-
 }  // namespace aisdk::algorithm

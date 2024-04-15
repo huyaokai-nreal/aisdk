@@ -114,6 +114,7 @@ node {
 node {
   name: "GestureRecognition"
   calculator: "GestureRecognitionCalculator"
+  input_stream: "GR_KPT2D_INPUT:kpt2d_filter"
   input_stream: "GR_KPT_INPUT:kpt3d_post_constrained"
   input_stream: "GR_SCORE_INPUT:hand_score"
   input_stream: "GR_STATE_INPUT:hand_state"

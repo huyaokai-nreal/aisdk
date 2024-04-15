@@ -21,7 +21,7 @@
     do {                                               \
         const ::absl::Status _status = (expr);         \
         if (!_status.ok()) {                           \
-            AISDK_LOG_TRACE(_status.message().data()); \
+            AISDK_LOG_ERROR(_status.message().data()); \
             return aisdk::algorithm::Status::FAILURE;  \
         }                                              \
     } while (0)
@@ -145,25 +145,6 @@ aisdk::algorithm::Status MediaPipeGraph::Init(aisdk::xengine::DlSymFuncs &funcs,
     m_calculator_graph = std::make_unique<mediapipe::CalculatorGraph>();
 
     MP_RETURN_IF_ERROR_WITH_LOG(m_calculator_graph->SetExecutor("", std::make_shared<mediapipe::ThreadPoolExecutor>(1)));
-
-    // mediapipe::ValidatedGraphConfig validated_graph;
-    // MP_RETURN_IF_ERROR_WITH_LOG(validated_graph.Initialize(graph_config));
-
-    // for (int index = 0; index < validated_graph.InputStreamInfos().size(); ++index) {
-    //     const mediapipe::EdgeInfo &edge_info = validated_graph.InputStreamInfos()[index];
-    //     std::cout << "edge_info:" << edge_info.name << " packet_type:" << edge_info.packet_type
-    //               << " back_edge:" << edge_info.back_edge << std::endl;
-    //     std::cout << "edge_info:" << edge_info.name << " parent_node_type:" << (int)edge_info.parent_node.type
-    //               << " parent_node.index:" << edge_info.parent_node.index << std::endl;
-    // }
-
-    // for (int index = 0; index < validated_graph.OutputStreamInfos().size(); ++index) {
-    //     const mediapipe::EdgeInfo &edge_info = validated_graph.OutputStreamInfos()[index];
-    //     std::cout << "edge_info2:" << edge_info.name << " packet_type:" << edge_info.packet_type
-    //               << " back_edge:" << edge_info.back_edge << std::endl;
-    //     std::cout << "edge_info2:" << edge_info.name << " parent_node_type:" << (int)edge_info.parent_node.type
-    //               << " parent_node.index:" << edge_info.parent_node.index << std::endl;
-    // }
 
     MP_RETURN_IF_ERROR_WITH_LOG(m_calculator_graph->Initialize(graph_config));
     for (int i = 0; i < graph_config.input_stream_size(); i++){
