@@ -1,8 +1,11 @@
 #include "nrcore_pipeline_mediapipe_graph_impl.h"
+#include <absl/strings/str_split.h>
+#include <absl/strings/string_view.h>
 
 #include <cstddef>
 #include <cstdint>
 
+#include "aisdk/algorithm/common/nrcore_define.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/set_cpu_affinity.h"
 #include "handtracking_mediapipe_calculators_register.h"
@@ -35,9 +38,7 @@ aisdk::algorithm::Status MediaPipeGraph::Start() {
 
 aisdk::algorithm::Status MediaPipeGraph::Stop() {
     if (m_calculator_graph) {
-        for (auto &iter : m_input_stream_name) {
-            MP_RETURN_IF_ERROR_WITH_LOG(m_calculator_graph->CloseInputStream(iter));
-        }
+        MP_RETURN_IF_ERROR_WITH_LOG(m_calculator_graph->CloseAllInputStreams());
         auto res_done = m_calculator_graph->WaitUntilDone();
     }
     return aisdk::algorithm::Status::SUCCESS;
@@ -46,27 +47,23 @@ aisdk::algorithm::Status MediaPipeGraph::Stop() {
 aisdk::algorithm::Status MediaPipeGraph::SetInputStreamCache(uint64_t graph_stream_stamp, uint64_t timestamp) {
     std::shared_ptr<StreamCache> stream = std::make_shared<StreamCache>();
     stream->timestamp = timestamp;
-    stream->m_output_packs_sum = m_output_stream_name.size();
-    stream->m_output_packs.resize(stream->m_output_packs_sum);
+    stream->m_output_packs_sum = 0;
+    stream->m_output_packs.resize(m_output_stream_name.size());
 #if defined(ENABLE_ALGORITHM_GRAPH_STREAM_EVAL_TIME)
     stream->m_stream_time =
         std::make_shared<aisdk::base::NaiveTimer>(__LINE__, "MediaPipeGraph", std::string("MediaPipeGraph::inference"));
 #endif
 
     std::lock_guard<std::mutex> guard(m_inference_lock);
-    auto insert_result = m_inference_stream_cache.insert(std::make_pair(graph_stream_stamp, stream));
-    if (!insert_result.second) {
-        AISDK_LOG_ERROR("MediaPipeGraph::SetInputStreamCache graph_stream_stamp={} Repeated!!!!", graph_stream_stamp);
-    } else {
-        return aisdk::algorithm::Status::FAILURE;
-    }
-
+    m_inference_stream_cache.insert(std::make_pair(graph_stream_stamp, stream));
     return aisdk::algorithm::Status::SUCCESS;
+
 }
 
 aisdk::algorithm::Status MediaPipeGraph::ClearInputStreamCache(uint64_t graph_stream_stamp) {
     std::lock_guard<std::mutex> guard(m_inference_lock);
     m_inference_stream_cache.erase(graph_stream_stamp);
+    return aisdk::algorithm::Status::SUCCESS;
 }
 
 bool MediaPipeGraph::MoveOutputCahce(std::shared_ptr<StreamCache> &stream) {
@@ -87,17 +84,17 @@ bool MediaPipeGraph::MoveOutputCahce(std::shared_ptr<StreamCache> &stream) {
 
 bool MediaPipeGraph::CallBackInferenceResult(const mediapipe::Packet &packet, uint64_t output_packs_order) {
     bool ret = false;
-    std::shared_ptr<StreamCache> cahce;
+    std::shared_ptr<StreamCache> cache;
     uint64_t graph_stream_stamp = packet.Timestamp().Value();
     bool is_move = false;
     {
         std::lock_guard<std::mutex> guard(m_inference_lock);
         auto iter = m_inference_stream_cache.find(graph_stream_stamp);
         if (iter != m_inference_stream_cache.end()) {
-            cahce = iter->second;
-            cahce->m_output_packs_sum++;
-            cahce->m_output_packs[output_packs_order] = std::move(packet);
-            if (cahce->m_output_packs_sum = cahce->m_output_packs.size()) {
+            cache = iter->second;
+            cache->m_output_packs_sum++;
+            cache->m_output_packs[output_packs_order] = packet;
+            if (cache->m_output_packs_sum == cache->m_output_packs.size()) {
                 m_inference_stream_cache.erase(graph_stream_stamp);
                 is_move = true;
             }
@@ -109,8 +106,8 @@ bool MediaPipeGraph::CallBackInferenceResult(const mediapipe::Packet &packet, ui
         }
     }
 
-    if (cahce && is_move) {
-        MoveOutputCahce(cahce);
+    if (cache && is_move) {
+        MoveOutputCahce(cache);
     }
 
     return ret;
@@ -147,7 +144,7 @@ aisdk::algorithm::Status MediaPipeGraph::Init(aisdk::xengine::DlSymFuncs &funcs,
 
     m_calculator_graph = std::make_unique<mediapipe::CalculatorGraph>();
 
-    m_calculator_graph->SetExecutor("DefaultExecutor", std::make_shared<mediapipe::ThreadPoolExecutor>(1));
+    MP_RETURN_IF_ERROR_WITH_LOG(m_calculator_graph->SetExecutor("", std::make_shared<mediapipe::ThreadPoolExecutor>(1)));
 
     // mediapipe::ValidatedGraphConfig validated_graph;
     // MP_RETURN_IF_ERROR_WITH_LOG(validated_graph.Initialize(graph_config));
@@ -169,11 +166,14 @@ aisdk::algorithm::Status MediaPipeGraph::Init(aisdk::xengine::DlSymFuncs &funcs,
     // }
 
     MP_RETURN_IF_ERROR_WITH_LOG(m_calculator_graph->Initialize(graph_config));
-
-    // 这里的stream_name应该自动获取，未实现....
-    m_input_stream_name.push_back("image");
-    m_input_stream_name.push_back("headpose");
-    m_output_stream_name.push_back("hand_result");
+    for (int i = 0; i < graph_config.input_stream_size(); i++){
+        std::vector<absl::string_view> names = absl::StrSplit(graph_config.input_stream(i), ':');
+        m_input_stream_name.emplace_back(names[names.size() -1]);
+    }
+    for(int i = 0; i < graph_config.output_stream_size(); i++){
+        std::vector<absl::string_view> names = absl::StrSplit(graph_config.output_stream(i), ':');
+        m_output_stream_name.emplace_back(names[names.size() -1]);
+    }
 
     for (uint32_t order = 0; order < m_output_stream_name.size(); order++) {
         auto callback = [this, order](const mediapipe::Packet &packet) -> ::absl::Status {

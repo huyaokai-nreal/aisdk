@@ -25,9 +25,9 @@ class MediaPipeGraph : public PipeGraphImpl {
     virtual ~MediaPipeGraph() {}
 
     aisdk::algorithm::Status Init(aisdk::xengine::DlSymFuncs &funcs, aisdk::xengine::PipelineConfig &config,
-                                  CameraParams &camera);
-    aisdk::algorithm::Status Start();
-    aisdk::algorithm::Status Stop();
+                                  CameraParams &camera) override;
+    aisdk::algorithm::Status Start() override;
+    aisdk::algorithm::Status Stop() override;
     // 登记已经push到grapgh中的stream，后续我们将graph输出的stream结果做匹配。
     aisdk::algorithm::Status SetInputStreamCache(uint64_t graph_stream_stamp, uint64_t timestamp);
     // graph添加stream失败，主动删除SetInputStreamCache登记的stream
@@ -37,7 +37,7 @@ class MediaPipeGraph : public PipeGraphImpl {
     // 内部函数，graph将多输出的packet合并到StreamCache中。
     bool CallBackInferenceResult(const mediapipe::Packet &packet, uint64_t output_packs_order);
 
-   public:
+   
     std::unique_ptr<mediapipe::CalculatorGraph> m_calculator_graph;
     std::vector<std::string> m_input_stream_name;
     std::vector<std::string> m_output_stream_name;
@@ -46,7 +46,7 @@ class MediaPipeGraph : public PipeGraphImpl {
     std::mutex m_inference_lock;
     std::map<uint64_t, std::shared_ptr<StreamCache>> m_inference_stream_cache;
 
-   private:
+   
     std::mutex m_output_lock;
     uint32_t m_max_output_cahce_num = 3;
     // 假设graph可以正常按时间戳顺序输出

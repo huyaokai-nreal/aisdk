@@ -4,8 +4,6 @@ input_stream: "CAM_INFO:cam_info"
 input_stream: "TIMESTAMP:timestamp"
 output_stream: "ALL_RESULTS:hand_result"
 
-num_threads: 1
-
 node {
 	name: "CheckHeadpose"
 	calculator: "CheckHeadposeCalculator"

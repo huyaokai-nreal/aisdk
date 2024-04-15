@@ -1,10 +1,14 @@
 #include "handtracking_mediapipe_graph.h"
+
+#include <fmt/core.h>
+
 #include <string>
+
+#include "aisdk/algorithm/common/NR_GlobalPredictorService.h"
+#include "aisdk/algorithm/common/nrcore_define.h"
 #include "aisdk/algorithm/func/hand_rotation.h"
 #include "aisdk/algorithm/internal_structs/hand_output_struct_internal.h"
 #include "aisdk/algorithm/internal_structs/headpose_struct_internal.h"
-
-#include "aisdk/algorithm/common/NR_GlobalPredictorService.h"
 #include "aisdk/base/file.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/profiling.h"
@@ -33,20 +37,6 @@ std::map<std::string, int> gesture_map = {
     } while (0)
 
 namespace aisdk::task {
-
-template <typename... Args>
-std::string string_sprintf(const char* format, Args... args) {
-    int length = std::snprintf(nullptr, 0, format, args...);
-    assert(length >= 0);
-
-    char* buf = new char[length + 1];
-    std::snprintf(buf, length + 1, format, args...);
-
-    std::string str(buf);
-    delete[] buf;
-    // return std::move(str);
-    return str;
-}
 
 #define record_test (0)
 std::string lcam_local_record_rootpath;
@@ -78,29 +68,30 @@ aisdk::algorithm::Status HandTrackingMediaPipeGraph::PushData(uint64_t timestamp
 
     // 先登记需要缓存的stream帧信息
     bool push_failure = false;
-    SetInputStreamCache(m_increase_timestep, timestamp);
+    auto status = SetInputStreamCache(m_increase_timestep, timestamp);
+    if (status == algorithm::Status::SUCCESS) {
+        // 这里根据stream输入的返回值做
+        MP_RETURN_IF_ERROR_WITH_LOG(m_calculator_graph->AddPacketToInputStream(
+            "image", image_packet.At(mediapipe::Timestamp(m_increase_timestep))));
+        MP_RETURN_IF_ERROR_WITH_LOG(m_calculator_graph->AddPacketToInputStream(
+            "head_pose", headpose_packet.At(mediapipe::Timestamp(m_increase_timestep))));
+        MP_RETURN_IF_ERROR_WITH_LOG(m_calculator_graph->AddPacketToInputStream(
+            "cam_info",
+            mediapipe::MakePacket<aisdk::algorithm::CamInfo>(cam_info).At(mediapipe::Timestamp(m_increase_timestep))));
+        MP_RETURN_IF_ERROR_WITH_LOG(m_calculator_graph->AddPacketToInputStream(
+            "timestamp", mediapipe::MakePacket<uint64_t>(timestamp).At(mediapipe::Timestamp(m_increase_timestep))));
 
-    // 这里根据stream输入的返回值做
-    MP_RETURN_IF_ERROR_WITH_LOG(m_calculator_graph->AddPacketToInputStream(
-        "image", image_packet.At(mediapipe::Timestamp(m_increase_timestep))));
-    MP_RETURN_IF_ERROR_WITH_LOG(m_calculator_graph->AddPacketToInputStream(
-        "head_pose", headpose_packet.At(mediapipe::Timestamp(m_increase_timestep))));
-    MP_RETURN_IF_ERROR_WITH_LOG(m_calculator_graph->AddPacketToInputStream(
-        "cam_info",
-        mediapipe::MakePacket<aisdk::algorithm::CamInfo>(cam_info).At(mediapipe::Timestamp(m_increase_timestep))));
-    MP_RETURN_IF_ERROR_WITH_LOG(m_calculator_graph->AddPacketToInputStream(
-        "timestamp", mediapipe::MakePacket<uint64_t>(timestamp).At(mediapipe::Timestamp(m_increase_timestep))));
-
-    // 若push失败，清除cahce
-    if (push_failure) {
-        ClearInputStreamCache(m_increase_timestep);
+        // 若push失败，清除cahce
+        if (push_failure) {
+            ClearInputStreamCache(m_increase_timestep);
+        }
     }
 
     if (record_test) {
         std::string lcam_pic_name =
-            lcam_local_record_rootpath + "/seq_" + string_sprintf("%010d", m_increase_timestep) + "_detect.jpg";
+            fmt::format("{}/seq_{:10d}_detect.jpg", lcam_local_record_rootpath, m_increase_timestep);
         std::string rcam_pic_name =
-            rcam_local_record_rootpath + "/seq_" + string_sprintf("%010d", m_increase_timestep) + "_detect.jpg";
+            fmt::format("{}/seq_{:10d}_detect.jpg", rcam_local_record_rootpath, m_increase_timestep);
         cv::Mat lcam = in_image[0].m_mat;
         cv::Mat rcam = in_image[1].m_mat;
 
@@ -253,4 +244,4 @@ aisdk::algorithm::Status HandTrackingMediaPipeGraph::PopResult(uint64_t hmd_time
     return aisdk::algorithm::Status::FAILURE;
 }
 
-}  // namespace aisdk::algorithm
+}  // namespace aisdk::task
