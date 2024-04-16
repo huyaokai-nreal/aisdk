@@ -2,6 +2,7 @@
 # mediapipe::stream_handler -Wl,--no-whole-archive The generated link.txt drop
 # mediapipe::stream_handler out of the block, why?
 add_library(xgraph_stream_handler_whole_archive INTERFACE)
+
 target_link_libraries(
     xgraph_stream_handler_whole_archive
     INTERFACE -Wl,--whole-archive xgraph::stream_handler -Wl,--no-whole-archive)
@@ -16,7 +17,9 @@ endif()
 ## generate protobufs
 set(ALGORITHM_LIBRARY_NAME algorithm)
 add_library(${ALGORITHM_LIBRARY_NAME} STATIC)
-
+if(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
+    target_compile_options(${ALGORITHM_LIBRARY_NAME} PRIVATE -DENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
+endif()
 target_include_directories(${ALGORITHM_LIBRARY_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/interface/handtracking_sdk)
 add_subdirectory(common)
 add_subdirectory(func)
@@ -41,9 +44,5 @@ target_compile_options(${ALGORITHM_LIBRARY_NAME}
     PRIVATE -Wno-error
 )
 
-
-if(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
-    target_compile_options(${ALGORITHM_LIBRARY_NAME} PRIVATE -DENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
-endif()
 
 add_clang_format_target(${ALGORITHM_LIBRARY_NAME})

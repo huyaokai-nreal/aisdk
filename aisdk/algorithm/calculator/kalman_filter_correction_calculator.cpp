@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <iostream>
 #include <memory>
 
@@ -25,6 +26,7 @@ namespace mediapipe {
 class KalmanFilterCorrectionCalculator : public CalculatorBase {
    private:
     aisdk::algorithm::StandardKpt3dInternal kpt3d_world_pre;
+    uint64_t last_timestamp_;
 
    public:
     static absl::Status GetContract(CalculatorContract* cc) {
@@ -67,8 +69,9 @@ class KalmanFilterCorrectionCalculator : public CalculatorBase {
                 predictor_lhand.start_tracking(timestamp, {kpt3d_world.lhand[21], {0., 0., 0.}});
             } else {
                 if (kpt3d_world_pre.lhand_valid) {
-                    predictor_lhand.track_with_correct(
-                        timestamp, {kpt3d_world.lhand[21], kpt3d_world.lhand[21] - kpt3d_world_pre.lhand[21]});
+                    auto measure_v = 1e9 * (kpt3d_world.lhand[21] - kpt3d_world_pre.lhand[21]) /
+                                     static_cast<double>(timestamp - last_timestamp_);
+                    predictor_lhand.track_with_correct(timestamp, {kpt3d_world.lhand[21], measure_v});
                 }
             }
             kpt3d_world_pre.lhand = kpt3d_world.lhand;
@@ -86,8 +89,9 @@ class KalmanFilterCorrectionCalculator : public CalculatorBase {
                 predictor_rhand.start_tracking(timestamp, {kpt3d_world.rhand[21], {0., 0., 0.}});
             } else {
                 if (kpt3d_world_pre.rhand_valid) {
-                    predictor_rhand.track_with_correct(
-                        timestamp, {kpt3d_world.rhand[21], kpt3d_world.rhand[21] - kpt3d_world_pre.rhand[21]});
+                    auto measure_v = 1e9 * (kpt3d_world.rhand[21] - kpt3d_world_pre.rhand[21]) /
+                                     static_cast<double>(timestamp - last_timestamp_);
+                    predictor_rhand.track_with_correct(timestamp, {kpt3d_world.rhand[21], measure_v});
                 }
             }
             kpt3d_world_pre.rhand = kpt3d_world.rhand;
@@ -96,7 +100,7 @@ class KalmanFilterCorrectionCalculator : public CalculatorBase {
             output_buffer_->rhand_valid = true;
         }
         cc->Outputs().Tag("OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
-
+        last_timestamp_ = timestamp;
         AISDK_LOG_TRACE("[KalmanFilterCorrectionCalculator] Process complete.");
         return absl::OkStatus();
     }

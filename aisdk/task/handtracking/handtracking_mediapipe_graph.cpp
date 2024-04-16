@@ -130,7 +130,7 @@ aisdk::algorithm::Status HandTrackingMediaPipeGraph::PopResult(uint64_t hmd_time
 
         *hand_num = 2;  // fixed.
 
-        float predict_scale = 0.9;
+        float predict_scale = 1.0;
 
         NRTransform _handjoint_pose_tmp;
         NRVector4f _col;
@@ -187,18 +187,21 @@ aisdk::algorithm::Status HandTrackingMediaPipeGraph::PopResult(uint64_t hmd_time
                         predict_scale * (hmd_time_nanos - hand_data_internal.timestamp) + hand_data_internal.timestamp;
                 }
 
-                AISDK_LOG_TRACE("predict_len: {}", (hmd_time_nanos - hand_data_internal.timestamp) / 1e9f);
-                AISDK_LOG_TRACE("{}, {}, {}, {}, {}, {}", hmd_time_nanos, hand_data_internal.timestamp,
+                AISDK_LOG_WARN("predict_len: {}", (hmd_time_nanos - hand_data_internal.timestamp) / 1e9f);
+                AISDK_LOG_WARN("{}, {}, {}, {}, {}, {}", hmd_time_nanos, hand_data_internal.timestamp,
                                 target_timestamp, root_meas[0], root_meas[1], root_meas[2]);
 
                 if (i == 0) {
-                    if (predictor_lhand.get_tracking_status())
+                    if (predictor_lhand.get_tracking_status()){
                         root_kf_predicted = predictor_lhand.track_only_pred(target_timestamp);
+                    }
 
                 } else {
                     if (predictor_rhand.get_tracking_status())
                         root_kf_predicted = predictor_rhand.track_only_pred(target_timestamp);
                 }
+                AISDK_LOG_WARN("predict root is {}, {}, {}", root_kf_predicted[0], root_kf_predicted[1], root_kf_predicted[2]);
+                AISDK_LOG_WARN("predict dist is {}, {}, {}", abs(root_kf_predicted[0]-root_meas[0]), abs(root_kf_predicted[1]-root_meas[1]), abs(root_kf_predicted[2]-root_meas[2]));
                 for (int k = 0; k < EZXR_DEFINED_JOINTS; k++) {
                     predicted_points[k] = ontracked_points[i][k] + root_kf_predicted - root_meas;
                 }
