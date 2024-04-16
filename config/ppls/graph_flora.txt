@@ -1,6 +1,5 @@
 input_stream: "IMAGE:image"
 input_stream: "HEADPOSE:head_pose"
-input_stream: "CAM_INFO:cam_info"
 output_stream: "ALL_RESULTS:hand_result"
 
 node {
@@ -13,7 +12,7 @@ node {
   name: "HandDetectionTrack"
   calculator: "HandDetTrackCalculator"
   input_stream: "IMAGE_INPUT:image"
-  input_stream: "CAM_INFO_INPUT:cam_info"
+  input_side_packet: "CAM_INFO_INPUT:cam_info"
   input_stream: "HEADPOSE:head_pose_checked"
   output_stream: "DET_BBOX_OUTPUT:detection_output"
 }
@@ -45,7 +44,7 @@ node {
 node {
   name: "LiftNet_3D"
   calculator: "LiftCalculator"
-  input_stream: "CAM_INFO_INPUT:cam_info"
+  input_side_packet: "CAM_INFO_INPUT:cam_info"
   input_stream: "LANDMARK_INPUT:kpt2d_filter"
   input_stream: "BBOX_INPUT:detection_smoothed_output"
   output_stream: "LIFT_OUTPUT:kpt3d"
@@ -70,7 +69,6 @@ node {
 node {
   name: "Compute3DScore"
   calculator: "Compute3DScoreCalculator"
-  input_stream: "CAM_INFO_INPUT:cam_info"
   input_stream: "LANDMARK_INPUT:kpt2d_filter"
   input_stream: "KPT3D_INPUT:kpt3d_blocked"
   output_stream: "OUTPUT:hand_score"

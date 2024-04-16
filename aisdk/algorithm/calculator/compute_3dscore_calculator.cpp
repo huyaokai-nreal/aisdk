@@ -36,7 +36,6 @@ class Compute3DScoreCalculator : public CalculatorBase {
    public:
     static absl::Status GetContract(CalculatorContract* cc) {
         AISDK_LOG_TRACE("[Compute3DScoreCalculator] GetContract start");
-        cc->Inputs().Tag("CAM_INFO_INPUT").Set<aisdk::algorithm::CamInfo>();
         cc->Inputs().Tag("LANDMARK_INPUT").Set<aisdk::algorithm::Kpt2dInternal>();
         cc->Inputs().Tag("KPT3D_INPUT").Set<aisdk::algorithm::Kpt3dInternal>();
         cc->Outputs().Tag("OUTPUT").Set<aisdk::algorithm::Score3dInternal>();
@@ -55,7 +54,6 @@ class Compute3DScoreCalculator : public CalculatorBase {
         TIMER_ONCE_WITH_TAG(Compute3DScoreCalculator::Process);
 #endif
         AISDK_LOG_TRACE("[Compute3DScoreCalculator] Process start");
-        const auto& cam_info = cc->Inputs().Tag("CAM_INFO_INPUT").Get<aisdk::algorithm::CamInfo>();
         const auto& kpt2d_data = cc->Inputs().Tag("LANDMARK_INPUT").Get<aisdk::algorithm::Kpt2dInternal>();
         const auto& kpt3d_data = cc->Inputs().Tag("KPT3D_INPUT").Get<aisdk::algorithm::Kpt3dInternal>();
         std::unique_ptr<aisdk::algorithm::Score3dInternal> output_buffer_ =

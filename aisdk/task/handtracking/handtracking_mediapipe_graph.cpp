@@ -8,10 +8,12 @@
 
 #include "aisdk/algorithm/common/NR_GlobalPredictorService.h"
 #include "aisdk/algorithm/common/nrcore_define.h"
+#include "aisdk/algorithm/common/nrnet_define.h"
 #include "aisdk/algorithm/func/hand_rotation.h"
 #include "aisdk/algorithm/internal_structs/hand_output_struct_internal.h"
 #include "aisdk/algorithm/internal_structs/headpose_struct_internal.h"
 #include "aisdk/base/log.h"
+#include "aisdk/task/handtracking/nrcore_pipeline.h"
 
 #define JOINTS_COUNT 25
 #define EZXR_DEFINED_JOINTS 23
@@ -43,6 +45,8 @@ HandTrackingMediaPipeGraph::HandTrackingMediaPipeGraph() {
     m_post_filter->init();
 }
 HandTrackingMediaPipeGraph::~HandTrackingMediaPipeGraph() {}
+    // 赋值相机参数
+
 
 aisdk::algorithm::Status HandTrackingMediaPipeGraph::PushData(uint64_t timestamp,
                                                               std::vector<aisdk::algorithm::Image>& in_image,
@@ -62,9 +66,9 @@ aisdk::algorithm::Status HandTrackingMediaPipeGraph::PushData(uint64_t timestamp
             "image", image_packet.At(mediapipe::Timestamp(timestamp_micro))));
         MP_RETURN_IF_ERROR_WITH_LOG(m_calculator_graph->AddPacketToInputStream(
             "head_pose", headpose_packet.At(mediapipe::Timestamp(timestamp_micro))));
-        MP_RETURN_IF_ERROR_WITH_LOG(m_calculator_graph->AddPacketToInputStream(
-            "cam_info",
-            mediapipe::MakePacket<aisdk::algorithm::CamInfo>(cam_info).At(mediapipe::Timestamp(timestamp_micro))));
+        //MP_RETURN_IF_ERROR_WITH_LOG(m_calculator_graph->AddPacketToInputStream(
+        //    "cam_info",
+        //    mediapipe::MakePacket<aisdk::algorithm::CamInfo>(cam_info).At(mediapipe::Timestamp(timestamp_micro))));
         // 若push失败，清除cahce
         if (push_failure) {
             ClearInputStreamCache(timestamp_micro);

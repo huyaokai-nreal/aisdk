@@ -5,6 +5,7 @@
 #include "../internal_structs/kpt2d_struct_internal.h"
 #include "../internal_structs/kpt3d_struct_internal.h"
 #include "../model/hand_lift.h"
+#include "aisdk/algorithm/common/nrnet_define.h"
 #include "aisdk/base/camera_model.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/time.h"
@@ -43,11 +44,14 @@ class LiftCalculator : public CalculatorBase {
    private:
     // SeqGMLPLiftNet algo instance
     std::shared_ptr<aisdk::algorithm::GMLPLiftNet3> netalgo;
+    std::shared_ptr<aisdk::base::Fisheye624CameraModel> lcam_model_ = nullptr;
+    std::shared_ptr<aisdk::base::Fisheye624CameraModel> rcam_model_ = nullptr;
+    aisdk::algorithm::CamInfo cam_info_;
 
    public:
     static absl::Status GetContract(CalculatorContract* cc) {
         AISDK_LOG_TRACE("[LiftCalculator] GetContract start");
-        cc->Inputs().Tag("CAM_INFO_INPUT").Set<aisdk::algorithm::CamInfo>();
+        cc->InputSidePackets().Tag("CAM_INFO_INPUT").Set<aisdk::algorithm::CamInfo>();
         cc->Inputs().Tag("BBOX_INPUT").Set<aisdk::algorithm::DetOutputInternal>();
         cc->Inputs().Tag("LANDMARK_INPUT").Set<aisdk::algorithm::Kpt2dInternal>();
         cc->Outputs().Tag("LIFT_OUTPUT").Set<aisdk::algorithm::Kpt3dInternal>();
@@ -64,6 +68,11 @@ class LiftCalculator : public CalculatorBase {
             return absl::Status(absl::StatusCode::kInvalidArgument,
                                 "[LiftCalculator] CreateNetAlgoBase nodename error");
         }
+        const auto& cam_info = cc->InputSidePackets().Tag("CAM_INFO_INPUT").Get<aisdk::algorithm::CamInfo>();
+        auto camera_model = format_fisheye624_camera_model(cam_info);
+        cam_info_ = cam_info;
+        lcam_model_ = camera_model.first;
+        rcam_model_ = camera_model.second;
         AISDK_LOG_TRACE("[LiftCalculator] Open complete");
         return absl::OkStatus();
     }
@@ -76,18 +85,13 @@ class LiftCalculator : public CalculatorBase {
 
         const auto& bbox = cc->Inputs().Tag("BBOX_INPUT").Get<aisdk::algorithm::DetOutputInternal>();
         const auto& kpt2d = cc->Inputs().Tag("LANDMARK_INPUT").Get<aisdk::algorithm::Kpt2dInternal>();
-        const auto& cam_info = cc->Inputs().Tag("CAM_INFO_INPUT").Get<aisdk::algorithm::CamInfo>();
-
-        auto camera_model = format_fisheye624_camera_model(cam_info);
-        auto lcam_model = camera_model.first;
-        auto rcam_model = camera_model.second;
 
         std::unique_ptr<aisdk::algorithm::Kpt3dInternal> output_buffer_ =
             absl::make_unique<aisdk::algorithm::Kpt3dInternal>();
         output_buffer_->clear();
 
-        auto lr_rot_matrix = cam_info.cvL_T_cvR.rotation();
-        auto lr_p = cam_info.cvL_T_cvR.translation();
+        auto lr_rot_matrix = cam_info_.cvL_T_cvR.rotation();
+        auto lr_p = cam_info_.cvL_T_cvR.translation();
         const int joint_root_idx = 9;
         if (kpt2d.lhand_valid) {
             aisdk::algorithm::LiftNetInputs lift_inputs;
@@ -97,44 +101,31 @@ class LiftCalculator : public CalculatorBase {
             const std::vector<cv::Vec2f>& input_uv_rcam = kpt2d.lhand_rcam;
 
             std::vector<cv::Vec2f> undistort_uv_lcam, undistort_uv_rcam;
-            if (cam_info.camera_type == 2) {
-                cv::fisheye::undistortPoints(input_uv_lcam, undistort_uv_lcam, cam_info.lcam_intrinsics,
-                                             cam_info.lcam_dist_coeffs.colRange(0, 4), cv::noArray(),
-                                             cam_info.lcam_intrinsics);
-                cv::fisheye::undistortPoints(input_uv_rcam, undistort_uv_rcam, cam_info.rcam_intrinsics,
-                                             cam_info.rcam_dist_coeffs.colRange(0, 4), cv::noArray(),
-                                             cam_info.rcam_intrinsics);
-            } else if (cam_info.camera_type == 3) {
-                std::vector<Eigen::Vector2f> points2ds_eigen;
-                std::vector<Eigen::Vector2f> res_points2ds_eigen;
-                points2ds_eigen.resize(input_uv_lcam.size());
+            std::vector<Eigen::Vector2f> points2ds_eigen;
+            std::vector<Eigen::Vector2f> res_points2ds_eigen;
+            points2ds_eigen.resize(input_uv_lcam.size());
 
-                // 左目
-                undistort_uv_lcam.resize(input_uv_lcam.size());
-                for (size_t i = 0; i < input_uv_lcam.size(); i++) {
-                    points2ds_eigen[i] = {input_uv_lcam[i][0], input_uv_lcam[i][1]};
-                }
-                res_points2ds_eigen = lcam_model->undistort(points2ds_eigen);
-                for (size_t i = 0; i < input_uv_lcam.size(); i++) {
-                    undistort_uv_lcam[i] = {res_points2ds_eigen[i][0], res_points2ds_eigen[i][1]};
-                }
-
-                // 右目
-                undistort_uv_rcam.resize(input_uv_rcam.size());
-                for (size_t i = 0; i < input_uv_rcam.size(); i++) {
-                    points2ds_eigen[i] = {input_uv_rcam[i][0], input_uv_rcam[i][1]};
-                }
-                res_points2ds_eigen = rcam_model->undistort(points2ds_eigen);
-                for (size_t i = 0; i < input_uv_rcam.size(); i++) {
-                    undistort_uv_rcam[i] = {res_points2ds_eigen[i][0], res_points2ds_eigen[i][1]};
-                }
-            } else {
-                undistort_uv_lcam = input_uv_lcam;
-                undistort_uv_rcam = input_uv_rcam;
+            // 左目
+            undistort_uv_lcam.resize(input_uv_lcam.size());
+            for (size_t i = 0; i < input_uv_lcam.size(); i++) {
+                points2ds_eigen[i] = {input_uv_lcam[i][0], input_uv_lcam[i][1]};
+            }
+            res_points2ds_eigen = lcam_model_->undistort(points2ds_eigen);
+            for (size_t i = 0; i < input_uv_lcam.size(); i++) {
+                undistort_uv_lcam[i] = {res_points2ds_eigen[i][0], res_points2ds_eigen[i][1]};
             }
 
+            // 右目
+            undistort_uv_rcam.resize(input_uv_rcam.size());
+            for (size_t i = 0; i < input_uv_rcam.size(); i++) {
+                points2ds_eigen[i] = {input_uv_rcam[i][0], input_uv_rcam[i][1]};
+            }
+            res_points2ds_eigen = rcam_model_->undistort(points2ds_eigen);
+            for (size_t i = 0; i < input_uv_rcam.size(); i++) {
+                undistort_uv_rcam[i] = {res_points2ds_eigen[i][0], res_points2ds_eigen[i][1]};
+            }
             // init base on cam_info input
-            aisdk::algorithm::CamInfo cam_info_liftnet = cam_info;
+            aisdk::algorithm::CamInfo cam_info_liftnet = cam_info_;
 
             // 左目
             std::vector<cv::Vec2f> leftcam_mod_uv(KPT_NUM);
@@ -153,7 +144,7 @@ class LiftCalculator : public CalculatorBase {
             leftcam_crop_resize_matrix.at<float>(1, 2) = (-lhand_lcam_bbox_f[1] * 128.) / lhand_lcam_bbox_f[3];
             leftcam_crop_resize_matrix.at<float>(2, 2) = 1.0;
 
-            cv::Mat leftcam_cam_matrix = leftcam_crop_resize_matrix * cam_info.lcam_intrinsics;
+            cv::Mat leftcam_cam_matrix = leftcam_crop_resize_matrix * cam_info_.lcam_intrinsics;
 
             cam_info_liftnet.lcam_intrinsics = leftcam_cam_matrix;
             // Only for re-init
@@ -185,7 +176,7 @@ class LiftCalculator : public CalculatorBase {
             rightcam_crop_resize_matrix.at<float>(1, 2) = (-lhand_rcam_bbox_f[1] * 128.) / lhand_rcam_bbox_f[3];
             rightcam_crop_resize_matrix.at<float>(2, 2) = 1.0;
 
-            cv::Mat rightcam_cam_matrix = rightcam_crop_resize_matrix * cam_info.rcam_intrinsics;
+            cv::Mat rightcam_cam_matrix = rightcam_crop_resize_matrix * cam_info_.rcam_intrinsics;
 
             cam_info_liftnet.rcam_intrinsics = rightcam_cam_matrix;
 
@@ -210,7 +201,7 @@ class LiftCalculator : public CalculatorBase {
             lift_inputs.L_T_R_translation = std::move(lr_p_vec);
             lift_inputs.beliefCoeff = 0.5;
 
-            cam_info_liftnet.cvL_T_cvR = cam_info.cvL_T_cvR;
+            cam_info_liftnet.cvL_T_cvR = cam_info_.cvL_T_cvR;
             netalgo->SetCamInfo(cam_info_liftnet);
 
             netalgo->Inference(lift_inputs, cam_info_liftnet, lift_outputs);
@@ -228,44 +219,31 @@ class LiftCalculator : public CalculatorBase {
 
             std::vector<cv::Vec2f> undistort_uv_lcam, undistort_uv_rcam;
 
-            if (cam_info.camera_type == 2) {  // flora
-                cv::fisheye::undistortPoints(input_uv_lcam, undistort_uv_lcam, cam_info.lcam_intrinsics,
-                                             cam_info.lcam_dist_coeffs.colRange(0, 4), cv::noArray(),
-                                             cam_info.lcam_intrinsics);
-                cv::fisheye::undistortPoints(input_uv_rcam, undistort_uv_rcam, cam_info.rcam_intrinsics,
-                                             cam_info.rcam_dist_coeffs.colRange(0, 4), cv::noArray(),
-                                             cam_info.rcam_intrinsics);
-            } else if (cam_info.camera_type == 3) {
-                std::vector<Eigen::Vector2f> points2ds_eigen;
-                std::vector<Eigen::Vector2f> res_points2ds_eigen;
-                points2ds_eigen.resize(input_uv_lcam.size());
+            std::vector<Eigen::Vector2f> points2ds_eigen;
+            std::vector<Eigen::Vector2f> res_points2ds_eigen;
+            points2ds_eigen.resize(input_uv_lcam.size());
 
-                // 左目
-                undistort_uv_lcam.resize(input_uv_lcam.size());
-                for (size_t i = 0; i < input_uv_lcam.size(); i++) {
-                    points2ds_eigen[i] = {input_uv_lcam[i][0], input_uv_lcam[i][1]};
-                }
-                res_points2ds_eigen = lcam_model->undistort(points2ds_eigen);
-                for (size_t i = 0; i < input_uv_lcam.size(); i++) {
-                    undistort_uv_lcam[i] = {res_points2ds_eigen[i][0], res_points2ds_eigen[i][1]};
-                }
-
-                // 右目
-                undistort_uv_rcam.resize(input_uv_rcam.size());
-                for (size_t i = 0; i < input_uv_rcam.size(); i++) {
-                    points2ds_eigen[i] = {input_uv_rcam[i][0], input_uv_rcam[i][1]};
-                }
-                res_points2ds_eigen = rcam_model->undistort(points2ds_eigen);
-                for (size_t i = 0; i < input_uv_rcam.size(); i++) {
-                    undistort_uv_rcam[i] = {res_points2ds_eigen[i][0], res_points2ds_eigen[i][1]};
-                }
-            } else {
-                undistort_uv_lcam = input_uv_lcam;
-                undistort_uv_rcam = input_uv_rcam;
+            // 左目
+            undistort_uv_lcam.resize(input_uv_lcam.size());
+            for (size_t i = 0; i < input_uv_lcam.size(); i++) {
+                points2ds_eigen[i] = {input_uv_lcam[i][0], input_uv_lcam[i][1]};
+            }
+            res_points2ds_eigen = lcam_model_->undistort(points2ds_eigen);
+            for (size_t i = 0; i < input_uv_lcam.size(); i++) {
+                undistort_uv_lcam[i] = {res_points2ds_eigen[i][0], res_points2ds_eigen[i][1]};
             }
 
+            // 右目
+            undistort_uv_rcam.resize(input_uv_rcam.size());
+            for (size_t i = 0; i < input_uv_rcam.size(); i++) {
+                points2ds_eigen[i] = {input_uv_rcam[i][0], input_uv_rcam[i][1]};
+            }
+            res_points2ds_eigen = rcam_model_->undistort(points2ds_eigen);
+            for (size_t i = 0; i < input_uv_rcam.size(); i++) {
+                undistort_uv_rcam[i] = {res_points2ds_eigen[i][0], res_points2ds_eigen[i][1]};
+            }
             // init base on cam_info input
-            aisdk::algorithm::CamInfo cam_info_liftnet = cam_info;
+            aisdk::algorithm::CamInfo cam_info_liftnet = cam_info_;
 
             // 左目
             std::vector<cv::Vec2f> leftcam_mod_uv(KPT_NUM);
@@ -284,7 +262,7 @@ class LiftCalculator : public CalculatorBase {
             leftcam_crop_resize_matrix.at<float>(1, 2) = (-rhand_lcam_bbox_f[1] * 128.) / rhand_lcam_bbox_f[3];
             leftcam_crop_resize_matrix.at<float>(2, 2) = 1.0;
 
-            cv::Mat leftcam_cam_matrix = leftcam_crop_resize_matrix * cam_info.lcam_intrinsics;
+            cv::Mat leftcam_cam_matrix = leftcam_crop_resize_matrix * cam_info_.lcam_intrinsics;
 
             cam_info_liftnet.lcam_intrinsics = leftcam_cam_matrix;
 
@@ -314,7 +292,7 @@ class LiftCalculator : public CalculatorBase {
             rightcam_crop_resize_matrix.at<float>(1, 2) = (-rhand_rcam_bbox_f[1] * 128.) / rhand_rcam_bbox_f[3];
             rightcam_crop_resize_matrix.at<float>(2, 2) = 1.0;
 
-            cv::Mat rightcam_cam_matrix = rightcam_crop_resize_matrix * cam_info.rcam_intrinsics;
+            cv::Mat rightcam_cam_matrix = rightcam_crop_resize_matrix * cam_info_.rcam_intrinsics;
 
             cam_info_liftnet.rcam_intrinsics = rightcam_cam_matrix;
 
@@ -339,7 +317,7 @@ class LiftCalculator : public CalculatorBase {
             lift_inputs.L_T_R_translation = std::move(lr_p_vec);
             lift_inputs.beliefCoeff = 0.5;
 
-            cam_info_liftnet.cvL_T_cvR = cam_info.cvL_T_cvR;
+            cam_info_liftnet.cvL_T_cvR = cam_info_.cvL_T_cvR;
             netalgo->SetCamInfo(cam_info_liftnet);
 
             netalgo->Inference(lift_inputs, cam_info_liftnet, lift_outputs);

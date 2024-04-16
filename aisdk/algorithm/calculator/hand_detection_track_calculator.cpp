@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <iostream>
 #include <memory>
 
@@ -96,6 +97,10 @@ class HandDetTrackCalculator : public CalculatorBase {
    private:
     // DetNet algo instance
     std::shared_ptr<aisdk::algorithm::HandDetectNetv2> netalgo;
+    std::shared_ptr<aisdk::base::Fisheye624CameraModel> lcam_model_ = nullptr;
+    std::shared_ptr<aisdk::base::Fisheye624CameraModel> rcam_model_ = nullptr;
+    uint32_t video_width_;
+    uint32_t video_height_;
     int det_tracker_step_ = 0;
 
    public:
@@ -104,7 +109,7 @@ class HandDetTrackCalculator : public CalculatorBase {
 
         // Declaration of input and output, according to definitons.
         cc->Inputs().Tag("IMAGE_INPUT").Set<std::vector<aisdk::algorithm::Image>>();
-        cc->Inputs().Tag("CAM_INFO_INPUT").Set<aisdk::algorithm::CamInfo>();
+        cc->InputSidePackets().Tag("CAM_INFO_INPUT").Set<aisdk::algorithm::CamInfo>();
         cc->Inputs().Tag("HEADPOSE").Set<aisdk::algorithm::HeadPoseInternal>();
         cc->Outputs().Tag("DET_BBOX_OUTPUT").Set<aisdk::algorithm::DetOutputInternal>();
 
@@ -122,6 +127,12 @@ class HandDetTrackCalculator : public CalculatorBase {
         }
 
         det_tracker_step_ = 0;
+        const auto &cam_info = cc->InputSidePackets().Tag("CAM_INFO_INPUT").Get<aisdk::algorithm::CamInfo>();
+        auto camera_model = format_fisheye624_camera_model(cam_info);
+        lcam_model_ = camera_model.first;
+        rcam_model_ = camera_model.second;
+        video_width_ = cam_info.video_width;
+        video_height_ = cam_info.video_height;
 
         AISDK_LOG_TRACE("[HandDetTrackCalculator] Open complete.");
         return absl::OkStatus();
@@ -134,7 +145,6 @@ class HandDetTrackCalculator : public CalculatorBase {
         AISDK_LOG_TRACE("[HandDetTrackCalculator] Process start");
 
         const auto &timestamp = cc->InputTimestamp().Seconds();
-        const auto &cam_info = cc->Inputs().Tag("CAM_INFO_INPUT").Get<aisdk::algorithm::CamInfo>();
 
         std::unique_ptr<aisdk::algorithm::DetOutputInternal> output_buffer_ =
             absl::make_unique<aisdk::algorithm::DetOutputInternal>();
@@ -143,9 +153,6 @@ class HandDetTrackCalculator : public CalculatorBase {
         const auto &lastframe_kpt3d = aisdk::algorithm::GlobalPredictorService::getInstance().get_kpt3d_world();
         const auto &headpose_data = cc->Inputs().Tag("HEADPOSE").Get<aisdk::algorithm::HeadPoseInternal>();
 
-        auto camera_model = format_fisheye624_camera_model(cam_info);
-        auto lcam_model = camera_model.first;
-        auto rcam_model = camera_model.second;
         if (det_tracker_step_ == 0 || (!lastframe_kpt3d.lhand_valid && !lastframe_kpt3d.rhand_valid)) {
             // do detection
             const auto &image_data = cc->Inputs().Tag("IMAGE_INPUT").Get<std::vector<aisdk::algorithm::Image>>();
@@ -187,11 +194,11 @@ class HandDetTrackCalculator : public CalculatorBase {
                     lhand_predict_frame[k] = lhand_predict_frame[k] + root_kf_predicted - root_meas;
                 }
 
-                aisdk::algorithm::reproj_bbox_with_new_headpose_flora624(lcam_model, rcam_model,
+                aisdk::algorithm::reproj_bbox_with_new_headpose_flora624(lcam_model_, rcam_model_,
                                                                          headpose_data.transform, lhand_predict_frame,
                                                                          proj_bbox_lcam_lhand, proj_bbox_rcam_lhand);
-                if (check_if_rect_valid(proj_bbox_lcam_lhand, cam_info.video_width, cam_info.video_height) &&
-                    check_if_rect_valid(proj_bbox_rcam_lhand, cam_info.video_width, cam_info.video_height)) {
+                if (check_if_rect_valid(proj_bbox_lcam_lhand, video_width_, video_height_) &&
+                    check_if_rect_valid(proj_bbox_rcam_lhand, video_width_, video_height_)) {
                     output_buffer_->lhand_valid = true;
                     output_buffer_->images_lhand_rects[0].emplace_back(proj_bbox_lcam_lhand);
                     output_buffer_->images_lhand_rects[1].emplace_back(proj_bbox_rcam_lhand);
@@ -211,12 +218,12 @@ class HandDetTrackCalculator : public CalculatorBase {
                     rhand_predict_frame[k] = rhand_predict_frame[k] + root_kf_predicted - root_meas;
                 }
 
-                aisdk::algorithm::reproj_bbox_with_new_headpose_flora624(lcam_model, rcam_model,
+                aisdk::algorithm::reproj_bbox_with_new_headpose_flora624(lcam_model_, rcam_model_,
                                                                          headpose_data.transform, rhand_predict_frame,
                                                                          proj_bbox_lcam_rhand, proj_bbox_rcam_rhand);
 
-                if (check_if_rect_valid(proj_bbox_lcam_rhand, cam_info.video_width, cam_info.video_height) &&
-                    check_if_rect_valid(proj_bbox_rcam_rhand, cam_info.video_width, cam_info.video_height)) {
+                if (check_if_rect_valid(proj_bbox_lcam_rhand, video_width_, video_height_) &&
+                    check_if_rect_valid(proj_bbox_rcam_rhand, video_width_, video_height_)) {
                     output_buffer_->rhand_valid = true;
                     output_buffer_->images_rhand_rects[0].emplace_back(proj_bbox_lcam_rhand);
                     output_buffer_->images_rhand_rects[1].emplace_back(proj_bbox_rcam_rhand);

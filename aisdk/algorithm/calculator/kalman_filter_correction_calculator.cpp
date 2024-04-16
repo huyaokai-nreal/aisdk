@@ -67,8 +67,8 @@ class KalmanFilterCorrectionCalculator : public CalculatorBase {
                 predictor_lhand.start_tracking(timestamp, {kpt3d_world.lhand[21], {0., 0., 0.}});
             } else {
                 if (kpt3d_world_pre.lhand_valid) {
-                    auto measure_v = (kpt3d_world.lhand[21] - kpt3d_world_pre.lhand[21]) /
-                                    (timestamp - last_timestamp_);
+                    auto measure_v =
+                        (kpt3d_world.lhand[21] - kpt3d_world_pre.lhand[21]) / (timestamp - last_timestamp_);
                     predictor_lhand.track_with_correct(timestamp, {kpt3d_world.lhand[21], measure_v});
                 }
             }
@@ -87,8 +87,8 @@ class KalmanFilterCorrectionCalculator : public CalculatorBase {
                 predictor_rhand.start_tracking(timestamp, {kpt3d_world.rhand[21], {0., 0., 0.}});
             } else {
                 if (kpt3d_world_pre.rhand_valid) {
-                    auto measure_v = (kpt3d_world.rhand[21] - kpt3d_world_pre.rhand[21]) /
-                                     (timestamp - last_timestamp_);
+                    auto measure_v =
+                        (kpt3d_world.rhand[21] - kpt3d_world_pre.rhand[21]) / (timestamp - last_timestamp_);
                     predictor_rhand.track_with_correct(timestamp, {kpt3d_world.rhand[21], measure_v});
                 }
             }
