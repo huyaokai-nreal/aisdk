@@ -13,14 +13,14 @@ class HandTrackingMediaPipeGraph : public MediaPipeGraph {
     virtual ~HandTrackingMediaPipeGraph();
 
     // 接口参数自定义
-    algorithm::Status PushData(uint64_t timestamp, std::vector<algorithm::Image>& in_image, NRTransform headpose, algorithm::CamInfo cam_info);
+    algorithm::Status PushData(uint64_t timestamp, std::vector<algorithm::Image>& in_image, NRTransform headpose,
+                               algorithm::CamInfo cam_info);
     algorithm::Status PopResult(uint64_t hmd_time_nanos, uint32_t* hand_num, HandData* out_hand_array);
     // 其他接口自定义
 
-    private:
+   private:
     // This is only a step, not real timestamp.
-    uint64_t m_increase_timestep = 0;
-    std::shared_ptr<HandFilters> m_post_filter;
+    std::unique_ptr<HandFilters> m_post_filter;
 };
 
-}  // namespace aisdk::algorithm
+}  // namespace aisdk::task

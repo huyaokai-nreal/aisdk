@@ -104,7 +104,6 @@ class HandDetTrackCalculator : public CalculatorBase {
 
         // Declaration of input and output, according to definitons.
         cc->Inputs().Tag("IMAGE_INPUT").Set<std::vector<aisdk::algorithm::Image>>();
-        cc->Inputs().Tag("TIMESTAMP").Set<uint64_t>();
         cc->Inputs().Tag("CAM_INFO_INPUT").Set<aisdk::algorithm::CamInfo>();
         cc->Inputs().Tag("HEADPOSE").Set<aisdk::algorithm::HeadPoseInternal>();
         cc->Outputs().Tag("DET_BBOX_OUTPUT").Set<aisdk::algorithm::DetOutputInternal>();
@@ -134,7 +133,7 @@ class HandDetTrackCalculator : public CalculatorBase {
 #endif
         AISDK_LOG_TRACE("[HandDetTrackCalculator] Process start");
 
-        const auto &timestamp = cc->Inputs().Tag("TIMESTAMP").Get<uint64_t>();
+        const auto &timestamp = cc->InputTimestamp().Seconds();
         const auto &cam_info = cc->Inputs().Tag("CAM_INFO_INPUT").Get<aisdk::algorithm::CamInfo>();
 
         std::unique_ptr<aisdk::algorithm::DetOutputInternal> output_buffer_ =

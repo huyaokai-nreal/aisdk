@@ -9,12 +9,7 @@
 #include "aisdk/base/log.h"
 #include "aisdk/base/set_cpu_affinity.h"
 #include "handtracking_mediapipe_calculators_register.h"
-#include "mediapipe/framework/port/file_helpers.h"
-#include "mediapipe/framework/port/map_util.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
-#include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status.h"
-#include "mediapipe/framework/port/statusor.h"
 #include "mediapipe/framework/thread_pool_executor.h"
 
 #define MP_RETURN_IF_ERROR_WITH_LOG(expr)              \
@@ -44,9 +39,8 @@ aisdk::algorithm::Status MediaPipeGraph::Stop() {
     return aisdk::algorithm::Status::SUCCESS;
 }
 
-aisdk::algorithm::Status MediaPipeGraph::SetInputStreamCache(uint64_t graph_stream_stamp, uint64_t timestamp) {
+aisdk::algorithm::Status MediaPipeGraph::SetInputStreamCache(int64_t graph_stream_stamp) {
     std::shared_ptr<StreamCache> stream = std::make_shared<StreamCache>();
-    stream->timestamp = timestamp;
     stream->m_output_packs_sum = 0;
     stream->m_output_packs.resize(m_output_stream_name.size());
 #if defined(ENABLE_ALGORITHM_GRAPH_STREAM_EVAL_TIME)
@@ -60,7 +54,7 @@ aisdk::algorithm::Status MediaPipeGraph::SetInputStreamCache(uint64_t graph_stre
 
 }
 
-aisdk::algorithm::Status MediaPipeGraph::ClearInputStreamCache(uint64_t graph_stream_stamp) {
+aisdk::algorithm::Status MediaPipeGraph::ClearInputStreamCache(int64_t graph_stream_stamp) {
     std::lock_guard<std::mutex> guard(m_inference_lock);
     m_inference_stream_cache.erase(graph_stream_stamp);
     return aisdk::algorithm::Status::SUCCESS;
@@ -82,10 +76,10 @@ bool MediaPipeGraph::MoveOutputCache(std::shared_ptr<StreamCache> &stream) {
     return true;
 }
 
-bool MediaPipeGraph::CallBackInferenceResult(const mediapipe::Packet &packet, uint64_t output_packs_order) {
+bool MediaPipeGraph::CallBackInferenceResult(const mediapipe::Packet &packet, int64_t output_packs_order) {
     bool ret = false;
     std::shared_ptr<StreamCache> cache;
-    uint64_t graph_stream_stamp = packet.Timestamp().Value();
+    int64_t graph_stream_stamp = packet.Timestamp().Value();
     bool is_move = false;
     {
         std::lock_guard<std::mutex> guard(m_inference_lock);

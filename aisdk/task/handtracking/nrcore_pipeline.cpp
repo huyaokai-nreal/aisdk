@@ -1,10 +1,7 @@
 #include "nrcore_pipeline.h"
 
-#include <type_traits>
-
 #include "aisdk/algorithm/calculator/nrcore_pipeline_mediapipe_service.h"
 #include "aisdk/algorithm/common/NR_GlobalCoordService.h"
-#include "aisdk/base/log.h"
 
 namespace aisdk::task {
 

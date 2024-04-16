@@ -27,14 +27,13 @@ namespace mediapipe {
 //   input_stream: "GR_KPT2D_INPUT:kpt2d_filter"
 //   input_stream: "GR_SCORE_INPUT:hand_score"
 //   input_stream: "GR_STATE_INPUT:hand_state"
-//   input_stream: "GR_TS_INPUT:timestamp"
 //   output_stream: "GR_OUTPUT:hand_result"
 // }
 
 class GestureRecognitionCalculator : public CalculatorBase {
    private:
-    std::shared_ptr<aisdk::algorithm::GestureRecognitionV2> m_gesture_classifier_lhand;
-    std::shared_ptr<aisdk::algorithm::GestureRecognitionV2> m_gesture_classifier_rhand;
+    std::unique_ptr<aisdk::algorithm::GestureRecognitionV2> m_gesture_classifier_lhand;
+    std::unique_ptr<aisdk::algorithm::GestureRecognitionV2> m_gesture_classifier_rhand;
 
    public:
     static absl::Status GetContract(CalculatorContract* cc) {
@@ -43,7 +42,6 @@ class GestureRecognitionCalculator : public CalculatorBase {
         cc->Inputs().Tag("GR_KPT2D_INPUT").Set<aisdk::algorithm::Kpt2dInternal>();
         cc->Inputs().Tag("GR_SCORE_INPUT").Set<aisdk::algorithm::Score3dInternal>();
         cc->Inputs().Tag("GR_STATE_INPUT").Set<aisdk::algorithm::HandStateInternal>();
-        cc->Inputs().Tag("GR_TS_INPUT").Set<uint64_t>();
         cc->Outputs().Tag("GR_OUTPUT").Set<aisdk::algorithm::HandOutputInternal>();
         AISDK_LOG_TRACE("[GestureRecognitionCalculator] GetContract complete.");
         return absl::OkStatus();
@@ -51,8 +49,8 @@ class GestureRecognitionCalculator : public CalculatorBase {
 
     absl::Status Open(CalculatorContext* cc) final {
         AISDK_LOG_TRACE("[GestureRecognitionCalculator] Open start.");
-        m_gesture_classifier_lhand = std::make_shared<aisdk::algorithm::GestureRecognitionV2>();
-        m_gesture_classifier_rhand = std::make_shared<aisdk::algorithm::GestureRecognitionV2>();
+        m_gesture_classifier_lhand = std::make_unique<aisdk::algorithm::GestureRecognitionV2>();
+        m_gesture_classifier_rhand = std::make_unique<aisdk::algorithm::GestureRecognitionV2>();
         AISDK_LOG_TRACE("[GestureRecognitionCalculator] Open complete.");
         return absl::OkStatus();
     }
@@ -72,7 +70,7 @@ class GestureRecognitionCalculator : public CalculatorBase {
         const auto& kpt3d_data = cc->Inputs().Tag("GR_KPT_INPUT").Get<aisdk::algorithm::StandardKpt3dInternal>();
         const auto& score3d_data = cc->Inputs().Tag("GR_SCORE_INPUT").Get<aisdk::algorithm::Score3dInternal>();
         const auto& state_data = cc->Inputs().Tag("GR_STATE_INPUT").Get<aisdk::algorithm::HandStateInternal>();
-        const auto& timestamp = cc->Inputs().Tag("GR_TS_INPUT").Get<uint64_t>();
+        const auto& timestamp = cc->InputTimestamp().Seconds();
         const auto& kpt2d_data = cc->Inputs().Tag("GR_KPT2D_INPUT").Get<aisdk::algorithm::Kpt2dInternal>();
 
         std::unique_ptr<aisdk::algorithm::HandOutputInternal> output_buffer_ =

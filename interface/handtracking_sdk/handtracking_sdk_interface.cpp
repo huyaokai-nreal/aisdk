@@ -663,10 +663,10 @@ NRPluginResult HandTracking::ParseAllCameraData(const NRGrayscaleCameraFrameData
     if (ins->pipeline_name == "handtracking_bino_graph_v2.0.0") {
         std::shared_ptr<task::HandTrackingMediaPipeGraph> impl =
             std::dynamic_pointer_cast<task::HandTrackingMediaPipeGraph>(pipeline.Impl());
-        std::vector<aisdk::algorithm::Image> tmp;
-        tmp.emplace_back(std::move(d1));
-        tmp.emplace_back(std::move(d2));
-        impl->PushData(nano_time_[0], tmp, head_pose, input_cam_info);
+        std::vector<aisdk::algorithm::Image> images;
+        images.emplace_back(std::move(d1));
+        images.emplace_back(std::move(d2));
+        impl->PushData(nano_time_[0], images, head_pose, input_cam_info);
         AISDK_LOG_TRACE("interface HandTrackingMediaPipeGraph::PushData");
     }
 

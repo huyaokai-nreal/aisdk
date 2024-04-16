@@ -79,7 +79,7 @@ int KFPredictor::init() {
     return 0;
 }
 
-int KFPredictor::start_tracking(uint64_t target_ts, PredictorState meas) {
+int KFPredictor::start_tracking(double target_ts, PredictorState meas) {
     // //AISDK_LOG_INFO("start_tracking start");
     std::lock_guard<std::mutex> lock(m_mutex);
     cv::Mat state = cv::Mat::zeros(m_state_size, 1, m_type);
@@ -101,7 +101,7 @@ int KFPredictor::start_tracking(uint64_t target_ts, PredictorState meas) {
     return 0;
 }
 
-PredictorState KFPredictor::predict(uint64_t target_ts) {
+PredictorState KFPredictor::predict(double target_ts) {
     // update time status
     // m_time_ts_last = m_time_ts;
     // m_time_ts = target_ts;
@@ -109,7 +109,7 @@ PredictorState KFPredictor::predict(uint64_t target_ts) {
 
     // AISDK_LOG_INFO("sign: {}", sign);
 
-    double dt_seconds = (double(sign * (target_ts - m_time_ts))) / 1000000000.;
+    double dt_seconds = sign * (target_ts - m_time_ts);
 
     // AISDK_LOG_INFO("target_ts_1: {}, m_time_ts: {}, dt: {}", target_ts, m_time_ts, dt_seconds);
     // AISDK_LOG_INFO("long: {}", target_ts - m_time_ts);
@@ -142,7 +142,7 @@ PredictorState KFPredictor::predict(uint64_t target_ts) {
                       m_kf_impl->statePre.at<float>(S_VZ)}};
 }
 
-PredictorState KFPredictor::correct(uint64_t target_ts, PredictorState meas, bool restart) {
+PredictorState KFPredictor::correct(double target_ts, PredictorState meas, bool restart) {
     if (restart) {
         m_time_ts = target_ts;
         cv::setIdentity(m_kf_impl->errorCovPre);
@@ -162,7 +162,7 @@ PredictorState KFPredictor::correct(uint64_t target_ts, PredictorState meas, boo
 
         int sign = (m_time_ts < m_time_ts_last) ? -1 : 1;
 
-        float dt_seconds = (double(sign * (m_time_ts - m_time_ts_last))) / 1000000000.;
+        float dt_seconds = sign * (m_time_ts - m_time_ts_last);
 
         cv::Mat meas_mat = cv::Mat::zeros(m_meas_size, 1, m_type);
         meas_mat.at<float>(M_X) = meas.pos[0];
@@ -211,7 +211,7 @@ PredictorState KFPredictor::correct(uint64_t target_ts, PredictorState meas, boo
     return {m_momentum.pos, pred_vec};
 }
 
-cv::Vec3f KFPredictor::track_only_pred(uint64_t target_ts) {
+cv::Vec3f KFPredictor::track_only_pred(double target_ts) {
     std::lock_guard<std::mutex> lock(m_mutex);
     auto pred = this->predict(target_ts);
     auto cpred = this->correct(target_ts, pred, false);
@@ -219,7 +219,7 @@ cv::Vec3f KFPredictor::track_only_pred(uint64_t target_ts) {
     return pred.pos;
 }
 
-cv::Vec3f KFPredictor::track_with_correct(uint64_t target_ts, PredictorState meas) {
+cv::Vec3f KFPredictor::track_with_correct(double target_ts, PredictorState meas) {
     std::lock_guard<std::mutex> lock(m_mutex);
     auto pred = this->predict(target_ts);
     auto cpred = this->correct(target_ts, meas, false);

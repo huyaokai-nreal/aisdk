@@ -9,7 +9,7 @@
 namespace aisdk::algorithm {
 
 struct HandOutputInternal {
-    uint64_t timestamp;
+    double timestamp; // seconds
 
     std::vector<cv::Vec3f> lhand_kpt;
     std::vector<cv::Vec3f> rhand_kpt;

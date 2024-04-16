@@ -1,7 +1,6 @@
 input_stream: "IMAGE:image"
 input_stream: "HEADPOSE:head_pose"
 input_stream: "CAM_INFO:cam_info"
-input_stream: "TIMESTAMP:timestamp"
 output_stream: "ALL_RESULTS:hand_result"
 
 node {
@@ -14,7 +13,6 @@ node {
   name: "HandDetectionTrack"
   calculator: "HandDetTrackCalculator"
   input_stream: "IMAGE_INPUT:image"
-  input_stream: "TIMESTAMP:timestamp"
   input_stream: "CAM_INFO_INPUT:cam_info"
   input_stream: "HEADPOSE:head_pose_checked"
   output_stream: "DET_BBOX_OUTPUT:detection_output"
@@ -96,7 +94,6 @@ node {
   calculator: "KalmanFilterCorrectionCalculator"
   input_stream: "INPUT:kpt3d_standard"
   input_stream: "STATE:hand_state"
-  input_stream: "TIMESTAMP:timestamp"
   output_stream: "OUTPUT:kpt3d_filtered"
 }
 node {
@@ -118,6 +115,5 @@ node {
   input_stream: "GR_KPT_INPUT:kpt3d_post_constrained"
   input_stream: "GR_SCORE_INPUT:hand_score"
   input_stream: "GR_STATE_INPUT:hand_state"
-  input_stream: "GR_TS_INPUT:timestamp"
   output_stream: "GR_OUTPUT:hand_result"
 }

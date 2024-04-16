@@ -2,6 +2,8 @@
 
 #include <fmt/core.h>
 
+#include <cstdint>
+#include <memory>
 #include <string>
 
 #include "aisdk/algorithm/common/NR_GlobalPredictorService.h"
@@ -9,9 +11,7 @@
 #include "aisdk/algorithm/func/hand_rotation.h"
 #include "aisdk/algorithm/internal_structs/hand_output_struct_internal.h"
 #include "aisdk/algorithm/internal_structs/headpose_struct_internal.h"
-#include "aisdk/base/file.h"
 #include "aisdk/base/log.h"
-#include "aisdk/base/profiling.h"
 
 #define JOINTS_COUNT 25
 #define EZXR_DEFINED_JOINTS 23
@@ -38,24 +38,9 @@ std::map<std::string, int> gesture_map = {
 
 namespace aisdk::task {
 
-#define record_test (0)
-std::string lcam_local_record_rootpath;
-std::string rcam_local_record_rootpath;
-
 HandTrackingMediaPipeGraph::HandTrackingMediaPipeGraph() {
-    m_post_filter = std::make_shared<HandFilters>();
+    m_post_filter = std::make_unique<HandFilters>();
     m_post_filter->init();
-
-    if (record_test) {
-        auto& prof = aisdk::base::DebugProfiling::Get().GetOpt();
-        std::string root_path = prof.local_data_record_rootpath + "/" + "developer_test";
-        aisdk::base::CreateDir(root_path);
-
-        lcam_local_record_rootpath = root_path + "/" + "leftcam_raw";
-        rcam_local_record_rootpath = root_path + "/" + "rightcam_raw";
-        aisdk::base::CreateDir(lcam_local_record_rootpath);
-        aisdk::base::CreateDir(rcam_local_record_rootpath);
-    }
 }
 HandTrackingMediaPipeGraph::~HandTrackingMediaPipeGraph() {}
 
@@ -63,48 +48,35 @@ aisdk::algorithm::Status HandTrackingMediaPipeGraph::PushData(uint64_t timestamp
                                                               std::vector<aisdk::algorithm::Image>& in_image,
                                                               NRTransform headpose,
                                                               aisdk::algorithm::CamInfo cam_info) {
+    // we use microseconds in xgraph pipeline
+    int64_t timestamp_micro = static_cast<int64_t>(timestamp / 1000);
     auto image_packet = mediapipe::MakePacket<std::vector<aisdk::algorithm::Image>>(std::move(in_image));
     auto headpose_packet = mediapipe::MakePacket<algorithm::HeadPoseInternal>(headpose);
 
     // 先登记需要缓存的stream帧信息
     bool push_failure = false;
-    auto status = SetInputStreamCache(m_increase_timestep, timestamp);
+    auto status = SetInputStreamCache(timestamp_micro);
     if (status == algorithm::Status::SUCCESS) {
         // 这里根据stream输入的返回值做
         MP_RETURN_IF_ERROR_WITH_LOG(m_calculator_graph->AddPacketToInputStream(
-            "image", image_packet.At(mediapipe::Timestamp(m_increase_timestep))));
+            "image", image_packet.At(mediapipe::Timestamp(timestamp_micro))));
         MP_RETURN_IF_ERROR_WITH_LOG(m_calculator_graph->AddPacketToInputStream(
-            "head_pose", headpose_packet.At(mediapipe::Timestamp(m_increase_timestep))));
+            "head_pose", headpose_packet.At(mediapipe::Timestamp(timestamp_micro))));
         MP_RETURN_IF_ERROR_WITH_LOG(m_calculator_graph->AddPacketToInputStream(
             "cam_info",
-            mediapipe::MakePacket<aisdk::algorithm::CamInfo>(cam_info).At(mediapipe::Timestamp(m_increase_timestep))));
-        MP_RETURN_IF_ERROR_WITH_LOG(m_calculator_graph->AddPacketToInputStream(
-            "timestamp", mediapipe::MakePacket<uint64_t>(timestamp).At(mediapipe::Timestamp(m_increase_timestep))));
-
+            mediapipe::MakePacket<aisdk::algorithm::CamInfo>(cam_info).At(mediapipe::Timestamp(timestamp_micro))));
         // 若push失败，清除cahce
         if (push_failure) {
-            ClearInputStreamCache(m_increase_timestep);
+            ClearInputStreamCache(timestamp_micro);
         }
     }
-
-    if (record_test) {
-        std::string lcam_pic_name =
-            fmt::format("{}/seq_{:10d}_detect.jpg", lcam_local_record_rootpath, m_increase_timestep);
-        std::string rcam_pic_name =
-            fmt::format("{}/seq_{:10d}_detect.jpg", rcam_local_record_rootpath, m_increase_timestep);
-        cv::Mat lcam = in_image[0].m_mat;
-        cv::Mat rcam = in_image[1].m_mat;
-
-        cv::imwrite(lcam_pic_name, lcam);
-        cv::imwrite(rcam_pic_name, rcam);
-    }
-
-    m_increase_timestep++;
+    //m_increase_timestep++;
     return aisdk::algorithm::Status::SUCCESS;
 }
 
-aisdk::algorithm::Status HandTrackingMediaPipeGraph::PopResult(uint64_t hmd_time_nanos, uint32_t* hand_num,
+aisdk::algorithm::Status HandTrackingMediaPipeGraph::PopResult(uint64_t hmd_time_nano, uint32_t* hand_num,
                                                                HandData* out_hand_array) {
+    double query_time = static_cast<double>(hmd_time_nano)/1e9;
     std::shared_ptr<StreamCache> outlist = GetOutputStreamCache();
     if (outlist) {
         auto& hand_data_packet = outlist->m_output_packs[0];
@@ -174,21 +146,21 @@ aisdk::algorithm::Status HandTrackingMediaPipeGraph::PopResult(uint64_t hmd_time
 
             auto predicted_points = ontracked_points[i];
 
-            if (tracked_internal[i] && hmd_time_nanos != 0) {
+            if (tracked_internal[i] && query_time != 0) {
                 cv::Vec3f root_meas = ontracked_points[i][21];
                 cv::Vec3f root_kf_predicted = ontracked_points[i][21];
 
-                uint64_t target_timestamp = 0;
-                if (hmd_time_nanos <= hand_data_internal.timestamp) {
+                double target_timestamp = 0;
+                if (query_time <= hand_data_internal.timestamp) {
                     target_timestamp =
-                        hand_data_internal.timestamp - predict_scale * (hand_data_internal.timestamp - hmd_time_nanos);
+                        hand_data_internal.timestamp - predict_scale * (hand_data_internal.timestamp - query_time);
                 } else {
                     target_timestamp =
-                        predict_scale * (hmd_time_nanos - hand_data_internal.timestamp) + hand_data_internal.timestamp;
+                        predict_scale * (query_time - hand_data_internal.timestamp) + hand_data_internal.timestamp;
                 }
 
-                AISDK_LOG_WARN("predict_len: {}", (hmd_time_nanos - hand_data_internal.timestamp) / 1e9f);
-                AISDK_LOG_WARN("{}, {}, {}, {}, {}, {}", hmd_time_nanos, hand_data_internal.timestamp,
+                AISDK_LOG_WARN("predict_len: {} s", (query_time - hand_data_internal.timestamp));
+                AISDK_LOG_WARN("{}, {}, {}, {}, {}, {}", query_time, hand_data_internal.timestamp,
                                 target_timestamp, root_meas[0], root_meas[1], root_meas[2]);
 
                 if (i == 0) {

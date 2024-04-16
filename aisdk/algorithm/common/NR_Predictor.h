@@ -44,26 +44,26 @@ namespace aisdk::algorithm {
 class KFPredictor {
    public:
     int init();
-    int start_tracking(uint64_t target_ts, PredictorState meas);
+    int start_tracking(double target_ts, PredictorState meas);
     void stop_tracking();
 
-    cv::Vec3f track_only_pred(uint64_t target_ts);
-    cv::Vec3f track_with_correct(uint64_t target_ts, PredictorState meas);
+    cv::Vec3f track_only_pred(double target_ts);
+    cv::Vec3f track_with_correct(double target_ts, PredictorState meas);
 
     bool get_tracking_status() const;
 
    private:
-    PredictorState predict(uint64_t target_ts);
-    PredictorState correct(uint64_t target_ts, PredictorState meas, bool restart);
+    PredictorState predict(double target_ts);
+    PredictorState correct(double target_ts, PredictorState meas, bool restart);
     int m_state_size = 9;
     int m_meas_size = 6;
     int m_ctrl_size = 0;
 
-    uint64_t m_time_ts = 0;
-    uint64_t m_time_ts_last = 0;
+    double m_time_ts = 0;
+    double m_time_ts_last = 0;
 
-    uint64_t m_time_ts_p = 0;
-    uint64_t m_time_ts_last_p = 0;
+    double m_time_ts_p = 0;
+    double m_time_ts_last_p = 0;
 
     unsigned int m_type = CV_32F;
 

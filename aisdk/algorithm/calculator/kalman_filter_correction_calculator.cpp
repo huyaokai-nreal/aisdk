@@ -19,21 +19,19 @@ namespace mediapipe {
 //   calculator: "KalmanFilterCorrectionCalculator"
 //   input_stream: "INPUT:kpt3d_standard"
 //   input_stream: "STATE:hand_state"
-//   input_stream: "TIMESTAMP:timestamp"
 //   output_stream: "OUTPUT:kpt3d_filtered"
 // }
 
 class KalmanFilterCorrectionCalculator : public CalculatorBase {
    private:
     aisdk::algorithm::StandardKpt3dInternal kpt3d_world_pre;
-    uint64_t last_timestamp_;
+    double last_timestamp_;  // in seconds
 
    public:
     static absl::Status GetContract(CalculatorContract* cc) {
         AISDK_LOG_TRACE("[KalmanFilterCorrectionCalculator] GetContract start.");
         cc->Inputs().Tag("INPUT").Set<aisdk::algorithm::StandardKpt3dInternal>();
         cc->Inputs().Tag("STATE").Set<aisdk::algorithm::HandStateInternal>();
-        cc->Inputs().Tag("TIMESTAMP").Set<uint64_t>();
         cc->Outputs().Tag("OUTPUT").Set<aisdk::algorithm::StandardKpt3dInternal>();
         AISDK_LOG_TRACE("[KalmanFilterCorrectionCalculator] GetContract complete.");
         return absl::OkStatus();
@@ -52,7 +50,7 @@ class KalmanFilterCorrectionCalculator : public CalculatorBase {
         AISDK_LOG_TRACE("[KalmanFilterCorrectionCalculator] Process start.");
         const auto& kpt3d_world = cc->Inputs().Tag("INPUT").Get<aisdk::algorithm::StandardKpt3dInternal>();
         const auto& hand_state = cc->Inputs().Tag("STATE").Get<aisdk::algorithm::HandStateInternal>();
-        const auto& timestamp = cc->Inputs().Tag("TIMESTAMP").Get<uint64_t>();
+        const auto& timestamp = cc->InputTimestamp().Seconds();
         std::unique_ptr<aisdk::algorithm::StandardKpt3dInternal> output_buffer_ =
             absl::make_unique<aisdk::algorithm::StandardKpt3dInternal>();
         output_buffer_->clear();
@@ -69,8 +67,8 @@ class KalmanFilterCorrectionCalculator : public CalculatorBase {
                 predictor_lhand.start_tracking(timestamp, {kpt3d_world.lhand[21], {0., 0., 0.}});
             } else {
                 if (kpt3d_world_pre.lhand_valid) {
-                    auto measure_v = 1e9 * (kpt3d_world.lhand[21] - kpt3d_world_pre.lhand[21]) /
-                                     static_cast<double>(timestamp - last_timestamp_);
+                    auto measure_v = (kpt3d_world.lhand[21] - kpt3d_world_pre.lhand[21]) /
+                                    (timestamp - last_timestamp_);
                     predictor_lhand.track_with_correct(timestamp, {kpt3d_world.lhand[21], measure_v});
                 }
             }
@@ -89,8 +87,8 @@ class KalmanFilterCorrectionCalculator : public CalculatorBase {
                 predictor_rhand.start_tracking(timestamp, {kpt3d_world.rhand[21], {0., 0., 0.}});
             } else {
                 if (kpt3d_world_pre.rhand_valid) {
-                    auto measure_v = 1e9 * (kpt3d_world.rhand[21] - kpt3d_world_pre.rhand[21]) /
-                                     static_cast<double>(timestamp - last_timestamp_);
+                    auto measure_v = (kpt3d_world.rhand[21] - kpt3d_world_pre.rhand[21]) /
+                                     (timestamp - last_timestamp_);
                     predictor_rhand.track_with_correct(timestamp, {kpt3d_world.rhand[21], measure_v});
                 }
             }
