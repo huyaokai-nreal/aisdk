@@ -6,6 +6,11 @@
 
 #define KPT_NUMS 21
 
+struct Kpt2dResult {
+    std::vector<std::vector<cv::Vec2f>> rsn_kpts;  // 单手 左目，右目
+    std::vector<std::vector<float>> rsn_scores;
+};
+
 namespace aisdk::algorithm {
 
 struct Kpt2dInternal {

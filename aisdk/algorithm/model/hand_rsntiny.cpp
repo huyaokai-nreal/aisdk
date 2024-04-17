@@ -1,8 +1,10 @@
 #include "hand_rsntiny.h"
 
+#include <absl/status/status.h>
+#include <absl/status/statusor.h>
+
 #include "aisdk/algorithm/common/math.h"
 #include "aisdk/algorithm/func/elementwise_mul.h"
-#include "aisdk/algorithm/func/netalgo_utils.h"
 #include "aisdk/algorithm/func/permute.h"
 #include "aisdk/algorithm/func/reducesum.h"
 #include "aisdk/algorithm/func/softmax.h"
@@ -36,19 +38,11 @@ aisdk::xengine::Status RSNTiny::Init(aisdk::xengine::NetAlgoConfig &algo, aisdk:
                                      aisdk::xengine::SessionConfig &session) {
     auto ret = CalculatorBaseNet::Init(algo, model, session);
     if (ret != aisdk::xengine::Status::SUCCESS) {
-        AISDK_LOG_TRACE("Get Here 2?");
         return ret;
     }
-    AISDK_LOG_TRACE("Get Here 3?");
-    itensor_format = checkshapeformat(model.vendor_type, itensor.m_tensors[0].m_rank);
-    AISDK_LOG_TRACE("Get Here 4?");
-    otensor_format = checkshapeformat(model.vendor_type, otensor.m_tensors[0].m_rank);
-    uint32_t tmp = 1;
-    for (uint32_t i = 0; i < otensor.m_tensors[0].m_rank; i++) {
-        tmp *= otensor.m_tensors[0].m_dims[i];
-    }
-    m_outputsNCHW.resize(tmp);
-    AISDK_LOG_TRACE("Get Here 5?");
+    itensor_format_ = itensor.m_tensors[0].m_dimtype;
+    otensor_format_ = otensor.m_tensors[0].m_dimtype;
+    m_outputsNCHW.resize(otensor.m_tensors[0].m_elementsize);
     // resize post process memory
     input_shape_ = itensor.m_tensors[0].m_dims[1];
     output_shape_ = otensor.m_tensors[0].m_dims[1];
@@ -66,7 +60,7 @@ aisdk::xengine::Status RSNTiny::Init(aisdk::xengine::NetAlgoConfig &algo, aisdk:
 void RSNTiny::PreProcess(const std::vector<Image> &net_input) {
     auto ai = itensor.m_batch * itensor.m_multishape_num;
     auto bi = net_input.size();
-    if (ai != bi || itensor.m_packed_bybatch == false) {
+    if (ai != bi || !itensor.m_packed_bybatch) {
         return;
     }
 
@@ -75,11 +69,11 @@ void RSNTiny::PreProcess(const std::vector<Image> &net_input) {
         auto &img = net_input[i].m_mat;
         multi_i = i / itensor.m_batch;
         batch_i = i % itensor.m_batch;
-        if (itensor_format == aisdk::xengine::TensorFormat::CHW) {
+        if (itensor_format_ == aisdk::xengine::TensorFormat::CHW) {
             channels = itensor.m_tensors[multi_i].m_dims[0];
             height = itensor.m_tensors[multi_i].m_dims[1];
             width = itensor.m_tensors[multi_i].m_dims[2];
-        } else if (itensor_format == aisdk::xengine::TensorFormat::HWC) {
+        } else if (itensor_format_ == aisdk::xengine::TensorFormat::HWC) {
             height = itensor.m_tensors[multi_i].m_dims[0];
             width = itensor.m_tensors[multi_i].m_dims[1];
             channels = itensor.m_tensors[multi_i].m_dims[2];
@@ -95,19 +89,19 @@ void RSNTiny::PreProcess(const std::vector<Image> &net_input) {
     }
 }
 
-void RSNTiny::PostProcess(RSNResult &result) {
-    if (otensor.m_packed_bybatch == false) {
+void RSNTiny::PostProcess(Kpt2dResult &result) {
+    if (!otensor.m_packed_bybatch) {
         return;
     }
     result.rsn_kpts.resize(otensor.m_batch);
     unsigned int _h, _w, _c, element_byte;
-    for (int multi_i = 0; multi_i < otensor.m_multishape_num; multi_i++) {
-        for (int batch_i = 0; batch_i < otensor.m_batch; batch_i++) {
-            if (otensor_format == aisdk::xengine::TensorFormat::CHW) {
+    for (size_t multi_i = 0; multi_i < otensor.m_multishape_num; multi_i++) {
+        for (size_t batch_i = 0; batch_i < otensor.m_batch; batch_i++) {
+            if (otensor_format_ == aisdk::xengine::TensorFormat::CHW) {
                 _c = otensor.m_tensors[multi_i].m_dims[0];
                 _h = otensor.m_tensors[multi_i].m_dims[1];
                 _w = otensor.m_tensors[multi_i].m_dims[2];
-            } else if (otensor_format == aisdk::xengine::TensorFormat::HWC) {
+            } else if (otensor_format_ == aisdk::xengine::TensorFormat::HWC) {
                 _h = otensor.m_tensors[multi_i].m_dims[0];
                 _w = otensor.m_tensors[multi_i].m_dims[1];
                 _c = otensor.m_tensors[multi_i].m_dims[2];
@@ -124,9 +118,9 @@ void RSNTiny::PostProcess(RSNResult &result) {
             // 单输出 "feat"
             std::vector<float> kpt_x_data(keypoint_num_);
             std::vector<float> kpt_y_data(keypoint_num_);
-            if (otensor_format == aisdk::xengine::TensorFormat::CHW) {
+            if (otensor_format_ == aisdk::xengine::TensorFormat::CHW) {
                 ipr(_data, kpt_x_data.data(), kpt_y_data.data());
-            } else if (otensor_format == aisdk::xengine::TensorFormat::HWC) {
+            } else if (otensor_format_ == aisdk::xengine::TensorFormat::HWC) {
                 NHWC2NCHW(_data, m_outputsNCHW.data(), 1, _c, _h * _w);
                 ipr(m_outputsNCHW.data(), kpt_x_data.data(), kpt_y_data.data());
             }
@@ -139,17 +133,15 @@ void RSNTiny::PostProcess(RSNResult &result) {
     }
 }
 
-aisdk::xengine::Status RSNTiny::Inference(const std::vector<Image> &baseinput, RSNResult &baseresult) {
+absl::StatusOr<Kpt2dResult> RSNTiny::Inference(const std::vector<Image> &baseinput) {
     PreProcess(baseinput);
+    Kpt2dResult baseresult;
     aisdk::xengine::Status ret = m_net->RunNet();
     if (ret == aisdk::xengine::Status::SUCCESS) {
         PostProcess(baseresult);
-    } else {
-        auto &result = baseresult;
-        result.rsn_kpts.resize(otensor.m_batch);
-        AISDK_LOG_TRACE("RSNTiny::Inference  Error!");
+        return baseresult;
     }
-    return ret;
+    return absl::UnavailableError("failed to get 2d hand kpt result from rsntiny");
 }
 
 }  // namespace aisdk::algorithm

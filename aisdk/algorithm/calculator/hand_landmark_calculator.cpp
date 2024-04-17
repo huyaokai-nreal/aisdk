@@ -104,10 +104,8 @@ class HandLandmarkCalculator : public CalculatorBase {
             lhand_cropped_rois.emplace_back(lhand_lcam_flipped_roi);
             lhand_cropped_rois.emplace_back(lhand_rcam_flipped_roi);
 
-            aisdk::algorithm::RSNResult rsn_result;
-
-            aisdk::xengine::Status ret = netalgo->Inference(lhand_cropped_rois, rsn_result);
-            if (ret != aisdk::xengine::Status::SUCCESS) {
+            auto rsn_result = netalgo->Inference(lhand_cropped_rois);
+            if (!rsn_result.ok()) {
                 output_buffer_->lhand_valid = false;
             } else {
                 output_buffer_->lhand_valid = true;
@@ -116,8 +114,8 @@ class HandLandmarkCalculator : public CalculatorBase {
                 std::vector<cv::Vec2f>& lhand_lcam_landmarks_final_output = output_buffer_->lhand_lcam;
                 std::vector<cv::Vec2f>& lhand_rcam_landmarks_final_output = output_buffer_->lhand_rcam;
 
-                std::vector<cv::Vec2f>& lhand_lcam_landmarks_net_output = rsn_result.rsn_kpts[0];
-                std::vector<cv::Vec2f>& lhand_rcam_landmarks_net_output = rsn_result.rsn_kpts[1];
+                std::vector<cv::Vec2f>& lhand_lcam_landmarks_net_output = rsn_result->rsn_kpts[0];
+                std::vector<cv::Vec2f>& lhand_rcam_landmarks_net_output = rsn_result->rsn_kpts[1];
 
                 for (int kpt_index = 0; kpt_index < KPT_NUMS; kpt_index++) {
                     // 左手左目xy
@@ -150,17 +148,11 @@ class HandLandmarkCalculator : public CalculatorBase {
 
             cv::Mat rhand_lcam_roi = generate_roi_image(lcam_proto_image.m_mat, rhand_lcam_rect, rsn_w, rsn_h);
             cv::Mat rhand_rcam_roi = generate_roi_image(rcam_proto_image.m_mat, rhand_rcam_rect, rsn_w, rsn_h);
-
             std::vector<aisdk::algorithm::Image> rhand_cropped_rois;
-
             rhand_cropped_rois.emplace_back(rhand_lcam_roi);
             rhand_cropped_rois.emplace_back(rhand_rcam_roi);
-
-            aisdk::algorithm::RSNResult rsn_result;
-
-            aisdk::xengine::Status ret = netalgo->Inference(rhand_cropped_rois, rsn_result);
-
-            if (ret != aisdk::xengine::Status::SUCCESS) {
+            auto rsn_result = netalgo->Inference(rhand_cropped_rois);
+            if (!rsn_result.ok()) {
                 output_buffer_->rhand_valid = false;
             } else {
                 output_buffer_->rhand_valid = true;
@@ -169,8 +161,8 @@ class HandLandmarkCalculator : public CalculatorBase {
                 std::vector<cv::Vec2f>& rhand_lcam_landmarks_final_output = output_buffer_->rhand_lcam;
                 std::vector<cv::Vec2f>& rhand_rcam_landmarks_final_output = output_buffer_->rhand_rcam;
 
-                std::vector<cv::Vec2f>& rhand_lcam_landmarks_net_output = rsn_result.rsn_kpts[0];
-                std::vector<cv::Vec2f>& rhand_rcam_landmarks_net_output = rsn_result.rsn_kpts[1];
+                std::vector<cv::Vec2f>& rhand_lcam_landmarks_net_output = rsn_result->rsn_kpts[0];
+                std::vector<cv::Vec2f>& rhand_rcam_landmarks_net_output = rsn_result->rsn_kpts[1];
 
                 for (int kpt_index = 0; kpt_index < KPT_NUMS; kpt_index++) {
                     // 右手左目xy

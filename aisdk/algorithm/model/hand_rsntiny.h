@@ -1,17 +1,14 @@
 #pragma once
 
-#include <cstdlib>
+#include <absl/status/status.h>
+#include <absl/status/statusor.h>
 #include <vector>
-
+#include "aisdk/algorithm/internal_structs/kpt2d_struct_internal.h"
+#include "aisdk/algorithm/common/nrnet_define.h"
 #include "calculator_basenet.h"
-#include "../func/netalgo_utils.h"
 
 namespace aisdk::algorithm {
 
-struct RSNResult {
-    std::vector<std::vector<cv::Vec2f>> rsn_kpts;  // 单手 左目，右目
-    std::vector<std::vector<float>> rsn_scores;
-};
 
 class RSNTiny : public CalculatorBaseNet {
    public:
@@ -24,15 +21,15 @@ class RSNTiny : public CalculatorBaseNet {
     aisdk::xengine::Status Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::ModelConfig &model,
                                 aisdk::xengine::SessionConfig &session);
     void PreProcess(const std::vector<Image> &net_input);
-    void PostProcess(RSNResult &result);
+    void PostProcess(Kpt2dResult &result);
     void PreProcessSingle(const std::vector<Image> &net_input, uint32_t batchn);
-    void PostProcessSingle(RSNResult &result, uint32_t batchn);
-    aisdk::xengine::Status Inference(const std::vector<Image> &baseinput, RSNResult &baseresult);
+    void PostProcessSingle(Kpt2dResult &result, uint32_t batchn);
+    absl::StatusOr<Kpt2dResult> Inference(const std::vector<Image> &input);
 
    private:
     void ipr(float *__restrict input_hm, float *__restrict kpt_x_out, float *__restrict kpt_y_out);
-    aisdk::xengine::TensorFormat itensor_format;
-    aisdk::xengine::TensorFormat otensor_format;
+    aisdk::xengine::TensorFormat itensor_format_;
+    aisdk::xengine::TensorFormat otensor_format_;
     unsigned int input_shape_ = 128;
     unsigned int output_shape_ = 32;
     unsigned int keypoint_num_ = 21;
