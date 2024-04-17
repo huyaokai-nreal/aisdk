@@ -1,4 +1,8 @@
-#include "aisdk/base/time.h"
+#include "time.h"
+
+#include <absl/time/clock.h>
+
+#include <utility>
 
 #include "aisdk/base/log.h"
 
@@ -6,7 +10,9 @@ namespace aisdk::base {
 
 std::string _CutParenthesesNTail(std::string &&prettyFuncon) {
     auto pos = prettyFuncon.find('(');
-    if (pos != std::string::npos) prettyFuncon.erase(prettyFuncon.begin() + pos, prettyFuncon.end());
+    if (pos != std::string::npos) {
+        prettyFuncon.erase(prettyFuncon.begin() + pos, prettyFuncon.end());
+    }
 
     return std::move(prettyFuncon);
 }
@@ -17,35 +23,25 @@ TimerBase::~TimerBase() {
     // do nothing
 }
 
-void TimerBase::reset() {
-    struct timeval Current;
-    gettimeofday(&Current, nullptr);
-    last_reset_time_ = Current.tv_sec * 1000000 + Current.tv_usec;
-}
+void TimerBase::reset() { last_reset_time = absl::Now(); }
 
-uint64_t TimerBase::durationInUs() {
-    struct timeval Current;
-    gettimeofday(&Current, nullptr);
-    auto lastTime = Current.tv_sec * 1000000 + Current.tv_usec;
+uint64_t TimerBase::durationInUs() { return absl::ToInt64Microseconds(absl::Now() - last_reset_time); }
 
-    return lastTime - last_reset_time_;
-}
-
-NaiveTimer::NaiveTimer(int line, const char *func) : TimerBase() {
+NaiveTimer::NaiveTimer(int line, const char *func) {
     name_ = strdup(_CutParenthesesNTail(func).c_str());
     line_ = line;
     tag_ = "null";
 }
 
-NaiveTimer::NaiveTimer(int line, const char *func, std::string _tag) : TimerBase() {
+NaiveTimer::NaiveTimer(int line, const char *func, std::string _tag) {
     name_ = strdup(_CutParenthesesNTail(func).c_str());
     line_ = line;
-    tag_ = _tag;
+    tag_ = std::move(_tag);
 }
 NaiveTimer::~NaiveTimer() {
     auto timeInUs = durationInUs();
     AISDK_LOG_WARN("[Name:{}],[Line:{}],[fun:{}],[cost:{:.3f}ms]", name_, line_, tag_.c_str(),
-                   (float)timeInUs / 1000.0f);
+                   (double)timeInUs / 1000.0F);
 }
 
 }  // namespace aisdk::base

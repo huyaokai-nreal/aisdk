@@ -1,12 +1,15 @@
 
+#include <absl/time/clock.h>
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include <doctest/doctest.h>
+
+
 #include "aisdk/base/time.h"
-#include <chrono>
-#include <thread>
 TEST_CASE("testing the time record") {
     {
-    TIMER_ONCE_WITH_TAG("timer");
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+        aisdk::base::TimerBase timer;
+        absl::SleepFor(absl::Seconds(1));
+        auto d = timer.durationInUs();
+        CHECK(abs(d-1e6) < 300);
     }
 }

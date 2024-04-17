@@ -1,6 +1,6 @@
 #pragma once
+#include <absl/time/time.h>
 #include <stdint.h>
-#include <sys/time.h>
 #include <unistd.h>
 
 #include <string>
@@ -23,7 +23,7 @@ class TimerBase {
     uint64_t durationInUs();
 
    protected:
-    uint64_t last_reset_time_;
+    absl::Time last_reset_time;
 };
 
 class NaiveTimer : TimerBase {

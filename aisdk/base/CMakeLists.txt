@@ -10,6 +10,6 @@ add_library(
     ${CMAKE_CURRENT_SOURCE_DIR}/set_cpu_affinity.cpp
 )
 
-target_link_libraries(base PUBLIC Eigen3::Eigen camera_model::camera_model framework::framework)
+target_link_libraries(base PUBLIC Eigen3::Eigen camera_model::camera_model framework::framework absl::time)
 target_compile_options(base PRIVATE -Wno-error)
 add_clang_format_target(base)
