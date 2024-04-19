@@ -13,8 +13,7 @@ class HandTrackingMediaPipeGraph : public MediaPipeGraph {
     virtual ~HandTrackingMediaPipeGraph();
 
     // 接口参数自定义
-    algorithm::Status PushData(uint64_t timestamp, std::vector<algorithm::Image>& in_image, NRTransform headpose,
-                               algorithm::CamInfo cam_info);
+    algorithm::Status PushData(uint64_t timestamp, std::vector<algorithm::Image>& in_image, NRTransform headpose);
     algorithm::Status PopResult(uint64_t hmd_time_nanos, uint32_t* hand_num, HandData* out_hand_array);
     // 其他接口自定义
 

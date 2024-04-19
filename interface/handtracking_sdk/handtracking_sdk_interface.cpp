@@ -604,61 +604,6 @@ NRPluginResult HandTracking::ParseAllCameraData(const NRGrayscaleCameraFrameData
     errorcode = ins->m_handtracking.m_interface->GetDevicePose(ins->GetHandle(), &headpose_proto, nano_time_[0]);
     head_pose = headpose_proto.transform;
 
-    // 赋值相机参数
-    aisdk::algorithm::CamInfo input_cam_info;
-
-    auto cam_param = ins->m_hmd.m_cam_param.m_params;
-
-    // 1. cvL_T_cvR
-    Eigen::Isometry3f glL_T_glR = Eigen::Isometry3f::Identity();
-    glL_T_glR.rotate(Eigen::Quaternionf(cam_param["glL_R_glR"][0], cam_param["glL_R_glR"][1], cam_param["glL_R_glR"][2],
-                                        cam_param["glL_R_glR"][3]));
-    glL_T_glR.pretranslate(
-        Eigen::Vector3f(cam_param["glL_t_glR"][0], cam_param["glL_t_glR"][1], cam_param["glL_t_glR"][2]));
-    if (ins->m_hmd.m_generate_method == 1) {
-        // 输入是GL系
-        Eigen::Matrix3f gl_R_cv;
-        gl_R_cv << 1, 0, 0, 0, -1, 0, 0, 0, -1;
-        Eigen::Isometry3f gl_T_cv = Eigen::Isometry3f::Identity();
-        gl_T_cv.rotate(gl_R_cv);
-        input_cam_info.cvL_T_cvR = gl_T_cv * glL_T_glR * gl_T_cv;
-    } else {
-        // 输入是cv系
-        input_cam_info.cvL_T_cvR = glL_T_glR;
-    }
-
-    // 2. 左目内参 lcam_intrinsics
-    cv::Mat l_K = cv::Mat::eye(3, 3, CV_32FC1);
-    l_K.at<float>(0, 0) = cam_param["cam_l_fc"][0];
-    l_K.at<float>(1, 1) = cam_param["cam_l_fc"][1];
-    l_K.at<float>(0, 2) = cam_param["cam_l_cc"][0];
-    l_K.at<float>(1, 2) = cam_param["cam_l_cc"][1];
-    input_cam_info.lcam_intrinsics = l_K;
-
-    // 3. 右目内参 rcam_intrinsics
-    cv::Mat r_K = cv::Mat::eye(3, 3, CV_32FC1);
-    r_K.at<float>(0, 0) = cam_param["cam_r_fc"][0];
-    r_K.at<float>(1, 1) = cam_param["cam_r_fc"][1];
-    r_K.at<float>(0, 2) = cam_param["cam_r_cc"][0];
-    r_K.at<float>(1, 2) = cam_param["cam_r_cc"][1];
-    input_cam_info.rcam_intrinsics = r_K;
-
-    // 4. 全部按照最多的参数存储
-    input_cam_info.lcam_dist_coeffs = cv::Mat::eye(1, 12, CV_32FC1);
-    for (uint32_t k = 0; k < cam_param["cam_l_kc"].size(); k++) {
-        input_cam_info.lcam_dist_coeffs.at<float>(0, k) = cam_param["cam_l_kc"][k];
-    }
-
-    input_cam_info.rcam_dist_coeffs = cv::Mat::eye(1, 12, CV_32FC1);
-    for (uint32_t k = 0; k < cam_param["cam_r_kc"].size(); k++) {
-        input_cam_info.rcam_dist_coeffs.at<float>(0, k) = cam_param["cam_r_kc"][k];
-    }
-
-    input_cam_info.camera_type = (int)cam_param["camera_model"][0];
-
-    input_cam_info.video_width = (uint32_t)cam_param["cam_resolution"][0];
-    input_cam_info.video_height = (uint32_t)cam_param["cam_resolution"][1];
-
     auto& pipeline = ins->GetPipeline();
     if (ins->pipeline_name == "handtracking_bino_graph_v2.0.0") {
         std::shared_ptr<task::HandTrackingMediaPipeGraph> impl =
@@ -666,7 +611,7 @@ NRPluginResult HandTracking::ParseAllCameraData(const NRGrayscaleCameraFrameData
         std::vector<aisdk::algorithm::Image> images;
         images.emplace_back(std::move(d1));
         images.emplace_back(std::move(d2));
-        impl->PushData(nano_time_[0], images, head_pose, input_cam_info);
+        impl->PushData(nano_time_[0], images, head_pose);
         AISDK_LOG_TRACE("interface HandTrackingMediaPipeGraph::PushData");
     }
 

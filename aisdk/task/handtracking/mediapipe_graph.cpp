@@ -125,14 +125,15 @@ aisdk::algorithm::CamInfo ConvertCameraInfo(aisdk::algorithm::CameraParams cam_i
     Eigen::Isometry3f glL_T_glR = Eigen::Isometry3f::Identity();
     glL_T_glR.rotate(Eigen::Quaternionf(cam_param["glL_R_glR"][0], cam_param["glL_R_glR"][1], cam_param["glL_R_glR"][2],
                                         cam_param["glL_R_glR"][3]));
+    // TODO: 后面处理一下输入是cv系的问题
     glL_T_glR.pretranslate(
         Eigen::Vector3f(cam_param["glL_t_glR"][0], cam_param["glL_t_glR"][1], cam_param["glL_t_glR"][2]));
-        // 输入是GL系
-        Eigen::Matrix3f gl_R_cv;
-        gl_R_cv << 1, 0, 0, 0, -1, 0, 0, 0, -1;
-        Eigen::Isometry3f gl_T_cv = Eigen::Isometry3f::Identity();
-        gl_T_cv.rotate(gl_R_cv);
-        input_cam_info.cvL_T_cvR = gl_T_cv * glL_T_glR * gl_T_cv;
+    // 输入是GL系
+    Eigen::Matrix3f gl_R_cv;
+    gl_R_cv << 1, 0, 0, 0, -1, 0, 0, 0, -1;
+    Eigen::Isometry3f gl_T_cv = Eigen::Isometry3f::Identity();
+    gl_T_cv.rotate(gl_R_cv);
+    input_cam_info.cvL_T_cvR = gl_T_cv * glL_T_glR * gl_T_cv;
 
     // 2. 左目内参 lcam_intrinsics
     cv::Mat l_K = cv::Mat::eye(3, 3, CV_32FC1);

@@ -45,13 +45,10 @@ HandTrackingMediaPipeGraph::HandTrackingMediaPipeGraph() {
     m_post_filter->init();
 }
 HandTrackingMediaPipeGraph::~HandTrackingMediaPipeGraph() {}
-    // 赋值相机参数
-
 
 aisdk::algorithm::Status HandTrackingMediaPipeGraph::PushData(uint64_t timestamp,
                                                               std::vector<aisdk::algorithm::Image>& in_image,
-                                                              NRTransform headpose,
-                                                              aisdk::algorithm::CamInfo cam_info) {
+                                                              NRTransform headpose) {
     // we use microseconds in xgraph pipeline
     int64_t timestamp_micro = static_cast<int64_t>(timestamp / 1000);
     auto image_packet = mediapipe::MakePacket<std::vector<aisdk::algorithm::Image>>(std::move(in_image));
@@ -66,21 +63,18 @@ aisdk::algorithm::Status HandTrackingMediaPipeGraph::PushData(uint64_t timestamp
             "image", image_packet.At(mediapipe::Timestamp(timestamp_micro))));
         MP_RETURN_IF_ERROR_WITH_LOG(m_calculator_graph->AddPacketToInputStream(
             "head_pose", headpose_packet.At(mediapipe::Timestamp(timestamp_micro))));
-        //MP_RETURN_IF_ERROR_WITH_LOG(m_calculator_graph->AddPacketToInputStream(
-        //    "cam_info",
-        //    mediapipe::MakePacket<aisdk::algorithm::CamInfo>(cam_info).At(mediapipe::Timestamp(timestamp_micro))));
         // 若push失败，清除cahce
         if (push_failure) {
             ClearInputStreamCache(timestamp_micro);
         }
     }
-    //m_increase_timestep++;
+    // m_increase_timestep++;
     return aisdk::algorithm::Status::SUCCESS;
 }
 
 aisdk::algorithm::Status HandTrackingMediaPipeGraph::PopResult(uint64_t hmd_time_nano, uint32_t* hand_num,
                                                                HandData* out_hand_array) {
-    double query_time = static_cast<double>(hmd_time_nano)/1e9;
+    double query_time = static_cast<double>(hmd_time_nano) / 1e9;
     std::shared_ptr<StreamCache> outlist = GetOutputStreamCache();
     if (outlist) {
         auto& hand_data_packet = outlist->m_output_packs[0];
@@ -164,11 +158,11 @@ aisdk::algorithm::Status HandTrackingMediaPipeGraph::PopResult(uint64_t hmd_time
                 }
 
                 AISDK_LOG_WARN("predict_len: {} s", (query_time - hand_data_internal.timestamp));
-                AISDK_LOG_WARN("{}, {}, {}, {}, {}, {}", query_time, hand_data_internal.timestamp,
-                                target_timestamp, root_meas[0], root_meas[1], root_meas[2]);
+                AISDK_LOG_WARN("{}, {}, {}, {}, {}, {}", query_time, hand_data_internal.timestamp, target_timestamp,
+                               root_meas[0], root_meas[1], root_meas[2]);
 
                 if (i == 0) {
-                    if (predictor_lhand.get_tracking_status()){
+                    if (predictor_lhand.get_tracking_status()) {
                         root_kf_predicted = predictor_lhand.track_only_pred(target_timestamp);
                     }
 
@@ -176,8 +170,10 @@ aisdk::algorithm::Status HandTrackingMediaPipeGraph::PopResult(uint64_t hmd_time
                     if (predictor_rhand.get_tracking_status())
                         root_kf_predicted = predictor_rhand.track_only_pred(target_timestamp);
                 }
-                AISDK_LOG_WARN("predict root is {}, {}, {}", root_kf_predicted[0], root_kf_predicted[1], root_kf_predicted[2]);
-                AISDK_LOG_WARN("predict dist is {}, {}, {}", abs(root_kf_predicted[0]-root_meas[0]), abs(root_kf_predicted[1]-root_meas[1]), abs(root_kf_predicted[2]-root_meas[2]));
+                AISDK_LOG_WARN("predict root is {}, {}, {}", root_kf_predicted[0], root_kf_predicted[1],
+                               root_kf_predicted[2]);
+                AISDK_LOG_WARN("predict dist is {}, {}, {}", abs(root_kf_predicted[0] - root_meas[0]),
+                               abs(root_kf_predicted[1] - root_meas[1]), abs(root_kf_predicted[2] - root_meas[2]));
                 for (int k = 0; k < EZXR_DEFINED_JOINTS; k++) {
                     predicted_points[k] = ontracked_points[i][k] + root_kf_predicted - root_meas;
                 }
