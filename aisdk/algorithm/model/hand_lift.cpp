@@ -517,31 +517,6 @@ void GMLPLiftNimble::PostProcess(LiftNetOutputs &outputs, const LiftNetInputs &i
         outputs.res3d[i] = cv::Vec3f{global_kpt(i, 0), global_kpt(i, 1), global_kpt(i, 2)};
     }
 
-    // get local hand pose
-    // int index_matrix = this->m_net->GetOutputTensorIndex("matrix");
-    // float *matrix_ptr = (float *)otensor.m_tensors[index_matrix].m_viraddr;
-    // Eigen::Map<Eigen::Matrix<float, 19, 9, Eigen::RowMajor>> local_matrix(matrix_ptr);
-    // Eigen::Matrix<float, 1, 9> reshaped_global_rotation;
-    // reshaped_global_rotation << global_rotation(0, 0), global_rotation(0, 1), global_rotation(0, 2),
-    //     global_rotation(1, 0), global_rotation(1, 1), global_rotation(1, 2), global_rotation(2, 0),
-    //     global_rotation(2, 1), global_rotation(2, 2);
-    // outputs.angle.resize(20);
-    // outputs.angle[0] = reshaped_global_rotation;
-    // for (int i = 1; i < NimblePoseNum; i++) {
-    //     outputs.angle[i] = local_matrix.block<1, 9>(i - 1, 0);
-    // }
-
-    // // get shape and trans
-    // int index_trans = this->m_net->GetOutputTensorIndex("trans");
-    // float *trans_ptr = (float *)otensor.m_tensors[index_trans].m_viraddr;
-    // outputs.trans.resize(1);
-    // outputs.trans[0] = cv::Vec3f(trans_ptr[0], trans_ptr[1], trans_ptr[2]);
-    // int index_shape = this->m_net->GetOutputTensorIndex("shape");
-    // float *shape_ptr = (float *)otensor.m_tensors[index_shape].m_viraddr;
-    // outputs.shape.resize(1);
-    // outputs.shape[0] = shape_ptr[0];
-
-
     int index_mem = this->m_net->GetOutputTensorIndex("mem_out");
 
     int mem_channels = otensor.m_tensors[index_mem].m_dims[0];
