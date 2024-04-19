@@ -82,8 +82,8 @@ class GMLPLiftNimble : public CalculatorBaseNet {
    public:
     aisdk::xengine::Status Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::ModelConfig &model, aisdk::xengine::SessionConfig &session);
     void PreProcess(const LiftNetInputs &inputs);
-    void PostProcess(LiftNimbleNetOutputs &outputs, const LiftNetInputs &inputs);
-    aisdk::xengine::Status Inference(const LiftNetInputs &inputs, LiftNimbleNetOutputs &outputs);
+    void PostProcess(LiftNetOutputs &outputs, const LiftNetInputs &inputs);
+    aisdk::xengine::Status Inference(const LiftNetInputs &inputs, LiftNetOutputs &outputs);
 
     aisdk::xengine::Status SetCameraInfo(const std::shared_ptr<BaseCameraModel>& left_camera, const std::shared_ptr<BaseCameraModel>& right_camera);
    private:
