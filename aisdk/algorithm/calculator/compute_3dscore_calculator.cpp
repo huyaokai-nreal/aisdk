@@ -8,12 +8,13 @@
 #include "aisdk/algorithm/common/nrnet_define.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/time.h"
+#include "aisdk/base/type.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/canonical_errors.h"
 
 // need camera model to do reproj
-float compute3dscore(const std::vector<cv::Vec3f>& kpt3d, const std::vector<cv::Vec2f>& kpt2d_lcam,
-                     const std::vector<cv::Vec2f>& kpt2d_rcam) {
+float compute3dscore(const std::vector<cv::Vec3f>& kpt3d, const std::vector<aisdk::Vec2f_t>& kpt2d_lcam,
+                     const std::vector<aisdk::Vec2f_t>& kpt2d_rcam) {
     float score = 0.9;
     return score;
 }

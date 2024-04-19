@@ -1,6 +1,7 @@
 #include "NR_Seq_Manager.h"
 
 #include "aisdk/base/log.h"
+#include "aisdk/base/type.h"
 
 namespace aisdk::algorithm {
 
@@ -119,7 +120,7 @@ bool SeqManager2D::reset() {
     return true;
 }
 
-bool SeqManager2D::updateSeq2D(const std::vector<cv::Vec2f>& kpt_2d) {
+bool SeqManager2D::updateSeq2D(const std::vector<Vec2f_t>& kpt_2d) {
     if (mHandDataSeq.size() == mWindowLength) {
         mHandDataSeq.pop_front();
         mHandDataSeq.push_back(kpt_2d);
@@ -132,7 +133,7 @@ bool SeqManager2D::updateSeq2D(const std::vector<cv::Vec2f>& kpt_2d) {
     return true;
 }
 
-std::vector<std::vector<cv::Vec2f>> SeqManager2D::getSeq() {
+std::vector<std::vector<Vec2f_t>> SeqManager2D::getSeq() {
     return {mHandDataSeq[15], mHandDataSeq[14], mHandDataSeq[13], mHandDataSeq[12], mHandDataSeq[11], mHandDataSeq[10]};
 }
 

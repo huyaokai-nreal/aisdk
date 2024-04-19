@@ -4,6 +4,7 @@
 #include "aisdk/algorithm/func/netalgo_utils.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/profiling.h"
+#include "aisdk/base/type.h"
 
 namespace aisdk::algorithm {
 
@@ -26,7 +27,7 @@ aisdk::xengine::Status LandmarkFilter::Init(aisdk::xengine::NetAlgoConfig &algo,
     return aisdk::xengine::Status::SUCCESS;
 }
 
-void LandmarkFilter::PreProcess(const std::vector<std::vector<cv::Vec2f>> &net_input) {
+void LandmarkFilter::PreProcess(const std::vector<std::vector<Vec2f_t>> &net_input) {
     int ai = itensor.m_batch * itensor.m_multishape_num;
     int bi = 1;
     if (ai != bi || itensor.m_packed_bybatch == false) {
@@ -50,14 +51,9 @@ void LandmarkFilter::PreProcess(const std::vector<std::vector<cv::Vec2f>> &net_i
 
         int mem_size = height * width * channels * element_byte;
         char *mem = (char *)itensor.m_tensors[multi_i].m_viraddr + batch_i * mem_size;
-        // printf("PreProcess: {}, {}, {}, {}\n", height, width,
-        // channels, element_byte);
         float *temp = (float *)mem;
 
-        std::vector<cv::Vec2f> inputKptS = net_input[0];
-        // cv::undistortPoints(inputSeq[0], inputKptS, m_cam_left.k, distcoeff,
-        // cv::noArray(), m_cam_left.k);
-
+        std::vector<Vec2f_t> inputKptS = net_input[0];
         m_center_uv = inputKptS[9];
         for (int i = 0; i < inputKptS.size(); i++) {
             inputKptS[i] -= m_center_uv;
@@ -75,7 +71,7 @@ void LandmarkFilter::PreProcess(const std::vector<std::vector<cv::Vec2f>> &net_i
     }
 }
 
-void LandmarkFilter::PostProcess(std::vector<cv::Vec2f> &result) {
+void LandmarkFilter::PostProcess(std::vector<Vec2f_t> &result) {
     if (otensor.m_packed_bybatch == false) {
         return;
     }
@@ -104,8 +100,8 @@ void LandmarkFilter::PostProcess(std::vector<cv::Vec2f> &result) {
     }
 }
 
-aisdk::xengine::Status LandmarkFilter::Inference(const std::vector<std::vector<cv::Vec2f>> &baseinput,
-                                                 std::vector<cv::Vec2f> &baseresult) {
+aisdk::xengine::Status LandmarkFilter::Inference(const std::vector<std::vector<Vec2f_t>> &baseinput,
+                                                 std::vector<Vec2f_t> &baseresult) {
     PreProcess(baseinput);
     aisdk::xengine::Status ret = m_net->RunNet();
     PostProcess(baseresult);

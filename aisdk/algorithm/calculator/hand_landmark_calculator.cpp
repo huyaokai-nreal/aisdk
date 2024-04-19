@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "aisdk/algorithm/calculator/hand_landmark_calculator.pb.h"
+#include "aisdk/algorithm/common/hand_define.h"
 #include "aisdk/algorithm/func/warpaffine.h"
 #include "aisdk/algorithm/internal_structs/det_struct_internal.h"
 #include "aisdk/algorithm/internal_structs/kpt2d_struct_internal.h"
@@ -81,8 +82,6 @@ class HandLandmarkCalculator : public CalculatorBase {
 
         std::unique_ptr<aisdk::algorithm::Kpt2dInternal> output_buffer_ =
             absl::make_unique<aisdk::algorithm::Kpt2dInternal>();
-        output_buffer_->clear();
-
         if (bbox_data.lhand_valid) {
             // refs
             const aisdk::algorithm::Image& lcam_proto_image = image_data[0];
@@ -111,13 +110,13 @@ class HandLandmarkCalculator : public CalculatorBase {
                 output_buffer_->lhand_valid = true;
 
                 // refs
-                std::vector<cv::Vec2f>& lhand_lcam_landmarks_final_output = output_buffer_->lhand_lcam;
-                std::vector<cv::Vec2f>& lhand_rcam_landmarks_final_output = output_buffer_->lhand_rcam;
+                auto& lhand_lcam_landmarks_final_output = output_buffer_->lhand_lcam;
+                auto& lhand_rcam_landmarks_final_output = output_buffer_->lhand_rcam;
 
-                std::vector<cv::Vec2f>& lhand_lcam_landmarks_net_output = rsn_result->rsn_kpts[0];
-                std::vector<cv::Vec2f>& lhand_rcam_landmarks_net_output = rsn_result->rsn_kpts[1];
+                const auto& lhand_lcam_landmarks_net_output = rsn_result->kpts[0];
+                const auto& lhand_rcam_landmarks_net_output = rsn_result->kpts[1];
 
-                for (int kpt_index = 0; kpt_index < KPT_NUMS; kpt_index++) {
+                for (int kpt_index = 0; kpt_index < aisdk::algorithm::kKeypointNum; kpt_index++) {
                     // 左手左目xy
                     lhand_lcam_landmarks_final_output[kpt_index][0] =
                         ((rsn_w - 1) - lhand_lcam_landmarks_net_output[kpt_index][0]) * lhand_lcam_rect.width / rsn_w +
@@ -134,8 +133,6 @@ class HandLandmarkCalculator : public CalculatorBase {
                         lhand_rcam_landmarks_net_output[kpt_index][1] * lhand_rcam_rect.height / rsn_h +
                         lhand_rcam_rect.y;
                 }
-                output_buffer_->lhand_lcam = lhand_lcam_landmarks_final_output;
-                output_buffer_->lhand_rcam = lhand_rcam_landmarks_final_output;
             }
         }
         if (bbox_data.rhand_valid) {
@@ -158,13 +155,13 @@ class HandLandmarkCalculator : public CalculatorBase {
                 output_buffer_->rhand_valid = true;
 
                 // refs
-                std::vector<cv::Vec2f>& rhand_lcam_landmarks_final_output = output_buffer_->rhand_lcam;
-                std::vector<cv::Vec2f>& rhand_rcam_landmarks_final_output = output_buffer_->rhand_rcam;
+                auto& rhand_lcam_landmarks_final_output = output_buffer_->rhand_lcam;
+                auto& rhand_rcam_landmarks_final_output = output_buffer_->rhand_rcam;
 
-                std::vector<cv::Vec2f>& rhand_lcam_landmarks_net_output = rsn_result->rsn_kpts[0];
-                std::vector<cv::Vec2f>& rhand_rcam_landmarks_net_output = rsn_result->rsn_kpts[1];
+                const auto& rhand_lcam_landmarks_net_output = rsn_result->kpts[0];
+                const auto& rhand_rcam_landmarks_net_output = rsn_result->kpts[1];
 
-                for (int kpt_index = 0; kpt_index < KPT_NUMS; kpt_index++) {
+                for (int kpt_index = 0; kpt_index < aisdk::algorithm::kKeypointNum; kpt_index++) {
                     // 右手左目xy
                     rhand_lcam_landmarks_final_output[kpt_index][0] =
                         rhand_lcam_landmarks_net_output[kpt_index][0] * rhand_lcam_rect.width / rsn_w +

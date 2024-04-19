@@ -1,4 +1,5 @@
 #include <memory>
+#include <opencv2/core/matx.hpp>
 
 #include "../internal_structs/kpt2d_struct_internal.h"
 #include "../internal_structs/kpt3d_struct_internal.h"
@@ -8,7 +9,6 @@
 #include "aisdk/base/log.h"
 #include "aisdk/base/time.h"
 #include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/port/canonical_errors.h"
 #include "nrcore_pipeline_mediapipe_service.h"
 
 namespace mediapipe {
@@ -69,41 +69,11 @@ class LiftCalculator : public CalculatorBase {
         const auto& kpt2d = cc->Inputs().Tag("LANDMARK_INPUT").Get<aisdk::algorithm::Kpt2dInternal>();
         std::unique_ptr<aisdk::algorithm::Kpt3dInternal> output_buffer_ =
             absl::make_unique<aisdk::algorithm::Kpt3dInternal>();
-        output_buffer_->clear();
         if (kpt2d.lhand_valid) {
             aisdk::algorithm::LiftNetInputs lift_inputs;
             aisdk::algorithm::LiftNetOutputs lift_outputs;
-
-            const std::vector<cv::Vec2f>& input_uv_lcam = kpt2d.lhand_lcam;
-            const std::vector<cv::Vec2f>& input_uv_rcam = kpt2d.lhand_rcam;
-
-            std::vector<cv::Vec2f> undistort_uv_lcam, undistort_uv_rcam;
-            std::vector<Eigen::Vector2f> points2ds_eigen;
-            std::vector<Eigen::Vector2f> res_points2ds_eigen;
-            points2ds_eigen.resize(input_uv_lcam.size());
-
-            // 左目
-            undistort_uv_lcam.resize(input_uv_lcam.size());
-            for (size_t i = 0; i < input_uv_lcam.size(); i++) {
-                points2ds_eigen[i] = {input_uv_lcam[i][0], input_uv_lcam[i][1]};
-            }
-            res_points2ds_eigen = lcam_model_->undistort(points2ds_eigen);
-            for (size_t i = 0; i < input_uv_lcam.size(); i++) {
-                undistort_uv_lcam[i] = {res_points2ds_eigen[i][0], res_points2ds_eigen[i][1]};
-            }
-
-            // 右目
-            undistort_uv_rcam.resize(input_uv_rcam.size());
-            for (size_t i = 0; i < input_uv_rcam.size(); i++) {
-                points2ds_eigen[i] = {input_uv_rcam[i][0], input_uv_rcam[i][1]};
-            }
-            res_points2ds_eigen = rcam_model_->undistort(points2ds_eigen);
-            for (size_t i = 0; i < input_uv_rcam.size(); i++) {
-                undistort_uv_rcam[i] = {res_points2ds_eigen[i][0], res_points2ds_eigen[i][1]};
-            }
-            // init base on cam_info input
-            lift_inputs.input_kpt_lcam = undistort_uv_lcam;
-            lift_inputs.input_kpt_rcam = undistort_uv_rcam;
+            lift_inputs.input_kpt_lcam = lcam_model_->undistort(kpt2d.lhand_lcam);
+            lift_inputs.input_kpt_rcam = rcam_model_->undistort(kpt2d.lhand_rcam);
             lift_inputs.is_left = 1.;
             netalgo->Inference(lift_inputs, lift_outputs);
             output_buffer_->lhand_valid = true;
@@ -113,37 +83,8 @@ class LiftCalculator : public CalculatorBase {
         if (kpt2d.rhand_valid) {
             aisdk::algorithm::LiftNetInputs lift_inputs;
             aisdk::algorithm::LiftNetOutputs lift_outputs;
-
-            const std::vector<cv::Vec2f>& input_uv_lcam = kpt2d.rhand_lcam;
-            const std::vector<cv::Vec2f>& input_uv_rcam = kpt2d.rhand_rcam;
-
-            std::vector<cv::Vec2f> undistort_uv_lcam, undistort_uv_rcam;
-
-            std::vector<Eigen::Vector2f> points2ds_eigen;
-            std::vector<Eigen::Vector2f> res_points2ds_eigen;
-            points2ds_eigen.resize(input_uv_lcam.size());
-
-            // 左目
-            undistort_uv_lcam.resize(input_uv_lcam.size());
-            for (size_t i = 0; i < input_uv_lcam.size(); i++) {
-                points2ds_eigen[i] = {input_uv_lcam[i][0], input_uv_lcam[i][1]};
-            }
-            res_points2ds_eigen = lcam_model_->undistort(points2ds_eigen);
-            for (size_t i = 0; i < input_uv_lcam.size(); i++) {
-                undistort_uv_lcam[i] = {res_points2ds_eigen[i][0], res_points2ds_eigen[i][1]};
-            }
-
-            // 右目
-            undistort_uv_rcam.resize(input_uv_rcam.size());
-            for (size_t i = 0; i < input_uv_rcam.size(); i++) {
-                points2ds_eigen[i] = {input_uv_rcam[i][0], input_uv_rcam[i][1]};
-            }
-            res_points2ds_eigen = rcam_model_->undistort(points2ds_eigen);
-            for (size_t i = 0; i < input_uv_rcam.size(); i++) {
-                undistort_uv_rcam[i] = {res_points2ds_eigen[i][0], res_points2ds_eigen[i][1]};
-            }
-            lift_inputs.input_kpt_lcam = undistort_uv_lcam;
-            lift_inputs.input_kpt_rcam = undistort_uv_rcam;
+            lift_inputs.input_kpt_lcam = lcam_model_->undistort(kpt2d.rhand_lcam);
+            lift_inputs.input_kpt_rcam = rcam_model_->undistort(kpt2d.rhand_rcam);
             lift_inputs.is_left = 0.;
             netalgo->Inference(lift_inputs, lift_outputs);
             output_buffer_->rhand_valid = true;

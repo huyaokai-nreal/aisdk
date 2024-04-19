@@ -93,7 +93,7 @@ void RSNTiny::PostProcess(Kpt2dResult &result) {
     if (!otensor.m_packed_bybatch) {
         return;
     }
-    result.rsn_kpts.resize(otensor.m_batch);
+    result.kpts.resize(otensor.m_batch);
     unsigned int _h, _w, _c, element_byte;
     for (size_t multi_i = 0; multi_i < otensor.m_multishape_num; multi_i++) {
         for (size_t batch_i = 0; batch_i < otensor.m_batch; batch_i++) {
@@ -110,8 +110,8 @@ void RSNTiny::PostProcess(Kpt2dResult &result) {
             char *mem = (char *)otensor.m_tensors[multi_i].m_viraddr + batch_i * _h * _w * _c * element_byte;
             float *_data = (float *)mem;
 
-            auto &rsnkpt = result.rsn_kpts[batch_i];
-            if (0 == rsnkpt.size()) {
+            auto &rsnkpt = result.kpts[batch_i];
+            if (rsnkpt.size() != keypoint_num_) {
                 rsnkpt.resize(keypoint_num_);
             }
 

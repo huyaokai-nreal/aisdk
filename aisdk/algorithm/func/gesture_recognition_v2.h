@@ -5,6 +5,7 @@
 #include <memory>
 #include <vector>
 #include <opencv2/core.hpp>
+#include "aisdk/base/type.h"
 
 namespace aisdk::algorithm {
     enum class FingureState { UNKNOWN = 0, OPEN, NEUTRAL, CLOSED };
@@ -239,16 +240,16 @@ class GestureRecognitionV2 {
     }
 
     std::pair<HandRawFeature, HandFeature> extract_hand_feature(
-        const std::vector<std::vector<Eigen::Vector3f>> &keypoints3d, const std::vector<cv::Vec2f> &keypoints2d,
+        const std::vector<std::vector<Eigen::Vector3f>> &keypoints3d, const std::vector<Vec2f_t> &keypoints2d,
         bool is_left_hand);
     std::pair<std::string, HandRawFeature> predict_with_keypoints3d(const std::vector<Eigen::Vector3f> &keypoints3d,
-                                                                    const std::vector<cv::Vec2f> &keypoints2d,
+                                                                    const std::vector<Vec2f_t> &keypoints2d,
                                                                     bool is_left_hand);
 
    private:
     bool is_face_to_head(const std::vector<std::vector<Eigen::Vector3f>> &keypoints3d, bool is_left_hand);
     bool is_ok_pinch(const std::vector<std::vector<Eigen::Vector3f>> &keypoints3d);
-    bool is_pinch_masked(const std::vector<cv::Vec2f> &keypoints2d, bool is_face_to_head);
+    bool is_pinch_masked(const std::vector<Vec2f_t> &keypoints2d, bool is_face_to_head);
     std::unique_ptr<HandFeatureUpdator> feature_updator;
     std::vector<std::string> gesture_list;
     float std_hand_length_ = 0.08;  // 8cm

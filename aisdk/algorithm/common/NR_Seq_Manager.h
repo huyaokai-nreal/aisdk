@@ -4,6 +4,7 @@
 #include <numeric>
 
 #include <opencv2/opencv.hpp>
+#include "aisdk/base/type.h"
 #include "ofxOneEuroFilter.h"
 
 namespace aisdk::algorithm {
@@ -70,12 +71,12 @@ class SeqManager2D final {
     SeqManager2D();
     ~SeqManager2D(){};
 
-    bool updateSeq2D(const std::vector<cv::Vec2f>& kpt_2d);
+    bool updateSeq2D(const std::vector<Vec2f_t>& kpt_2d);
     bool reset();
-    std::vector<std::vector<cv::Vec2f>> getSeq();
+    std::vector<std::vector<Vec2f_t>> getSeq();
 
    private:
-    std::deque<std::vector<cv::Vec2f>> mHandDataSeq;
+    std::deque<std::vector<Vec2f_t>> mHandDataSeq;
     int mWindowLength;
 };
 

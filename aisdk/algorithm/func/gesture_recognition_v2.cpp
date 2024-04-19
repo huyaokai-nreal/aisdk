@@ -4,6 +4,7 @@
 #include <map>
 
 #include "aisdk/base/log.h"
+#include "aisdk/base/type.h"
 
 namespace aisdk::algorithm {
 std::map<std::string, std::function<bool(const HandFeature &, const HandRawFeature &)>> gestureFunctionMap = {
@@ -207,7 +208,7 @@ bool GestureRecognitionV2::is_ok_pinch(const std::vector<std::vector<Eigen::Vect
     AISDK_LOG_TRACE("HandTracking: pinch angle: {}", pinch_figure_angle);
     return pinch_figure_angle > 80;
 }
-bool GestureRecognitionV2::is_pinch_masked(const std::vector<cv::Vec2f> &keypoints2d, bool is_to_face) {
+bool GestureRecognitionV2::is_pinch_masked(const std::vector<Vec2f_t> &keypoints2d, bool is_to_face) {
     Eigen::Vector2f thumb_mid_2d{keypoints2d[1][0], keypoints2d[1][1]};
     Eigen::Vector2f thumb_point_2d{keypoints2d[4][0], keypoints2d[4][1]};
     Eigen::Vector2f index_mid_pt_2d{keypoints2d[6][0], keypoints2d[6][1]};
@@ -220,7 +221,7 @@ bool GestureRecognitionV2::is_pinch_masked(const std::vector<cv::Vec2f> &keypoin
     return is_pinch_masked;
 }
 std::pair<HandRawFeature, HandFeature> GestureRecognitionV2::extract_hand_feature(
-    const std::vector<std::vector<Eigen::Vector3f>> &keypoints3d, const std::vector<cv::Vec2f> &keypoints2d,
+    const std::vector<std::vector<Eigen::Vector3f>> &keypoints3d, const std::vector<Vec2f_t> &keypoints2d,
     bool is_left_hand) {
     auto fingure_angles = calculate_fingure_angles(keypoints3d);
     auto abduction_angles = calculate_abduction_angles(keypoints3d);
@@ -240,7 +241,7 @@ std::pair<HandRawFeature, HandFeature> GestureRecognitionV2::extract_hand_featur
                                                   is_to_face || ok_pinch, pinch_masked)};
 }
 std::pair<std::string, HandRawFeature> GestureRecognitionV2::predict_with_keypoints3d(
-    const std::vector<Eigen::Vector3f> &keypoints3d, const std::vector<cv::Vec2f> &keypoints2d, bool is_left_hand) {
+    const std::vector<Eigen::Vector3f> &keypoints3d, const std::vector<Vec2f_t> &keypoints2d, bool is_left_hand) {
     std::vector<std::vector<Eigen::Vector3f>> points(5, std::vector<Eigen::Vector3f>(5));
     float hand_length = (keypoints3d[9] - keypoints3d[0]).norm();
     const auto &root_kpt = keypoints3d[0];

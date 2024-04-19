@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include "aisdk/base/camera_model.h"
+#include "aisdk/base/type.h"
 #include "calculator_basenet.h"
 #include "aisdk/xengine/nrhal_define.h"
 #include "aisdk/algorithm/common/nrnet_define.h"
@@ -9,8 +10,8 @@
 namespace aisdk::algorithm {
 using aisdk::base::BaseCameraModel;
 struct LiftNetInputs {
-    std::vector<cv::Vec2f> input_kpt_lcam;  // 单手 左目
-    std::vector<cv::Vec2f> input_kpt_rcam;  // 单手 右目
+    std::vector<Vec2f_t> input_kpt_lcam;  // 单手 左目
+    std::vector<Vec2f_t> input_kpt_rcam;  // 单手 右目
     double timestamp;
     float is_left;
 };
