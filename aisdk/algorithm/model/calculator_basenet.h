@@ -1,4 +1,7 @@
 #pragma once
+#include <absl/status/statusor.h>
+#include "aisdk/algorithm/common/nrnet_define.h"
+#include "aisdk/algorithm/internal_structs/kpt2d_struct_internal.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/profiling.h"
 #include "aisdk/xengine/nr_model_mgr.h"
@@ -47,6 +50,11 @@ class CalculatorBaseNet {
     BaseNetAlgoPtr m_net = nullptr;
     aisdk::xengine::IoTensors itensor;
     aisdk::xengine::IoTensors otensor;
+};
+class HandLandmarkBaseNet: public CalculatorBaseNet {
+    public:
+    virtual absl::StatusOr<Kpt2dResult> Inference(const std::vector<Image> &input) = 0;
+
 };
 
 }  // namespace aisdk::algorithm

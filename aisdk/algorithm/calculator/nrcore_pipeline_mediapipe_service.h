@@ -13,7 +13,7 @@
 
 namespace aisdk::algorithm {
 using BaseNetAlgoPtr = std::unique_ptr<aisdk::xengine::BaseNetAlgo,std::function<void(aisdk::xengine::BaseNetAlgo*)>>;
-class CalculatorBaseNet;
+//class CalculatorBaseNet;
 class XrMediaServiceUtils {
    public:
     // 保存mediapipe的系统配置，主要是和网络算子相关的
@@ -29,7 +29,7 @@ class XrMediaServiceUtils {
     // 创建一个calculator的net算子
     template <typename T>
     static std::shared_ptr<T> CreateNetAlgoBase(void* parent_graph, const std::string& node_name) {
-        static_assert(std::is_base_of_v<CalculatorBaseNet, T>, "T is not derived from CalculatorBaseNet!");
+        //static_assert(std::is_base_of_v<CalculatorBaseNet, T>, "T is not derived from CalculatorBaseNet!");
 
         if (m_pipelineconfig.end() == m_pipelineconfig.find(parent_graph)) {
             return nullptr;

@@ -1,13 +1,20 @@
+#include <absl/status/status.h>
+
 #include <memory>
 #include <opencv2/core/matx.hpp>
+#include <variant>
 #include <vector>
 
 #include "aisdk/algorithm/calculator/hand_landmark_calculator.pb.h"
 #include "aisdk/algorithm/common/hand_define.h"
+#include "aisdk/algorithm/common/nrnet_define.h"
 #include "aisdk/algorithm/func/warpaffine.h"
 #include "aisdk/algorithm/internal_structs/det_struct_internal.h"
 #include "aisdk/algorithm/internal_structs/kpt2d_struct_internal.h"
+#include "aisdk/algorithm/model/calculator_basenet.h"
 #include "aisdk/algorithm/model/hand_rsntiny.h"
+#include "aisdk/algorithm/model/hand_rtmtiny.h"
+#include "aisdk/base/camera_model.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/time.h"
 #include "mediapipe/framework/calculator_framework.h"
@@ -32,9 +39,10 @@ namespace mediapipe {
 class HandLandmarkCalculator : public CalculatorBase {
    private:
     // RSNTiny algo instance
-    std::shared_ptr<aisdk::algorithm::RSNTiny> netalgo;
+    std::shared_ptr<aisdk::algorithm::HandLandmarkBaseNet> netalgo;
     int32_t input_width_;
     int32_t input_height_;
+    std::string model_name_;
 
    public:
     static absl::Status GetContract(CalculatorContract* cc) {
@@ -53,9 +61,20 @@ class HandLandmarkCalculator : public CalculatorBase {
         const auto& options = cc->Options<aisdk::HandLandmarkCalculatorOptions>();
         input_height_ = options.input_height();
         input_width_ = options.input_width();
-        netalgo = aisdk::algorithm::XrMediaServiceUtils::CreateNetAlgoBase<aisdk::algorithm::RSNTiny>((void*)0x202310,
-                                                                                                      "2d_rsntiny");
+        model_name_ = options.model_name();
+        if (model_name_ == "2d_rsntiny") {
+            netalgo = aisdk::algorithm::XrMediaServiceUtils::CreateNetAlgoBase<aisdk::algorithm::RSNTiny>(
+                (void*)0x202310, model_name_);
+        } else if (model_name_ == "2d_rtmtiny") {
+            AISDK_LOG_TRACE("[HandLandmarkCalculator] start init rtmtiny");
+            netalgo = aisdk::algorithm::XrMediaServiceUtils::CreateNetAlgoBase<aisdk::algorithm::RTMTiny>(
+                (void*)0x202310, model_name_);
+            AISDK_LOG_TRACE("[HandLandmarkCalculator] finish init rtmtiny");
+        } else {
+            return absl::AbortedError(fmt::format("can not init model with {}", model_name_));
+        }
         if (!netalgo) {
+            AISDK_LOG_TRACE("[HandLandmarkCalculator]  init landmark model failed");
             return {absl::StatusCode::kInvalidArgument, "[HandLandmarkCalculator] CreateNetAlgoBase nodename error"};
         }
         AISDK_LOG_TRACE("[HandLandmarkCalculator] Open complete");

@@ -5,4 +5,5 @@ package aisdk;
 message HandLandmarkCalculatorOptions  {
   int32 input_width = 1;
   int32 input_height = 2; 
+  string  model_name = 3;
 }
