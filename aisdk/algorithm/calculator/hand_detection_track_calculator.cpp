@@ -30,75 +30,12 @@ namespace mediapipe {
 //   output_stream: "DET_BBOX_OUTPUT:detection_output"
 // }
 
-std::pair<std::shared_ptr<aisdk::base::OpenCVFisheyeCameraModel>,
-          std::shared_ptr<aisdk::base::OpenCVFisheyeCameraModel>>
-format_opencvfisheye_camera_model(const aisdk::algorithm::CamInfo &cam_info) {
-    Eigen::Isometry3f cam_to_world_transform = Eigen::Isometry3f::Identity();
-
-    // lcam
-    aisdk::base::CameraIntrinsics intrinsics_lcam{
-        cam_info.lcam_intrinsics.at<float>(0, 0), cam_info.lcam_intrinsics.at<float>(1, 1),
-        cam_info.lcam_intrinsics.at<float>(0, 2), cam_info.lcam_intrinsics.at<float>(1, 2)};
-    aisdk::base::OpenCVFisheyeCameraDistortion distortion_lcam{
-        cam_info.lcam_dist_coeffs.at<float>(0, 0), cam_info.lcam_dist_coeffs.at<float>(0, 1),
-        cam_info.lcam_dist_coeffs.at<float>(0, 2), cam_info.lcam_dist_coeffs.at<float>(0, 3)};
-    auto lcam_model = std::make_shared<aisdk::base::OpenCVFisheyeCameraModel>(intrinsics_lcam, distortion_lcam,
-                                                                              cam_to_world_transform);
-
-    // lcam
-    aisdk::base::CameraIntrinsics intrinsics_rcam{
-        cam_info.rcam_intrinsics.at<float>(0, 0), cam_info.rcam_intrinsics.at<float>(1, 1),
-        cam_info.rcam_intrinsics.at<float>(0, 2), cam_info.rcam_intrinsics.at<float>(1, 2)};
-    aisdk::base::OpenCVFisheyeCameraDistortion distortion_rcam{
-        cam_info.rcam_dist_coeffs.at<float>(0, 0), cam_info.rcam_dist_coeffs.at<float>(0, 1),
-        cam_info.rcam_dist_coeffs.at<float>(0, 2), cam_info.rcam_dist_coeffs.at<float>(0, 3)};
-    auto rcam_model = std::make_shared<aisdk::base::OpenCVFisheyeCameraModel>(intrinsics_rcam, distortion_rcam,
-                                                                              cam_to_world_transform);
-
-    return std::make_pair(lcam_model, rcam_model);
-}
-
-std::pair<std::shared_ptr<aisdk::base::Fisheye624CameraModel>, std::shared_ptr<aisdk::base::Fisheye624CameraModel>>
-format_fisheye624_camera_model(const aisdk::algorithm::CamInfo &cam_info) {
-    Eigen::Isometry3f cam_to_world_transform = Eigen::Isometry3f::Identity();
-
-    // lcam
-    aisdk::base::CameraIntrinsics intrinsics_lcam{
-        cam_info.lcam_intrinsics.at<float>(0, 0), cam_info.lcam_intrinsics.at<float>(1, 1),
-        cam_info.lcam_intrinsics.at<float>(0, 2), cam_info.lcam_intrinsics.at<float>(1, 2)};
-    aisdk::base::Fisheye624CameraDistortion distortion_lcam{
-        cam_info.lcam_dist_coeffs.at<float>(0, 0),  cam_info.lcam_dist_coeffs.at<float>(0, 1),
-        cam_info.lcam_dist_coeffs.at<float>(0, 2),  cam_info.lcam_dist_coeffs.at<float>(0, 3),
-        cam_info.lcam_dist_coeffs.at<float>(0, 4),  cam_info.lcam_dist_coeffs.at<float>(0, 5),
-        cam_info.lcam_dist_coeffs.at<float>(0, 6),  cam_info.lcam_dist_coeffs.at<float>(0, 7),
-        cam_info.lcam_dist_coeffs.at<float>(0, 8),  cam_info.lcam_dist_coeffs.at<float>(0, 9),
-        cam_info.lcam_dist_coeffs.at<float>(0, 10), cam_info.lcam_dist_coeffs.at<float>(0, 11)};
-    auto lcam_model =
-        std::make_shared<aisdk::base::Fisheye624CameraModel>(intrinsics_lcam, distortion_lcam, cam_to_world_transform);
-
-    // lcam
-    aisdk::base::CameraIntrinsics intrinsics_rcam{
-        cam_info.rcam_intrinsics.at<float>(0, 0), cam_info.rcam_intrinsics.at<float>(1, 1),
-        cam_info.rcam_intrinsics.at<float>(0, 2), cam_info.rcam_intrinsics.at<float>(1, 2)};
-    aisdk::base::Fisheye624CameraDistortion distortion_rcam{
-        cam_info.rcam_dist_coeffs.at<float>(0, 0),  cam_info.rcam_dist_coeffs.at<float>(0, 1),
-        cam_info.rcam_dist_coeffs.at<float>(0, 2),  cam_info.rcam_dist_coeffs.at<float>(0, 3),
-        cam_info.rcam_dist_coeffs.at<float>(0, 4),  cam_info.rcam_dist_coeffs.at<float>(0, 5),
-        cam_info.rcam_dist_coeffs.at<float>(0, 6),  cam_info.rcam_dist_coeffs.at<float>(0, 7),
-        cam_info.rcam_dist_coeffs.at<float>(0, 8),  cam_info.rcam_dist_coeffs.at<float>(0, 9),
-        cam_info.rcam_dist_coeffs.at<float>(0, 10), cam_info.rcam_dist_coeffs.at<float>(0, 11)};
-    auto rcam_model =
-        std::make_shared<aisdk::base::Fisheye624CameraModel>(intrinsics_rcam, distortion_rcam, cam_info.cvL_T_cvR);
-
-    return std::make_pair(lcam_model, rcam_model);
-}
-
 class HandDetTrackCalculator : public CalculatorBase {
    private:
     // DetNet algo instance
     std::shared_ptr<aisdk::algorithm::HandDetectNetv2> netalgo;
-    std::shared_ptr<aisdk::base::Fisheye624CameraModel> lcam_model_ = nullptr;
-    std::shared_ptr<aisdk::base::Fisheye624CameraModel> rcam_model_ = nullptr;
+    std::shared_ptr<aisdk::base::BaseCameraModel> lcam_model_ = nullptr;
+    std::shared_ptr<aisdk::base::BaseCameraModel> rcam_model_ = nullptr;
     uint32_t video_width_;
     uint32_t video_height_;
     int det_tracker_step_ = 0;
@@ -109,7 +46,10 @@ class HandDetTrackCalculator : public CalculatorBase {
 
         // Declaration of input and output, according to definitons.
         cc->Inputs().Tag("IMAGE_INPUT").Set<std::vector<aisdk::algorithm::Image>>();
-        cc->InputSidePackets().Tag("CAM_INFO_INPUT").Set<aisdk::algorithm::CamInfo>();
+        cc->InputSidePackets()
+            .Tag("CAM_INFO_INPUT")
+            .Set<std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>,
+                           std::shared_ptr<aisdk::base::BaseCameraModel>>>();
         cc->Inputs().Tag("HEADPOSE").Set<aisdk::algorithm::HeadPoseInternal>();
         cc->Outputs().Tag("DET_BBOX_OUTPUT").Set<aisdk::algorithm::DetOutputInternal>();
 
@@ -127,12 +67,14 @@ class HandDetTrackCalculator : public CalculatorBase {
         }
 
         det_tracker_step_ = 0;
-        const auto &cam_info = cc->InputSidePackets().Tag("CAM_INFO_INPUT").Get<aisdk::algorithm::CamInfo>();
-        auto camera_model = format_fisheye624_camera_model(cam_info);
-        lcam_model_ = camera_model.first;
-        rcam_model_ = camera_model.second;
-        video_width_ = cam_info.video_width;
-        video_height_ = cam_info.video_height;
+        const auto &cam_info = cc->InputSidePackets()
+                                   .Tag("CAM_INFO_INPUT")
+                                   .Get<std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>,
+                                                  std::shared_ptr<aisdk::base::BaseCameraModel>>>();
+        lcam_model_ = cam_info.first;
+        rcam_model_ = cam_info.second;
+        video_width_ = lcam_model_->video_width_;
+        video_height_ = lcam_model_->video_height_;
 
         AISDK_LOG_TRACE("[HandDetTrackCalculator] Open complete.");
         return absl::OkStatus();
@@ -194,9 +136,9 @@ class HandDetTrackCalculator : public CalculatorBase {
                     lhand_predict_frame[k] = lhand_predict_frame[k] + root_kf_predicted - root_meas;
                 }
 
-                aisdk::algorithm::reproj_bbox_with_new_headpose_flora624(lcam_model_, rcam_model_,
-                                                                         headpose_data.transform, lhand_predict_frame,
-                                                                         proj_bbox_lcam_lhand, proj_bbox_rcam_lhand);
+                aisdk::algorithm::reproj_bbox_with_new_headpose(lcam_model_, rcam_model_, headpose_data.transform,
+                                                                lhand_predict_frame, proj_bbox_lcam_lhand,
+                                                                proj_bbox_rcam_lhand);
                 if (check_if_rect_valid(proj_bbox_lcam_lhand, video_width_, video_height_) &&
                     check_if_rect_valid(proj_bbox_rcam_lhand, video_width_, video_height_)) {
                     output_buffer_->lhand_valid = true;
@@ -218,9 +160,9 @@ class HandDetTrackCalculator : public CalculatorBase {
                     rhand_predict_frame[k] = rhand_predict_frame[k] + root_kf_predicted - root_meas;
                 }
 
-                aisdk::algorithm::reproj_bbox_with_new_headpose_flora624(lcam_model_, rcam_model_,
-                                                                         headpose_data.transform, rhand_predict_frame,
-                                                                         proj_bbox_lcam_rhand, proj_bbox_rcam_rhand);
+                aisdk::algorithm::reproj_bbox_with_new_headpose(lcam_model_, rcam_model_, headpose_data.transform,
+                                                                rhand_predict_frame, proj_bbox_lcam_rhand,
+                                                                proj_bbox_rcam_rhand);
 
                 if (check_if_rect_valid(proj_bbox_lcam_rhand, video_width_, video_height_) &&
                     check_if_rect_valid(proj_bbox_rcam_rhand, video_width_, video_height_)) {

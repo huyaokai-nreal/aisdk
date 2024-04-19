@@ -23,9 +23,6 @@ namespace mediapipe {
 //   output_stream: "LIFT_OUTPUT:kpt3d"
 // }
 
-std::pair<std::shared_ptr<aisdk::base::Fisheye624CameraModel>, std::shared_ptr<aisdk::base::Fisheye624CameraModel>>
-format_fisheye624_camera_model(const aisdk::algorithm::CamInfo& cam_info);
-
 class LiftCalculator : public CalculatorBase {
    private:
     // SeqGMLPLiftNet algo instance
@@ -36,7 +33,10 @@ class LiftCalculator : public CalculatorBase {
    public:
     static absl::Status GetContract(CalculatorContract* cc) {
         AISDK_LOG_TRACE("[LiftCalculator] GetContract start");
-        cc->InputSidePackets().Tag("CAM_INFO_INPUT").Set<aisdk::algorithm::CamInfo>();
+        cc->InputSidePackets()
+            .Tag("CAM_INFO_INPUT")
+            .Set<std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>,
+                           std::shared_ptr<aisdk::base::BaseCameraModel>>>();
         cc->Inputs().Tag("LANDMARK_INPUT").Set<aisdk::algorithm::Kpt2dInternal>();
         cc->Outputs().Tag("LIFT_OUTPUT").Set<aisdk::algorithm::Kpt3dInternal>();
         AISDK_LOG_TRACE("[LiftCalculator] GetContract complete");
@@ -52,10 +52,12 @@ class LiftCalculator : public CalculatorBase {
             return absl::Status(absl::StatusCode::kInvalidArgument,
                                 "[LiftCalculator] CreateNetAlgoBase nodename error");
         }
-        const auto& cam_info = cc->InputSidePackets().Tag("CAM_INFO_INPUT").Get<aisdk::algorithm::CamInfo>();
-        auto camera_model = format_fisheye624_camera_model(cam_info);
-        lcam_model_ = camera_model.first;
-        rcam_model_ = camera_model.second;
+        const auto& cam_info = cc->InputSidePackets()
+                                   .Tag("CAM_INFO_INPUT")
+                                   .Get<std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>,
+                                                  std::shared_ptr<aisdk::base::BaseCameraModel>>>();
+        lcam_model_ = cam_info.first;
+        rcam_model_ = cam_info.second;
         netalgo->SetCameraInfo(lcam_model_, rcam_model_);
         AISDK_LOG_TRACE("[LiftCalculator] Open complete");
         return absl::OkStatus();

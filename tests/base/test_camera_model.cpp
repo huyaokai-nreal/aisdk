@@ -9,7 +9,7 @@ TEST_CASE("testing the opencv pinhole camera") {
     CameraIntrinsics cam_k{240.47993898902308, 240.45010798807022, 238.24292414176563, 318.920557320675};
     OpenCVPinholeCameraDistortion cam_d{0.012542161517124128, 0.04662863296034774, -0.04361866666639336, 0,
                                         0.009913181928564089};
-    OpenCVPinholeCameraModel camera_model{cam_k, cam_d, Eigen::Isometry3f::Identity()};
+    OpenCVPinholeCameraModel camera_model{cam_k, cam_d, Eigen::Isometry3f::Identity(), aisdk::base::CameraType::PINHOLE, 480, 640};
     Eigen::Vector3f world_pt{10, 10, 100};
     std::vector<Eigen::Vector3f> world_pts{world_pt};
     std::vector<Eigen::Vector3f> camera_pts = camera_model.world_to_eye(world_pts);
@@ -36,7 +36,7 @@ TEST_CASE("testing the opencv fisheye camera") {
     CameraIntrinsics cam_k{240.47993898902308, 240.45010798807022, 238.24292414176563, 318.920557320675};
     OpenCVFisheyeCameraDistortion cam_d{0.012542161517124128, 0.04662863296034774, -0.04361866666639336,
                                         0.009913181928564089};
-    OpenCVFisheyeCameraModel camera_model{cam_k, cam_d, Eigen::Isometry3f::Identity()};
+    OpenCVFisheyeCameraModel camera_model{cam_k, cam_d, Eigen::Isometry3f::Identity(), aisdk::base::CameraType::FISHEYE400, 480, 640};
     Eigen::Vector3f world_pt{100, 100, 100};
     std::vector<Eigen::Vector3f> world_pts{world_pt};
     std::vector<Eigen::Vector3f> camera_pts = camera_model.world_to_eye(world_pts);
@@ -63,7 +63,7 @@ TEST_CASE("testing the opencv fisheye624 camera") {
     CameraIntrinsics cam_k{240.47993898902308, 240.45010798807022, 238.24292414176563, 318.920557320675};
     Fisheye624CameraDistortion cam_d{
         0.012542161517124128, 0.04662863296034774, -0.04361866666639336, 0.009913181928564089, 0, 0, 0, 0, 0, 0, 0, 0};
-    Fisheye624CameraModel camera_model{cam_k, cam_d, Eigen::Isometry3f::Identity()};
+    Fisheye624CameraModel camera_model{cam_k, cam_d, Eigen::Isometry3f::Identity(), aisdk::base::CameraType::FISHEYE624, 480, 640};
     Eigen::Vector3f world_pt{100, 100, 100};
     std::vector<Eigen::Vector3f> world_pts{world_pt};
     std::vector<Eigen::Vector3f> camera_pts = camera_model.world_to_eye(world_pts);
@@ -89,7 +89,7 @@ TEST_CASE("testing the opencv fisheye624 camera with base class") {
     CameraIntrinsics cam_k{240.47993898902308, 240.45010798807022, 238.24292414176563, 318.920557320675};
     Fisheye624CameraDistortion cam_d{
         0.012542161517124128, 0.04662863296034774, -0.04361866666639336, 0.009913181928564089, 0, 0, 0, 0, 0, 0, 0, 0};
-    std::unique_ptr<aisdk::base::BaseCameraModel> camera_model_ptr = std::make_unique<Fisheye624CameraModel>(cam_k, cam_d, Eigen::Isometry3f::Identity());
+    std::unique_ptr<aisdk::base::BaseCameraModel> camera_model_ptr = std::make_unique<Fisheye624CameraModel>(cam_k, cam_d, Eigen::Isometry3f::Identity(), aisdk::base::CameraType::FISHEYE624, 480, 640);
     Eigen::Vector3f world_pt{100, 100, 100};
     std::vector<Eigen::Vector3f> world_pts{world_pt};
     std::vector<Eigen::Vector3f> camera_pts = camera_model_ptr->world_to_eye(world_pts);

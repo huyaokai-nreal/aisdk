@@ -8,10 +8,23 @@ struct CameraIntrinsics {
     float cx_ = 0;
     float cy_ = 0;
 };
+
+enum class CameraType {
+    UNKNOWN = 0,
+    PINHOLE = 1,
+    FISHEYE400 = 2,
+    FISHEYE624 = 3,
+};
+
 class BaseCameraModel {
    public:
-    BaseCameraModel(const CameraIntrinsics& camera_intrinsics, const Eigen::Isometry3f& camera_to_world_xf)
-        : camera_intrinsics_(camera_intrinsics), camera_to_world_xf_(camera_to_world_xf){};
+    BaseCameraModel(const CameraIntrinsics& camera_intrinsics, const Eigen::Isometry3f& camera_to_world_xf,
+                    CameraType camera_type, uint32_t video_width, uint32_t video_height)
+        : camera_intrinsics_(camera_intrinsics),
+          camera_to_world_xf_(camera_to_world_xf),
+          camera_type_(camera_type),
+          video_width_(video_width),
+          video_height_(video_height){};
     virtual std::vector<Eigen::Vector2f> undistort(const std::vector<Eigen::Vector2f>& point_2d) = 0;
     virtual std::vector<Eigen::Vector3f> world_to_eye(const std::vector<Eigen::Vector3f>& point_3d) = 0;
     virtual std::vector<Eigen::Vector3f> eye_to_world(const std::vector<Eigen::Vector3f>& point_3d) = 0;
@@ -25,14 +38,20 @@ class BaseCameraModel {
    protected:
     CameraIntrinsics camera_intrinsics_;
     Eigen::Isometry3f camera_to_world_xf_ = Eigen::Isometry3f::Identity();
+
+   public:
+    CameraType camera_type_;
+    uint32_t video_width_;
+    uint32_t video_height_;
 };
 
 template <typename ProjectType, typename DistortType>
 class CameraModel : public BaseCameraModel {
    public:
     CameraModel(const CameraIntrinsics& camera_intrinsics, const DistortType& distortion,
-                const Eigen::Isometry3f& camera_to_world_xf)
-        : BaseCameraModel(camera_intrinsics, camera_to_world_xf),
+                const Eigen::Isometry3f& camera_to_world_xf, CameraType camera_type, uint32_t video_width,
+                uint32_t video_height)
+        : BaseCameraModel(camera_intrinsics, camera_to_world_xf, camera_type, video_width, video_height),
           distortion_model_(distortion){};
     std::vector<Eigen::Vector2f> undistort(const std::vector<Eigen::Vector2f>& point_2d) override;
     std::vector<Eigen::Vector3f> world_to_eye(const std::vector<Eigen::Vector3f>& point_3d) override;

@@ -1,4 +1,5 @@
 #include "mediapipe_graph.h"
+
 #include <absl/strings/str_split.h>
 #include <absl/strings/string_view.h>
 #include <mediapipe/framework/packet.h>
@@ -8,6 +9,7 @@
 
 #include "aisdk/algorithm/common/nrcore_define.h"
 #include "aisdk/algorithm/common/nrnet_define.h"
+#include "aisdk/base/camera_model.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/set_cpu_affinity.h"
 #include "handtracking_mediapipe_calculators_register.h"
@@ -53,7 +55,6 @@ aisdk::algorithm::Status MediaPipeGraph::SetInputStreamCache(int64_t graph_strea
     std::lock_guard<std::mutex> guard(m_inference_lock);
     m_inference_stream_cache.insert(std::make_pair(graph_stream_stamp, stream));
     return aisdk::algorithm::Status::SUCCESS;
-
 }
 
 aisdk::algorithm::Status MediaPipeGraph::ClearInputStreamCache(int64_t graph_stream_stamp) {
@@ -118,8 +119,9 @@ std::shared_ptr<StreamCache> MediaPipeGraph::GetOutputStreamCache() {
 
     return ret;
 }
-aisdk::algorithm::CamInfo ConvertCameraInfo(aisdk::algorithm::CameraParams cam_info){
-    auto& cam_param = cam_info.m_params;
+
+aisdk::algorithm::CamInfo ConvertCameraInfo(aisdk::algorithm::CameraParams cam_info) {
+    auto &cam_param = cam_info.m_params;
     aisdk::algorithm::CamInfo input_cam_info;
     // 1. cvL_T_cvR
     Eigen::Isometry3f glL_T_glR = Eigen::Isometry3f::Identity();
@@ -169,11 +171,92 @@ aisdk::algorithm::CamInfo ConvertCameraInfo(aisdk::algorithm::CameraParams cam_i
     return input_cam_info;
 }
 
+std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>, std::shared_ptr<aisdk::base::BaseCameraModel>>
+format_pinhole_camera_model(const aisdk::algorithm::CamInfo &cam_info) {
+    // lcam
+    aisdk::base::CameraIntrinsics intrinsics_lcam{
+        cam_info.lcam_intrinsics.at<float>(0, 0), cam_info.lcam_intrinsics.at<float>(1, 1),
+        cam_info.lcam_intrinsics.at<float>(0, 2), cam_info.lcam_intrinsics.at<float>(1, 2)};
+    aisdk::base::OpenCVFisheyeCameraDistortion distortion_lcam{
+        cam_info.lcam_dist_coeffs.at<float>(0, 0), cam_info.lcam_dist_coeffs.at<float>(0, 1),
+        cam_info.lcam_dist_coeffs.at<float>(0, 2), cam_info.lcam_dist_coeffs.at<float>(0, 3)};
+    auto lcam_model = std::make_shared<aisdk::base::OpenCVFisheyeCameraModel>(
+        intrinsics_lcam, distortion_lcam, Eigen::Isometry3f::Identity(),
+        static_cast<aisdk::base::CameraType>(cam_info.camera_type), cam_info.video_width, cam_info.video_height);
+
+    // rcam
+    aisdk::base::CameraIntrinsics intrinsics_rcam{
+        cam_info.rcam_intrinsics.at<float>(0, 0), cam_info.rcam_intrinsics.at<float>(1, 1),
+        cam_info.rcam_intrinsics.at<float>(0, 2), cam_info.rcam_intrinsics.at<float>(1, 2)};
+    aisdk::base::OpenCVFisheyeCameraDistortion distortion_rcam{
+        cam_info.rcam_dist_coeffs.at<float>(0, 0), cam_info.rcam_dist_coeffs.at<float>(0, 1),
+        cam_info.rcam_dist_coeffs.at<float>(0, 2), cam_info.rcam_dist_coeffs.at<float>(0, 3)};
+    auto rcam_model = std::make_shared<aisdk::base::OpenCVFisheyeCameraModel>(
+        intrinsics_rcam, distortion_rcam, cam_info.cvL_T_cvR,
+        static_cast<aisdk::base::CameraType>(cam_info.camera_type), cam_info.video_width, cam_info.video_height);
+
+    return std::make_pair(lcam_model, rcam_model);
+}
+
+std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>, std::shared_ptr<aisdk::base::BaseCameraModel>>
+format_fisheye624_camera_model(const aisdk::algorithm::CamInfo &cam_info) {
+    // lcam
+    aisdk::base::CameraIntrinsics intrinsics_lcam{
+        cam_info.lcam_intrinsics.at<float>(0, 0), cam_info.lcam_intrinsics.at<float>(1, 1),
+        cam_info.lcam_intrinsics.at<float>(0, 2), cam_info.lcam_intrinsics.at<float>(1, 2)};
+    aisdk::base::Fisheye624CameraDistortion distortion_lcam{
+        cam_info.lcam_dist_coeffs.at<float>(0, 0),  cam_info.lcam_dist_coeffs.at<float>(0, 1),
+        cam_info.lcam_dist_coeffs.at<float>(0, 2),  cam_info.lcam_dist_coeffs.at<float>(0, 3),
+        cam_info.lcam_dist_coeffs.at<float>(0, 4),  cam_info.lcam_dist_coeffs.at<float>(0, 5),
+        cam_info.lcam_dist_coeffs.at<float>(0, 6),  cam_info.lcam_dist_coeffs.at<float>(0, 7),
+        cam_info.lcam_dist_coeffs.at<float>(0, 8),  cam_info.lcam_dist_coeffs.at<float>(0, 9),
+        cam_info.lcam_dist_coeffs.at<float>(0, 10), cam_info.lcam_dist_coeffs.at<float>(0, 11)};
+    auto lcam_model = std::make_shared<aisdk::base::Fisheye624CameraModel>(
+        intrinsics_lcam, distortion_lcam, Eigen::Isometry3f::Identity(),
+        static_cast<aisdk::base::CameraType>(cam_info.camera_type), cam_info.video_width, cam_info.video_height);
+
+    // rcam
+    aisdk::base::CameraIntrinsics intrinsics_rcam{
+        cam_info.rcam_intrinsics.at<float>(0, 0), cam_info.rcam_intrinsics.at<float>(1, 1),
+        cam_info.rcam_intrinsics.at<float>(0, 2), cam_info.rcam_intrinsics.at<float>(1, 2)};
+    aisdk::base::Fisheye624CameraDistortion distortion_rcam{
+        cam_info.rcam_dist_coeffs.at<float>(0, 0),  cam_info.rcam_dist_coeffs.at<float>(0, 1),
+        cam_info.rcam_dist_coeffs.at<float>(0, 2),  cam_info.rcam_dist_coeffs.at<float>(0, 3),
+        cam_info.rcam_dist_coeffs.at<float>(0, 4),  cam_info.rcam_dist_coeffs.at<float>(0, 5),
+        cam_info.rcam_dist_coeffs.at<float>(0, 6),  cam_info.rcam_dist_coeffs.at<float>(0, 7),
+        cam_info.rcam_dist_coeffs.at<float>(0, 8),  cam_info.rcam_dist_coeffs.at<float>(0, 9),
+        cam_info.rcam_dist_coeffs.at<float>(0, 10), cam_info.rcam_dist_coeffs.at<float>(0, 11)};
+    auto rcam_model = std::make_shared<aisdk::base::Fisheye624CameraModel>(
+        intrinsics_rcam, distortion_rcam, cam_info.cvL_T_cvR,
+        static_cast<aisdk::base::CameraType>(cam_info.camera_type), cam_info.video_width, cam_info.video_height);
+
+    return std::make_pair(lcam_model, rcam_model);
+}
+
+std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>, std::shared_ptr<aisdk::base::BaseCameraModel>>
+ConvertCameraModel(const aisdk::algorithm::CamInfo &cam_info) {
+    std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>, std::shared_ptr<aisdk::base::BaseCameraModel>>
+        camera_model;
+    if (cam_info.camera_type == 1) {
+        // ella pinhole
+        camera_model = format_pinhole_camera_model(cam_info);
+    } else if (cam_info.camera_type == 3) {
+        // flora fisheye624
+        camera_model = format_fisheye624_camera_model(cam_info);
+    }
+    return camera_model;
+}
+
 aisdk::algorithm::Status MediaPipeGraph::Init(aisdk::xengine::DlSymFuncs &funcs, aisdk::xengine::PipelineConfig &config,
                                               CameraParams &camera) {
     auto camera_info = ConvertCameraInfo(camera);
+    auto camera_model = ConvertCameraModel(camera_info);
+
     std::map<std::string, mediapipe::Packet> side_packets;
-    side_packets["cam_info"] = mediapipe::MakePacket<algorithm::CamInfo>(camera_info);
+    side_packets["cam_info"] = mediapipe::MakePacket<
+        std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>, std::shared_ptr<aisdk::base::BaseCameraModel>>>(
+        camera_model);
+
     // 读取原始线程的名称
     std::string graph_thread_name = std::string("xr_aisdk_graph");
     size_t ori_affinity = aisdk::base::get_sched_affinity();
@@ -193,16 +276,17 @@ aisdk::algorithm::Status MediaPipeGraph::Init(aisdk::xengine::DlSymFuncs &funcs,
 
     m_calculator_graph = std::make_unique<mediapipe::CalculatorGraph>();
 
-    MP_RETURN_IF_ERROR_WITH_LOG(m_calculator_graph->SetExecutor("", std::make_shared<mediapipe::ThreadPoolExecutor>(1)));
+    MP_RETURN_IF_ERROR_WITH_LOG(
+        m_calculator_graph->SetExecutor("", std::make_shared<mediapipe::ThreadPoolExecutor>(1)));
 
     MP_RETURN_IF_ERROR_WITH_LOG(m_calculator_graph->Initialize(graph_config, side_packets));
-    for (int i = 0; i < graph_config.input_stream_size(); i++){
+    for (int i = 0; i < graph_config.input_stream_size(); i++) {
         std::vector<absl::string_view> names = absl::StrSplit(graph_config.input_stream(i), ':');
-        m_input_stream_name.emplace_back(names[names.size() -1]);
+        m_input_stream_name.emplace_back(names[names.size() - 1]);
     }
-    for(int i = 0; i < graph_config.output_stream_size(); i++){
+    for (int i = 0; i < graph_config.output_stream_size(); i++) {
         std::vector<absl::string_view> names = absl::StrSplit(graph_config.output_stream(i), ':');
-        m_output_stream_name.emplace_back(names[names.size() -1]);
+        m_output_stream_name.emplace_back(names[names.size() - 1]);
     }
 
     for (uint32_t order = 0; order < m_output_stream_name.size(); order++) {
