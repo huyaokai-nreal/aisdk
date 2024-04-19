@@ -88,7 +88,7 @@ format_fisheye624_camera_model(const aisdk::algorithm::CamInfo &cam_info) {
         cam_info.rcam_dist_coeffs.at<float>(0, 8),  cam_info.rcam_dist_coeffs.at<float>(0, 9),
         cam_info.rcam_dist_coeffs.at<float>(0, 10), cam_info.rcam_dist_coeffs.at<float>(0, 11)};
     auto rcam_model =
-        std::make_shared<aisdk::base::Fisheye624CameraModel>(intrinsics_rcam, distortion_rcam, cam_to_world_transform);
+        std::make_shared<aisdk::base::Fisheye624CameraModel>(intrinsics_rcam, distortion_rcam, cam_info.cvL_T_cvR);
 
     return std::make_pair(lcam_model, rcam_model);
 }

@@ -46,7 +46,6 @@ node {
   calculator: "LiftCalculator"
   input_side_packet: "CAM_INFO_INPUT:cam_info"
   input_stream: "LANDMARK_INPUT:kpt2d_filter"
-  input_stream: "BBOX_INPUT:detection_smoothed_output"
   output_stream: "LIFT_OUTPUT:kpt3d"
 }
 node {
