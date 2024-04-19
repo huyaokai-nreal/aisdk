@@ -1,5 +1,4 @@
 #include <cstdint>
-#include <iostream>
 #include <memory>
 
 #include "../common/NR_GlobalPredictorService.h"
@@ -11,15 +10,14 @@
 #include "aisdk/base/camera_model.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/time.h"
-#include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/port/canonical_errors.h"
-#include "nrcore_pipeline_mediapipe_service.h"
+#include "aisdk/xgraph/xgraph.h"
+#include "xgraph_service_utils.h"
 
 // TODO: update codes in batch=1 branch
 
 #define EZXR_DEFINED_JOINTS 23
 
-namespace mediapipe {
+namespace aisdk::algorithm {
 
 // A calculator generate bbox detection result, based on detnet inference result.
 // Definition:
@@ -30,7 +28,7 @@ namespace mediapipe {
 //   output_stream: "DET_BBOX_OUTPUT:detection_output"
 // }
 
-class HandDetTrackCalculator : public CalculatorBase {
+class HandDetTrackCalculator : public xgraph::CalculatorBase {
    private:
     // DetNet algo instance
     std::shared_ptr<aisdk::algorithm::HandDetectNetv2> netalgo;
@@ -41,7 +39,7 @@ class HandDetTrackCalculator : public CalculatorBase {
     int det_tracker_step_ = 0;
 
    public:
-    static absl::Status GetContract(CalculatorContract *cc) {
+    static absl::Status GetContract(xgraph::CalculatorContract *cc) {
         AISDK_LOG_TRACE("[HandDetTrackCalculator] GetContract start");
 
         // Declaration of input and output, according to definitons.
@@ -57,9 +55,9 @@ class HandDetTrackCalculator : public CalculatorBase {
         return absl::OkStatus();
     }
 
-    absl::Status Open(CalculatorContext *cc) final {
+    absl::Status Open(xgraph::CalculatorContext *cc) final {
         AISDK_LOG_TRACE("[HandDetTrackCalculator] Open start");
-        netalgo = aisdk::algorithm::XrMediaServiceUtils::CreateNetAlgoBase<aisdk::algorithm::HandDetectNetv2>(
+        netalgo = aisdk::algorithm::XGraphServiceUtils::CreateNetAlgoBase<aisdk::algorithm::HandDetectNetv2>(
             (void *)0x202310, "detect");
         if (!netalgo) {
             return absl::Status(absl::StatusCode::kInvalidArgument,
@@ -80,7 +78,7 @@ class HandDetTrackCalculator : public CalculatorBase {
         return absl::OkStatus();
     }
 
-    absl::Status Process(CalculatorContext *cc) final {
+    absl::Status Process(xgraph::CalculatorContext *cc) final {
 #if defined(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
         TIMER_ONCE_WITH_TAG(HandDetTrackCalculator::Process);
 #endif
@@ -194,4 +192,4 @@ class HandDetTrackCalculator : public CalculatorBase {
     }
 };
 
-}  // namespace mediapipe
+}  // namespace aisdk::algorithm

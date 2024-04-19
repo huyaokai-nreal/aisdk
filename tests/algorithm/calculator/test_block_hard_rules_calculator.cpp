@@ -1,21 +1,14 @@
 #include <absl/memory/memory.h>
 #include <absl/status/status.h>
 #include <aisdk/algorithm/internal_structs/kpt3d_struct_internal.h>
-#include <aisdk/algorithm/calculator/nrcore_pipeline_mediapipe_service.h>
-#include <mediapipe/framework/calculator.pb.h>
-#include <mediapipe/framework/deps/status.h>
-#include <mediapipe/framework/packet.h>
-#include <mediapipe/framework/timestamp.h>
-
-#include "mediapipe/framework/calculator_runner.h"
-#include "mediapipe/framework/port/parse_text_proto.h"
-#include "aisdk/task/handtracking/handtracking_mediapipe_calculators_register.h"
+#include <aisdk/algorithm/calculator/xgraph_service_utils.h>
+#include <aisdk/xgraph/xgraph.h>
+#include "aisdk/task/handtracking/handtracking_calculators_register.h"
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include <doctest/doctest.h>
-using namespace mediapipe;
 using namespace aisdk;
 TEST_CASE("testing block hard rule calculator in graph") {
-    TriggerGloalGraphCalculatorsConstruct();
+    task::TriggerGloalGraphCalculatorsConstruct();
     constexpr char kTestGraphConfig[] = R"(
         input_stream: "in"
         output_stream: "out"
@@ -30,8 +23,8 @@ TEST_CASE("testing block hard rule calculator in graph") {
         }
         }
 )";
-    CalculatorGraphConfig config = mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(kTestGraphConfig);
-    CalculatorGraph graph;
+    xgraph::CalculatorGraphConfig config = xgraph::ParseTextProtoOrDie<xgraph::CalculatorGraphConfig>(kTestGraphConfig);
+    xgraph::CalculatorGraph graph;
     absl::Status status = graph.Initialize({config}, {});
     CHECK(status.ok());
     status = graph.StartRun({});
@@ -43,7 +36,7 @@ TEST_CASE("testing block hard rule calculator in graph") {
 }
 
 TEST_CASE("test block hard rule calculator") {
-    TriggerGloalGraphCalculatorsConstruct();
+    task::TriggerGloalGraphCalculatorsConstruct();
     constexpr char kTestGraphConfig[] = R"(
           calculator: "BlockHardRulesCalculator"
           input_stream: "BLOCK_IN:in"
@@ -55,8 +48,8 @@ TEST_CASE("test block hard rule calculator") {
         }
 )";
 
-    CalculatorGraphConfig::Node node_config = ParseTextProtoOrDie<CalculatorGraphConfig::Node>(kTestGraphConfig);
-    CalculatorRunner runner(node_config);
+    xgraph::CalculatorGraphConfig::Node node_config = xgraph::ParseTextProtoOrDie<xgraph::CalculatorGraphConfig::Node>(kTestGraphConfig);
+    xgraph::CalculatorRunner runner(node_config);
     using Kpt3dData = algorithm::Kpt3dInternal;
     auto input = absl::make_unique<Kpt3dData>();
 
@@ -66,10 +59,10 @@ TEST_CASE("test block hard rule calculator") {
     }
     input->lhand_valid = true;
     input->rhand_valid = true;
-    runner.MutableInputs()->Tag("BLOCK_IN").packets.push_back(Adopt(input.release()).At(Timestamp::PostStream()));
+    runner.MutableInputs()->Tag("BLOCK_IN").packets.push_back(xgraph::Adopt(input.release()).At(xgraph::Timestamp::PostStream()));
     auto status = runner.Run();
     CHECK(status.ok());
-    const Packet& result_packet = runner.Outputs().Tag("BLOCK_OUT").packets[0];
+    const xgraph::Packet& result_packet = runner.Outputs().Tag("BLOCK_OUT").packets[0];
     const auto& result = result_packet.Get<Kpt3dData>();
     CHECK(result.lhand_valid);
     CHECK(!result.rhand_valid);

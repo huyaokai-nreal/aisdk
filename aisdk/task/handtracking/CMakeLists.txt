@@ -1,7 +1,7 @@
 add_library(handtracking STATIC
-${CMAKE_CURRENT_SOURCE_DIR}/handtracking_mediapipe_calculators_register.cpp
-${CMAKE_CURRENT_SOURCE_DIR}/handtracking_mediapipe_graph.cpp
-${CMAKE_CURRENT_SOURCE_DIR}/mediapipe_graph.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/handtracking_calculators_register.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/handtracking_xgraph.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/base_xgraph.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/nrcore_pipeline.cpp
 
 )

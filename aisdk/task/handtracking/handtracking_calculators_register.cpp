@@ -1,4 +1,4 @@
-#include "handtracking_mediapipe_calculators_register.h"
+#include "handtracking_calculators_register.h"
 
 #include "aisdk/algorithm/calculator/block_hard_rules_calculator.cpp"
 #include "aisdk/algorithm/calculator/check_headpose_calculator.cpp"
@@ -17,9 +17,11 @@
 #include "aisdk/algorithm/calculator/pre_constraint_calculator.cpp"
 #include "aisdk/algorithm/calculator/standardize_keypoints_calculator.cpp"
 
-namespace mediapipe {
+namespace aisdk::task {
+
 // 这里是要规避全局类不构造的问题, 以后找到原因解决
 void TriggerGloalGraphCalculatorsConstructForHandTracking() {
+    using namespace algorithm;
     REGISTER_CALCULATOR(BlockHardRulesCalculator);          // ok!
     REGISTER_CALCULATOR(CheckHeadposeCalculator);           // not fully implemented
     REGISTER_CALCULATOR(Compute3DScoreCalculator);          // not fully implemented
@@ -41,7 +43,7 @@ void TriggerGloalGraphCalculatorsConstructForHandTracking() {
 // 这里是要规避全局类不构造的问题, 以后找到原因解决
 void TriggerGloalGraphCalculatorsConstruct() {
     static std::once_flag oc;
-    std::call_once(oc, [&]() { mediapipe::TriggerGloalGraphCalculatorsConstructForHandTracking(); });
+    std::call_once(oc, [&]() { aisdk::task::TriggerGloalGraphCalculatorsConstructForHandTracking(); });
 }
 
-}  // namespace mediapipe
+}  // namespace aisdk::task

@@ -1,16 +1,12 @@
-#include <iostream>
 #include <memory>
 
-#include "../common/metrics.h"
 #include "../internal_structs/kpt2d_struct_internal.h"
 #include "../internal_structs/kpt3d_struct_internal.h"
 #include "../internal_structs/score_3d_struct_internal.h"
-#include "aisdk/algorithm/common/nrnet_define.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/time.h"
 #include "aisdk/base/type.h"
-#include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/port/canonical_errors.h"
+#include "aisdk/xgraph/xgraph.h"
 
 // need camera model to do reproj
 float compute3dscore(const std::vector<cv::Vec3f>& kpt3d, const std::vector<aisdk::Vec2f_t>& kpt2d_lcam,
@@ -19,7 +15,7 @@ float compute3dscore(const std::vector<cv::Vec3f>& kpt3d, const std::vector<aisd
     return score;
 }
 
-namespace mediapipe {
+namespace aisdk::algorithm {
 
 // A calculator compute 3d score metric for hand score and hand state.
 // Definition:
@@ -32,10 +28,10 @@ namespace mediapipe {
 //   output_stream: "OUTPUT:hand_score"
 // }
 
-class Compute3DScoreCalculator : public CalculatorBase {
+class Compute3DScoreCalculator : public xgraph::CalculatorBase {
    private:
    public:
-    static absl::Status GetContract(CalculatorContract* cc) {
+    static absl::Status GetContract(xgraph::CalculatorContract* cc) {
         AISDK_LOG_TRACE("[Compute3DScoreCalculator] GetContract start");
         cc->Inputs().Tag("LANDMARK_INPUT").Set<aisdk::algorithm::Kpt2dInternal>();
         cc->Inputs().Tag("KPT3D_INPUT").Set<aisdk::algorithm::Kpt3dInternal>();
@@ -44,13 +40,13 @@ class Compute3DScoreCalculator : public CalculatorBase {
         return absl::OkStatus();
     }
 
-    absl::Status Open(CalculatorContext* cc) final {
+    absl::Status Open(xgraph::CalculatorContext* cc) final {
         AISDK_LOG_TRACE("[Compute3DScoreCalculator] Open start");
         AISDK_LOG_TRACE("[Compute3DScoreCalculator] Open complete");
         return absl::OkStatus();
     }
 
-    absl::Status Process(CalculatorContext* cc) final {
+    absl::Status Process(xgraph::CalculatorContext* cc) final {
 #if defined(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
         TIMER_ONCE_WITH_TAG(Compute3DScoreCalculator::Process);
 #endif
@@ -85,4 +81,4 @@ class Compute3DScoreCalculator : public CalculatorBase {
     }
 };
 
-}  // namespace mediapipe
+}  // namespace aisdk::algorithm

@@ -1,12 +1,8 @@
-#include <iostream>
-#include <memory>
-
 #include "../internal_structs/kpt3d_struct_internal.h"
 #include "../internal_structs/standard_kpt3d_struct_internal.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/time.h"
-#include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/port/canonical_errors.h"
+#include "aisdk/xgraph/xgraph.h"
 
 #define STANDARDIZE_TARGET_POINTS 23
 
@@ -21,7 +17,7 @@ std::vector<cv::Vec3f> convert_to_23points(const std::vector<cv::Vec3f>& input) 
     return result;
 }
 
-namespace mediapipe {
+namespace aisdk::algorithm {
 
 // A calculator convert 3d keypoint format from 21 points to 23 points
 // Definition:
@@ -32,10 +28,10 @@ namespace mediapipe {
 //   output_stream: "OUTPUT:kpt3d_standard"
 // }
 
-class StandardizeKeypointsCalculator : public CalculatorBase {
+class StandardizeKeypointsCalculator : public xgraph::CalculatorBase {
    private:
    public:
-    static absl::Status GetContract(CalculatorContract* cc) {
+    static absl::Status GetContract(xgraph::CalculatorContract* cc) {
         AISDK_LOG_TRACE("[StandardizeKeypointsCalculator] GetContract start.");
         cc->Inputs().Tag("INPUT").Set<aisdk::algorithm::Kpt3dInternal>();
         cc->Outputs().Tag("OUTPUT").Set<aisdk::algorithm::StandardKpt3dInternal>();
@@ -43,13 +39,13 @@ class StandardizeKeypointsCalculator : public CalculatorBase {
         return absl::OkStatus();
     }
 
-    absl::Status Open(CalculatorContext* cc) final {
+    absl::Status Open(xgraph::CalculatorContext* cc) final {
         AISDK_LOG_TRACE("[StandardizeKeypointsCalculator] Open start.");
         AISDK_LOG_TRACE("[StandardizeKeypointsCalculator] Open complete.");
         return absl::OkStatus();
     }
 
-    absl::Status Process(CalculatorContext* cc) final {
+    absl::Status Process(xgraph::CalculatorContext* cc) final {
 #if defined(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
         TIMER_ONCE_WITH_TAG(StandardizeKeypointsCalculator::Process);
 #endif
@@ -80,4 +76,4 @@ class StandardizeKeypointsCalculator : public CalculatorBase {
     }
 };
 
-}  // namespace mediapipe
+}  // namespace aisdk::algorithm

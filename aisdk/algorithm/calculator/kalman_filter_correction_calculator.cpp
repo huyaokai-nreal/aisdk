@@ -1,5 +1,3 @@
-#include <cstdint>
-#include <iostream>
 #include <memory>
 
 #include "../common/NR_GlobalPredictorService.h"
@@ -7,10 +5,9 @@
 #include "../internal_structs/standard_kpt3d_struct_internal.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/time.h"
-#include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/port/canonical_errors.h"
+#include "aisdk/xgraph/xgraph.h"
 
-namespace mediapipe {
+namespace aisdk::algorithm {
 
 // A calculator doing correction step of a global kalman filter.
 // Definition:
@@ -22,13 +19,13 @@ namespace mediapipe {
 //   output_stream: "OUTPUT:kpt3d_filtered"
 // }
 
-class KalmanFilterCorrectionCalculator : public CalculatorBase {
+class KalmanFilterCorrectionCalculator : public xgraph::CalculatorBase {
    private:
     aisdk::algorithm::StandardKpt3dInternal kpt3d_world_pre;
     double last_timestamp_;  // in seconds
 
    public:
-    static absl::Status GetContract(CalculatorContract* cc) {
+    static absl::Status GetContract(xgraph::CalculatorContract* cc) {
         AISDK_LOG_TRACE("[KalmanFilterCorrectionCalculator] GetContract start.");
         cc->Inputs().Tag("INPUT").Set<aisdk::algorithm::StandardKpt3dInternal>();
         cc->Inputs().Tag("STATE").Set<aisdk::algorithm::HandStateInternal>();
@@ -37,13 +34,13 @@ class KalmanFilterCorrectionCalculator : public CalculatorBase {
         return absl::OkStatus();
     }
 
-    absl::Status Open(CalculatorContext* cc) final {
+    absl::Status Open(xgraph::CalculatorContext* cc) final {
         AISDK_LOG_TRACE("[KalmanFilterCorrectionCalculator] Open start.");
         AISDK_LOG_TRACE("[KalmanFilterCorrectionCalculator] Open complete.");
         return absl::OkStatus();
     }
 
-    absl::Status Process(CalculatorContext* cc) final {
+    absl::Status Process(xgraph::CalculatorContext* cc) final {
 #if defined(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
         TIMER_ONCE_WITH_TAG(KalmanFilterCorrectionCalculator::Process);
 #endif
@@ -104,4 +101,4 @@ class KalmanFilterCorrectionCalculator : public CalculatorBase {
     }
 };
 
-}  // namespace mediapipe
+}  // namespace aisdk::algorithm

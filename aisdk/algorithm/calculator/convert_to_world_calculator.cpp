@@ -1,4 +1,3 @@
-#include <iostream>
 #include <memory>
 
 #include "../common/NR_Transfer.h"
@@ -7,10 +6,9 @@
 #include "../internal_structs/kpt3d_struct_internal.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/time.h"
-#include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/port/canonical_errors.h"
+#include "aisdk/xgraph/xgraph.h"
 
-namespace mediapipe {
+namespace aisdk::algorithm {
 
 std::vector<cv::Vec3f> transfer_from_cvL_to_world(NRTransform headpose, const std::vector<cv::Vec3f>& points_lcam_cv) {
     std::vector<cv::Vec3f> points_lcam_gl, points_head, points_world;
@@ -31,10 +29,10 @@ std::vector<cv::Vec3f> transfer_from_cvL_to_world(NRTransform headpose, const st
 //   output_stream: "OUTPUT:kpt3d_world"
 // }
 
-class ConvertToWorldCalculator : public CalculatorBase {
+class ConvertToWorldCalculator : public xgraph::CalculatorBase {
    private:
    public:
-    static absl::Status GetContract(CalculatorContract* cc) {
+    static absl::Status GetContract(xgraph::CalculatorContract* cc) {
         AISDK_LOG_TRACE("[ConvertToWorldCalculator] GetContract start.");
         cc->Inputs().Tag("INPUT").Set<aisdk::algorithm::Kpt3dInternal>();
         cc->Inputs().Tag("HEADPOSE").Set<aisdk::algorithm::HeadPoseInternal>();
@@ -44,13 +42,13 @@ class ConvertToWorldCalculator : public CalculatorBase {
         return absl::OkStatus();
     }
 
-    absl::Status Open(CalculatorContext* cc) final {
+    absl::Status Open(xgraph::CalculatorContext* cc) final {
         AISDK_LOG_TRACE("[ConvertToWorldCalculator] Open start.");
         AISDK_LOG_TRACE("[ConvertToWorldCalculator] Open complete.");
         return absl::OkStatus();
     }
 
-    absl::Status Process(CalculatorContext* cc) final {
+    absl::Status Process(xgraph::CalculatorContext* cc) final {
 #if defined(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
         TIMER_ONCE_WITH_TAG(ConvertToWorldCalculator::Process);
 #endif
@@ -93,4 +91,4 @@ class ConvertToWorldCalculator : public CalculatorBase {
     }
 };
 
-}  // namespace mediapipe
+}  // namespace aisdk::algorithm

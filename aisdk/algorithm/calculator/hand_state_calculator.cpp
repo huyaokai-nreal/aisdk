@@ -1,4 +1,3 @@
-#include <iostream>
 #include <memory>
 
 #include "../func/hand_state.h"
@@ -6,10 +5,9 @@
 #include "../internal_structs/score_3d_struct_internal.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/time.h"
-#include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/port/canonical_errors.h"
+#include "aisdk/xgraph/xgraph.h"
 
-namespace mediapipe {
+namespace aisdk::algorithm {
 
 // A calculator analyzing hand state from score.
 // Definition:
@@ -19,13 +17,13 @@ namespace mediapipe {
 //   input_stream: "SCORE_INPUT:hand_score"
 //   output_stream: "OUTPUT:hand_state"
 // }
-class HandStateCalculator : public CalculatorBase {
+class HandStateCalculator : public xgraph::CalculatorBase {
    private:
     std::unique_ptr<aisdk::algorithm::HandStateMachine> m_state_lhand;
     std::unique_ptr<aisdk::algorithm::HandStateMachine> m_state_rhand;
 
    public:
-    static absl::Status GetContract(CalculatorContract* cc) {
+    static absl::Status GetContract(xgraph::CalculatorContract* cc) {
         AISDK_LOG_TRACE("[HandStateCalculator] GetContract start.");
         cc->Inputs().Tag("SCORE_INPUT").Set<aisdk::algorithm::Score3dInternal>();
         cc->Outputs().Tag("OUTPUT").Set<aisdk::algorithm::HandStateInternal>();
@@ -33,7 +31,7 @@ class HandStateCalculator : public CalculatorBase {
         return absl::OkStatus();
     }
 
-    absl::Status Open(CalculatorContext* cc) final {
+    absl::Status Open(xgraph::CalculatorContext* cc) final {
         AISDK_LOG_TRACE("[HandStateCalculator] Open start.");
         m_state_lhand = std::make_unique<aisdk::algorithm::HandStateMachine>(0.6, 15);
         m_state_rhand = std::make_unique<aisdk::algorithm::HandStateMachine>(0.6, 15);
@@ -41,7 +39,7 @@ class HandStateCalculator : public CalculatorBase {
         return absl::OkStatus();
     }
 
-    absl::Status Process(CalculatorContext* cc) final {
+    absl::Status Process(xgraph::CalculatorContext* cc) final {
 #if defined(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
         TIMER_ONCE_WITH_TAG(HandStateCalculator::Process);
 #endif
@@ -67,4 +65,4 @@ class HandStateCalculator : public CalculatorBase {
     }
 };
 
-}  // namespace mediapipe
+}  // namespace aisdk::algorithm

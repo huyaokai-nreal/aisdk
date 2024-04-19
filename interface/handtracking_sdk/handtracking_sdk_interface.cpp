@@ -14,7 +14,7 @@
 #include <opencv2/opencv.hpp>
 
 #include "aisdk/base/dlutil.h"
-#include "aisdk/task/handtracking/handtracking_mediapipe_graph.h"
+#include "aisdk/task/handtracking/handtracking_xgraph.h"
 #include "framework/util/android_globals.h"
 #include "framework/util/fileutil.h"
 #include "framework/util/os_time.h"
@@ -98,8 +98,8 @@ NRPluginResult HandTracking::GetHandData(NRPluginHandle handle, uint64_t hmd_tim
     auto* ins = Plugin::GetInstance();
     auto& pipeline = ins->GetPipeline();
     if (ins->pipeline_name == "handtracking_bino_graph_v2.0.0") {
-        std::shared_ptr<task::HandTrackingMediaPipeGraph> impl =
-            std::dynamic_pointer_cast<task::HandTrackingMediaPipeGraph>(pipeline.Impl());
+        std::shared_ptr<task::HandTrackingXGraph> impl =
+            std::dynamic_pointer_cast<task::HandTrackingXGraph>(pipeline.Impl());
         aisdk::algorithm::Status status = impl->PopResult(hmd_time_nanos, out_hand_num, out_hand_array);
         if (status == aisdk::algorithm::Status::SUCCESS) {
             return NR_PLUGIN_RESULT_SUCCESS;
@@ -118,8 +118,8 @@ int HandTracking::GetHandTrackingMidExecInfo(ProfilingInfo* info) {
     auto* ins = Plugin::GetInstance();
     auto& pipline = ins->GetPipeline();
     if (ins->pipeline_name == "handtracking_bino_graph_v2.0.0") {
-        std::shared_ptr<task::HandTrackingMediaPipeGraph> impl =
-            std::dynamic_pointer_cast<task::HandTrackingMediaPipeGraph>(pipline.Impl());
+        std::shared_ptr<task::HandTrackingXGraph> impl =
+            std::dynamic_pointer_cast<task::HandTrackingXGraph>(pipline.Impl());
         // NrCore::Status status = impl->PopExecInfo(tmp);
         // if (status == NrCore::Status::SUCCESS) {
         //     info->timestamp = result->timestamp;
@@ -606,13 +606,13 @@ NRPluginResult HandTracking::ParseAllCameraData(const NRGrayscaleCameraFrameData
 
     auto& pipeline = ins->GetPipeline();
     if (ins->pipeline_name == "handtracking_bino_graph_v2.0.0") {
-        std::shared_ptr<task::HandTrackingMediaPipeGraph> impl =
-            std::dynamic_pointer_cast<task::HandTrackingMediaPipeGraph>(pipeline.Impl());
+        std::shared_ptr<task::HandTrackingXGraph> impl =
+            std::dynamic_pointer_cast<task::HandTrackingXGraph>(pipeline.Impl());
         std::vector<aisdk::algorithm::Image> images;
         images.emplace_back(std::move(d1));
         images.emplace_back(std::move(d2));
         impl->PushData(nano_time_[0], images, head_pose);
-        AISDK_LOG_TRACE("interface HandTrackingMediaPipeGraph::PushData");
+        AISDK_LOG_TRACE("interface HandTrackingXGraph::PushData");
     }
 
     return errorcode;
@@ -905,10 +905,10 @@ NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
                     // 需要指定具体的实现
                     aisdk::algorithm::Status status;
                     if (tmp[pipeline_index].pipeline_name == "handtracking_bino_graph_v2.0.0") {
-                        status = pipline.Init<task::HandTrackingMediaPipeGraph>(
-                            ins->m_handtracking.m_funcs, tmp[pipeline_index], ins->m_hmd.m_cam_param);
+                        status = pipline.Init<task::HandTrackingXGraph>(ins->m_handtracking.m_funcs,
+                                                                        tmp[pipeline_index], ins->m_hmd.m_cam_param);
                     } else {
-                        AISDK_LOG_INFO("HandTracking: not found MediaPipeGraph!");
+                        AISDK_LOG_INFO("HandTracking: not found XGraph!");
                         continue;
                     }
                     if (status == aisdk::algorithm::Status::SUCCESS) {

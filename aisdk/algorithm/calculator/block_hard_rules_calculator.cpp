@@ -1,12 +1,10 @@
-#include <iostream>
 #include <memory>
 
 #include "../internal_structs/kpt3d_struct_internal.h"
 #include "aisdk/algorithm/calculator/block_hard_rules_calculator.pb.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/time.h"
-#include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/port/canonical_errors.h"
+#include "aisdk/xgraph/xgraph.h"
 
 constexpr int root_index = 0;
 
@@ -18,7 +16,7 @@ bool block_rule_root_distance(const std::vector<cv::Vec3f>& points_3d, float max
     }
 }
 
-namespace mediapipe {
+namespace aisdk::algorithm {
 
 // A calculator blocks 3d keypoint invalid outputs with simple hard rules.
 // Definition:
@@ -28,12 +26,12 @@ namespace mediapipe {
 //   output_stream: "BLOCK_OUT:kpt3d_blocked"
 // }
 
-class BlockHardRulesCalculator : public CalculatorBase {
+class BlockHardRulesCalculator : public xgraph::CalculatorBase {
    private:
     float max_root_depth_;
 
    public:
-    static absl::Status GetContract(CalculatorContract* cc) {
+    static absl::Status GetContract(xgraph::CalculatorContract* cc) {
         AISDK_LOG_TRACE("[BlockHardRulesCalculator] GetContract start");
         cc->Inputs().Tag("BLOCK_IN").Set<aisdk::algorithm::Kpt3dInternal>();
         cc->Outputs().Tag("BLOCK_OUT").Set<aisdk::algorithm::Kpt3dInternal>();
@@ -41,7 +39,7 @@ class BlockHardRulesCalculator : public CalculatorBase {
         return absl::OkStatus();
     }
 
-    absl::Status Open(CalculatorContext* cc) final {
+    absl::Status Open(xgraph::CalculatorContext* cc) final {
         AISDK_LOG_TRACE("[BlockHardRulesCalculator] Open start");
         const auto& options = cc->Options<aisdk::BlockHardRulesCalculatorOptions>();
         max_root_depth_ = options.max_root_depth();
@@ -49,7 +47,7 @@ class BlockHardRulesCalculator : public CalculatorBase {
         return absl::OkStatus();
     }
 
-    absl::Status Process(CalculatorContext* cc) final {
+    absl::Status Process(xgraph::CalculatorContext* cc) final {
 #if defined(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
         TIMER_ONCE_WITH_TAG(BlockHardRulesCalculator::Process);
 #endif
@@ -87,4 +85,4 @@ class BlockHardRulesCalculator : public CalculatorBase {
     }
 };
 
-}  // namespace mediapipe
+}  // namespace aisdk::algorithm

@@ -1,4 +1,4 @@
-#include "handtracking_mediapipe_graph.h"
+#include "handtracking_xgraph.h"
 
 #include <fmt/core.h>
 
@@ -14,6 +14,7 @@
 #include "aisdk/algorithm/internal_structs/headpose_struct_internal.h"
 #include "aisdk/base/log.h"
 #include "aisdk/task/handtracking/nrcore_pipeline.h"
+#include "aisdk/xgraph/xgraph.h"
 
 #define JOINTS_COUNT 25
 #define EZXR_DEFINED_JOINTS 23
@@ -40,29 +41,29 @@ std::map<std::string, int> gesture_map = {
 
 namespace aisdk::task {
 
-HandTrackingMediaPipeGraph::HandTrackingMediaPipeGraph() {
+HandTrackingXGraph::HandTrackingXGraph() {
     m_post_filter = std::make_unique<HandFilters>();
     m_post_filter->init();
 }
-HandTrackingMediaPipeGraph::~HandTrackingMediaPipeGraph() {}
+HandTrackingXGraph::~HandTrackingXGraph() {}
 
-aisdk::algorithm::Status HandTrackingMediaPipeGraph::PushData(uint64_t timestamp,
-                                                              std::vector<aisdk::algorithm::Image>& in_image,
-                                                              NRTransform headpose) {
+aisdk::algorithm::Status HandTrackingXGraph::PushData(uint64_t timestamp,
+                                                      std::vector<aisdk::algorithm::Image>& in_image,
+                                                      NRTransform headpose) {
     // we use microseconds in xgraph pipeline
     int64_t timestamp_micro = static_cast<int64_t>(timestamp / 1000);
-    auto image_packet = mediapipe::MakePacket<std::vector<aisdk::algorithm::Image>>(std::move(in_image));
-    auto headpose_packet = mediapipe::MakePacket<algorithm::HeadPoseInternal>(headpose);
+    auto image_packet = xgraph::MakePacket<std::vector<aisdk::algorithm::Image>>(std::move(in_image));
+    auto headpose_packet = xgraph::MakePacket<algorithm::HeadPoseInternal>(headpose);
 
     // 先登记需要缓存的stream帧信息
     bool push_failure = false;
     auto status = SetInputStreamCache(timestamp_micro);
     if (status == algorithm::Status::SUCCESS) {
         // 这里根据stream输入的返回值做
+        MP_RETURN_IF_ERROR_WITH_LOG(
+            m_calculator_graph->AddPacketToInputStream("image", image_packet.At(xgraph::Timestamp(timestamp_micro))));
         MP_RETURN_IF_ERROR_WITH_LOG(m_calculator_graph->AddPacketToInputStream(
-            "image", image_packet.At(mediapipe::Timestamp(timestamp_micro))));
-        MP_RETURN_IF_ERROR_WITH_LOG(m_calculator_graph->AddPacketToInputStream(
-            "head_pose", headpose_packet.At(mediapipe::Timestamp(timestamp_micro))));
+            "head_pose", headpose_packet.At(xgraph::Timestamp(timestamp_micro))));
         // 若push失败，清除cahce
         if (push_failure) {
             ClearInputStreamCache(timestamp_micro);
@@ -72,8 +73,8 @@ aisdk::algorithm::Status HandTrackingMediaPipeGraph::PushData(uint64_t timestamp
     return aisdk::algorithm::Status::SUCCESS;
 }
 
-aisdk::algorithm::Status HandTrackingMediaPipeGraph::PopResult(uint64_t hmd_time_nano, uint32_t* hand_num,
-                                                               HandData* out_hand_array) {
+aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, uint32_t* hand_num,
+                                                       HandData* out_hand_array) {
     double query_time = static_cast<double>(hmd_time_nano) / 1e9;
     std::shared_ptr<StreamCache> outlist = GetOutputStreamCache();
     if (outlist) {

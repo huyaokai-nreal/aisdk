@@ -1,5 +1,5 @@
 
-namespace mediapipe {
+namespace aisdk::task {
 void TriggerGloalGraphCalculatorsConstructForHandTracking();
 
 void TriggerGloalGraphCalculatorsConstruct();

@@ -1,25 +1,23 @@
 
-#include "nrcore_pipeline_mediapipe_service.h"
-
-#include <mutex>
+#include "xgraph_service_utils.h"
 
 #include "aisdk/xengine/nr_model_mgr.h"
 
 namespace aisdk::algorithm {
 
-std::map<void *, aisdk::xengine::PipelineConfig> XrMediaServiceUtils::m_pipelineconfig;
-aisdk::xengine::DlSymFuncs XrMediaServiceUtils::m_funcs;
-CameraParams XrMediaServiceUtils::m_camera_params;
+std::map<void *, aisdk::xengine::PipelineConfig> XGraphServiceUtils::m_pipelineconfig;
+aisdk::xengine::DlSymFuncs XGraphServiceUtils::m_funcs;
+CameraParams XGraphServiceUtils::m_camera_params;
 
-int XrMediaServiceUtils::SavePipelineConfig(void *parent_graph, aisdk::xengine::DlSymFuncs &funcs,
-                                            aisdk::xengine::PipelineConfig &config, CameraParams &camera) {
+int XGraphServiceUtils::SavePipelineConfig(void *parent_graph, aisdk::xengine::DlSymFuncs &funcs,
+                                           aisdk::xengine::PipelineConfig &config, CameraParams &camera) {
     m_funcs = funcs;
     m_pipelineconfig[parent_graph] = config;
     m_camera_params = camera;
     return 0;
 }
 
-std::string XrMediaServiceUtils::GetPipelineNodeAlgoParam(void *parent_graph, std::string node_name) {
+std::string XGraphServiceUtils::GetPipelineNodeAlgoParam(void *parent_graph, std::string node_name) {
     if (m_pipelineconfig.end() == m_pipelineconfig.find(parent_graph)) {
         return "";
     }
@@ -49,9 +47,9 @@ std::string XrMediaServiceUtils::GetPipelineNodeAlgoParam(void *parent_graph, st
     return params;
 }
 
-CameraParams &XrMediaServiceUtils::GetCameraParams() { return m_camera_params; }
+CameraParams &XGraphServiceUtils::GetCameraParams() { return m_camera_params; }
 
-void XrMediaServiceUtils::DeleteNetAlgoBase(aisdk::xengine::BaseNetAlgo *net) {
+void XGraphServiceUtils::DeleteNetAlgoBase(aisdk::xengine::BaseNetAlgo *net) {
     AISDK_LOG_TRACE("DeleteNetAlgoBase: {}", (void *)net);
     m_funcs.m_destorynetalgo(net);
 }

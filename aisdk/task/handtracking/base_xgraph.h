@@ -1,8 +1,5 @@
 #pragma once
-
-#include <mediapipe/framework/calculator_graph.h>
-#include <mediapipe/framework/packet.h>
-
+#include "aisdk/xgraph/xgraph.h"
 #include <cstdint>
 #include <mutex>
 
@@ -15,14 +12,14 @@ class StreamCache {
    public:
     std::mutex m_lock;
     uint32_t m_output_packs_sum;
-    std::vector<mediapipe::Packet> m_output_packs;
+    std::vector<xgraph::Packet> m_output_packs;
     std::shared_ptr<aisdk::base::NaiveTimer> m_stream_time;
 };
 
-class MediaPipeGraph : public PipeGraphImpl {
+class BaseXGraph : public PipeGraphImpl {
    public:
-    MediaPipeGraph() : PipeGraphImpl() {}
-    virtual ~MediaPipeGraph() {}
+    BaseXGraph() : PipeGraphImpl() {}
+    virtual ~BaseXGraph() {}
 
     aisdk::algorithm::Status Init(aisdk::xengine::DlSymFuncs &funcs, aisdk::xengine::PipelineConfig &config,
                                   CameraParams &camera) override;
@@ -35,9 +32,9 @@ class MediaPipeGraph : public PipeGraphImpl {
     // 获取最新的stream结果，如果不被调用，也不会阻塞graph运行。MoveOutputCahce函数将会将超过m_max_output_cahce_num的stream结果删除
     std::shared_ptr<StreamCache> GetOutputStreamCache();
     // 内部函数，graph将多输出的packet合并到StreamCache中。
-    bool CallBackInferenceResult(const mediapipe::Packet &packet, int64_t output_packs_order);
+    bool CallBackInferenceResult(const xgraph::Packet &packet, int64_t output_packs_order);
 
-    std::unique_ptr<mediapipe::CalculatorGraph> m_calculator_graph;
+    std::unique_ptr<xgraph::CalculatorGraph> m_calculator_graph;
     std::vector<std::string> m_input_stream_name;
     std::vector<std::string> m_output_stream_name;
 

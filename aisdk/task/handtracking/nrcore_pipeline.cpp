@@ -1,6 +1,6 @@
 #include "nrcore_pipeline.h"
 
-#include "aisdk/algorithm/calculator/nrcore_pipeline_mediapipe_service.h"
+#include "aisdk/algorithm/calculator/xgraph_service_utils.h"
 #include "aisdk/algorithm/common/NR_GlobalCoordService.h"
 
 namespace aisdk::task {
@@ -43,7 +43,7 @@ aisdk::algorithm::Status PipeGraphImpl::Init(aisdk::xengine::DlSymFuncs &funcs, 
                                              CameraParams &camera) {
     // aisdk::algorithm::XrMediaServiceUtils::SavePipelineConfig(this, funcs, config, camera);
     // (void*)0x202310
-    aisdk::algorithm::XrMediaServiceUtils::SavePipelineConfig((void *)0x202310, funcs, config, camera);
+    aisdk::algorithm::XGraphServiceUtils::SavePipelineConfig((void *)0x202310, funcs, config, camera);
     SetGlobalCameraParams(camera);
     return aisdk::algorithm::Status::SUCCESS;
 }

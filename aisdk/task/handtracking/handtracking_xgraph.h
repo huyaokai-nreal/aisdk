@@ -2,15 +2,15 @@
 
 #include "aisdk/algorithm/common/nrnet_define.h"
 #include "aisdk/algorithm/func/hand_filters.h"
-#include "mediapipe_graph.h"
+#include "base_xgraph.h"
 #include "perception/nr_perception_hand_tracking.h"
 
 namespace aisdk::task {
 
-class HandTrackingMediaPipeGraph : public MediaPipeGraph {
+class HandTrackingXGraph : public BaseXGraph {
    public:
-    HandTrackingMediaPipeGraph();
-    virtual ~HandTrackingMediaPipeGraph();
+    HandTrackingXGraph();
+    virtual ~HandTrackingXGraph();
 
     // 接口参数自定义
     algorithm::Status PushData(uint64_t timestamp, std::vector<algorithm::Image>& in_image, NRTransform headpose);

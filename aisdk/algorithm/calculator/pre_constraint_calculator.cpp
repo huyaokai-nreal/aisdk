@@ -1,11 +1,9 @@
-#include <iostream>
 #include <memory>
 
 #include "../internal_structs/kpt3d_struct_internal.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/time.h"
-#include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/port/canonical_errors.h"
+#include "aisdk/xgraph/xgraph.h"
 #include "thirdparty/MANO_IK-main/mano/AIK.h"
 
 #define KPT_NUMS 21
@@ -29,7 +27,7 @@ static std::vector<cv::Vec3f> constrain_func_pre(const std::vector<cv::Vec3f>& i
     return output_kpt3d;
 }
 
-namespace mediapipe {
+namespace aisdk::algorithm {
 // A calculator doing constraint based on MANO template.
 // The implement is exactly same to PostConstrainCalculator, maybe merged in next phase.
 // Definition:
@@ -39,10 +37,10 @@ namespace mediapipe {
 //   output_stream: "OUTPUT:kpt3d_constrained"
 // }
 
-class PreConstrainCalculator : public CalculatorBase {
+class PreConstrainCalculator : public xgraph::CalculatorBase {
    private:
    public:
-    static absl::Status GetContract(CalculatorContract* cc) {
+    static absl::Status GetContract(xgraph::CalculatorContract* cc) {
         AISDK_LOG_TRACE("[PreConstrainCalculator] GetContract start");
         cc->Inputs().Tag("INPUT").Set<aisdk::algorithm::Kpt3dInternal>();
         cc->Outputs().Tag("OUTPUT").Set<aisdk::algorithm::Kpt3dInternal>();
@@ -50,13 +48,13 @@ class PreConstrainCalculator : public CalculatorBase {
         return absl::OkStatus();
     }
 
-    absl::Status Open(CalculatorContext* cc) final {
+    absl::Status Open(xgraph::CalculatorContext* cc) final {
         AISDK_LOG_TRACE("[PreConstrainCalculator] Open start");
         AISDK_LOG_TRACE("[PreConstrainCalculator] Open complete");
         return absl::OkStatus();
     }
 
-    absl::Status Process(CalculatorContext* cc) final {
+    absl::Status Process(xgraph::CalculatorContext* cc) final {
 #if defined(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
         TIMER_ONCE_WITH_TAG(PreConstrainCalculator::Process);
 #endif
@@ -87,4 +85,4 @@ class PreConstrainCalculator : public CalculatorBase {
     }
 };
 
-}  // namespace mediapipe
+}  // namespace aisdk::algorithm

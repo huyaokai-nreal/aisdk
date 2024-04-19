@@ -4,14 +4,13 @@
 #include "../internal_structs/kpt2d_struct_internal.h"
 #include "../internal_structs/kpt3d_struct_internal.h"
 #include "../model/hand_lift.h"
-#include "aisdk/algorithm/common/nrnet_define.h"
 #include "aisdk/base/camera_model.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/time.h"
-#include "mediapipe/framework/calculator_framework.h"
-#include "nrcore_pipeline_mediapipe_service.h"
+#include "aisdk/xgraph/xgraph.h"
+#include "xgraph_service_utils.h"
 
-namespace mediapipe {
+namespace aisdk::algorithm {
 
 // A calculator generate hand 3d keypoint result, based on liftnet.
 // Definition:
@@ -23,7 +22,7 @@ namespace mediapipe {
 //   output_stream: "LIFT_OUTPUT:kpt3d"
 // }
 
-class LiftCalculator : public CalculatorBase {
+class LiftCalculator : public xgraph::CalculatorBase {
    private:
     // SeqGMLPLiftNet algo instance
     std::shared_ptr<aisdk::algorithm::GMLPLiftNet3> netalgo;
@@ -31,7 +30,7 @@ class LiftCalculator : public CalculatorBase {
     std::shared_ptr<aisdk::base::BaseCameraModel> rcam_model_ = nullptr;
 
    public:
-    static absl::Status GetContract(CalculatorContract* cc) {
+    static absl::Status GetContract(xgraph::CalculatorContract* cc) {
         AISDK_LOG_TRACE("[LiftCalculator] GetContract start");
         cc->InputSidePackets()
             .Tag("CAM_INFO_INPUT")
@@ -43,10 +42,10 @@ class LiftCalculator : public CalculatorBase {
         return absl::OkStatus();
     }
 
-    absl::Status Open(CalculatorContext* cc) final {
+    absl::Status Open(xgraph::CalculatorContext* cc) final {
         AISDK_LOG_TRACE("[LiftCalculator] Open start");
         // 3d_lift
-        netalgo = aisdk::algorithm::XrMediaServiceUtils::CreateNetAlgoBase<aisdk::algorithm::GMLPLiftNet3>(
+        netalgo = aisdk::algorithm::XGraphServiceUtils::CreateNetAlgoBase<aisdk::algorithm::GMLPLiftNet3>(
             (void*)0x202310, "3d_lift");
         if (!netalgo) {
             return absl::Status(absl::StatusCode::kInvalidArgument,
@@ -63,7 +62,7 @@ class LiftCalculator : public CalculatorBase {
         return absl::OkStatus();
     }
 
-    absl::Status Process(CalculatorContext* cc) final {
+    absl::Status Process(xgraph::CalculatorContext* cc) final {
 #if defined(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
         TIMER_ONCE_WITH_TAG(LiftCalculator::Process);
 #endif
@@ -103,4 +102,4 @@ class LiftCalculator : public CalculatorBase {
     }
 };
 
-}  // namespace mediapipe
+}  // namespace aisdk::algorithm

@@ -1,4 +1,3 @@
-#include <iostream>
 #include <memory>
 #include <string>
 
@@ -11,12 +10,11 @@
 #include "aisdk/algorithm/internal_structs/kpt2d_struct_internal.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/time.h"
-#include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/port/canonical_errors.h"
+#include "aisdk/xgraph/xgraph.h"
 
 #define STANDARDIZE_TARGET_POINTS 23
 
-namespace mediapipe {
+namespace aisdk::algorithm {
 
 // A calculator generate hand output summarized result.
 // Definition:
@@ -30,13 +28,13 @@ namespace mediapipe {
 //   output_stream: "GR_OUTPUT:hand_result"
 // }
 
-class GestureRecognitionCalculator : public CalculatorBase {
+class GestureRecognitionCalculator : public xgraph::CalculatorBase {
    private:
     std::unique_ptr<aisdk::algorithm::GestureRecognitionV2> m_gesture_classifier_lhand;
     std::unique_ptr<aisdk::algorithm::GestureRecognitionV2> m_gesture_classifier_rhand;
 
    public:
-    static absl::Status GetContract(CalculatorContract* cc) {
+    static absl::Status GetContract(xgraph::CalculatorContract* cc) {
         AISDK_LOG_TRACE("[GestureRecognitionCalculator] GetContract start.");
         cc->Inputs().Tag("GR_KPT_INPUT").Set<aisdk::algorithm::StandardKpt3dInternal>();
         cc->Inputs().Tag("GR_KPT2D_INPUT").Set<aisdk::algorithm::Kpt2dInternal>();
@@ -47,7 +45,7 @@ class GestureRecognitionCalculator : public CalculatorBase {
         return absl::OkStatus();
     }
 
-    absl::Status Open(CalculatorContext* cc) final {
+    absl::Status Open(xgraph::CalculatorContext* cc) final {
         AISDK_LOG_TRACE("[GestureRecognitionCalculator] Open start.");
         m_gesture_classifier_lhand = std::make_unique<aisdk::algorithm::GestureRecognitionV2>();
         m_gesture_classifier_rhand = std::make_unique<aisdk::algorithm::GestureRecognitionV2>();
@@ -55,7 +53,7 @@ class GestureRecognitionCalculator : public CalculatorBase {
         return absl::OkStatus();
     }
 
-    absl::Status Process(CalculatorContext* cc) final {
+    absl::Status Process(xgraph::CalculatorContext* cc) final {
 #if defined(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
         TIMER_ONCE_WITH_TAG(GestureRecognitionCalculator::Process);
 #endif
@@ -150,4 +148,4 @@ class GestureRecognitionCalculator : public CalculatorBase {
     }
 };
 
-}  // namespace mediapipe
+}  // namespace aisdk::algorithm

@@ -6,7 +6,6 @@
 #include "aisdk/algorithm/common/nrcore_define.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/profiling.h"
-#include "aisdk/xengine/nrhal_common.h"
 #include "aisdk/xengine/nrhal_net.h"
 #include "aisdk/xengine/nrhal_capi_symbol.h"
 
@@ -14,7 +13,7 @@
 namespace aisdk::algorithm {
 using BaseNetAlgoPtr = std::unique_ptr<aisdk::xengine::BaseNetAlgo,std::function<void(aisdk::xengine::BaseNetAlgo*)>>;
 //class CalculatorBaseNet;
-class XrMediaServiceUtils {
+class XGraphServiceUtils {
    public:
     // 保存mediapipe的系统配置，主要是和网络算子相关的
     static int SavePipelineConfig(void* parent_graph, aisdk::xengine::DlSymFuncs& funcs,
@@ -57,7 +56,7 @@ class XrMediaServiceUtils {
                         break;
                     }
                     AISDK_LOG_TRACE("CreateNetAlgoBase: {}", (void *)net);
-                    BaseNetAlgoPtr net_ptr(net, XrMediaServiceUtils::DeleteNetAlgoBase);
+                    BaseNetAlgoPtr net_ptr(net, XGraphServiceUtils::DeleteNetAlgoBase);
                     handle->SetBaseNetAlgo(net_ptr);
                     auto ret = handle->Init(pc, pa, pb);
                     if (ret != aisdk::xengine::Status::SUCCESS) {

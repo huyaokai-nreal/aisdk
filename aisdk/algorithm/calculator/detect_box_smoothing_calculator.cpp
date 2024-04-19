@@ -1,14 +1,12 @@
-#include <iostream>
 #include <memory>
 
 #include "../common/NR_Seq_Manager.h"
 #include "../internal_structs/det_struct_internal.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/time.h"
-#include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/port/canonical_errors.h"
+#include "aisdk/xgraph/xgraph.h"
 
-namespace mediapipe {
+namespace aisdk::algorithm {
 
 // A calculator generate smoothed detection bbox result.
 // Definition:
@@ -18,7 +16,7 @@ namespace mediapipe {
 //   output_stream: "BBOX_SMOOTHED_OUTPUT:detection_smoothed_output"
 // }
 
-class DetectBoxSmoothingCalculator : public CalculatorBase {
+class DetectBoxSmoothingCalculator : public xgraph::CalculatorBase {
    private:
     std::shared_ptr<aisdk::algorithm::SeqManager> m_seq_lcam_lhand;
     std::shared_ptr<aisdk::algorithm::SeqManager> m_seq_lcam_rhand;
@@ -26,7 +24,7 @@ class DetectBoxSmoothingCalculator : public CalculatorBase {
     std::shared_ptr<aisdk::algorithm::SeqManager> m_seq_rcam_rhand;
 
    public:
-    static absl::Status GetContract(CalculatorContract* cc) {
+    static absl::Status GetContract(xgraph::CalculatorContract* cc) {
         AISDK_LOG_TRACE("[DetectBoxSmoothingCalculator] GetContract start");
 
         cc->Inputs().Tag("BBOX_INPUT").Set<aisdk::algorithm::DetOutputInternal>();
@@ -36,7 +34,7 @@ class DetectBoxSmoothingCalculator : public CalculatorBase {
         return absl::OkStatus();
     }
 
-    absl::Status Open(CalculatorContext* cc) final {
+    absl::Status Open(xgraph::CalculatorContext* cc) final {
         AISDK_LOG_TRACE("[DetectBoxSmoothingCalculator] Open start");
 
         m_seq_lcam_lhand = std::make_shared<aisdk::algorithm::SeqManager>();
@@ -48,7 +46,7 @@ class DetectBoxSmoothingCalculator : public CalculatorBase {
         return absl::OkStatus();
     }
 
-    absl::Status Process(CalculatorContext* cc) final {
+    absl::Status Process(xgraph::CalculatorContext* cc) final {
 #if defined(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
         TIMER_ONCE_WITH_TAG(DetectBoxSmoothingCalculator::Process);
 #endif
@@ -98,4 +96,4 @@ class DetectBoxSmoothingCalculator : public CalculatorBase {
     }
 };
 
-}  // namespace mediapipe
+}  // namespace aisdk::algorithm

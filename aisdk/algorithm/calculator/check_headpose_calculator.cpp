@@ -1,16 +1,13 @@
-#include <iostream>
 #include <memory>
 
 #include "../internal_structs/headpose_struct_internal.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/time.h"
-#include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/port/canonical_errors.h"
+#include "aisdk/xgraph/xgraph.h"
 
 // currently do nothing
-bool isHeadposeValid(const aisdk::algorithm::HeadPoseInternal& headpose) { return true; }
 
-namespace mediapipe {
+namespace aisdk::algorithm {
 
 // A calculator check if headpose input valid.
 // Definition:
@@ -20,10 +17,11 @@ namespace mediapipe {
 //   output_stream: "OUTPUT:head_pose_checked"
 // }
 
-class CheckHeadposeCalculator : public CalculatorBase {
+bool isHeadposeValid(const aisdk::algorithm::HeadPoseInternal& headpose) { return true; }
+class CheckHeadposeCalculator : public xgraph::CalculatorBase {
    private:
    public:
-    static absl::Status GetContract(CalculatorContract* cc) {
+    static absl::Status GetContract(xgraph::CalculatorContract* cc) {
         AISDK_LOG_TRACE("[CheckHeadposeCalculator] GetContract start.");
         cc->Inputs().Tag("INPUT").Set<aisdk::algorithm::HeadPoseInternal>();
         cc->Outputs().Tag("OUTPUT").Set<aisdk::algorithm::HeadPoseInternal>();
@@ -31,13 +29,13 @@ class CheckHeadposeCalculator : public CalculatorBase {
         return absl::OkStatus();
     }
 
-    absl::Status Open(CalculatorContext* cc) final {
+    absl::Status Open(xgraph::CalculatorContext* cc) final {
         AISDK_LOG_TRACE("[CheckHeadposeCalculator] Open start.");
         AISDK_LOG_TRACE("[CheckHeadposeCalculator] Open complete.");
         return absl::OkStatus();
     }
 
-    absl::Status Process(CalculatorContext* cc) final {
+    absl::Status Process(xgraph::CalculatorContext* cc) final {
 #if defined(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
         TIMER_ONCE_WITH_TAG(CheckHeadposeCalculator::Process);
 #endif
@@ -61,4 +59,4 @@ class CheckHeadposeCalculator : public CalculatorBase {
     }
 };
 
-}  // namespace mediapipe
+}  // namespace aisdk::algorithm

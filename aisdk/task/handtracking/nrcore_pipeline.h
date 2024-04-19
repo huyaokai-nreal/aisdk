@@ -31,7 +31,7 @@ class Pipeline {
                                   CameraParams &camera) {
         static_assert(std::is_base_of<PipeGraphImpl, T>::value, "T is not derived from PipeGraphImpl!");
 
-        if (config.framework_type == aisdk::xengine::FrameworkType::MEDIAPIPE_GRAPH) {
+        if (config.framework_type == aisdk::xengine::FrameworkType::XGRAPH) {
             // 区分不同实现的pipeline
             m_graph_impl = std::make_shared<T>();
             if (m_graph_impl) {

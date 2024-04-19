@@ -299,12 +299,12 @@ bool GeneratePipelineMainConfig(Json::Value &root, mtar_t &tar, PipelineConfig &
     // 必须参数
     if (pipeline.isMember("framework") && pipeline["framework"].isString()) {
         std::string framework = pipeline["framework"].asString();
-        if (framework == "mediapipe_graph") {
-            config.framework_type = aisdk::xengine::FrameworkType::MEDIAPIPE_GRAPH;
+        if (framework == "xgraph") {
+            config.framework_type = aisdk::xengine::FrameworkType::XGRAPH;
 
-            if (pipeline.isMember("mediapipe_graph_prototxt") && pipeline["mediapipe_graph_prototxt"].isString()) {
+            if (pipeline.isMember("xgraph_prototxt") && pipeline["xgraph_prototxt"].isString()) {
                 mtar_header_t h;
-                if (MTAR_ESUCCESS == mtar_find(&tar, pipeline["mediapipe_graph_prototxt"].asCString(), &h)) {
+                if (MTAR_ESUCCESS == mtar_find(&tar, pipeline["xgraph_prototxt"].asCString(), &h)) {
                     void *p = nullptr;
                     mtar_mem_read_data(&tar, &p, h.size);
                     config.graph_config = std::string((const char *)p, h.size);

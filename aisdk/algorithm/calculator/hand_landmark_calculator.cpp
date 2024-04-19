@@ -1,8 +1,6 @@
 #include <absl/status/status.h>
 
 #include <memory>
-#include <opencv2/core/matx.hpp>
-#include <variant>
 #include <vector>
 
 #include "aisdk/algorithm/calculator/hand_landmark_calculator.pb.h"
@@ -14,13 +12,12 @@
 #include "aisdk/algorithm/model/calculator_basenet.h"
 #include "aisdk/algorithm/model/hand_rsntiny.h"
 #include "aisdk/algorithm/model/hand_rtmtiny.h"
-#include "aisdk/base/camera_model.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/time.h"
-#include "mediapipe/framework/calculator_framework.h"
-#include "nrcore_pipeline_mediapipe_service.h"
+#include "aisdk/xgraph/xgraph.h"
+#include "xgraph_service_utils.h"
 
-namespace mediapipe {
+namespace aisdk::algorithm {
 
 // A calculator generate hand landmark result, based on rsntiny/rsnnano neural network.
 // Definition:
@@ -36,7 +33,7 @@ namespace mediapipe {
 //    }
 // }
 
-class HandLandmarkCalculator : public CalculatorBase {
+class HandLandmarkCalculator : public xgraph::CalculatorBase {
    private:
     // RSNTiny algo instance
     std::shared_ptr<aisdk::algorithm::HandLandmarkBaseNet> netalgo;
@@ -45,7 +42,7 @@ class HandLandmarkCalculator : public CalculatorBase {
     std::string model_name_;
 
    public:
-    static absl::Status GetContract(CalculatorContract* cc) {
+    static absl::Status GetContract(xgraph::CalculatorContract* cc) {
         AISDK_LOG_TRACE("[HandLandmarkCalculator] GetContract start");
 
         cc->Inputs().Tag("IMAGE_INPUT").Set<std::vector<aisdk::algorithm::Image>>();
@@ -56,18 +53,18 @@ class HandLandmarkCalculator : public CalculatorBase {
         return absl::OkStatus();
     }
 
-    absl::Status Open(CalculatorContext* cc) final {
+    absl::Status Open(xgraph::CalculatorContext* cc) final {
         AISDK_LOG_TRACE("[HandLandmarkCalculator] Open start");
         const auto& options = cc->Options<aisdk::HandLandmarkCalculatorOptions>();
         input_height_ = options.input_height();
         input_width_ = options.input_width();
         model_name_ = options.model_name();
         if (model_name_ == "2d_rsntiny") {
-            netalgo = aisdk::algorithm::XrMediaServiceUtils::CreateNetAlgoBase<aisdk::algorithm::RSNTiny>(
+            netalgo = aisdk::algorithm::XGraphServiceUtils::CreateNetAlgoBase<aisdk::algorithm::RSNTiny>(
                 (void*)0x202310, model_name_);
         } else if (model_name_ == "2d_rtmtiny") {
             AISDK_LOG_TRACE("[HandLandmarkCalculator] start init rtmtiny");
-            netalgo = aisdk::algorithm::XrMediaServiceUtils::CreateNetAlgoBase<aisdk::algorithm::RTMTiny>(
+            netalgo = aisdk::algorithm::XGraphServiceUtils::CreateNetAlgoBase<aisdk::algorithm::RTMTiny>(
                 (void*)0x202310, model_name_);
             AISDK_LOG_TRACE("[HandLandmarkCalculator] finish init rtmtiny");
         } else {
@@ -81,7 +78,7 @@ class HandLandmarkCalculator : public CalculatorBase {
         return absl::OkStatus();
     }
 
-    absl::Status Process(CalculatorContext* cc) final {
+    absl::Status Process(xgraph::CalculatorContext* cc) final {
 #if defined(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
         TIMER_ONCE_WITH_TAG(HandLandmarkCalculator::Process);
 #endif
@@ -195,4 +192,4 @@ class HandLandmarkCalculator : public CalculatorBase {
         return absl::OkStatus();
     }
 };
-};  // namespace mediapipe
+};  // namespace aisdk::algorithm

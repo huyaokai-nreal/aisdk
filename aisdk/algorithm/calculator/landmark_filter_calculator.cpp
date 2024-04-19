@@ -1,4 +1,3 @@
-#include <iostream>
 #include <memory>
 
 #include "../common/NR_Seq_Manager.h"
@@ -6,11 +5,10 @@
 #include "../model/landmark_filter.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/time.h"
-#include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/port/canonical_errors.h"
-#include "nrcore_pipeline_mediapipe_service.h"
+#include "aisdk/xgraph/xgraph.h"
+#include "xgraph_service_utils.h"
 
-namespace mediapipe {
+namespace aisdk::algorithm {
 
 // A calculator generate smoothed detection bbox result.
 // Definition:
@@ -20,7 +18,7 @@ namespace mediapipe {
 //   output_stream: "BBOX_SMOOTHED_OUTPUT:detection_smoothed_output"
 // }
 
-class LandmarkFilterCalculator : public CalculatorBase {
+class LandmarkFilterCalculator : public xgraph::CalculatorBase {
    private:
     std::shared_ptr<aisdk::algorithm::LandmarkFilter> netalgo;
 
@@ -30,7 +28,7 @@ class LandmarkFilterCalculator : public CalculatorBase {
     std::shared_ptr<aisdk::algorithm::SeqManager2D> m_seq2d_rcam_rhand;
 
    public:
-    static absl::Status GetContract(CalculatorContract* cc) {
+    static absl::Status GetContract(xgraph::CalculatorContract* cc) {
         AISDK_LOG_TRACE("[LandmarkFilterCalculator] GetContract start");
 
         cc->Inputs().Tag("LANDMARK_INPUT").Set<aisdk::algorithm::Kpt2dInternal>();
@@ -40,10 +38,10 @@ class LandmarkFilterCalculator : public CalculatorBase {
         return absl::OkStatus();
     }
 
-    absl::Status Open(CalculatorContext* cc) final {
+    absl::Status Open(xgraph::CalculatorContext* cc) final {
         AISDK_LOG_TRACE("[LandmarkFilterCalculator] Open start");
 
-        netalgo = aisdk::algorithm::XrMediaServiceUtils::CreateNetAlgoBase<aisdk::algorithm::LandmarkFilter>(
+        netalgo = aisdk::algorithm::XGraphServiceUtils::CreateNetAlgoBase<aisdk::algorithm::LandmarkFilter>(
             (void*)0x202310, "2d_filter");
         if (!netalgo) {
             return absl::Status(absl::StatusCode::kInvalidArgument,
@@ -59,7 +57,7 @@ class LandmarkFilterCalculator : public CalculatorBase {
         return absl::OkStatus();
     }
 
-    absl::Status Process(CalculatorContext* cc) final {
+    absl::Status Process(xgraph::CalculatorContext* cc) final {
 #if defined(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
         TIMER_ONCE_WITH_TAG(LandmarkFilterCalculator::Process);
 #endif
@@ -110,4 +108,4 @@ class LandmarkFilterCalculator : public CalculatorBase {
     }
 };
 
-}  // namespace mediapipe
+}  // namespace aisdk::algorithm

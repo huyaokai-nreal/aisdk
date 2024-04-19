@@ -18,7 +18,7 @@ enum class NodeType {
 enum class FrameworkType {
     UNKNOWN = 0,
     XREAL_SIMPLE_SERIAL = 1,
-    MEDIAPIPE_GRAPH = 2,
+    XGRAPH = 2,
 };
 
 struct FileSource {
