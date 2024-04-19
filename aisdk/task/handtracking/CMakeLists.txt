@@ -17,7 +17,7 @@ install(TARGETS handtracking
             ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 FILE(GLOB HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
 install(
-  FILES 
+  FILES
   ${HEADERS}
   DESTINATION
   ${AISDK_INCLUDE_INSTALL_DIR}/task/handtracking
@@ -26,3 +26,5 @@ target_compile_options(handtracking PRIVATE -Wno-error
     PRIVATE -Wno-error
     PRIVATE -DNRPLUGIN  # handtracking_sdk需要的宏定义
   )
+
+add_clang_format_target(handtracking)

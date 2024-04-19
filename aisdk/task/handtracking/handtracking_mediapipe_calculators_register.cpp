@@ -1,4 +1,5 @@
 #include "handtracking_mediapipe_calculators_register.h"
+
 #include "aisdk/algorithm/calculator/block_hard_rules_calculator.cpp"
 #include "aisdk/algorithm/calculator/check_headpose_calculator.cpp"
 #include "aisdk/algorithm/calculator/compute_3dscore_calculator.cpp"
@@ -42,6 +43,5 @@ void TriggerGloalGraphCalculatorsConstruct() {
     static std::once_flag oc;
     std::call_once(oc, [&]() { mediapipe::TriggerGloalGraphCalculatorsConstructForHandTracking(); });
 }
-
 
 }  // namespace mediapipe
