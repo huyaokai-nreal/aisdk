@@ -27,7 +27,7 @@ namespace aisdk::algorithm {
 class HandLiftCalculator : public xgraph::CalculatorBase {
    private:
     // SeqGMLPLiftNet algo instance
-    std::shared_ptr<aisdk::algorithm::GMLPLiftNet3> netalgo;
+    std::shared_ptr<aisdk::algorithm::GMLPLiftNimble> netalgo;
     std::shared_ptr<aisdk::base::BaseCameraModel> lcam_model_ = nullptr;
     std::shared_ptr<aisdk::base::BaseCameraModel> rcam_model_ = nullptr;
 

@@ -79,7 +79,7 @@
         },
         "3d_lift": {
             "model_config": {
-                "file_name": "models/hand_liftv2_stdv2_convrnn_240315_02d78c.mnn",
+                "file_name": "models/liftnimble_reg6d_seq_0411_75b6fa.mnn",
                 "vendor": "mnn"
             },
             "session_config": {
@@ -97,7 +97,7 @@
                 "mem_out"
             ],
             "netalgo_config": {
-                "name": "gmlplift_v3.0.0"
+                "name": "gmlplift_nimble_v1.0.0"
             }
         }
     },
