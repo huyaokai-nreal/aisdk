@@ -10,6 +10,8 @@ struct Kpt3dInternal {
     // Hand 3d output data, a single hand data size should be 21.
     std::vector<cv::Vec3f> lhand;
     std::vector<cv::Vec3f> rhand;
+    float lscore = 0;
+    float rscore = 0;
 
     bool lhand_valid = false;
     bool rhand_valid = false;

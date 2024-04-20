@@ -1,7 +1,6 @@
 #include "handtracking_calculators_register.h"
 
 #include "aisdk/algorithm/calculator/block_hard_rules_calculator.cpp"
-#include "aisdk/algorithm/calculator/compute_3dscore_calculator.cpp"
 #include "aisdk/algorithm/calculator/convert_to_world_calculator.cpp"
 #include "aisdk/algorithm/calculator/detect_box_smoothing_calculator.cpp"
 #include "aisdk/algorithm/calculator/gesture_recognition_calculator.cpp"
@@ -9,7 +8,6 @@
 #include "aisdk/algorithm/calculator/hand_detection_track_calculator.cpp"
 #include "aisdk/algorithm/calculator/hand_landmark_calculator.cpp"
 #include "aisdk/algorithm/calculator/hand_lift_calculator.cpp"
-#include "aisdk/algorithm/calculator/hand_state_calculator.cpp"
 #include "aisdk/algorithm/calculator/kalman_filter_correction_calculator.cpp"
 #include "aisdk/algorithm/calculator/landmark_filter_calculator.cpp"
 #include "aisdk/algorithm/calculator/standardize_keypoints_calculator.cpp"
@@ -20,13 +18,11 @@ namespace aisdk::task {
 void TriggerGloalGraphCalculatorsConstructForHandTracking() {
     using namespace algorithm;
     REGISTER_CALCULATOR(BlockHardRulesCalculator);          // ok!
-    REGISTER_CALCULATOR(Compute3DScoreCalculator);          // not fully implemented
     REGISTER_CALCULATOR(ConvertToWorldCalculator);          // ok!
     REGISTER_CALCULATOR(DetectBoxSmoothingCalculator);      // ok!
     REGISTER_CALCULATOR(HandDetectionCalculator);           // ok!
     REGISTER_CALCULATOR(GestureRecognitionCalculator);      // ok!
     REGISTER_CALCULATOR(HandLandmarkCalculator);            // ok!
-    REGISTER_CALCULATOR(HandStateCalculator);               // ok！
     REGISTER_CALCULATOR(KalmanFilterCorrectionCalculator);  // ok!
     REGISTER_CALCULATOR(HandLiftCalculator);                // ok!
     REGISTER_CALCULATOR(StandardizeKeypointsCalculator);    // ok！

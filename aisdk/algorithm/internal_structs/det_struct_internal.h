@@ -41,4 +41,4 @@ struct DetOutputInternal {
     // }
 };
 
-}  // namespace aisdk::aisdk::algorithm
+}  // namespace aisdk::algorithm

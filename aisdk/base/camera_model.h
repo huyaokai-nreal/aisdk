@@ -27,6 +27,7 @@ class BaseCameraModel {
           video_height_(video_height){};
     virtual std::vector<Eigen::Vector2f> undistort(const std::vector<Eigen::Vector2f>& point_2d) = 0;
     virtual std::vector<Eigen::Vector3f> world_to_eye(const std::vector<Eigen::Vector3f>& point_3d) = 0;
+    virtual std::vector<Eigen::Vector2f> world_to_window(const std::vector<Eigen::Vector3f>& point_3d) = 0;
     virtual std::vector<Eigen::Vector3f> eye_to_world(const std::vector<Eigen::Vector3f>& point_3d) = 0;
     virtual std::vector<Eigen::Vector2f> eye_to_window(const std::vector<Eigen::Vector3f>& point_3d) = 0;
     virtual std::vector<Eigen::Vector3f> window_to_eye(const std::vector<Eigen::Vector2f>& point_2d) = 0;
@@ -55,6 +56,7 @@ class CameraModel : public BaseCameraModel {
           distortion_model_(distortion){};
     std::vector<Eigen::Vector2f> undistort(const std::vector<Eigen::Vector2f>& point_2d) override;
     std::vector<Eigen::Vector3f> world_to_eye(const std::vector<Eigen::Vector3f>& point_3d) override;
+    std::vector<Eigen::Vector2f> world_to_window(const std::vector<Eigen::Vector3f>& point_3d) override;
     std::vector<Eigen::Vector3f> eye_to_world(const std::vector<Eigen::Vector3f>& point_3d) override;
     std::vector<Eigen::Vector2f> eye_to_window(const std::vector<Eigen::Vector3f>& point_3d) override;
     std::vector<Eigen::Vector3f> window_to_eye(const std::vector<Eigen::Vector2f>& point_2d) override;

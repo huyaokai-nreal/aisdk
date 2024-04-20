@@ -1,16 +1,22 @@
 #pragma once
 
-#include "Eigen/Dense"
+#include <memory>
 #include <opencv2/opencv.hpp>
+#include <vector>
 
-float compute_rmse(std::vector<cv::Vec2f> lval, std::vector<cv::Vec2f> rval);
-
-float compute_score3d(std::vector<cv::Vec3f> pred_xyz, std::vector<cv::Vec2f> leftcam_uv_ori,
-                      std::vector<cv::Vec2f> rightcam_uv_ori, cv::Mat leftcam_cam_matrix, cv::Mat rightcam_cam_matrix,
-                      Eigen::Isometry3f m_cvL_T_cvR);
+#include "Eigen/Dense"
+#include "aisdk/base/camera_model.h"
+#include "aisdk/base/type.h"
+namespace aisdk::algorithm {
+float compute_score_with_reprojection(const std::vector<cv::Vec3f>& pred_xyz, const std::vector<Vec2f_t>& leftcam_uv_ori,
+                                      const std::vector<Vec2f_t>& rightcam_uv_ori,
+                                      const std::shared_ptr<base::BaseCameraModel>& left_cam,
+                                      const std::shared_ptr<base::BaseCameraModel>& right_cam);
 
 float get_bbox_distance(cv::Rect src, cv::Rect dst);
 
 bool check_if_rect_valid(cv::Rect rect, int max_width, int max_height);
 bool check_if_rect_valid_relax(cv::Rect rect, int max_width, int max_height);
 bool isNaN(const std::vector<cv::Vec3f>& kpts);
+
+}  // namespace aisdk::algorithm

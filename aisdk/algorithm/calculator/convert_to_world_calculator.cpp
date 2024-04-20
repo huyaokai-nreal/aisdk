@@ -1,7 +1,6 @@
 #include <memory>
 
 #include "../common/NR_Transfer.h"
-#include "../internal_structs/hand_state_struct_internal.h"
 #include "../internal_structs/headpose_struct_internal.h"
 #include "../internal_structs/kpt3d_struct_internal.h"
 #include "aisdk/base/log.h"
@@ -36,7 +35,6 @@ class ConvertToWorldCalculator : public xgraph::CalculatorBase {
         AISDK_LOG_TRACE("[ConvertToWorldCalculator] GetContract start.");
         cc->Inputs().Tag("INPUT").Set<aisdk::algorithm::Kpt3dInternal>();
         cc->Inputs().Tag("HEADPOSE").Set<aisdk::algorithm::HeadPoseInternal>();
-        cc->Inputs().Tag("STATE_INPUT").Set<aisdk::algorithm::HandStateInternal>();
         cc->Outputs().Tag("OUTPUT").Set<aisdk::algorithm::Kpt3dInternal>();
         AISDK_LOG_TRACE("[ConvertToWorldCalculator] GetContract complete.");
         return absl::OkStatus();

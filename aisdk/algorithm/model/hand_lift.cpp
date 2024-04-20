@@ -242,10 +242,10 @@ void GMLPLiftNet3::PreProcess(const LiftNetInputs &inputs) {
     AISDK_LOG_TRACE("[GMLPLiftNet3] rcam cx={}, cy={}, fx={}, fy={}", r_K.cx_, r_K.cy_, r_K.fx_, r_K.fy_);
 
     for (int idx = 0; idx < kAlgoKeypointNum; idx++) {
-        AISDK_LOG_TRACE("[GMLPLiftNet3] lkpt({}): 0={}, 1={}", idx, inputs.input_kpt_lcam[idx][0],
-                        inputs.input_kpt_lcam[idx][1]);
-        AISDK_LOG_TRACE("[GMLPLiftNet3] rkpt({}): 0={}, 1={}", idx, inputs.input_kpt_lcam[idx][0],
-                        inputs.input_kpt_lcam[idx][1]);
+        // AISDK_LOG_TRACE("[GMLPLiftNet3] lkpt({}): 0={}, 1={}", idx, inputs.input_kpt_lcam[idx][0],
+        //                 inputs.input_kpt_lcam[idx][1]);
+        // AISDK_LOG_TRACE("[GMLPLiftNet3] rkpt({}): 0={}, 1={}", idx, inputs.input_kpt_rcam[idx][0],
+        //                 inputs.input_kpt_rcam[idx][1]);
 
         m_leftcam_x[idx] = (inputs.input_kpt_lcam[idx][0] - l_K.cx_) / l_K.fx_;
         m_leftcam_y[idx] = (inputs.input_kpt_lcam[idx][1] - l_K.cy_) / l_K.fy_;
@@ -262,15 +262,15 @@ void GMLPLiftNet3::PreProcess(const LiftNetInputs &inputs) {
         buffer_x[i * 2] = m_leftcam_x[i];
         buffer_x[i * 2 + 1] = m_leftcam_y[i];
 
-        AISDK_LOG_TRACE("[GMLPLiftNet3] buffer_x, {}: {}, {}: {}", i * 2, buffer_x[i * 2], i * 2 + 1,
-                        buffer_x[i * 2 + 1]);
+        // AISDK_LOG_TRACE("[GMLPLiftNet3] buffer_x, {}: {}, {}: {}", i * 2, buffer_x[i * 2], i * 2 + 1,
+        //                buffer_x[i * 2 + 1]);
     }
     buffer_x[42] = inputs.is_left;
     for (int i = 0; i < kAlgoKeypointNum; i++) {
         buffer_y[i * 2] = m_rightcam_x[i];
         buffer_y[i * 2 + 1] = m_rightcam_y[i];
-        AISDK_LOG_TRACE("[GMLPLiftNet3] buffer_y, {}: {}, {}: {}", i * 2, buffer_y[i * 2], i * 2 + 1,
-                        buffer_y[i * 2 + 1]);
+        // AISDK_LOG_TRACE("[GMLPLiftNet3] buffer_y, {}: {}, {}: {}", i * 2, buffer_y[i * 2], i * 2 + 1,
+        //                 buffer_y[i * 2 + 1]);
     }
     buffer_y[42] = inputs.is_left;
 

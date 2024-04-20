@@ -55,24 +55,12 @@ node {
     }
   }
 }
-node {
-  name: "Compute3DScore"
-  calculator: "Compute3DScoreCalculator"
-  input_stream: "LANDMARK_INPUT:kpt2d_filter"
-  input_stream: "KPT3D_INPUT:kpt3d_blocked"
-  output_stream: "OUTPUT:hand_score"
-}
-node {
-  name: "HandState"
-  calculator: "HandStateCalculator"
-  input_stream: "SCORE_INPUT:hand_score"
-  output_stream: "OUTPUT:hand_state"
-}
+
+
 node {
   name: "ConvertToWorld"
   calculator: "ConvertToWorldCalculator"
   input_stream: "INPUT:kpt3d_blocked"
-  input_stream: "STATE_INPUT:hand_state"
   input_stream: "HEADPOSE:head_pose"
   output_stream: "OUTPUT:kpt3d_world"
 }
@@ -80,7 +68,6 @@ node {
   name: "KalmanFilterCorrection"
   calculator: "KalmanFilterCorrectionCalculator"
   input_stream: "INPUT:kpt3d_standard"
-  input_stream: "STATE:hand_state"
   output_stream: "OUTPUT:kpt3d_filtered"
 }
 
@@ -95,7 +82,5 @@ node {
   calculator: "GestureRecognitionCalculator"
   input_stream: "GR_KPT2D_INPUT:kpt2d_filter"
   input_stream: "GR_KPT_INPUT:kpt3d_filtered"
-  input_stream: "GR_SCORE_INPUT:hand_score"
-  input_stream: "GR_STATE_INPUT:hand_state"
   output_stream: "GR_OUTPUT:hand_result"
 }

@@ -1,6 +1,15 @@
 #include "metrics.h"
 
-float compute_rmse(std::vector<cv::Vec2f> lval, std::vector<cv::Vec2f> rval) {
+#include <algorithm>
+#include <opencv2/core/matx.hpp>
+#include <vector>
+
+#include "aisdk/base/camera_model.h"
+#include "aisdk/base/log.h"
+#include "aisdk/base/type.h"
+namespace aisdk::algorithm {
+
+float compute_rmse(std::vector<Vec2f_t> lval, std::vector<Vec2f_t> rval) {
     float res = 0;
     for (int i = 0; i < 13; i++) {
         res += (lval[i][0] - rval[i][0]) * (lval[i][0] - rval[i][0]) +
@@ -19,36 +28,34 @@ float compute_rmse(std::vector<cv::Vec2f> lval, std::vector<cv::Vec2f> rval) {
     return rmse / norm;
 }
 
-float compute_score3d(std::vector<cv::Vec3f> pred_xyz, std::vector<cv::Vec2f> leftcam_uv_ori,
-                      std::vector<cv::Vec2f> rightcam_uv_ori, cv::Mat leftcam_cam_matrix, cv::Mat rightcam_cam_matrix,
-                      Eigen::Isometry3f m_cvL_T_cvR) {
-    std::vector<cv::Vec2f> leftcam_uv_pred(21);
-    float rmse_2d, rmse_2d_rl;
-    for (int i = 0; i < 21; i++) {
-        leftcam_uv_pred[i][0] =
-            (pred_xyz[i][0] * leftcam_cam_matrix.at<float>(0, 0)) / pred_xyz[i][2] + leftcam_cam_matrix.at<float>(0, 2);
-        leftcam_uv_pred[i][1] =
-            (pred_xyz[i][1] * leftcam_cam_matrix.at<float>(1, 1)) / pred_xyz[i][2] + leftcam_cam_matrix.at<float>(1, 2);
+void log_kpt2d(std::vector<Vec2f_t> kpts) {
+    for (const auto& kpt : kpts) {
+        AISDK_LOG_WARN("x: {}, y:{}", kpt[0], kpt[1]);
     }
-    rmse_2d = compute_rmse(leftcam_uv_pred, leftcam_uv_ori);
-
-    std::vector<cv::Vec2f> rightcam_uv_pred(21);
-
-    for (int i = 0; i < 21; i++) {
-        Eigen::Vector3f rightcam_cv_temp(pred_xyz[i][0], pred_xyz[i][1], pred_xyz[i][2]);
-
-        rightcam_cv_temp = m_cvL_T_cvR.inverse() * rightcam_cv_temp;
-        cv::Vec3f rightcam_proj{rightcam_cv_temp.x(), rightcam_cv_temp.y(), rightcam_cv_temp.z()};
-
-        rightcam_uv_pred[i][0] = (rightcam_proj[0] * rightcam_cam_matrix.at<float>(0, 0)) / rightcam_proj[2] +
-                                 rightcam_cam_matrix.at<float>(0, 2);
-        rightcam_uv_pred[i][1] = (rightcam_proj[1] * rightcam_cam_matrix.at<float>(1, 1)) / rightcam_proj[2] +
-                                 rightcam_cam_matrix.at<float>(1, 2);
-    }
-    rmse_2d_rl = compute_rmse(rightcam_uv_pred, rightcam_uv_ori);
-
-    return rmse_2d + rmse_2d_rl;
 }
+float compute_score_with_reprojection(const std::vector<cv::Vec3f>& pred_xyz,
+                                      const std::vector<Vec2f_t>& leftcam_uv_ori,
+                                      const std::vector<Vec2f_t>& rightcam_uv_ori,
+                                      const std::shared_ptr<base::BaseCameraModel>& left_cam,
+                                      const std::shared_ptr<base::BaseCameraModel>& right_cam) {
+    // AISDK_LOG_WARN("left pred kpt 2d");
+    // log_kpt2d(leftcam_uv_ori);
+    std::vector<Vec3f_t> kpt3d(pred_xyz.size());
+    auto cv_to_eigen = [](cv::Vec3f x) -> Vec3f_t { return {x[0], x[1], x[2]}; };
+    std::transform(pred_xyz.begin(), pred_xyz.end(), kpt3d.begin(), cv_to_eigen);
+    auto left_reproj_kpt2d = left_cam->world_to_window(kpt3d);
+    // AISDK_LOG_WARN("left reproj kpt 2d");
+    // log_kpt2d(left_reproj_kpt2d);
+    auto left_error = compute_rmse(left_reproj_kpt2d, leftcam_uv_ori);
+    // AISDK_LOG_WARN("right pred kpt 2d");
+    // log_kpt2d(rightcam_uv_ori);
+    auto right_reproj_kpt2d = right_cam->world_to_window(kpt3d);
+    // AISDK_LOG_WARN("right reproj kpt 2d");
+    // log_kpt2d(right_reproj_kpt2d);
+    auto right_error = compute_rmse(right_reproj_kpt2d, rightcam_uv_ori);
+
+    return std::max(left_error, right_error);
+}  // namespace aisdk::algorithm
 
 float get_bbox_distance(cv::Rect src, cv::Rect dst) {
     float dis = 0.0;
@@ -79,3 +86,4 @@ bool isNaN(const std::vector<cv::Vec3f>& kpts) {
     }
     return false;
 }
+}  // namespace aisdk::algorithm

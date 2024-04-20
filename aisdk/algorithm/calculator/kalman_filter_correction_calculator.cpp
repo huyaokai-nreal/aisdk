@@ -1,9 +1,6 @@
-#include <memory>
-
 #include "../common/NR_GlobalPredictorService.h"
-#include "../internal_structs/hand_state_struct_internal.h"
-#include "../internal_structs/standard_kpt3d_struct_internal.h"
 #include "aisdk/algorithm/func/netalgo_utils.h"
+#include "aisdk/algorithm/internal_structs/kpt3d_struct_internal.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/time.h"
 #include "aisdk/xgraph/xgraph.h"
@@ -22,15 +19,14 @@ namespace aisdk::algorithm {
 
 class KalmanFilterCorrectionCalculator : public xgraph::CalculatorBase {
    private:
-    aisdk::algorithm::StandardKpt3dInternal kpt3d_world_pre;
+    Kpt3dInternal kpt3d_world_pre;
     double last_timestamp_;  // in seconds
 
    public:
     static absl::Status GetContract(xgraph::CalculatorContract* cc) {
         AISDK_LOG_TRACE("[KalmanFilterCorrectionCalculator] GetContract start.");
-        cc->Inputs().Tag("INPUT").Set<aisdk::algorithm::StandardKpt3dInternal>();
-        cc->Inputs().Tag("STATE").Set<aisdk::algorithm::HandStateInternal>();
-        cc->Outputs().Tag("OUTPUT").Set<aisdk::algorithm::StandardKpt3dInternal>();
+        cc->Inputs().Tag("INPUT").Set<Kpt3dInternal>();
+        cc->Outputs().Tag("OUTPUT").Set<Kpt3dInternal>();
         AISDK_LOG_TRACE("[KalmanFilterCorrectionCalculator] GetContract complete.");
         return absl::OkStatus();
     }
@@ -46,17 +42,14 @@ class KalmanFilterCorrectionCalculator : public xgraph::CalculatorBase {
         TIMER_ONCE_WITH_TAG(KalmanFilterCorrectionCalculator::Process);
 #endif
         AISDK_LOG_TRACE("[KalmanFilterCorrectionCalculator] Process start.");
-        const auto& kpt3d_world = cc->Inputs().Tag("INPUT").Get<aisdk::algorithm::StandardKpt3dInternal>();
-        const auto& hand_state = cc->Inputs().Tag("STATE").Get<aisdk::algorithm::HandStateInternal>();
+        const auto& kpt3d_world = cc->Inputs().Tag("INPUT").Get<Kpt3dInternal>();
         const auto& timestamp = cc->InputTimestamp().Seconds();
-        std::unique_ptr<aisdk::algorithm::StandardKpt3dInternal> output_buffer_ =
-            absl::make_unique<aisdk::algorithm::StandardKpt3dInternal>();
-        output_buffer_->clear();
+        std::unique_ptr<Kpt3dInternal> output_buffer_ = absl::make_unique<Kpt3dInternal>();
 
         auto& predictor_lhand = aisdk::algorithm::GlobalPredictorService::getInstance().get_predictor_lhand();
         auto& predictor_rhand = aisdk::algorithm::GlobalPredictorService::getInstance().get_predictor_rhand();
 
-        if (hand_state.lhand_valid == false) {
+        if (kpt3d_world.lhand_valid == false) {
             predictor_lhand.stop_tracking();
             output_buffer_->lhand_valid = false;
             kpt3d_world_pre.lhand_valid = false;
@@ -77,7 +70,7 @@ class KalmanFilterCorrectionCalculator : public xgraph::CalculatorBase {
             output_buffer_->lhand_valid = true;
         }
 
-        if (hand_state.rhand_valid == false) {
+        if (kpt3d_world.rhand_valid == false) {
             predictor_rhand.stop_tracking();
             output_buffer_->rhand_valid = false;
             kpt3d_world_pre.rhand_valid = false;

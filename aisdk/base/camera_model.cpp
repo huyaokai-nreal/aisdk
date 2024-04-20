@@ -8,6 +8,12 @@
 #include "aisdk/base/camera_model_projection.h"
 namespace aisdk::base {
 template <typename P, typename D>
+std::vector<Eigen::Vector2f> CameraModel<P, D>::world_to_window(const std::vector<Eigen::Vector3f> &point_3d) {
+    auto eye_kpts = world_to_eye(point_3d);
+    auto result = eye_to_window(eye_kpts);
+    return result;
+}
+template <typename P, typename D>
 std::vector<Eigen::Vector3f> CameraModel<P, D>::world_to_eye(const std::vector<Eigen::Vector3f> &point_3d) {
     std::vector<Eigen::Vector3f> result;
     result.reserve(point_3d.size());
