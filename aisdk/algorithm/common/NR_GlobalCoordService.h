@@ -3,7 +3,10 @@
 #include <Eigen/Dense>
 #include <opencv2/core/core.hpp>
 #include <vector>
+
 #include "aisdk/base/coord_transform_service.h"
+#include "aisdk/base/type.h"
+namespace aisdk::algorithm {
 
 enum class XrealCoordSystem { CV_LEFT_CAM, GL_LEFT_CAM, GL_HEAD, GL_RIGHT_CAM, CV_RIGHT_CAM, COORD_MAX_COUNT = 5 };
 
@@ -35,19 +38,15 @@ class GlobalCoordService {
         service.setTransform(from, to, rotation, translation);
     }
 
-    cv::Vec3f transform(const CoordinateSystemEnum& from, const CoordinateSystemEnum& to, const cv::Vec3f& point_cv) {
-        Eigen::Matrix<TransformDataType, 3, 1> point_eigen(point_cv[0], point_cv[1], point_cv[2]);
-        Eigen::Matrix<TransformDataType, 3, 1> result_eigen = service.transform(from, to, point_eigen);
-        return cv::Vec3f(result_eigen[0], result_eigen[1], result_eigen[2]);
+    Vec3f_t transform(const CoordinateSystemEnum& from, const CoordinateSystemEnum& to, const Vec3f_t& point_cv) {
+        return  service.transform(from, to, point_cv);
     }
 
-    std::vector<cv::Vec3f> transform(const CoordinateSystemEnum& from, const CoordinateSystemEnum& to,
-                                     const std::vector<cv::Vec3f>& point_cv) {
-        std::vector<cv::Vec3f> res(point_cv.size());
+    std::vector<Vec3f_t> transform(const CoordinateSystemEnum& from, const CoordinateSystemEnum& to,
+                                   const std::vector<Vec3f_t>& point_cv) {
+        std::vector<Vec3f_t> res(point_cv.size());
         for (size_t i = 0; i < point_cv.size(); i++) {
-            Eigen::Matrix<TransformDataType, 3, 1> point_eigen(point_cv[i][0], point_cv[i][1], point_cv[i][2]);
-            Eigen::Matrix<TransformDataType, 3, 1> result_eigen = service.transform(from, to, point_eigen);
-            res[i] = cv::Vec3f(result_eigen[0], result_eigen[1], result_eigen[2]);
+            res[i] = service.transform(from, to, point_cv[i]);
         }
         return res;
     }
@@ -57,3 +56,5 @@ class GlobalCoordService {
 
     aisdk::base::CoordTransformService<CoordinateSystemEnum, CoordSystemSize, TransformDataType> service;
 };
+
+}  // namespace aisdk::algorithm

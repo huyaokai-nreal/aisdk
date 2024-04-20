@@ -17,7 +17,7 @@ struct LiftNetInputs {
 };
 
 struct LiftNetOutputs {
-    std::vector<cv::Vec3f> res3d;
+    std::vector<Vec3f_t> res3d;
 };
 
 // GMLP V1 for light only

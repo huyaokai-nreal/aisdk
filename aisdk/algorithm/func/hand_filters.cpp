@@ -1,5 +1,7 @@
 #include "hand_filters.h"
 
+namespace aisdk::algorithm {
+
 #define EZXR_DEFINED_JOINTS 23
 
 bool HandFilters::init() {
@@ -39,8 +41,8 @@ bool HandFilters::init() {
     return true;
 }
 
-void HandFilters::kpt_seq_3d_filter(int hand_side, std::vector<cv::Vec3f>& point3d) {
-    std::vector<cv::Vec3f> rel_points, palm_points, root_point;
+void HandFilters::kpt_seq_3d_filter(int hand_side, std::vector<Vec3f_t>& point3d) {
+    std::vector<Vec3f_t> rel_points, palm_points, root_point;
 
     for (int i = 0; i < EZXR_DEFINED_JOINTS; i++) {
         if (i == 21) continue;
@@ -72,5 +74,6 @@ void HandFilters::kpt_seq_3d_filter(int hand_side, std::vector<cv::Vec3f>& point
             p++;
         }
     }
-    return;
 };
+
+}  // namespace aisdk::algorithm

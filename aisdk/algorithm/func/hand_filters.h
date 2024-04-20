@@ -3,13 +3,15 @@
 #include <vector>
 
 #include "../common/NR_Seq_Manager.h"
+namespace aisdk::algorithm {
+
 
 class HandFilters final {
    public:
     HandFilters(){};
     ~HandFilters(){};
     bool init();
-    void kpt_seq_3d_filter(int hand_side, std::vector<cv::Vec3f>& point3d);
+    void kpt_seq_3d_filter(int hand_side, std::vector<Vec3f_t>& point3d);
 
    private:
     std::shared_ptr<aisdk::algorithm::SeqManager3D> m_seq3d_lhand;
@@ -21,3 +23,5 @@ class HandFilters final {
     std::shared_ptr<aisdk::algorithm::SeqManager3D> m_seq3d_center_lhand;
     std::shared_ptr<aisdk::algorithm::SeqManager3D> m_seq3d_center_rhand;
 };
+
+}

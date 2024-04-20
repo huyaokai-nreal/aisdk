@@ -4,6 +4,7 @@
 #include "aisdk/algorithm/calculator/block_hard_rules_calculator.pb.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/time.h"
+#include "aisdk/base/type.h"
 #include "aisdk/xgraph/xgraph.h"
 
 constexpr int root_index = 0;
@@ -31,7 +32,7 @@ class BlockHardRulesCalculator : public xgraph::CalculatorBase {
         AISDK_LOG_TRACE("[BlockHardRulesCalculator] GetContract complete");
         return absl::OkStatus();
     }
-    inline bool block_rule_root_distance(const std::vector<cv::Vec3f>& points_3d, float max_depth) {
+    inline bool block_rule_root_distance(const std::vector<Vec3f_t>& points_3d, float max_depth) {
         return points_3d[root_index][2] > max_depth;
     }
 

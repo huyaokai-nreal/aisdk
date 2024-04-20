@@ -95,8 +95,6 @@ class CoordTransformService {
     }
 
     Vector3 transform(const CoordinateSystemEnum& from, const CoordinateSystemEnum& to, const Vector3& point) const {
-        static_assert(std::is_same<ScalarType, typename std::remove_reference_t<decltype(point)>::Scalar>::value,
-                      "Mismatched precision types in input point.");
         return m_transforms[static_cast<std::size_t>(from)][static_cast<std::size_t>(to)] * point;
     }
 
@@ -106,8 +104,6 @@ class CoordTransformService {
 
     std::vector<Vector3> transform(const CoordinateSystemEnum& from, const CoordinateSystemEnum& to,
                                    const std::vector<Vector3>& points) const {
-        static_assert(std::is_same<ScalarType, typename std::remove_reference_t<decltype(points)>::Scalar>::value,
-                      "Mismatched precision types in input point.");
         std::vector<Vector3> transformed_points;
         transformed_points.reserve(points.size());
         const auto& isometry = m_transforms[static_cast<std::size_t>(from)][static_cast<std::size_t>(to)];

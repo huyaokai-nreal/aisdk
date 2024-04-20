@@ -3,6 +3,7 @@
 #include "../func/netalgo_utils.h"
 #include "aisdk/algorithm/common/hand_define.h"
 #include "aisdk/base/log.h"
+#include "aisdk/base/type.h"
 
 namespace aisdk::algorithm {
 
@@ -143,13 +144,13 @@ void GMLPLiftNet::PostProcess(LiftNetOutputs &outputs, const CamInfo &cam_info) 
                 auto leftZ = _data;
                 auto rightZ = _data + 21;
 
-                cv::Vec3f leftcam_XYZ{leftZ[i] * m_leftcam_x[i], leftZ[i] * m_leftcam_y[i], leftZ[i]};
-                cv::Vec3f rightcam_XYZ{rightZ[i] * m_rightcam_x[i], rightZ[i] * m_rightcam_y[i], rightZ[i]};
+                Vec3f_t leftcam_XYZ{leftZ[i] * m_leftcam_x[i], leftZ[i] * m_leftcam_y[i], leftZ[i]};
+                Vec3f_t rightcam_XYZ{rightZ[i] * m_rightcam_x[i], rightZ[i] * m_rightcam_y[i], rightZ[i]};
 
-                Eigen::Vector3f rightcam_root_cv(rightcam_XYZ[0], rightcam_XYZ[1], rightcam_XYZ[2]);
-                Eigen::Vector3f rightcam_root_cv_to_left = cam_info.cvL_T_cvR * rightcam_root_cv;
-                cv::Vec3f rightcam_to_left_XYZ{rightcam_root_cv_to_left.x(), rightcam_root_cv_to_left.y(),
-                                               rightcam_root_cv_to_left.z()};
+                Vec3f_t rightcam_root_cv(rightcam_XYZ[0], rightcam_XYZ[1], rightcam_XYZ[2]);
+                Vec3f_t rightcam_root_cv_to_left = cam_info.cvL_T_cvR * rightcam_root_cv;
+                Vec3f_t rightcam_to_left_XYZ{rightcam_root_cv_to_left.x(), rightcam_root_cv_to_left.y(),
+                                             rightcam_root_cv_to_left.z()};
                 outputs.res3d[i] = corruption_cam * leftcam_XYZ + (1 - corruption_cam) * rightcam_to_left_XYZ;
             }
         }
@@ -334,7 +335,7 @@ void GMLPLiftNet3::PostProcess(LiftNetOutputs &outputs, const LiftNetInputs &inp
         Eigen::Vector3f rightcam_to_left_XYZ = right_camera_->get_cam_to_world_transform() * rightcam_XYZ;
         Eigen::Vector3f final_kpt = corruption_cam * leftcam_XYZ + (1 - corruption_cam) * rightcam_to_left_XYZ;
 
-        outputs.res3d[i] = cv::Vec3f{final_kpt.x(), final_kpt.y(), final_kpt.z()};
+        outputs.res3d[i] = Vec3f_t{final_kpt.x(), final_kpt.y(), final_kpt.z()};
     }
 
     int index_mem = this->m_net->GetOutputTensorIndex("mem_out");

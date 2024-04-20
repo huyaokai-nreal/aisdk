@@ -1,3 +1,5 @@
+#include <aisdk/base/type.h>
+#include <algorithm>
 #include <opencv2/core/matx.hpp>
 #include <vector>
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
@@ -12,7 +14,7 @@
  */
 
 TEST_CASE("testing the pose svd solver") {
-    std::vector<cv::Vec3f> kpts{{9.456082, -23.14286, -102.04225},   {-2.481389, 1.7483234, -82.89849},
+    std::vector<cv::Vec3f> kpts_{{9.456082, -23.14286, -102.04225},   {-2.481389, 1.7483234, -82.89849},
                                 {-22.376545, 37.343575, -81.94794},  {-41.47552, 58.679825, -78.18042},
                                 {-55.764217, 67.73949, -83.255775},  {-2.033105, 52.642273, -123.78874},
                                 {-30.565258, 76.83467, -131.10605},  {-51.843487, 73.819176, -126.12402},
@@ -23,7 +25,9 @@ TEST_CASE("testing the pose svd solver") {
                                 {-71.35381, 34.714935, -127.356155}, {-16.500355, 11.297039, -157.28973},
                                 {-45.16375, 20.769608, -167.20609},  {-59.602566, 19.249035, -159.10095},
                                 {-70.787415, 20.62072, -150.15366}};
-    auto metacarpal_joints = get_metacarpal_joints_v1(kpts);
+    std::vector<aisdk::Vec3f_t> kpts(kpts_.size());
+    std::transform(kpts_.begin(), kpts_.end(), kpts.begin(), [](auto kpt){return aisdk::Vec3f_t{kpt[0], kpt[1], kpt[2]};});
+    auto metacarpal_joints = aisdk::algorithm::get_metacarpal_joints_v1(kpts);
     Eigen::Vector3f index_meta {metacarpal_joints[0][0], metacarpal_joints[0][1], metacarpal_joints[0][2]};
     CHECK(index_meta.isApprox(Eigen::Vector3f{4.92867047,4.02336109,-103.55305733}));
     Eigen::Vector3f middle_meta {metacarpal_joints[1][0], metacarpal_joints[1][1], metacarpal_joints[1][2]};

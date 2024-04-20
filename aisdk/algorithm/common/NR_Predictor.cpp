@@ -136,10 +136,10 @@ PredictorState KFPredictor::predict(double target_ts) {
     //                m_kf_impl->statePre.at<float>(S_VX), m_kf_impl->statePre.at<float>(S_VY),
     //                m_kf_impl->statePre.at<float>(S_VZ));
 
-    return {cv::Vec3f{m_kf_impl->statePre.at<float>(S_X), m_kf_impl->statePre.at<float>(S_Y),
-                      m_kf_impl->statePre.at<float>(S_Z)},
-            cv::Vec3f{m_kf_impl->statePre.at<float>(S_VX), m_kf_impl->statePre.at<float>(S_VY),
-                      m_kf_impl->statePre.at<float>(S_VZ)}};
+    return {Vec3f_t{m_kf_impl->statePre.at<float>(S_X), m_kf_impl->statePre.at<float>(S_Y),
+                    m_kf_impl->statePre.at<float>(S_Z)},
+            Vec3f_t{m_kf_impl->statePre.at<float>(S_VX), m_kf_impl->statePre.at<float>(S_VY),
+                    m_kf_impl->statePre.at<float>(S_VZ)}};
 }
 
 PredictorState KFPredictor::correct(double target_ts, PredictorState meas, bool restart) {
@@ -201,17 +201,17 @@ PredictorState KFPredictor::correct(double target_ts, PredictorState meas, bool 
     // AISDK_LOG_INFO("meas predicted a: {}, {}, {}", m_kf_impl->statePost.at<float>(S_AX),
     //                       m_kf_impl->statePost.at<float>(S_AY), m_kf_impl->statePost.at<float>(S_AZ));
 
-    auto pred_pos = cv::Vec3f{m_kf_impl->statePost.at<float>(S_X), m_kf_impl->statePost.at<float>(S_Y),
-                              m_kf_impl->statePost.at<float>(S_Z)};
-    auto pred_vec = cv::Vec3f{m_kf_impl->statePost.at<float>(S_VX), m_kf_impl->statePost.at<float>(S_VY),
-                              m_kf_impl->statePost.at<float>(S_VZ)};
+    auto pred_pos = Vec3f_t{m_kf_impl->statePost.at<float>(S_X), m_kf_impl->statePost.at<float>(S_Y),
+                            m_kf_impl->statePost.at<float>(S_Z)};
+    auto pred_vec = Vec3f_t{m_kf_impl->statePost.at<float>(S_VX), m_kf_impl->statePost.at<float>(S_VY),
+                            m_kf_impl->statePost.at<float>(S_VZ)};
 
-    m_momentum.pos = ALPHA * m_momentum.pos + (ONE - ALPHA) * pred_pos;
+    m_momentum.pos = ALPHA.array() * m_momentum.pos.array() + (ONE - ALPHA).array() * pred_pos.array();
 
     return {m_momentum.pos, pred_vec};
 }
 
-cv::Vec3f KFPredictor::track_only_pred(double target_ts) {
+Vec3f_t KFPredictor::track_only_pred(double target_ts) {
     std::lock_guard<std::mutex> lock(m_mutex);
     auto pred = this->predict(target_ts);
     auto cpred = this->correct(target_ts, pred, false);
@@ -219,7 +219,7 @@ cv::Vec3f KFPredictor::track_only_pred(double target_ts) {
     return pred.pos;
 }
 
-cv::Vec3f KFPredictor::track_with_correct(double target_ts, PredictorState meas) {
+Vec3f_t KFPredictor::track_with_correct(double target_ts, PredictorState meas) {
     std::lock_guard<std::mutex> lock(m_mutex);
     auto pred = this->predict(target_ts);
     auto cpred = this->correct(target_ts, meas, false);

@@ -1,4 +1,5 @@
 #include "hand_rotation.h"
+namespace aisdk::algorithm {
 
 std::map<int, int> parent_index = {{1, 0},   {5, 0},   {9, 0},   {13, 0},  {22, 0},  {2, 1},   {6, 5},
                                    {10, 9},  {14, 13}, {17, 22}, {3, 2},   {7, 6},   {11, 10}, {15, 14},
@@ -7,26 +8,22 @@ const std::vector<int> lev1_index = {1, 5, 9, 13, 22};
 const std::vector<int> lev2_index = {2, 6, 10, 14, 17};
 const std::vector<int> lev3_index = {3, 7, 11, 15, 18};
 const std::vector<int> lev4_index = {4, 8, 12, 16, 19};
-std::vector<cv::Vec3f> get_metacarpal_joints_v1(const std::vector<cv::Vec3f>& joints) {
+std::vector<Vec3f_t> get_metacarpal_joints_v1(const std::vector<Vec3f_t>& joints) {
     const auto& root_joint = joints[0];
-    auto little_vec = (root_joint - joints[9]) + (root_joint - joints[17]);
-    little_vec /= cv::norm(little_vec, cv::NORM_L2);
-    auto little_metacarpal = joints[17] + 0.6667 * cv::norm(joints[0], joints[17]) * little_vec;
+    auto little_vec = ((root_joint - joints[9]) + (root_joint - joints[17])).normalized();
+    auto little_metacarpal = joints[17] + 0.6667 * (joints[0] - joints[17]).norm() * little_vec;
 
-    auto ring_vec = (root_joint - joints[9]) + (root_joint - joints[13]);
-    ring_vec /= cv::norm(ring_vec, cv::NORM_L2);
-    auto ring_metacarpal = joints[13] + 0.6667 * cv::norm(joints[0], joints[13]) * ring_vec;
+    auto ring_vec = ((root_joint - joints[9]) + (root_joint - joints[13])).normalized();
+    auto ring_metacarpal = joints[13] + 0.6667 * (joints[0] - joints[13]).norm() * ring_vec;
 
-    auto middle_vec = (root_joint - joints[9]);
-    middle_vec /= cv::norm(middle_vec, cv::NORM_L2);
-    auto middle_metacarpal = joints[9] + 0.6667 * cv::norm(joints[0], joints[9]) * middle_vec;
+    auto middle_vec = (root_joint - joints[9]).normalized();
+    auto middle_metacarpal = joints[9] + 0.6667 * (joints[0] - joints[9]).norm() * middle_vec;
 
-    auto index_vec = 2 * middle_vec - ring_vec;
-    index_vec /= cv::norm(index_vec, cv::NORM_L2);
-    auto index_metacarpal = joints[5] + 0.6667 * cv::norm(joints[0], joints[5]) * index_vec;
+    auto index_vec = (2 * middle_vec - ring_vec).normalized();
+    auto index_metacarpal = joints[5] + 0.6667 * (joints[0] - joints[5]).norm() * index_vec;
     return {index_metacarpal, middle_metacarpal, ring_metacarpal, little_metacarpal};
 }
-bool compute_joint_rotation(const std::vector<cv::Vec3f>& joint, bool left_hand,
+bool compute_joint_rotation(const std::vector<Vec3f_t>& joint, bool left_hand,
                             std::vector<Eigen::Matrix3d>& rotations_world,
                             std::vector<Eigen::Matrix3d>& rotations_local) {
     rotations_world.clear();
@@ -41,19 +38,19 @@ bool compute_joint_rotation(const std::vector<cv::Vec3f>& joint, bool left_hand,
     // gl_T_cv.rotate(gl_R_cv);
     auto cv_T_gl = gl_T_cv;
 
-    cv::Vec3f v0_y = joint[9] - joint[0];
+    Vec3f_t v0_y = joint[9] - joint[0];
     Eigen::Vector3d vec_1, vec_2;
     vec_1 = {0, 1, 0};
     vec_2 = {v0_y[0], v0_y[1], v0_y[2]};
     Eigen::Matrix3d R0_y = Eigen::Quaterniond::FromTwoVectors(vec_1, vec_2).toRotationMatrix();
 
-    cv::Vec3f v0_z_temp = v0_y.cross(joint[5] - joint[0]);
+    Vec3f_t v0_z_temp = v0_y.cross(joint[5] - joint[0]);
 
     if (left_hand) {
         v0_z_temp *= -1;
     }
 
-    cv::Vec3f v0_z = cv::normalize(v0_z_temp);
+    Vec3f_t v0_z = v0_z_temp.normalized();
     vec_1 = {0, 0, 1};
     vec_1 = R0_y * vec_1;
     vec_2 = {v0_z[0], v0_z[1], v0_z[2]};
@@ -152,3 +149,5 @@ bool compute_joint_rotation(const std::vector<cv::Vec3f>& joint, bool left_hand,
 
     return true;
 }
+
+}  // namespace aisdk::algorithm

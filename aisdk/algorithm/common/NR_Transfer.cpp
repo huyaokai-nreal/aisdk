@@ -5,21 +5,21 @@
 
 namespace aisdk::algorithm {
 
-void TransferCVToGL(const std::vector<cv::Vec3f>& _point3d_src, std::vector<cv::Vec3f>& _point3d_dst) {
+void TransferCVToGL(const std::vector<Vec3f_t>& _point3d_src, std::vector<Vec3f_t>& _point3d_dst) {
     // cv_T_gl/gl_T_cv is same, so leftcam/rightcam are equivalent.
     auto res = GlobalCoordService::getInstance()->transform(XrealCoordSystem::CV_LEFT_CAM,
                                                             XrealCoordSystem::GL_LEFT_CAM, _point3d_src);
     _point3d_dst = res;
 }
 
-void TransferLeftCamToHead(const std::vector<cv::Vec3f>& _point3d_src, std::vector<cv::Vec3f>& _point3d_dst) {
+void TransferLeftCamToHead(const std::vector<Vec3f_t>& _point3d_src, std::vector<Vec3f_t>& _point3d_dst) {
     auto res = GlobalCoordService::getInstance()->transform(XrealCoordSystem::GL_LEFT_CAM, XrealCoordSystem::GL_HEAD,
                                                             _point3d_src);
     _point3d_dst = res;
 }
 
-void TransferHeadToWorld(NRTransform& extrinsic_trans_head_world_, const std::vector<cv::Vec3f>& _point3d_src,
-                         std::vector<cv::Vec3f>& _point3d_dst) {
+void TransferHeadToWorld(NRTransform& extrinsic_trans_head_world_, const std::vector<Vec3f_t>& _point3d_src,
+                         std::vector<Vec3f_t>& _point3d_dst) {
     _point3d_dst.clear();
 
     Eigen::Quaternion<float> glW_q_glH(extrinsic_trans_head_world_.rotation.qw, extrinsic_trans_head_world_.rotation.qx,
@@ -39,21 +39,21 @@ void TransferHeadToWorld(NRTransform& extrinsic_trans_head_world_, const std::ve
     }
 }
 
-void TransferGLtoCV(const std::vector<cv::Vec3f>& _point3d_src, std::vector<cv::Vec3f>& _point3d_dst) {
+void TransferGLtoCV(const std::vector<Vec3f_t>& _point3d_src, std::vector<Vec3f_t>& _point3d_dst) {
     // cv_T_gl/gl_T_cv is same, so leftcam/rightcam are equivalent.
     auto res = GlobalCoordService::getInstance()->transform(XrealCoordSystem::GL_LEFT_CAM,
                                                             XrealCoordSystem::CV_LEFT_CAM, _point3d_src);
     _point3d_dst = res;
 }
 
-void TransferHeadToLeftCam(const std::vector<cv::Vec3f>& _point3d_src, std::vector<cv::Vec3f>& _point3d_dst) {
+void TransferHeadToLeftCam(const std::vector<Vec3f_t>& _point3d_src, std::vector<Vec3f_t>& _point3d_dst) {
     auto res = GlobalCoordService::getInstance()->transform(XrealCoordSystem::GL_HEAD, XrealCoordSystem::GL_LEFT_CAM,
                                                             _point3d_src);
     _point3d_dst = res;
 }
 
-void TransferWorldToHead(NRTransform& extrinsic_trans_head_world_, const std::vector<cv::Vec3f>& _point3d_src,
-                         std::vector<cv::Vec3f>& _point3d_dst) {
+void TransferWorldToHead(NRTransform& extrinsic_trans_head_world_, const std::vector<Vec3f_t>& _point3d_src,
+                         std::vector<Vec3f_t>& _point3d_dst) {
     _point3d_dst.clear();
 
     Eigen::Quaternion<float> glW_q_glH(extrinsic_trans_head_world_.rotation.qw, extrinsic_trans_head_world_.rotation.qx,
@@ -76,9 +76,8 @@ void TransferWorldToHead(NRTransform& extrinsic_trans_head_world_, const std::ve
     }
 }
 
-std::vector<cv::Vec3f> cal_lcam_kpt3d_cv_to_world(NRTransform extrinsic_world,
-                                                  const std::vector<cv::Vec3f>& points3d_src) {
-    std::vector<cv::Vec3f> point_hd, point_cam, point_wd;
+std::vector<Vec3f_t> cal_lcam_kpt3d_cv_to_world(NRTransform extrinsic_world, const std::vector<Vec3f_t>& points3d_src) {
+    std::vector<Vec3f_t> point_hd, point_cam, point_wd;
 
     TransferCVToGL(points3d_src, point_cam);
 
@@ -89,9 +88,9 @@ std::vector<cv::Vec3f> cal_lcam_kpt3d_cv_to_world(NRTransform extrinsic_world,
     return point_wd;
 }
 
-std::vector<cv::Vec3f> recal_lcam_kpt3d_cv_with_new_headpose(NRTransform extrinsic_world,
-                                                             const std::vector<cv::Vec3f>& points3d_src) {
-    std::vector<cv::Vec3f> point_hd, point_cam, point_cv;
+std::vector<Vec3f_t> recal_lcam_kpt3d_cv_with_new_headpose(NRTransform extrinsic_world,
+                                                           const std::vector<Vec3f_t>& points3d_src) {
+    std::vector<Vec3f_t> point_hd, point_cam, point_cv;
 
     TransferWorldToHead(extrinsic_world, points3d_src, point_hd);
 
@@ -102,22 +101,17 @@ std::vector<cv::Vec3f> recal_lcam_kpt3d_cv_with_new_headpose(NRTransform extrins
     return point_cv;
 }
 
-std::vector<cv::Vec3f> lcam_cv_to_rcam_cv(const std::vector<cv::Vec3f>& points3d_src) {
+std::vector<Vec3f_t> lcam_cv_to_rcam_cv(const std::vector<Vec3f_t>& points3d_src) {
     auto points3d_dst = GlobalCoordService::getInstance()->transform(XrealCoordSystem::CV_LEFT_CAM,
                                                                      XrealCoordSystem::CV_RIGHT_CAM, points3d_src);
     return points3d_dst;
 }
 
 std::vector<cv::Vec2f> cv_to_uv(std::shared_ptr<aisdk::base::BaseCameraModel> cam_model,
-                                const std::vector<cv::Vec3f>& points3d_cv) {
+                                const std::vector<Vec3f_t>& points3d_cv) {
     std::vector<cv::Vec2f> uv_res;
-    std::vector<Eigen::Vector3f> points3d_eigen_internal;
     uv_res.resize(REPROJ_POINT_NUM);
-    points3d_eigen_internal.resize(REPROJ_POINT_NUM);
-    for (size_t i = 0; i < REPROJ_POINT_NUM; i++) {
-        points3d_eigen_internal[i] = {points3d_cv[i][0], points3d_cv[i][1], points3d_cv[i][2]};
-    }
-    auto projected_2d_internal = cam_model->eye_to_window(points3d_eigen_internal);
+    auto projected_2d_internal = cam_model->eye_to_window(points3d_cv);
     for (size_t i = 0; i < REPROJ_POINT_NUM; i++) {
         uv_res[i] = {projected_2d_internal[i](0), projected_2d_internal[i](1)};
     }
@@ -126,7 +120,7 @@ std::vector<cv::Vec2f> cv_to_uv(std::shared_ptr<aisdk::base::BaseCameraModel> ca
 
 void reproj_bbox_with_new_headpose(std::shared_ptr<aisdk::base::BaseCameraModel> lcam_model,
                                    std::shared_ptr<aisdk::base::BaseCameraModel> rcam_model,
-                                   NRTransform extrinsics_world, const std::vector<cv::Vec3f>& points_3d,
+                                   NRTransform extrinsics_world, const std::vector<Vec3f_t>& points_3d,
                                    cv::Rect& proj_bbox_lcam, cv::Rect& proj_bbox_rcam) {
     auto kpt3d_cv_lcam = recal_lcam_kpt3d_cv_with_new_headpose(extrinsics_world, points_3d);
 

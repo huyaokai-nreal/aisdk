@@ -10,6 +10,8 @@
 #include <memory>
 #include <mutex>
 #include <opencv2/opencv.hpp>
+#include "aisdk/base/type.h"
+namespace aisdk::algorithm {
 
 // state variable indices
 #define S_X 0
@@ -29,26 +31,25 @@
 #define M_VY 4
 #define M_VZ 5
 
-// #define BETA cv::Vec3f(0.4, 0.4, 0.4)
+// #define BETA Vec3f_t(0.4, 0.4, 0.4)
 #define ALPHA \
-    cv::Vec3f { 0.6, 0.6, 0.6 }
+    Vec3f_t { 0.6, 0.6, 0.6 }
 #define ONE \
-    cv::Vec3f { 1.0, 1.0, 1.0 }
+    Vec3f_t { 1.0, 1.0, 1.0 }
 
 struct PredictorState {
-    cv::Vec3f pos;
-    cv::Vec3f vec;
+    Vec3f_t pos;
+    Vec3f_t vec;
 };
 
-namespace aisdk::algorithm {
 class KFPredictor {
    public:
     int init();
     int start_tracking(double target_ts, PredictorState meas);
     void stop_tracking();
 
-    cv::Vec3f track_only_pred(double target_ts);
-    cv::Vec3f track_with_correct(double target_ts, PredictorState meas);
+    Vec3f_t track_only_pred(double target_ts);
+    Vec3f_t track_with_correct(double target_ts, PredictorState meas);
 
     bool get_tracking_status() const;
 
@@ -75,4 +76,5 @@ class KFPredictor {
 
     mutable std::mutex m_mutex;
 };
-}  // namespace aisdk::algorithm
+
+}

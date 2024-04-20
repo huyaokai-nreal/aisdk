@@ -3,6 +3,7 @@
 #include <Eigen/src/Geometry/Quaternion.h>
 
 #include "aisdk/algorithm/common/hand_define.h"
+#include "aisdk/base/type.h"
 #include "thirdparty/MANO_IK-main/mano/AIK.h"
 
 namespace aisdk::algorithm {
@@ -182,27 +183,13 @@ std::tuple<Eigen::Matrix3d, Eigen::Matrix3d, float> get_rotations_for_standard_s
     double baseline = baseline_vec.norm();
     return {left_R, right_R, baseline};
 }
-std::vector<cv::Vec3f> constrain_hand(const std::vector<cv::Vec3f>& input_kpt3d, bool is_left) {
-    std::vector<cv::Vec3f> output_kpt3d(kAlgoKeypointNum);
-    std::vector<Eigen::Vector3f> res3d_mano_input(kAlgoKeypointNum), res3d_mano_output(kAlgoKeypointNum);
-    for (int i = 0; i < kAlgoKeypointNum; i++) {
-        res3d_mano_input[i][0] = input_kpt3d[i][0];
-        res3d_mano_input[i][1] = input_kpt3d[i][1];
-        res3d_mano_input[i][2] = input_kpt3d[i][2];
-    }
-
-    res3d_mano_output = constraint_hand_v2(res3d_mano_input, is_left);
-
-    for (int i = 0; i < kAlgoKeypointNum; i++) {
-        output_kpt3d[i][0] = res3d_mano_output[i][0];
-        output_kpt3d[i][1] = res3d_mano_output[i][1];
-        output_kpt3d[i][2] = res3d_mano_output[i][2];
-    }
-    return output_kpt3d;
+std::vector<Vec3f_t> constrain_hand(const std::vector<Vec3f_t>& input_kpt3d, bool is_left) {
+    std::vector<Vec3f_t> output_kpt3d(kAlgoKeypointNum);
+    return constraint_hand_v2(input_kpt3d, is_left);
 }
 
-std::vector<cv::Vec3f> convert_to_23points(const std::vector<cv::Vec3f>& input) {
-    std::vector<cv::Vec3f> result(23);
+std::vector<Vec3f_t> convert_to_23points(const std::vector<Vec3f_t>& input) {
+    std::vector<Vec3f_t> result(23);
     // input size should be 21
     for (int i = 0; i < input.size(); i++) {
         result[i] = input[i];

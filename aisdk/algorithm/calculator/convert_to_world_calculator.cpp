@@ -5,12 +5,13 @@
 #include "../internal_structs/kpt3d_struct_internal.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/time.h"
+#include "aisdk/base/type.h"
 #include "aisdk/xgraph/xgraph.h"
 
 namespace aisdk::algorithm {
 
-std::vector<cv::Vec3f> transfer_from_cvL_to_world(NRTransform headpose, const std::vector<cv::Vec3f>& points_lcam_cv) {
-    std::vector<cv::Vec3f> points_lcam_gl, points_head, points_world;
+std::vector<Vec3f_t> transfer_from_cvL_to_world(NRTransform headpose, const std::vector<Vec3f_t>& points_lcam_cv) {
+    std::vector<Vec3f_t> points_lcam_gl, points_head, points_world;
 
     aisdk::algorithm::TransferCVToGL(points_lcam_cv, points_lcam_gl);
     aisdk::algorithm::TransferLeftCamToHead(points_lcam_gl, points_head);

@@ -182,7 +182,7 @@ float DynamicFilter3D::var(std::vector<float> input) {
     return variance / input.size();
 }
 
-bool DynamicFilter3D::getDynamicFilterHandData(std::vector<cv::Vec3f>& kpt_3d) {
+bool DynamicFilter3D::getDynamicFilterHandData(std::vector<Vec3f_t>& kpt_3d) {
     mHandDataSeq.push_back(kpt_3d);
     if (mHandDataSeq.size() > mWindowLength) {
         mHandDataSeq.pop_front();
@@ -349,7 +349,7 @@ SeqManager3D::SeqManager3D(int sample_num, const OneEuroParams& params) : mSampl
 
 bool SeqManager3D::reset() { return true; }
 
-bool SeqManager3D::getFilterHandData(std::vector<cv::Vec3f>& kpt_3d) {
+bool SeqManager3D::getFilterHandData(std::vector<Vec3f_t>& kpt_3d) {
     for (int i = 0; i < mSampleNum; i++) {
         kpt_3d[i][0] = mOneEuroFilterList[i * 3]->filter(kpt_3d[i][0]);
         kpt_3d[i][1] = mOneEuroFilterList[i * 3 + 1]->filter(kpt_3d[i][1]);
@@ -370,7 +370,7 @@ SeqManagerVec::SeqManagerVec(const OneEuroParams& params) {
 
 bool SeqManagerVec::reset() { return true; }
 
-bool SeqManagerVec::getFilterVecData(cv::Vec3f& velocity_3d) {
+bool SeqManagerVec::getFilterVecData(Vec3f_t& velocity_3d) {
     velocity_3d[0] = mOneEuroFilterList[0]->filter(velocity_3d[0]);
     velocity_3d[1] = mOneEuroFilterList[1]->filter(velocity_3d[1]);
     velocity_3d[2] = mOneEuroFilterList[2]->filter(velocity_3d[2]);

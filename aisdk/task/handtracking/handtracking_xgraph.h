@@ -19,7 +19,7 @@ class HandTrackingXGraph : public BaseXGraph {
 
    private:
     // This is only a step, not real timestamp.
-    std::unique_ptr<HandFilters> m_post_filter;
+    std::unique_ptr<algorithm::HandFilters> m_post_filter;
 };
 
 }  // namespace aisdk::task

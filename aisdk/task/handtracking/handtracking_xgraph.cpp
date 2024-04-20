@@ -42,7 +42,7 @@ std::map<std::string, int> gesture_map = {
 namespace aisdk::task {
 
 HandTrackingXGraph::HandTrackingXGraph() {
-    m_post_filter = std::make_unique<HandFilters>();
+    m_post_filter = std::make_unique<algorithm::HandFilters>();
     m_post_filter->init();
 }
 HandTrackingXGraph::~HandTrackingXGraph() {}
@@ -119,7 +119,7 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
         }
 
         bool tracked_internal[2] = {false, false};
-        std::vector<std::vector<cv::Vec3f>> ontracked_points(2);
+        std::vector<std::vector<Vec3f_t>> ontracked_points(2);
 
         for (int i = 0; i < 2; i++) {
             out_hand_array[i].version = 0;
@@ -146,8 +146,8 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
             auto predicted_points = ontracked_points[i];
 
             if (tracked_internal[i] && query_time != 0) {
-                cv::Vec3f root_meas = ontracked_points[i][21];
-                cv::Vec3f root_kf_predicted = ontracked_points[i][21];
+                Vec3f_t root_meas = ontracked_points[i][21];
+                Vec3f_t root_kf_predicted = ontracked_points[i][21];
 
                 double target_timestamp = 0;
                 if (query_time <= hand_data_internal.timestamp) {
@@ -160,7 +160,7 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
 
                 AISDK_LOG_TRACE("predict_len: {} s", (query_time - hand_data_internal.timestamp));
                 AISDK_LOG_TRACE("{}, {}, {}, {}, {}, {}", query_time, hand_data_internal.timestamp, target_timestamp,
-                               root_meas[0], root_meas[1], root_meas[2]);
+                                root_meas[0], root_meas[1], root_meas[2]);
 
                 if (i == 0) {
                     if (predictor_lhand.get_tracking_status()) {
@@ -172,9 +172,9 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
                         root_kf_predicted = predictor_rhand.track_only_pred(target_timestamp);
                 }
                 AISDK_LOG_TRACE("predict root is {}, {}, {}", root_kf_predicted[0], root_kf_predicted[1],
-                               root_kf_predicted[2]);
+                                root_kf_predicted[2]);
                 AISDK_LOG_TRACE("predict dist is {}, {}, {}", abs(root_kf_predicted[0] - root_meas[0]),
-                               abs(root_kf_predicted[1] - root_meas[1]), abs(root_kf_predicted[2] - root_meas[2]));
+                                abs(root_kf_predicted[1] - root_meas[1]), abs(root_kf_predicted[2] - root_meas[2]));
                 for (int k = 0; k < EZXR_DEFINED_JOINTS; k++) {
                     predicted_points[k] = ontracked_points[i][k] + root_kf_predicted - root_meas;
                 }
@@ -186,7 +186,7 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
                 AISDK_LOG_TRACE("WorldKpt3dSeqFilter after pred");
                 m_post_filter->kpt_seq_3d_filter(i, predicted_points);
 
-                compute_joint_rotation(predicted_points, (i == 0), rotations_world, rotations_local);
+                algorithm::compute_joint_rotation(predicted_points, (i == 0), rotations_world, rotations_local);
             }
 
             if (out_hand_array[i].is_tracked) {

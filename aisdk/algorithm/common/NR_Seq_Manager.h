@@ -85,7 +85,7 @@ class DynamicFilter3D final {
     DynamicFilter3D(int sample_num, int dim, int window, float lambda);
     ~DynamicFilter3D(){};
 
-    bool getDynamicFilterHandData(std::vector<cv::Vec3f>& kpt_3d);
+    bool getDynamicFilterHandData(std::vector<Vec3f_t>& kpt_3d);
     bool reset();
 
    private:
@@ -93,8 +93,8 @@ class DynamicFilter3D final {
     float mean(std::vector<float> input);
     float var(std::vector<float> input);
 
-    std::deque<std::vector<cv::Vec3f>> mHandDataSeq;
-    std::vector<cv::Vec3f> mPreData;
+    std::deque<std::vector<Vec3f_t>> mHandDataSeq;
+    std::vector<Vec3f_t> mPreData;
     std::vector<DynamicData3D> mHandData;
     int mWindowLength;
     int mDim;
@@ -143,7 +143,7 @@ class SeqManager3D final {
     SeqManager3D(int sample_num, const OneEuroParams& params);
     ~SeqManager3D(){};
 
-    bool getFilterHandData(std::vector<cv::Vec3f>& kpt_3d);
+    bool getFilterHandData(std::vector<Vec3f_t>& kpt_3d);
 
     bool reset();
 
@@ -156,7 +156,7 @@ class SeqManagerVec final {
     SeqManagerVec(const OneEuroParams& params);
     ~SeqManagerVec(){};
 
-    bool getFilterVecData(cv::Vec3f& velocity);
+    bool getFilterVecData(Vec3f_t& velocity);
 
     bool reset();
 

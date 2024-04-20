@@ -4,7 +4,8 @@
 #include "aisdk/algorithm/common/NR_GlobalCoordService.h"
 
 namespace aisdk::task {
-
+using algorithm::GlobalCoordService;
+using algorithm::XrealCoordSystem;
 void SetGlobalCameraParams(CameraParams &camera) {
     Eigen::Matrix3f gl_R_cv;
     uint32_t generate_method = (uint32_t)camera.m_params["generate_method"][0];

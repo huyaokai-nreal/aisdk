@@ -28,21 +28,17 @@ float compute_rmse(std::vector<Vec2f_t> lval, std::vector<Vec2f_t> rval) {
     return rmse / norm;
 }
 
-float compute_score_with_reprojection(const std::vector<cv::Vec3f>& pred_xyz,
-                                      const std::vector<Vec2f_t>& leftcam_uv_ori,
+float compute_score_with_reprojection(const std::vector<Vec3f_t>& pred_xyz, const std::vector<Vec2f_t>& leftcam_uv_ori,
                                       const std::vector<Vec2f_t>& rightcam_uv_ori,
                                       const std::shared_ptr<base::BaseCameraModel>& left_cam,
                                       const std::shared_ptr<base::BaseCameraModel>& right_cam) {
-    std::vector<Vec3f_t> kpt3d(pred_xyz.size());
-    auto cv_to_eigen = [](cv::Vec3f x) -> Vec3f_t { return {x[0], x[1], x[2]}; };
-    std::transform(pred_xyz.begin(), pred_xyz.end(), kpt3d.begin(), cv_to_eigen);
-    auto left_reproj_kpt2d = left_cam->world_to_window(kpt3d);
+    auto left_reproj_kpt2d = left_cam->world_to_window(pred_xyz);
     auto left_error = compute_rmse(left_reproj_kpt2d, leftcam_uv_ori);
-    auto right_reproj_kpt2d = right_cam->world_to_window(kpt3d);
+    auto right_reproj_kpt2d = right_cam->world_to_window(pred_xyz);
     auto right_error = compute_rmse(right_reproj_kpt2d, rightcam_uv_ori);
 
     return std::max(left_error, right_error);
-}  // namespace aisdk::algorithm
+}
 
 float get_bbox_distance(cv::Rect src, cv::Rect dst) {
     float dis = 0.0;
@@ -65,7 +61,7 @@ bool check_if_rect_valid_relax(cv::Rect rect, int max_width, int max_height) {
     return cx > 0 && cx < max_width && cy > 0 && cy < max_height;
 }
 
-bool isNaN(const std::vector<cv::Vec3f>& kpts) {
+bool isNaN(const std::vector<Vec3f_t>& kpts) {
     for (int i = 0; i < kpts.size(); i++) {
         if (std::isnan(kpts[i][0]) || std::isnan(kpts[i][0]) || std::isnan(kpts[i][0])) {
             return true;

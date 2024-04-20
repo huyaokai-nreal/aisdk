@@ -5,14 +5,15 @@
 #include <vector>
 
 #include "Eigen/Dense"
+#include "aisdk/base/type.h"
 
 namespace aisdk::algorithm {
 
 struct HandOutputInternal {
     double timestamp; // seconds
 
-    std::vector<cv::Vec3f> lhand_kpt;
-    std::vector<cv::Vec3f> rhand_kpt;
+    std::vector<Vec3f_t> lhand_kpt;
+    std::vector<Vec3f_t> rhand_kpt;
 
     std::vector<Eigen::Matrix3f> lhand_rot;
     std::vector<Eigen::Matrix3f> rhand_rot;
