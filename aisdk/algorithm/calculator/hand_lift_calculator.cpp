@@ -70,6 +70,7 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
 #endif
         AISDK_LOG_TRACE("[LiftCalculator] Process start");
         const auto& kpt2d = cc->Inputs().Tag("LANDMARK_INPUT").Get<aisdk::algorithm::Kpt2dInternal>();
+        const auto& timestamp = cc->InputTimestamp().Seconds();
         std::unique_ptr<aisdk::algorithm::Kpt3dInternal> output_buffer_ =
             absl::make_unique<aisdk::algorithm::Kpt3dInternal>();
         if (kpt2d.lhand_valid) {
@@ -78,6 +79,7 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
             lift_inputs.input_kpt_lcam = lcam_model_->undistort(kpt2d.lhand_lcam);
             lift_inputs.input_kpt_rcam = rcam_model_->undistort(kpt2d.lhand_rcam);
             lift_inputs.is_left = 1.;
+            lift_inputs.timestamp = timestamp;
             netalgo->Inference(lift_inputs, lift_outputs);
             output_buffer_->lhand_valid = true;
             output_buffer_->lhand = constrain_hand(lift_outputs.res3d, true);
@@ -93,6 +95,7 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
             lift_inputs.input_kpt_lcam = lcam_model_->undistort(kpt2d.rhand_lcam);
             lift_inputs.input_kpt_rcam = rcam_model_->undistort(kpt2d.rhand_rcam);
             lift_inputs.is_left = 0.;
+            lift_inputs.timestamp = timestamp;
             netalgo->Inference(lift_inputs, lift_outputs);
             output_buffer_->rhand_valid = true;
             output_buffer_->rhand = constrain_hand(lift_outputs.res3d, false);

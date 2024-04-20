@@ -1,5 +1,7 @@
 #include "hand_lift.h"
 
+#include <cstring>
+
 #include "../func/netalgo_utils.h"
 #include "aisdk/algorithm/common/hand_define.h"
 #include "aisdk/base/log.h"
@@ -221,8 +223,7 @@ aisdk::xengine::Status GMLPLiftNet3::Inference(const LiftNetInputs &inputs, Lift
     AISDK_LOG_TRACE("[GMLPLiftNet3] Inference");
     PreProcess(inputs);
     aisdk::xengine::Status ret = m_net->RunNet();
-    PostProcess(outputs, inputs);  // TIPS: v3这里改了PostProcess接口是因为develop分支这里面用iodata混用,
-                                   // 从output中取了输入信息, 所以要用到inputs
+    PostProcess(outputs, inputs);
     return ret;
 }
 
@@ -286,24 +287,12 @@ void GMLPLiftNet3::PreProcess(const LiftNetInputs &inputs) {
 
     char *mem_hand_c = (char *)itensor.m_tensors[index_mem].m_viraddr;
     float *mem_hand = (float *)mem_hand_c;
-
-    if (inputs.is_left != 0. && inputs.timestamp - last_left_time < reset_mem_time) {
-        for (int i = 0; i < mem_size; i++) {
-            mem_hand[i] = mem_left_hand[i];
-        }
-    } else if (inputs.is_left == 0. && inputs.timestamp - last_right_time < reset_mem_time) {
-        for (int i = 0; i < mem_size; i++) {
-            mem_hand[i] = mem_right_hand[i];
-        }
+    if (inputs.is_left != 0. && (inputs.timestamp - last_left_time) < reset_mem_time) {
+        memcpy(mem_hand, mem_right_hand.data(), mem_size);
+    } else if (inputs.is_left == 0. && (inputs.timestamp - last_right_time) < reset_mem_time) {
+        memcpy(mem_hand, mem_right_hand.data(), mem_size);
     } else {
-        AISDK_LOG_TRACE("[GMLPLiftNet3] reset liftnetv3 mem");
-        for (int i = 0; i < mem_size; i++) {
-            mem_hand[i] = 0;
-        }
-    }
-
-    for (int i = 0; i < mem_size; i++) {
-        AISDK_LOG_TRACE("[GMLPLiftNet3] mem_hand[{}] = {}", i, mem_hand[i]);
+        memset(mem_hand, 0, mem_size);
     }
 }
 
@@ -340,22 +329,18 @@ void GMLPLiftNet3::PostProcess(LiftNetOutputs &outputs, const LiftNetInputs &inp
 
     int index_mem = this->m_net->GetOutputTensorIndex("mem_out");
 
-    int mem_channels = itensor.m_tensors[index_mem].m_dims[0];
-    int mem_height = itensor.m_tensors[index_mem].m_dims[1];
-    int mem_width = itensor.m_tensors[index_mem].m_dims[2];
+    int mem_channels = otensor.m_tensors[index_mem].m_dims[0];
+    int mem_height = otensor.m_tensors[index_mem].m_dims[1];
+    int mem_width = otensor.m_tensors[index_mem].m_dims[2];
 
     int mem_size = mem_height * mem_width * mem_channels;
-    float *mem_hand = (float *)itensor.m_tensors[index_mem].m_viraddr;
+    float *mem_hand = (float *)otensor.m_tensors[index_mem].m_viraddr;
 
     if (inputs.is_left != 0.) {
-        for (int i = 0; i < mem_size; i++) {
-            mem_left_hand[i] = mem_hand[i];
-        }
+        memcpy(mem_left_hand.data(), mem_hand, mem_size);
         last_left_time = inputs.timestamp;
     } else {
-        for (int i = 0; i < mem_size; i++) {
-            mem_right_hand[i] = mem_hand[i];
-        }
+        memcpy(mem_right_hand.data(), mem_hand, mem_size);
         last_right_time = inputs.timestamp;
     }
 }
