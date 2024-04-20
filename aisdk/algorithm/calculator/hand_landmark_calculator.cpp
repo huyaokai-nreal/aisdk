@@ -122,7 +122,7 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
                 output_buffer_->lhand_valid = false;
             } else {
                 output_buffer_->lhand_valid = true;
-                for (int kpt_index = 0; kpt_index < aisdk::algorithm::kKeypointNum; kpt_index++) {
+                for (int kpt_index = 0; kpt_index < aisdk::algorithm::kAlgoKeypointNum; kpt_index++) {
                     // 左手左目xy
                     output_buffer_->lhand_lcam[kpt_index][0] =
                         ((input_width_ - 1) - rsn_result->kpts[0][kpt_index][0]) * lhand_lcam_rect.width /
@@ -161,7 +161,7 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
                 output_buffer_->rhand_valid = false;
             } else {
                 output_buffer_->rhand_valid = true;
-                for (int kpt_index = 0; kpt_index < aisdk::algorithm::kKeypointNum; kpt_index++) {
+                for (int kpt_index = 0; kpt_index < aisdk::algorithm::kAlgoKeypointNum; kpt_index++) {
                     // 右手左目xy
                     output_buffer_->rhand_lcam[kpt_index][0] =
                         rsn_result->kpts[0][kpt_index][0] * rhand_lcam_rect.width / input_width_ + rhand_lcam_rect.x;

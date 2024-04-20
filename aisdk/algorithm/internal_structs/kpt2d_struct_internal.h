@@ -13,10 +13,10 @@ struct Kpt2dResult {
 };
 struct Kpt2dInternal {
     Kpt2dInternal() {
-        lhand_lcam.resize(kKeypointNum);
-        lhand_rcam.resize(kKeypointNum);
-        rhand_lcam.resize(kKeypointNum);
-        rhand_rcam.resize(kKeypointNum);
+        lhand_lcam.resize(kAlgoKeypointNum);
+        lhand_rcam.resize(kAlgoKeypointNum);
+        rhand_lcam.resize(kAlgoKeypointNum);
+        rhand_rcam.resize(kAlgoKeypointNum);
     }
 
     // Hand 2d output data, a single eand data size should be 21.

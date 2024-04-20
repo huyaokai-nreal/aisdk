@@ -3,17 +3,11 @@ input_stream: "HEADPOSE:head_pose"
 output_stream: "ALL_RESULTS:hand_result"
 
 node {
-	name: "CheckHeadpose"
-	calculator: "CheckHeadposeCalculator"
-	input_stream: "INPUT:head_pose"
-	output_stream: "OUTPUT:head_pose_checked"
-}
-node {
   name: "HandDetectionTrack"
   calculator: "HandDetTrackCalculator"
   input_stream: "IMAGE_INPUT:image"
   input_side_packet: "CAM_INFO_INPUT:cam_info"
-  input_stream: "HEADPOSE:head_pose_checked"
+  input_stream: "HEADPOSE:head_pose"
   output_stream: "DET_BBOX_OUTPUT:detection_output"
 }
 node {
@@ -44,21 +38,16 @@ node {
 }
 node {
   name: "LiftNet_3D"
-  calculator: "LiftCalculator"
+  calculator: "HandLiftCalculator"
   input_side_packet: "CAM_INFO_INPUT:cam_info"
   input_stream: "LANDMARK_INPUT:kpt2d_filter"
   output_stream: "LIFT_OUTPUT:kpt3d"
 }
-node {
-  name: "PreConstraint_3D"
-  calculator: "PreConstrainCalculator"
-  input_stream: "INPUT:kpt3d"
-  output_stream: "OUTPUT:kpt3d_constrained"
-}
+
 node {
   name: "BlockHardRules"
   calculator: "BlockHardRulesCalculator"
-  input_stream: "BLOCK_IN:kpt3d_constrained"
+  input_stream: "BLOCK_IN:kpt3d"
   output_stream: "BLOCK_OUT:kpt3d_blocked"
   node_options: {
     [type.googleapis.com/aisdk.BlockHardRulesCalculatorOptions] { 
@@ -84,7 +73,7 @@ node {
   calculator: "ConvertToWorldCalculator"
   input_stream: "INPUT:kpt3d_blocked"
   input_stream: "STATE_INPUT:hand_state"
-  input_stream: "HEADPOSE:head_pose_checked"
+  input_stream: "HEADPOSE:head_pose"
   output_stream: "OUTPUT:kpt3d_world"
 }
 node {
@@ -94,12 +83,7 @@ node {
   input_stream: "STATE:hand_state"
   output_stream: "OUTPUT:kpt3d_filtered"
 }
-node {
-  name: "PostConstraint_3D"
-  calculator: "PostConstrainCalculator"
-  input_stream: "INPUT:kpt3d_filtered"
-  output_stream: "OUTPUT:kpt3d_post_constrained"
-}
+
 node {
   name: "StandardizeKeypoints"
   calculator: "StandardizeKeypointsCalculator"
@@ -110,7 +94,7 @@ node {
   name: "GestureRecognition"
   calculator: "GestureRecognitionCalculator"
   input_stream: "GR_KPT2D_INPUT:kpt2d_filter"
-  input_stream: "GR_KPT_INPUT:kpt3d_post_constrained"
+  input_stream: "GR_KPT_INPUT:kpt3d_filtered"
   input_stream: "GR_SCORE_INPUT:hand_score"
   input_stream: "GR_STATE_INPUT:hand_state"
   output_stream: "GR_OUTPUT:hand_result"

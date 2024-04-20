@@ -1,21 +1,9 @@
 #include "../internal_structs/kpt3d_struct_internal.h"
 #include "../internal_structs/standard_kpt3d_struct_internal.h"
+#include "aisdk/algorithm/func/netalgo_utils.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/time.h"
 #include "aisdk/xgraph/xgraph.h"
-
-#define STANDARDIZE_TARGET_POINTS 23
-
-std::vector<cv::Vec3f> convert_to_23points(const std::vector<cv::Vec3f>& input) {
-    std::vector<cv::Vec3f> result(STANDARDIZE_TARGET_POINTS);
-    // input size should be 21
-    for (int i = 0; i < input.size(); i++) {
-        result[i] = input[i];
-    }
-    result[21] = 0.5 * (input[0] + input[9]);
-    result[22] = 0.5 * (0.5 * (input[0] - input[9]) + 0.5 * (input[0] - input[17])) + input[17];
-    return result;
-}
 
 namespace aisdk::algorithm {
 

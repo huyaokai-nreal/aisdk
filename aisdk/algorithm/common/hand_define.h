@@ -1,5 +1,5 @@
 #pragma  once 
 namespace aisdk::algorithm {
-    constexpr int kKeypointNum = 21;
+    constexpr int kAlgoKeypointNum = 21;
 
 }

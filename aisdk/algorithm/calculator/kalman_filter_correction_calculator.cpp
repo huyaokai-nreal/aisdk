@@ -3,6 +3,7 @@
 #include "../common/NR_GlobalPredictorService.h"
 #include "../internal_structs/hand_state_struct_internal.h"
 #include "../internal_structs/standard_kpt3d_struct_internal.h"
+#include "aisdk/algorithm/func/netalgo_utils.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/time.h"
 #include "aisdk/xgraph/xgraph.h"
@@ -71,7 +72,8 @@ class KalmanFilterCorrectionCalculator : public xgraph::CalculatorBase {
             }
             kpt3d_world_pre.lhand = kpt3d_world.lhand;
             kpt3d_world_pre.lhand_valid = true;
-            output_buffer_->lhand = kpt3d_world.lhand;
+            output_buffer_->lhand = constrain_hand(kpt3d_world.lhand, true);
+            output_buffer_->lhand = convert_to_23points(output_buffer_->lhand);
             output_buffer_->lhand_valid = true;
         }
 
@@ -91,7 +93,8 @@ class KalmanFilterCorrectionCalculator : public xgraph::CalculatorBase {
             }
             kpt3d_world_pre.rhand = kpt3d_world.rhand;
             kpt3d_world_pre.rhand_valid = true;
-            output_buffer_->rhand = kpt3d_world.rhand;
+            output_buffer_->rhand = constrain_hand(kpt3d_world.rhand, false);
+            output_buffer_->rhand = convert_to_23points(output_buffer_->rhand);
             output_buffer_->rhand_valid = true;
         }
         cc->Outputs().Tag("OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());

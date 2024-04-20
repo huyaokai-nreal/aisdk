@@ -4,6 +4,7 @@
 #include "../internal_structs/kpt2d_struct_internal.h"
 #include "../internal_structs/kpt3d_struct_internal.h"
 #include "../model/hand_lift.h"
+#include "aisdk/algorithm/func/netalgo_utils.h"
 #include "aisdk/base/camera_model.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/time.h"
@@ -22,7 +23,7 @@ namespace aisdk::algorithm {
 //   output_stream: "LIFT_OUTPUT:kpt3d"
 // }
 
-class LiftCalculator : public xgraph::CalculatorBase {
+class HandLiftCalculator : public xgraph::CalculatorBase {
    private:
     // SeqGMLPLiftNet algo instance
     std::shared_ptr<aisdk::algorithm::GMLPLiftNet3> netalgo;
@@ -78,7 +79,7 @@ class LiftCalculator : public xgraph::CalculatorBase {
             lift_inputs.is_left = 1.;
             netalgo->Inference(lift_inputs, lift_outputs);
             output_buffer_->lhand_valid = true;
-            output_buffer_->lhand = lift_outputs.res3d;
+            output_buffer_->lhand = constrain_hand(lift_outputs.res3d, true);
         }
 
         if (kpt2d.rhand_valid) {
@@ -89,7 +90,7 @@ class LiftCalculator : public xgraph::CalculatorBase {
             lift_inputs.is_left = 0.;
             netalgo->Inference(lift_inputs, lift_outputs);
             output_buffer_->rhand_valid = true;
-            output_buffer_->rhand = lift_outputs.res3d;
+            output_buffer_->rhand = constrain_hand(lift_outputs.res3d, false);
         }
         if (output_buffer_->lhand_valid || output_buffer_->rhand_valid) {
             cc->Outputs().Tag("LIFT_OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
