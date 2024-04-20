@@ -4,38 +4,10 @@
 
 #include "aisdk/algorithm/common/hand_define.h"
 #include "aisdk/base/type.h"
+#include "generate_bbox.h"
 #include "thirdparty/MANO_IK-main/mano/AIK.h"
 
 namespace aisdk::algorithm {
-
-void bbox_to_center_and_scale(float* bbox, float* center, float* scale) {
-    center[0] = bbox[0] + bbox[2] / 2.0;
-    center[1] = bbox[1] + bbox[3] / 2.0;
-
-    scale[0] = bbox[2] * 1.0;
-    scale[1] = bbox[3] * 1.0;
-
-    return;
-}
-
-void center_scale_to_bbox(float* bbox, float* center, float* scale) {
-    bbox[2] = scale[0];
-    bbox[3] = scale[1];
-    bbox[0] = center[0] - bbox[2] / 2.0;
-    bbox[1] = center[1] - bbox[3] / 2.0;
-
-    return;
-}
-
-void adjust_bbox(float* bbox, float height, float width, float* bbox_res, float* center, float* scale) {
-    bbox_res[0] = std::max(float(0), std::min(width, bbox[0]));
-    bbox_res[1] = std::max(float(0), std::min(height, bbox[1]));
-    bbox_res[2] = std::max(float(0), std::min(width - bbox[0], bbox[2]));
-    bbox_res[3] = std::max(float(0), std::min(height - bbox[1], bbox[3]));
-
-    bbox_to_center_and_scale(bbox_res, center, scale);
-    return;
-}
 
 void expand_bbox(int min_x, int min_y, int max_x, int max_y, float* bbox) {
     cv::Rect res;

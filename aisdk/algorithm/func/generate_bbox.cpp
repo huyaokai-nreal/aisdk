@@ -1,4 +1,5 @@
 #include "generate_bbox.h"
+namespace aisdk::algorithm {
 
 void bbox_to_center_and_scale(float* bbox, float* center, float* scale) {
     center[0] = bbox[0] + bbox[2] / 2.0;
@@ -87,11 +88,11 @@ cv::Rect generate_bbox(int max_width, int max_height, std::vector<std::vector<fl
     return bbox_res;
 }
 
-cv::Rect generate_bbox(int max_width, int max_height, std::vector<cv::Vec2f> kps) {
+cv::Rect generate_bbox(int max_width, int max_height, std::vector<Vec2f_t> kps) {
     float center[2], scale[2];
     float bbox[4], bbox_crop[4];
 
-    kpts_to_bbox<std::vector<cv::Vec2f>>(kps, bbox);
+    kpts_to_bbox<std::vector<Vec2f_t>>(kps, bbox);
 
     // std::cout << bbox[0] << " " << bbox[1] << " " << bbox[2] << " " << bbox[3] << std::endl;
 
@@ -114,3 +115,5 @@ cv::Rect generate_bbox(int max_width, int max_height, std::vector<cv::Vec2f> kps
     // bbox_f = {bbox_crop[0], bbox_crop[1], bbox_crop[2], bbox_crop[3]};
     return bbox_res;
 }
+
+}  // namespace aisdk::algorithm

@@ -24,7 +24,7 @@ bool SeqManager::reset() {
     return true;
 }
 
-bool SeqManager::getCurrentHandData(cv::Rect& bbox, float& score, std::vector<cv::Vec2f>& kpt_2d,
+bool SeqManager::getCurrentHandData(cv::Rect& bbox, float& score, std::vector<Vec2f_t>& kpt_2d,
                                     std::vector<float>& score_kpt) {
     HandStepData temp;
     if (mHandDataSavedSeq.size() < mSlideWindowSize) {
@@ -71,7 +71,7 @@ bool SeqManager::getCurrentHandData(cv::Rect& bbox, float& score, std::vector<cv
         temp.bbox.score = score;
 
         for (int i = 0; i < 21; i++) {
-            cv::Vec2f temp_kpt;
+            Vec2f_t temp_kpt;
             temp_kpt = mSeqParam[0] * mHandDataSavedSeq[0].kpt[i].kpt2d +
                        mSeqParam[1] * mHandDataSavedSeq[1].kpt[i].kpt2d +
                        mSeqParam[2] * mHandDataSavedSeq[2].kpt[i].kpt2d +
@@ -105,7 +105,7 @@ bool SeqManager::getFilterBoxData(cv::Rect& bbox, float& score) {
     return true;
 }
 
-bool SeqManager::getFilterKptData(std::vector<cv::Vec2f>& kpt_2d, std::vector<float>& score_kpt) {
+bool SeqManager::getFilterKptData(std::vector<Vec2f_t>& kpt_2d, std::vector<float>& score_kpt) {
     for (int i = 0; i < 21; i++) {
         kpt_2d[i][0] = mOneEuroFilterList[i * 2]->filter(kpt_2d[i][0]);
         kpt_2d[i][1] = mOneEuroFilterList[i * 2 + 1]->filter(kpt_2d[i][1]);
@@ -285,7 +285,7 @@ float DynamicFilter2D::unexplicit_var(std::vector<float> input, int pnt_index, i
     return variance / input.size();
 }
 
-bool DynamicFilter2D::getDynamicFilterHandData(std::vector<cv::Vec2f>& kpt_2d) {
+bool DynamicFilter2D::getDynamicFilterHandData(std::vector<Vec2f_t>& kpt_2d) {
     mHandDataSeq.push_back(kpt_2d);
     if (mHandDataSeq.size() > mWindowLength) {
         mHandDataSeq.pop_front();

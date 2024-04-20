@@ -16,11 +16,11 @@ struct BoxData {
 
 struct KptData {
     float score;
-    cv::Vec2f kpt2d;
+    Vec2f_t kpt2d;
 };
 
 struct HandStepData {
-    HandStepData() { kpt = std::vector<KptData>(21, {0, 0}); };
+    HandStepData() { kpt = std::vector<KptData>(21, {0, Vec2f_t{0, 0}}); };
 
     BoxData bbox;
     std::vector<KptData> kpt;
@@ -51,11 +51,11 @@ class SeqManager final {
     SeqManager();
     ~SeqManager(){};
     // EMA
-    bool getCurrentHandData(cv::Rect& bbox, float& score, std::vector<cv::Vec2f>& kpt_2d,
+    bool getCurrentHandData(cv::Rect& bbox, float& score, std::vector<Vec2f_t>& kpt_2d,
                             std::vector<float>& score_kpt);
     // 1 Euro
     bool getFilterBoxData(cv::Rect& bbox, float& score);
-    bool getFilterKptData(std::vector<cv::Vec2f>& kpt_2d, std::vector<float>& score_kpt);
+    bool getFilterKptData(std::vector<Vec2f_t>& kpt_2d, std::vector<float>& score_kpt);
     bool reset();
 
    private:
@@ -107,7 +107,7 @@ class DynamicFilter2D final {
     DynamicFilter2D(int dim, int window, float lambda);
     ~DynamicFilter2D(){};
 
-    bool getDynamicFilterHandData(std::vector<cv::Vec2f>& kpt_2d);
+    bool getDynamicFilterHandData(std::vector<Vec2f_t>& kpt_2d);
     bool reset();
 
    private:
@@ -117,8 +117,8 @@ class DynamicFilter2D final {
 
     float unexplicit_var(std::vector<float> input, int pnt_index, int coord_index);
 
-    std::deque<std::vector<cv::Vec2f>> mHandDataSeq;
-    std::vector<cv::Vec2f> mPreData;
+    std::deque<std::vector<Vec2f_t>> mHandDataSeq;
+    std::vector<Vec2f_t> mPreData;
     std::vector<DynamicData2D> mHandData;
     int mWindowLength;
     int mDim;

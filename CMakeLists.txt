@@ -44,7 +44,7 @@ option(ENABLE_CLANG_TIDY_CHECK       "Analyze code with clang-tidy."            
 option(ENABLE_LOG_LEVEL_RELEASE  "enable log level for release" ON)
 option(ENABLE_LOG_LEVEL_ALL "enable trace log level" OFF)
 # build algorithm
-option(ENABLE_ALGORITHM_GRAPH_STREAM_EVAL_TIME "enable algorithm mediapipe graph stream eval time."  OFF)
+option(ENABLE_ALGORITHM_GRAPH_STREAM_EVAL_TIME "enable algorithm mediapipe graph stream eval time."  ON)
 option(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME "enable algorithm mediapipe calculator process eval time."  OFF)
 # build xengine nn
 option(ENABLE_XENGINE_SHARED_LIB "enable xengine shared lib."  OFF)

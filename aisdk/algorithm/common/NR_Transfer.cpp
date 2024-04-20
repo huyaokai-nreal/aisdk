@@ -107,17 +107,6 @@ std::vector<Vec3f_t> lcam_cv_to_rcam_cv(const std::vector<Vec3f_t>& points3d_src
     return points3d_dst;
 }
 
-std::vector<cv::Vec2f> cv_to_uv(std::shared_ptr<aisdk::base::BaseCameraModel> cam_model,
-                                const std::vector<Vec3f_t>& points3d_cv) {
-    std::vector<cv::Vec2f> uv_res;
-    uv_res.resize(REPROJ_POINT_NUM);
-    auto projected_2d_internal = cam_model->eye_to_window(points3d_cv);
-    for (size_t i = 0; i < REPROJ_POINT_NUM; i++) {
-        uv_res[i] = {projected_2d_internal[i](0), projected_2d_internal[i](1)};
-    }
-    return uv_res;
-}
-
 void reproj_bbox_with_new_headpose(std::shared_ptr<aisdk::base::BaseCameraModel> lcam_model,
                                    std::shared_ptr<aisdk::base::BaseCameraModel> rcam_model,
                                    NRTransform extrinsics_world, const std::vector<Vec3f_t>& points_3d,
@@ -126,11 +115,11 @@ void reproj_bbox_with_new_headpose(std::shared_ptr<aisdk::base::BaseCameraModel>
 
     auto kpt3d_cv_rcam = lcam_cv_to_rcam_cv(kpt3d_cv_lcam);
 
-    auto kpt2d_lcam = cv_to_uv(lcam_model, kpt3d_cv_lcam);
-    auto kpt2d_rcam = cv_to_uv(rcam_model, kpt3d_cv_rcam);
+    auto kpt2d_lcam = lcam_model->eye_to_window(kpt3d_cv_lcam);
+    auto kpt2d_rcam = rcam_model->eye_to_window(kpt3d_cv_rcam);
 
-    proj_bbox_lcam = generate_bbox(479, 639, kpt2d_lcam);
-    proj_bbox_rcam = generate_bbox(479, 639, kpt2d_rcam);
+    proj_bbox_lcam = generate_bbox(lcam_model->video_width_ - 1, lcam_model->video_height_ - 1, kpt2d_lcam);
+    proj_bbox_rcam = generate_bbox(rcam_model->video_width_ - 1, rcam_model->video_height_ - 1, kpt2d_rcam);
 
     return;
 }

@@ -16,6 +16,8 @@ class GlobalPredictorService {
     KFPredictor& get_predictor_rhand() { return kfpredictor_rhand; }
 
     Kpt3dInternal& get_kpt3d_world() { return kpt3d_world; }
+    GlobalPredictorService(const GlobalPredictorService&) = delete;
+    GlobalPredictorService& operator=(const GlobalPredictorService&) = delete;
 
    private:
     KFPredictor kfpredictor_lhand;
@@ -30,8 +32,6 @@ class GlobalPredictorService {
 
     ~GlobalPredictorService() {}
 
-    GlobalPredictorService(const GlobalPredictorService&) = delete;
-    GlobalPredictorService& operator=(const GlobalPredictorService&) = delete;
 };
 
 }  // namespace aisdk::algorithm
