@@ -158,8 +158,8 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
                         predict_scale * (query_time - hand_data_internal.timestamp) + hand_data_internal.timestamp;
                 }
 
-                AISDK_LOG_WARN("predict_len: {} s", (query_time - hand_data_internal.timestamp));
-                AISDK_LOG_WARN("{}, {}, {}, {}, {}, {}", query_time, hand_data_internal.timestamp, target_timestamp,
+                AISDK_LOG_TRACE("predict_len: {} s", (query_time - hand_data_internal.timestamp));
+                AISDK_LOG_TRACE("{}, {}, {}, {}, {}, {}", query_time, hand_data_internal.timestamp, target_timestamp,
                                root_meas[0], root_meas[1], root_meas[2]);
 
                 if (i == 0) {
@@ -171,9 +171,9 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
                     if (predictor_rhand.get_tracking_status())
                         root_kf_predicted = predictor_rhand.track_only_pred(target_timestamp);
                 }
-                AISDK_LOG_WARN("predict root is {}, {}, {}", root_kf_predicted[0], root_kf_predicted[1],
+                AISDK_LOG_TRACE("predict root is {}, {}, {}", root_kf_predicted[0], root_kf_predicted[1],
                                root_kf_predicted[2]);
-                AISDK_LOG_WARN("predict dist is {}, {}, {}", abs(root_kf_predicted[0] - root_meas[0]),
+                AISDK_LOG_TRACE("predict dist is {}, {}, {}", abs(root_kf_predicted[0] - root_meas[0]),
                                abs(root_kf_predicted[1] - root_meas[1]), abs(root_kf_predicted[2] - root_meas[2]));
                 for (int k = 0; k < EZXR_DEFINED_JOINTS; k++) {
                     predicted_points[k] = ontracked_points[i][k] + root_kf_predicted - root_meas;

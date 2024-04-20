@@ -28,30 +28,17 @@ float compute_rmse(std::vector<Vec2f_t> lval, std::vector<Vec2f_t> rval) {
     return rmse / norm;
 }
 
-void log_kpt2d(std::vector<Vec2f_t> kpts) {
-    for (const auto& kpt : kpts) {
-        AISDK_LOG_WARN("x: {}, y:{}", kpt[0], kpt[1]);
-    }
-}
 float compute_score_with_reprojection(const std::vector<cv::Vec3f>& pred_xyz,
                                       const std::vector<Vec2f_t>& leftcam_uv_ori,
                                       const std::vector<Vec2f_t>& rightcam_uv_ori,
                                       const std::shared_ptr<base::BaseCameraModel>& left_cam,
                                       const std::shared_ptr<base::BaseCameraModel>& right_cam) {
-    // AISDK_LOG_WARN("left pred kpt 2d");
-    // log_kpt2d(leftcam_uv_ori);
     std::vector<Vec3f_t> kpt3d(pred_xyz.size());
     auto cv_to_eigen = [](cv::Vec3f x) -> Vec3f_t { return {x[0], x[1], x[2]}; };
     std::transform(pred_xyz.begin(), pred_xyz.end(), kpt3d.begin(), cv_to_eigen);
     auto left_reproj_kpt2d = left_cam->world_to_window(kpt3d);
-    // AISDK_LOG_WARN("left reproj kpt 2d");
-    // log_kpt2d(left_reproj_kpt2d);
     auto left_error = compute_rmse(left_reproj_kpt2d, leftcam_uv_ori);
-    // AISDK_LOG_WARN("right pred kpt 2d");
-    // log_kpt2d(rightcam_uv_ori);
     auto right_reproj_kpt2d = right_cam->world_to_window(kpt3d);
-    // AISDK_LOG_WARN("right reproj kpt 2d");
-    // log_kpt2d(right_reproj_kpt2d);
     auto right_error = compute_rmse(right_reproj_kpt2d, rightcam_uv_ori);
 
     return std::max(left_error, right_error);

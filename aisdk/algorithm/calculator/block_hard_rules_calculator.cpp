@@ -8,14 +8,6 @@
 
 constexpr int root_index = 0;
 
-bool block_rule_root_distance(const std::vector<cv::Vec3f>& points_3d, float max_depth) {
-    if (points_3d[root_index][2] > max_depth) {
-        return false;
-    } else {
-        return true;
-    }
-}
-
 namespace aisdk::algorithm {
 
 // A calculator blocks 3d keypoint invalid outputs with simple hard rules.
@@ -29,6 +21,7 @@ namespace aisdk::algorithm {
 class BlockHardRulesCalculator : public xgraph::CalculatorBase {
    private:
     float max_root_depth_;
+    float score_th_;
 
    public:
     static absl::Status GetContract(xgraph::CalculatorContract* cc) {
@@ -38,11 +31,15 @@ class BlockHardRulesCalculator : public xgraph::CalculatorBase {
         AISDK_LOG_TRACE("[BlockHardRulesCalculator] GetContract complete");
         return absl::OkStatus();
     }
+    inline bool block_rule_root_distance(const std::vector<cv::Vec3f>& points_3d, float max_depth) {
+        return points_3d[root_index][2] > max_depth;
+    }
 
     absl::Status Open(xgraph::CalculatorContext* cc) final {
         AISDK_LOG_TRACE("[BlockHardRulesCalculator] Open start");
         const auto& options = cc->Options<aisdk::BlockHardRulesCalculatorOptions>();
         max_root_depth_ = options.max_root_depth();
+        score_th_ = options.score_th();
         AISDK_LOG_TRACE("[BlockHardRulesCalculator] Open complete");
         return absl::OkStatus();
     }
@@ -56,20 +53,19 @@ class BlockHardRulesCalculator : public xgraph::CalculatorBase {
 
         std::unique_ptr<aisdk::algorithm::Kpt3dInternal> output_buffer_ =
             absl::make_unique<aisdk::algorithm::Kpt3dInternal>();
-        output_buffer_->clear();
-
+        *output_buffer_ = input_data;
         if (input_data.lhand_valid) {
             AISDK_LOG_TRACE("[BlockHardRulesCalculator] Checking left hand");
-            if (block_rule_root_distance(input_data.lhand, max_root_depth_)) {
-                output_buffer_->lhand_valid = true;
-                output_buffer_->lhand = input_data.lhand;
+            if (block_rule_root_distance(input_data.lhand, max_root_depth_) || input_data.lscore > score_th_) {
+                AISDK_LOG_TRACE("[BlockHardRulesCalculator] block left hand {}", input_data.lscore);
+                output_buffer_->lhand_valid = false;
             }
         }
         if (input_data.rhand_valid) {
             AISDK_LOG_TRACE("[BlockHardRulesCalculator] Checking right hand");
-            if (block_rule_root_distance(input_data.rhand, max_root_depth_)) {
-                output_buffer_->rhand_valid = true;
-                output_buffer_->rhand = input_data.rhand;
+            if (block_rule_root_distance(input_data.rhand, max_root_depth_) || input_data.rscore > score_th_) {
+                AISDK_LOG_TRACE("[BlockHardRulesCalculator] block right hand {}", input_data.rscore);
+                output_buffer_->rhand_valid = false;
             }
         }
 
