@@ -1,11 +1,8 @@
-#ifndef __NR_TRANSFER__
-#define __NR_TRANSFER__
-
+#pragma  once
 #include <opencv2/opencv.hpp>
 
 #include "Eigen/Dense"
 #include "aisdk/base/camera_model.h"
-#include "aisdk/base/log.h"
 #include "aisdk/base/type.h"
 #include "interface/handtracking_sdk/public/nr_plugin_types.h"
 
@@ -31,4 +28,3 @@ void reproj_bbox_with_new_headpose(std::shared_ptr<aisdk::base::BaseCameraModel>
 
 }  // namespace aisdk::algorithm
 
-#endif

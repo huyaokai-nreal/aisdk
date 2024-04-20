@@ -13,7 +13,6 @@
 #include "aisdk/algorithm/internal_structs/hand_output_struct_internal.h"
 #include "aisdk/algorithm/internal_structs/headpose_struct_internal.h"
 #include "aisdk/base/log.h"
-#include "aisdk/task/handtracking/nrcore_pipeline.h"
 #include "aisdk/xgraph/xgraph.h"
 
 #define JOINTS_COUNT 25

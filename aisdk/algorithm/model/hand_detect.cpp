@@ -1,6 +1,7 @@
 #include "hand_detect.h"
 
 #include "aisdk/algorithm/common/nrnet_define.h"
+#include "aisdk/algorithm/func/netalgo_utils.h"
 #include "aisdk/base/profiling.h"
 #include "aisdk/xengine/cv/xr_cv.h"
 

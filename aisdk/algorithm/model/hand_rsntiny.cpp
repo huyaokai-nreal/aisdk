@@ -8,7 +8,6 @@
 #include "aisdk/algorithm/func/permute.h"
 #include "aisdk/algorithm/func/reducesum.h"
 #include "aisdk/algorithm/func/softmax.h"
-#include "aisdk/base/log.h"
 namespace aisdk::algorithm {
 
 /**

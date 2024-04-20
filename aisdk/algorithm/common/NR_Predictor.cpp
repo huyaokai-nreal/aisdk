@@ -6,10 +6,6 @@
  */
 #include "NR_Predictor.h"
 
-#include <algorithm>
-
-#include "aisdk/base/log.h"
-
 namespace aisdk::algorithm {
 int KFPredictor::init() {
     // Init KalmanFilter with status params

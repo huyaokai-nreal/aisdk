@@ -1,11 +1,9 @@
 #pragma once
 
-#include <cstdlib>
 #include <opencv2/core/matx.hpp>
 
 #include "aisdk/base/type.h"
 #include "calculator_basenet.h"
-#include "../func/netalgo_utils.h"
 
 namespace aisdk::algorithm {
 

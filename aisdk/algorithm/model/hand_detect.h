@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../func/netalgo_utils.h"
 #include "../internal_structs/det_struct_internal.h"
 #include "aisdk/xengine/nr_model_mgr.h"
 #include "calculator_basenet.h"

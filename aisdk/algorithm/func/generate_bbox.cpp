@@ -7,8 +7,6 @@ void bbox_to_center_and_scale(float* bbox, float* center, float* scale) {
 
     scale[0] = bbox[2] * 1.0;
     scale[1] = bbox[3] * 1.0;
-
-    return;
 }
 
 void center_scale_to_bbox(float* bbox, float* center, float* scale) {
@@ -16,8 +14,6 @@ void center_scale_to_bbox(float* bbox, float* center, float* scale) {
     bbox[3] = scale[1];
     bbox[0] = center[0] - bbox[2] / 2.0;
     bbox[1] = center[1] - bbox[3] / 2.0;
-
-    return;
 }
 
 void adjust_bbox(float* bbox, float height, float width, float* bbox_res, float* center, float* scale) {
@@ -27,7 +23,6 @@ void adjust_bbox(float* bbox, float height, float width, float* bbox_res, float*
     bbox_res[3] = std::max(float(0), std::min(height - bbox[1], bbox[3]));
 
     bbox_to_center_and_scale(bbox_res, center, scale);
-    return;
 }
 
 template <typename T>
@@ -56,8 +51,6 @@ void kpts_to_bbox(const T& kps, float* bbox) {
     bbox[1] = min_y;
     bbox[2] = max_x - min_x;
     bbox[3] = max_y - min_y;
-
-    return;
 }
 
 cv::Rect generate_bbox(int max_width, int max_height, std::vector<std::vector<float>> kps, std::vector<float>& bbox_f) {

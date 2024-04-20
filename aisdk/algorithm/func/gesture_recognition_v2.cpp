@@ -79,7 +79,6 @@ void HandFeatureUpdator::update_hand_orientation(float hand_angle) {
 }
 
 void HandFeatureUpdator::update_curl_feature(const std::vector<Eigen::Vector3f> &angles) {
-    int angle_size = angles.size();
     int per_angle_size = angles[0].size();
     auto feature_list = cur_hand_feature->curl_features();
     FingureState thumb_feature = feature_list[0];

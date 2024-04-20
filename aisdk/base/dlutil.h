@@ -1,6 +1,5 @@
 #pragma once
 
-#include <iostream>
 #include <string>
 
 #if !defined(_WIN32)
@@ -8,7 +7,6 @@
 #include <assert.h>
 #include <dirent.h>
 #include <dlfcn.h>
-#include <stdlib.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>

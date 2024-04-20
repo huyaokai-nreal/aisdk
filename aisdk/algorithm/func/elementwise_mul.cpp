@@ -18,7 +18,6 @@ void elementwise_mult(float* __restrict A, float* __restrict B, float* __restric
     for (int i = 0; i < size; i++) {
         C[i] = A[i] * B[i];
     }
-    return;
 }
 
 void elementwise_mult_hm(float* __restrict hm_input, float* __restrict coeffs, float* __restrict hm_output,
@@ -28,5 +27,4 @@ void elementwise_mult_hm(float* __restrict hm_input, float* __restrict coeffs, f
     for (int c = 0; c < channels; c++) {
         elementwise_mult(hm_input + c * col_size, coeffs, hm_output + c * col_size, col_size);
     }
-    return;
 }

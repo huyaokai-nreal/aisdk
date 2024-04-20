@@ -26,8 +26,6 @@ void expand_bbox(int min_x, int min_y, int max_x, int max_y, float* bbox) {
     bbox[1] = min_y;
     bbox[2] = max_x - min_x;
     bbox[3] = max_y - min_y;
-
-    return;
 }
 
 cv::Rect add_bbox_margin(int min_x, int min_y, int max_x, int max_y, int max_w, int max_h) {

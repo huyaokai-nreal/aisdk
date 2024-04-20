@@ -1,8 +1,6 @@
 #include "landmark_filter.h"
 
-#include "../func/permute.h"
 #include "aisdk/algorithm/func/netalgo_utils.h"
-#include "aisdk/base/log.h"
 #include "aisdk/base/profiling.h"
 #include "aisdk/base/type.h"
 

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <deque>
-#include <numeric>
 
 #include <opencv2/opencv.hpp>
 #include "aisdk/base/type.h"

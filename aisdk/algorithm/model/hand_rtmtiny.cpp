@@ -7,7 +7,6 @@
 
 #include "aisdk/algorithm/common/math.h"
 #include "aisdk/algorithm/func/softmax.h"
-#include "aisdk/base/log.h"
 namespace aisdk::algorithm {
 
 /**

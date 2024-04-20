@@ -1,5 +1,7 @@
 #include "NR_Seq_Manager.h"
 
+#include <numeric>
+
 #include "aisdk/base/log.h"
 #include "aisdk/base/type.h"
 
