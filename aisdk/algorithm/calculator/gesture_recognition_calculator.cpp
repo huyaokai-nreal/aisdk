@@ -75,15 +75,12 @@ class GestureRecognitionCalculator : public xgraph::CalculatorBase {
             output_buffer_->lhand_valid = true;
             output_buffer_->lhand_score = kpt3d_data.lscore;
             output_buffer_->lhand_kpt = kpt3d_data.lhand;
+            output_buffer_->lhand_v = kpt3d_data.lhand_v;
             output_buffer_->lhand_gesture = gesture_res;
-            // now rotation will be computed at prediction thread
-            // output_buffer_->lhand_rot.resize(23);
             AISDK_LOG_TRACE("[GestureRecognitionCalculator] process left hand complete. {}",
                             output_buffer_->lhand_gesture);
         }
         if (kpt3d_data.rhand_valid) {
-            // process left hand
-            // process here
             AISDK_LOG_TRACE("[GestureRecognitionCalculator] process right hand.");
             std::string gesture_res;
             std::vector<Eigen::Vector3f> points3d_in(STANDARDIZE_TARGET_POINTS);
@@ -96,8 +93,8 @@ class GestureRecognitionCalculator : public xgraph::CalculatorBase {
             output_buffer_->rhand_valid = true;
             output_buffer_->rhand_score = kpt3d_data.rscore;
             output_buffer_->rhand_kpt = kpt3d_data.rhand;
+            output_buffer_->rhand_v = kpt3d_data.rhand_v;
             output_buffer_->rhand_gesture = gesture_res;
-            // output_buffer_->rhand_rot.resize(23);
             AISDK_LOG_TRACE("[GestureRecognitionCalculator] process right hand complete. {}",
                             output_buffer_->rhand_gesture);
         }

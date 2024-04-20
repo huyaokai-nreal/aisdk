@@ -30,17 +30,17 @@ node {
     }
   }
 }
-node {
-  name: "LandmarkFilter"
-  calculator: "LandmarkFilterCalculator"
-  input_stream: "LANDMARK_INPUT:kpt2d"
-  output_stream: "LANDMARK_OUTPUT:kpt2d_filter"
-}
+#node {
+#  name: "LandmarkFilter"
+#  calculator: "LandmarkFilterCalculator"
+#  input_stream: "LANDMARK_INPUT:kpt2d"
+#  output_stream: "LANDMARK_OUTPUT:kpt2d_filter"
+#}
 node {
   name: "LiftNet_3D"
   calculator: "HandLiftCalculator"
   input_side_packet: "CAM_INFO_INPUT:cam_info"
-  input_stream: "LANDMARK_INPUT:kpt2d_filter"
+  input_stream: "LANDMARK_INPUT:kpt2d"
   output_stream: "LIFT_OUTPUT:kpt3d"
 }
 
@@ -81,7 +81,7 @@ node {
 node {
   name: "GestureRecognition"
   calculator: "GestureRecognitionCalculator"
-  input_stream: "GR_KPT2D_INPUT:kpt2d_filter"
+  input_stream: "GR_KPT2D_INPUT:kpt2d"
   input_stream: "GR_KPT_INPUT:kpt3d_filtered"
   output_stream: "GR_OUTPUT:hand_result"
 }

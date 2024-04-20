@@ -60,6 +60,7 @@ class KalmanFilterCorrectionCalculator : public xgraph::CalculatorBase {
                 if (kpt3d_world_pre.lhand_valid) {
                     auto measure_v =
                         (kpt3d_world.lhand[21] - kpt3d_world_pre.lhand[21]) / (timestamp - last_timestamp_);
+                    output_buffer_->lhand_v = measure_v;
                     predictor_lhand.track_with_correct(timestamp, {kpt3d_world.lhand[21], measure_v});
                 }
             }
@@ -81,6 +82,7 @@ class KalmanFilterCorrectionCalculator : public xgraph::CalculatorBase {
                 if (kpt3d_world_pre.rhand_valid) {
                     auto measure_v =
                         (kpt3d_world.rhand[21] - kpt3d_world_pre.rhand[21]) / (timestamp - last_timestamp_);
+                    output_buffer_->rhand_v = measure_v;
                     predictor_rhand.track_with_correct(timestamp, {kpt3d_world.rhand[21], measure_v});
                 }
             }

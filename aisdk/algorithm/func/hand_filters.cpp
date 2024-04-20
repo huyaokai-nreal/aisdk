@@ -14,18 +14,18 @@ bool HandFilters::init() {
     finger_params.freq = freq;
 
     // 根节点
-    center_params.mincutoff = {0.1, 0.1, 0.1};  // 调静止状态下的稳定性,越小稳定性越好
-    center_params.beta = {10.0, 10.0, 10.0};    // 运动状态下alpha的变化速率，alpha越大，跟踪越及时
+    center_params.mincutoff = {0.2, 0.2, 0.1};  // 调静止状态下的稳定性,越小稳定性越好
+    center_params.beta = {15.0, 15.0, 10.0};    // 运动状态下alpha的变化速率，alpha越大，跟踪越及时
     center_params.dcutoff = {0.8, 0.8, 0.5};    // 速度滤波的固定效果
 
     // 手掌
-    palm_params.mincutoff = {0.4, 0.4, 0.1};  // 调静止状态下的稳定性,越小稳定性越好
-    palm_params.beta = {20.0, 20.0, 10.0};    // 运动状态下alpha的变化速率，alpha越大，跟踪越及时
+    palm_params.mincutoff = {0.4, 0.4, 0.2};  // 调静止状态下的稳定性,越小稳定性越好
+    palm_params.beta = {30.0, 30.0, 15.0};    // 运动状态下alpha的变化速率，alpha越大，跟踪越及时
     palm_params.dcutoff = {2.0, 2.0, 1.0};    // 速度滤波的固定效果
 
     // 手指
-    finger_params.mincutoff = {0.4, 0.4, 0.1};
-    finger_params.beta = {20.0, 20.0, 10.0};
+    finger_params.mincutoff = {0.4, 0.4, 0.2};
+    finger_params.beta = {30.0, 30.0, 15.0};
     finger_params.dcutoff = {2.0, 2.0, 1.0};
 
     // finger

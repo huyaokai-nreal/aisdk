@@ -14,6 +14,10 @@ struct HandOutputInternal {
 
     std::vector<Vec3f_t> lhand_kpt;
     std::vector<Vec3f_t> rhand_kpt;
+    
+    Vec3f_t lhand_v{0,0,0};
+    Vec3f_t rhand_v{0,0,0};
+
 
     std::vector<Eigen::Matrix3f> lhand_rot;
     std::vector<Eigen::Matrix3f> rhand_rot;
