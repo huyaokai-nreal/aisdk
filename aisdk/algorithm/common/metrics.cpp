@@ -65,6 +65,11 @@ bool check_if_rect_valid(cv::Rect rect, int max_width, int max_height) {
     return !(rect.x < 0 || rect.x >= max_width || rect.y < 0 || rect.y >= max_height || rect.width <= 0 ||
              rect.x + rect.width >= max_width || rect.height <= 0 || rect.y + rect.height >= max_height);
 }
+bool check_if_rect_valid_relax(cv::Rect rect, int max_width, int max_height) {
+    int cx = rect.x + 0.5 * rect.width;
+    int cy = rect.y + 0.5 * rect.height;
+    return cx > 0 && cx < max_width && cy > 0 && cy < max_height;
+}
 
 bool isNaN(const std::vector<cv::Vec3f>& kpts) {
     for (int i = 0; i < kpts.size(); i++) {

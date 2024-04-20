@@ -137,8 +137,8 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
                 aisdk::algorithm::reproj_bbox_with_new_headpose(lcam_model_, rcam_model_, headpose_data.transform,
                                                                 lhand_predict_frame, proj_bbox_lcam_lhand,
                                                                 proj_bbox_rcam_lhand);
-                if (check_if_rect_valid(proj_bbox_lcam_lhand, video_width_, video_height_) &&
-                    check_if_rect_valid(proj_bbox_rcam_lhand, video_width_, video_height_)) {
+                if (check_if_rect_valid_relax(proj_bbox_lcam_lhand, video_width_, video_height_) &&
+                    check_if_rect_valid_relax(proj_bbox_rcam_lhand, video_width_, video_height_)) {
                     output_buffer_->lhand_valid = true;
                     output_buffer_->images_lhand_rects[0].emplace_back(proj_bbox_lcam_lhand);
                     output_buffer_->images_lhand_rects[1].emplace_back(proj_bbox_rcam_lhand);
@@ -162,8 +162,8 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
                                                                 rhand_predict_frame, proj_bbox_lcam_rhand,
                                                                 proj_bbox_rcam_rhand);
 
-                if (check_if_rect_valid(proj_bbox_lcam_rhand, video_width_, video_height_) &&
-                    check_if_rect_valid(proj_bbox_rcam_rhand, video_width_, video_height_)) {
+                if (check_if_rect_valid_relax(proj_bbox_lcam_rhand, video_width_, video_height_) &&
+                    check_if_rect_valid_relax(proj_bbox_rcam_rhand, video_width_, video_height_)) {
                     output_buffer_->rhand_valid = true;
                     output_buffer_->images_rhand_rects[0].emplace_back(proj_bbox_lcam_rhand);
                     output_buffer_->images_rhand_rects[1].emplace_back(proj_bbox_rcam_rhand);

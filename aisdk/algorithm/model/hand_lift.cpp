@@ -208,14 +208,11 @@ aisdk::xengine::Status GMLPLiftNet3::SetCameraInfo(const std::shared_ptr<BaseCam
                                                    const std::shared_ptr<BaseCameraModel> &right_camera) {
     left_camera_ = left_camera;
     right_camera_ = right_camera;
-    if (!init_camera_info_) {
-        auto [rot_left, rot_right, baseline] =
-            get_rotations_for_standard_stereo(right_camera->get_cam_to_world_transform().matrix().cast<double>());
-        rot_left_ = rot_left.cast<float>();
-        rot_right_ = rot_right.cast<float>();
-        init_camera_info_ = true;
-        baseline_scale_ = baseline;
-    }
+    auto [rot_left, rot_right, baseline] =
+        get_rotations_for_standard_stereo(right_camera->get_cam_to_world_transform().matrix().cast<double>());
+    rot_left_ = rot_left.cast<float>();
+    rot_right_ = rot_right.cast<float>();
+    baseline_ = baseline;
     return aisdk::xengine::Status::SUCCESS;
 }
 
@@ -322,8 +319,8 @@ void GMLPLiftNet3::PostProcess(LiftNetOutputs &outputs, const LiftNetInputs &inp
         auto leftZ = _data;
         auto rightZ = _data + 21;
 
-        auto left_depth = leftZ[i] * baseline_scale_;
-        auto right_depth = rightZ[i] * baseline_scale_;
+        auto left_depth = leftZ[i] * baseline_;
+        auto right_depth = rightZ[i] * baseline_;
 
         Eigen::Vector3f leftcam_XYZ;
         Eigen::Vector3f rightcam_XYZ;

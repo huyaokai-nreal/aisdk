@@ -66,9 +66,7 @@ class GMLPLiftNet3:public CalculatorBaseNet {
     double last_left_time = 0;
     double last_right_time = 0;
 
-    float baseline_scale_ = 0;
-    float standard_baseline_ = 0.13;
-    bool init_camera_info_ = false;
+    float baseline_ = 0;
 };
 
 }  // namespace aisdk::algorithm
