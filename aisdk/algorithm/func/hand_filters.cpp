@@ -13,11 +13,6 @@ bool HandFilters::init() {
     palm_params.freq = freq;
     finger_params.freq = freq;
 
-    // 根节点
-    center_params.mincutoff = {0.2, 0.2, 0.1};  // 调静止状态下的稳定性,越小稳定性越好
-    center_params.beta = {15.0, 15.0, 10.0};    // 运动状态下alpha的变化速率，alpha越大，跟踪越及时
-    center_params.dcutoff = {0.8, 0.8, 0.5};    // 速度滤波的固定效果
-
     // 手掌
     palm_params.mincutoff = {0.4, 0.4, 0.2};  // 调静止状态下的稳定性,越小稳定性越好
     palm_params.beta = {30.0, 30.0, 15.0};    // 运动状态下alpha的变化速率，alpha越大，跟踪越及时
@@ -34,16 +29,12 @@ bool HandFilters::init() {
     // palm
     m_seq3d_palm_lhand = std::make_shared<aisdk::algorithm::SeqManager3D>(6, palm_params);
     m_seq3d_palm_rhand = std::make_shared<aisdk::algorithm::SeqManager3D>(6, palm_params);
-    // center
-    m_seq3d_center_lhand = std::make_shared<aisdk::algorithm::SeqManager3D>(1, center_params);
-    m_seq3d_center_rhand = std::make_shared<aisdk::algorithm::SeqManager3D>(1, center_params);
 
     return true;
 }
 
 void HandFilters::kpt_seq_3d_filter(int hand_side, std::vector<Vec3f_t>& point3d) {
-    std::vector<Vec3f_t> rel_points, palm_points, root_point;
-
+    std::vector<Vec3f_t> rel_points, palm_points;
     for (int i = 0; i < EZXR_DEFINED_JOINTS; i++) {
         if (i == 21) continue;
         if (i == 0 || i == 5 || i == 9 || i == 13 || i == 17 || i == 22) {
@@ -52,25 +43,23 @@ void HandFilters::kpt_seq_3d_filter(int hand_side, std::vector<Vec3f_t>& point3d
             rel_points.emplace_back(point3d[i] - point3d[21]);
         }
     }
-    root_point.emplace_back(point3d[21]);
+    const auto& root_point = point3d[21];
     if (hand_side == 0) {
         m_seq3d_lhand->getFilterHandData(rel_points);
         m_seq3d_palm_lhand->getFilterHandData(palm_points);
-        m_seq3d_center_lhand->getFilterHandData(root_point);
     } else {
         m_seq3d_rhand->getFilterHandData(rel_points);
         m_seq3d_palm_rhand->getFilterHandData(palm_points);
-        m_seq3d_center_rhand->getFilterHandData(root_point);
     }
 
     for (int i = 0, p = 0, q = 0; i < EZXR_DEFINED_JOINTS; i++) {
         if (i == 21)
-            point3d[i] = root_point[0];
+            point3d[i] = root_point;
         else if (i == 0 || i == 5 || i == 9 || i == 13 || i == 17 || i == 22) {
-            point3d[i] = root_point[0] + palm_points[q];
+            point3d[i] = root_point + palm_points[q];
             q++;
         } else {
-            point3d[i] = root_point[0] + rel_points[p];
+            point3d[i] = root_point + rel_points[p];
             p++;
         }
     }

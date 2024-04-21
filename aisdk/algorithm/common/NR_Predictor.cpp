@@ -6,6 +6,12 @@
  */
 #include "NR_Predictor.h"
 
+#include <memory>
+#include <vector>
+
+#include "aisdk/algorithm/common/NR_Seq_Manager.h"
+#include "aisdk/base/type.h"
+
 namespace aisdk::algorithm {
 int KFPredictor::init() {
     // Init KalmanFilter with status params
@@ -13,16 +19,16 @@ int KFPredictor::init() {
     m_kf_impl = std::make_unique<cv::KalmanFilter>(m_state_size, m_meas_size, m_ctrl_size, m_type);
 
     // A: Transition State Matrix
-    //   x  y  z  vx vy vz ax      ay      az
-    // [ 1  0  0  dT 0  0  0.5dT^2 0       0       ]
-    // [ 0  1  0  0  dT 0  0       0.5dT^2 0       ]
-    // [ 0  0  1  0  0  dT 0       0       0.5dT^2 ]
-    // [ 0  0  0  1  0  0  0       0       0       ] -
-    // [ 0  0  0  0  1  0  0       0       0       ]  |  ==> Maybe identity * dT
-    // [ 0  0  0  0  0  1  0       0       0       ] -
-    // [ 0  0  0  0  0  0  1       0       0       ]
-    // [ 0  0  0  0  0  0  0       1       0       ]
-    // [ 0  0  0  0  0  0  0       0       1       ]
+    //     x  y  z  vx vy vz ax      ay      az
+    // x [ 1  0  0  dT 0  0  0.5dT^2 0       0       ]
+    // y [ 0  1  0  0  dT 0  0       0.5dT^2 0       ]
+    // z [ 0  0  1  0  0  dT 0       0       0.5dT^2 ]
+    // vx[ 0  0  0  1  0  0  dt       0       0       ] -
+    // vy[ 0  0  0  0  1  0  0       dt       0       ]  |  ==> Maybe identity * dT
+    // yz[ 0  0  0  0  0  1  0       0       dt       ] -
+    // ax[ 0  0  0  0  0  0  1       0       0       ]
+    // ay[ 0  0  0  0  0  0  0       1       0       ]
+    // az[ 0  0  0  0  0  0  0       0       1       ]
 
     cv::setIdentity(m_kf_impl->transitionMatrix);
     // m_kf_impl->measurementMatrix.at<float>(M_X, S_VX) = 1.0f;
@@ -71,12 +77,23 @@ int KFPredictor::init() {
     // m_kf_impl->measurementNoiseCov.at<float>(S_Z, S_Z) = 1e-3;
 
     // cv::setIdentity(m_kf_impl->errorCovPost, cv::Scalar(.1));
+    // init smoother
+    reset_predict_smoother();
 
     return 0;
 }
-
+void KFPredictor::reset_predict_smoother() {
+    OneEuroParams center_params;
+    center_params.mincutoff = {0.4, 0.4, 0.2};  // 调静止状态下的稳定性,越小稳定性越好
+    center_params.beta = {15.0, 15.0, 10.0};    // 运动状态下alpha的变化速率，alpha越大，跟踪越及时
+    center_params.dcutoff = {0.8, 0.8, 0.5};
+    // center_params.mincutoff = {0.4, 0.4, 0.2};  // 调静止状态下的稳定性,越小稳定性越好
+    // center_params.beta = {30.0, 30.0, 15.0};    // 运动状态下alpha的变化速率，alpha越大，跟踪越及时
+    // center_params.dcutoff = {2, 2, 1};          // 速度滤波的固定效果
+    center_params.freq = 60;
+    predict_smoother_ = std::make_unique<SeqManager3D>(1, center_params);
+}
 int KFPredictor::start_tracking(double target_ts, PredictorState meas) {
-    // //AISDK_LOG_INFO("start_tracking start");
     std::lock_guard<std::mutex> lock(m_mutex);
     cv::Mat state = cv::Mat::zeros(m_state_size, 1, m_type);
     state.at<float>(S_X) = meas.pos[0];
@@ -88,114 +105,45 @@ int KFPredictor::start_tracking(double target_ts, PredictorState meas) {
 
     m_kf_impl->statePost = state;
     m_kf_impl->statePre = state;
-    m_time_ts_last = m_time_ts;
-    m_time_ts = target_ts;
-
+    last_correct_time_ = target_ts;
     m_momentum.pos = meas.pos;
-
+    reset_predict_smoother();
     is_tracked = true;
     return 0;
 }
-
-PredictorState KFPredictor::predict(double target_ts) {
-    // update time status
-    // m_time_ts_last = m_time_ts;
-    // m_time_ts = target_ts;
-    int sign = (target_ts < m_time_ts) ? -1 : 1;
-
-    // AISDK_LOG_INFO("sign: {}", sign);
-
-    double dt_seconds = sign * (target_ts - m_time_ts);
-
-    // AISDK_LOG_INFO("target_ts_1: {}, m_time_ts: {}, dt: {}", target_ts, m_time_ts, dt_seconds);
-    // AISDK_LOG_INFO("long: {}", target_ts - m_time_ts);
-    // AISDK_LOG_INFO("double cast: {}", static_cast<double>(sign * (target_ts - m_time_ts)));
-    // AISDK_LOG_INFO("double: {}", double(sign * (target_ts - m_time_ts)));
-    // AISDK_LOG_INFO("target_ts_2: {}, m_time_ts: {}, dt: {}", target_ts, m_time_ts, dt_seconds);
-
-    m_kf_impl->transitionMatrix.at<float>(S_X, S_VX) = sign * dt_seconds;
-    m_kf_impl->transitionMatrix.at<float>(S_Y, S_VY) = sign * dt_seconds;
-    m_kf_impl->transitionMatrix.at<float>(S_Z, S_VZ) = sign * dt_seconds;
+void KFPredictor::update_transition_matrix(double target_ts) {
+    double dt_seconds = target_ts - last_correct_time_;
+    m_kf_impl->transitionMatrix.at<float>(S_X, S_VX) = dt_seconds;
+    m_kf_impl->transitionMatrix.at<float>(S_Y, S_VY) = dt_seconds;
+    m_kf_impl->transitionMatrix.at<float>(S_Z, S_VZ) = dt_seconds;
 
     m_kf_impl->transitionMatrix.at<float>(S_VX, S_AX) = dt_seconds;
     m_kf_impl->transitionMatrix.at<float>(S_VY, S_AY) = dt_seconds;
     m_kf_impl->transitionMatrix.at<float>(S_VZ, S_AZ) = dt_seconds;
 
-    m_kf_impl->transitionMatrix.at<float>(S_X, S_AX) = sign * 0.5 * dt_seconds * dt_seconds;
-    m_kf_impl->transitionMatrix.at<float>(S_Y, S_AY) = sign * 0.5 * dt_seconds * dt_seconds;
-    m_kf_impl->transitionMatrix.at<float>(S_Z, S_AZ) = sign * 0.5 * dt_seconds * dt_seconds;
+    m_kf_impl->transitionMatrix.at<float>(S_X, S_AX) = 0.5 * dt_seconds * dt_seconds;
+    m_kf_impl->transitionMatrix.at<float>(S_Y, S_AY) = 0.5 * dt_seconds * dt_seconds;
+    m_kf_impl->transitionMatrix.at<float>(S_Z, S_AZ) = 0.5 * dt_seconds * dt_seconds;
+}
 
+PredictorState KFPredictor::predict() {
     m_kf_impl->predict();
-
-    // AISDK_LOG_INFO("predict state: {}, {}, {}, {}, {}, {}", m_kf_impl->statePre.at<float>(S_X),
-    //                m_kf_impl->statePre.at<float>(S_Y), m_kf_impl->statePre.at<float>(S_Z),
-    //                m_kf_impl->statePre.at<float>(S_VX), m_kf_impl->statePre.at<float>(S_VY),
-    //                m_kf_impl->statePre.at<float>(S_VZ));
-
     return {Vec3f_t{m_kf_impl->statePre.at<float>(S_X), m_kf_impl->statePre.at<float>(S_Y),
                     m_kf_impl->statePre.at<float>(S_Z)},
             Vec3f_t{m_kf_impl->statePre.at<float>(S_VX), m_kf_impl->statePre.at<float>(S_VY),
                     m_kf_impl->statePre.at<float>(S_VZ)}};
 }
 
-PredictorState KFPredictor::correct(double target_ts, PredictorState meas, bool restart) {
-    if (restart) {
-        m_time_ts = target_ts;
-        cv::setIdentity(m_kf_impl->errorCovPre);
+PredictorState KFPredictor::correct(PredictorState meas) {
+    cv::Mat meas_mat = cv::Mat::zeros(m_meas_size, 1, m_type);
+    meas_mat.at<float>(M_X) = meas.pos[0];
+    meas_mat.at<float>(M_Y) = meas.pos[1];
+    meas_mat.at<float>(M_Z) = meas.pos[2];
 
-        // Updating statePost with bbx, bby, bbw, and bbh
-        m_kf_impl->statePost.at<float>(S_X) = meas.pos[0];
-        m_kf_impl->statePost.at<float>(S_Y) = meas.pos[1];
-        m_kf_impl->statePost.at<float>(S_Z) = meas.pos[2];
-
-        m_kf_impl->statePost.at<float>(S_VX) = meas.vec[0];
-        m_kf_impl->statePost.at<float>(S_VY) = meas.vec[1];
-        m_kf_impl->statePost.at<float>(S_VZ) = meas.vec[2];
-
-    } else {
-        m_time_ts_last = m_time_ts;
-        m_time_ts = target_ts;
-
-        int sign = (m_time_ts < m_time_ts_last) ? -1 : 1;
-
-        float dt_seconds = sign * (m_time_ts - m_time_ts_last);
-
-        cv::Mat meas_mat = cv::Mat::zeros(m_meas_size, 1, m_type);
-        meas_mat.at<float>(M_X) = meas.pos[0];
-        meas_mat.at<float>(M_Y) = meas.pos[1];
-        meas_mat.at<float>(M_Z) = meas.pos[2];
-
-        meas_mat.at<float>(M_VX) = meas.vec[0];
-        meas_mat.at<float>(M_VY) = meas.vec[1];
-        meas_mat.at<float>(M_VZ) = meas.vec[2];
-
-        // AISDK_LOG_INFO("meas target_ts: {}, m_time_ts: {}, dt: {}", m_time_ts, m_time_ts_last, dt_seconds);
-
-        // AISDK_LOG_INFO("meas state 1: {}, {}, {}, {}, {}, {}", meas.pos[0], meas.pos[1], meas.pos[2],
-        //                       meas.vec[0], meas.vec[1], meas.vec[2]);
-
-        m_kf_impl->transitionMatrix.at<float>(S_X, S_VX) = sign * dt_seconds;
-        m_kf_impl->transitionMatrix.at<float>(S_Y, S_VY) = sign * dt_seconds;
-        m_kf_impl->transitionMatrix.at<float>(S_Z, S_VZ) = sign * dt_seconds;
-
-        m_kf_impl->transitionMatrix.at<float>(S_VX, S_AX) = dt_seconds;
-        m_kf_impl->transitionMatrix.at<float>(S_VY, S_AY) = dt_seconds;
-        m_kf_impl->transitionMatrix.at<float>(S_VZ, S_AZ) = dt_seconds;
-
-        m_kf_impl->transitionMatrix.at<float>(S_X, S_AX) = sign * 0.5 * dt_seconds * dt_seconds;
-        m_kf_impl->transitionMatrix.at<float>(S_Y, S_AY) = sign * 0.5 * dt_seconds * dt_seconds;
-        m_kf_impl->transitionMatrix.at<float>(S_Z, S_AZ) = sign * 0.5 * dt_seconds * dt_seconds;
-
-        m_kf_impl->correct(meas_mat);
-
-        // AISDK_LOG_INFO("meas state 2: {}, {}, {}, {}, {}, {}", m_kf_impl->statePost.at<float>(M_X),
-        //                       m_kf_impl->statePost.at<float>(M_Y), m_kf_impl->statePost.at<float>(M_Z),
-        //                       m_kf_impl->statePost.at<float>(M_VX), m_kf_impl->statePost.at<float>(M_VY),
-        //                       m_kf_impl->statePost.at<float>(M_VZ));
-    }
-
-    // AISDK_LOG_INFO("meas predicted a: {}, {}, {}", m_kf_impl->statePost.at<float>(S_AX),
-    //                       m_kf_impl->statePost.at<float>(S_AY), m_kf_impl->statePost.at<float>(S_AZ));
+    meas_mat.at<float>(M_VX) = meas.vec[0];
+    meas_mat.at<float>(M_VY) = meas.vec[1];
+    meas_mat.at<float>(M_VZ) = meas.vec[2];
+    m_kf_impl->correct(meas_mat);
 
     auto pred_pos = Vec3f_t{m_kf_impl->statePost.at<float>(S_X), m_kf_impl->statePost.at<float>(S_Y),
                             m_kf_impl->statePost.at<float>(S_Z)};
@@ -209,16 +157,21 @@ PredictorState KFPredictor::correct(double target_ts, PredictorState meas, bool 
 
 Vec3f_t KFPredictor::track_only_pred(double target_ts) {
     std::lock_guard<std::mutex> lock(m_mutex);
-    auto pred = this->predict(target_ts);
-    auto cpred = this->correct(target_ts, pred, false);
-
-    return pred.pos;
+    update_transition_matrix(target_ts);
+    auto pred = this->predict();
+    // auto cpred = this->correct(pred);
+    // last_correct_time_ = target_ts;
+    std::vector<Vec3f_t> pred_pose{pred.pos};
+    predict_smoother_->getFilterHandData(pred_pose);
+    return pred_pose[0];
 }
 
 Vec3f_t KFPredictor::track_with_correct(double target_ts, PredictorState meas) {
     std::lock_guard<std::mutex> lock(m_mutex);
-    auto pred = this->predict(target_ts);
-    auto cpred = this->correct(target_ts, meas, false);
+    update_transition_matrix(target_ts);
+    auto pred = this->predict();
+    auto cpred = this->correct(meas);
+    last_correct_time_ = target_ts;
 
     return cpred.pos;
 }

@@ -5,7 +5,6 @@
 #include "../common/NR_Seq_Manager.h"
 namespace aisdk::algorithm {
 
-
 class HandFilters final {
    public:
     HandFilters(){};
@@ -19,9 +18,6 @@ class HandFilters final {
 
     std::shared_ptr<aisdk::algorithm::SeqManager3D> m_seq3d_palm_lhand;
     std::shared_ptr<aisdk::algorithm::SeqManager3D> m_seq3d_palm_rhand;
-
-    std::shared_ptr<aisdk::algorithm::SeqManager3D> m_seq3d_center_lhand;
-    std::shared_ptr<aisdk::algorithm::SeqManager3D> m_seq3d_center_rhand;
 };
 
-}
+}  // namespace aisdk::algorithm

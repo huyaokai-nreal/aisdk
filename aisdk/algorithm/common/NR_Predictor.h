@@ -10,6 +10,7 @@
 #include <memory>
 #include <mutex>
 #include <opencv2/opencv.hpp>
+#include "aisdk/algorithm/common/NR_Seq_Manager.h"
 #include "aisdk/base/type.h"
 namespace aisdk::algorithm {
 
@@ -54,27 +55,20 @@ class KFPredictor {
     bool get_tracking_status() const;
 
    private:
-    PredictorState predict(double target_ts);
-    PredictorState correct(double target_ts, PredictorState meas, bool restart);
+    PredictorState predict();
+    PredictorState correct( PredictorState meas);
+    void update_transition_matrix(double target_ts);
+    void reset_predict_smoother();
     int m_state_size = 9;
     int m_meas_size = 6;
     int m_ctrl_size = 0;
-
-    double m_time_ts = 0;
-    double m_time_ts_last = 0;
-
-    double m_time_ts_p = 0;
-    double m_time_ts_last_p = 0;
-
+    double last_correct_time_ = 0;
     unsigned int m_type = CV_32F;
-
     std::unique_ptr<cv::KalmanFilter> m_kf_impl;
-
     bool is_tracked = false;
-
     PredictorState m_momentum;
-
     mutable std::mutex m_mutex;
+    std::unique_ptr<SeqManager3D> predict_smoother_;
 };
 
 }
