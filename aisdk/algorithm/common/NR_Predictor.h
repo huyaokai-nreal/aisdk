@@ -59,6 +59,7 @@ class KFPredictor {
     PredictorState correct( PredictorState meas);
     void update_transition_matrix(double target_ts);
     void reset_predict_smoother();
+    double get_valid_predict_time_length(double target_ts);
     int m_state_size = 9;
     int m_meas_size = 6;
     int m_ctrl_size = 0;
@@ -68,6 +69,7 @@ class KFPredictor {
     bool is_tracked = false;
     PredictorState m_momentum;
     mutable std::mutex m_mutex;
+    double last_measure_time_ = 0;
     std::unique_ptr<SeqManager3D> predict_smoother_;
 };
 

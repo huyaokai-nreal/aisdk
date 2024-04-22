@@ -102,10 +102,7 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
 
         *hand_num = 2;  // fixed.
 
-        float predict_scale = 1.0;
-
         NRTransform _handjoint_pose_tmp;
-        NRVector4f _col;
         memset(&_handjoint_pose_tmp, 0, sizeof(_handjoint_pose_tmp));
         _handjoint_pose_tmp.rotation.qw = 1.0f;
 
@@ -121,8 +118,6 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
 
         bool tracked_internal[2] = {false, false};
         std::vector<std::vector<Vec3f_t>> ontracked_points(2);
-        float hand_speed = 0;
-
         for (int i = 0; i < 2; i++) {
             out_hand_array[i].version = 0;
 
@@ -137,11 +132,9 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
             if (i == 0) {
                 tracked_internal[i] = hand_data_internal.lhand_valid;
                 ontracked_points[i] = hand_data_internal.lhand_kpt;
-                hand_speed = hand_data_internal.lhand_v.norm();
             } else {
                 tracked_internal[i] = hand_data_internal.rhand_valid;
                 ontracked_points[i] = hand_data_internal.rhand_kpt;
-                hand_speed = hand_data_internal.rhand_v.norm();
             }
 
             out_hand_array[i].is_tracked = tracked_internal[i];
@@ -152,38 +145,18 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
             if (tracked_internal[i] && query_time != 0) {
                 Vec3f_t root_meas = ontracked_points[i][21];
                 Vec3f_t root_kf_predicted = ontracked_points[i][21];
-                std::array<double, 3> predict_time_interval_vec = {0.1, 0.08, 0.04};  // 100ms, 80ms, 40ms
-                constexpr float static_hand_th_1 = 0.1;
-                constexpr float static_hand_th_2 = 0.2;
-                int hand_static_state = 0;  // 0 dynamic, 1 middle, 2 static
-                if (hand_speed < static_hand_th_1)
-                    hand_static_state = 2;
-                else if (hand_speed < static_hand_th_2)
-                    hand_static_state = 1;
-                double target_timestamp = 0;
-                if (query_time <= hand_data_internal.timestamp) {
-                    target_timestamp =
-                        hand_data_internal.timestamp - predict_scale * (hand_data_internal.timestamp - query_time);
-                } else {
-                    auto predict_interval = predict_scale * (query_time - hand_data_internal.timestamp);
-                    predict_interval = std::min(predict_interval, predict_time_interval_vec[hand_static_state]);
-                    target_timestamp = predict_interval + hand_data_internal.timestamp;
-                }
-                AISDK_LOG_WARN("hand speed is {}", hand_speed);
-                AISDK_LOG_WARN("hand state is {}", hand_static_state);
-                AISDK_LOG_WARN("predict_len: {} s", (target_timestamp - hand_data_internal.timestamp));
 
                 AISDK_LOG_TRACE("{}, {}, {}, {}, {}, {}", query_time, hand_data_internal.timestamp, target_timestamp,
                                 root_meas[0], root_meas[1], root_meas[2]);
 
                 if (i == 0) {
                     if (predictor_lhand.get_tracking_status()) {
-                        root_kf_predicted = predictor_lhand.track_only_pred(target_timestamp, true);
+                        root_kf_predicted = predictor_lhand.track_only_pred(query_time, true);
                     }
 
                 } else {
                     if (predictor_rhand.get_tracking_status())
-                        root_kf_predicted = predictor_rhand.track_only_pred(target_timestamp, true);
+                        root_kf_predicted = predictor_rhand.track_only_pred(query_time, true);
                 }
                 AISDK_LOG_TRACE("predict root is {}, {}, {}", root_kf_predicted[0], root_kf_predicted[1],
                                 root_kf_predicted[2]);

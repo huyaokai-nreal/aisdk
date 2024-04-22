@@ -84,12 +84,9 @@ int KFPredictor::init() {
 }
 void KFPredictor::reset_predict_smoother() {
     OneEuroParams center_params;
-    center_params.mincutoff = {0.4, 0.4, 0.2};  // 调静止状态下的稳定性,越小稳定性越好
-    center_params.beta = {15.0, 15.0, 10.0};    // 运动状态下alpha的变化速率，alpha越大，跟踪越及时
-    center_params.dcutoff = {0.8, 0.8, 0.5};
-    // center_params.mincutoff = {0.4, 0.4, 0.2};  // 调静止状态下的稳定性,越小稳定性越好
-    // center_params.beta = {30.0, 30.0, 15.0};    // 运动状态下alpha的变化速率，alpha越大，跟踪越及时
-    // center_params.dcutoff = {2, 2, 1};          // 速度滤波的固定效果
+    center_params.mincutoff = {0.2, 0.2, 0.2};  // 调静止状态下的稳定性,越小稳定性越好
+    center_params.beta = {20.0, 20.0, 10.0};    // 运动状态下alpha的变化速率，alpha越大，跟踪越及时
+    center_params.dcutoff = {1.0, 1.0, 0.5};    // 速度滤波的固定效果
     center_params.freq = 60;
     predict_smoother_ = std::make_unique<SeqManager3D>(1, center_params);
 }
@@ -117,13 +114,13 @@ void KFPredictor::update_transition_matrix(double target_ts) {
     m_kf_impl->transitionMatrix.at<float>(S_Y, S_VY) = dt_seconds;
     m_kf_impl->transitionMatrix.at<float>(S_Z, S_VZ) = dt_seconds;
 
-    m_kf_impl->transitionMatrix.at<float>(S_VX, S_AX) = dt_seconds;
-    m_kf_impl->transitionMatrix.at<float>(S_VY, S_AY) = dt_seconds;
-    m_kf_impl->transitionMatrix.at<float>(S_VZ, S_AZ) = dt_seconds;
+    m_kf_impl->transitionMatrix.at<float>(S_VX, S_AX) = abs(dt_seconds);
+    m_kf_impl->transitionMatrix.at<float>(S_VY, S_AY) = abs(dt_seconds);
+    m_kf_impl->transitionMatrix.at<float>(S_VZ, S_AZ) = abs(dt_seconds);
 
-    m_kf_impl->transitionMatrix.at<float>(S_X, S_AX) = 0.5 * dt_seconds * dt_seconds;
-    m_kf_impl->transitionMatrix.at<float>(S_Y, S_AY) = 0.5 * dt_seconds * dt_seconds;
-    m_kf_impl->transitionMatrix.at<float>(S_Z, S_AZ) = 0.5 * dt_seconds * dt_seconds;
+    m_kf_impl->transitionMatrix.at<float>(S_X, S_AX) = 0.5 * abs(dt_seconds) * dt_seconds;
+    m_kf_impl->transitionMatrix.at<float>(S_Y, S_AY) = 0.5 * abs(dt_seconds) * dt_seconds;
+    m_kf_impl->transitionMatrix.at<float>(S_Z, S_AZ) = 0.5 * abs(dt_seconds) * dt_seconds;
 }
 
 PredictorState KFPredictor::predict() {
@@ -156,22 +153,45 @@ PredictorState KFPredictor::correct(PredictorState meas) {
 }
 
 Vec3f_t KFPredictor::track_only_pred(double target_ts, bool with_smooth) {
+    double valid_target_ts = get_valid_predict_time_length(target_ts);
     std::lock_guard<std::mutex> lock(m_mutex);
-    update_transition_matrix(target_ts);
+    update_transition_matrix(valid_target_ts);
     auto pred = this->predict();
     std::vector<Vec3f_t> pred_pose{pred.pos};
+    this->correct(pred);
+    last_correct_time_ = target_ts;
     if (with_smooth) {
         predict_smoother_->getFilterHandData(pred_pose);
     }
     return pred_pose[0];
 }
 
+double KFPredictor::get_valid_predict_time_length(double target_ts) {
+    std::array<double, 3> predict_time_interval_vec = {0.1, 0.08, 0.04};  // 100ms, 80ms, 40ms
+    constexpr float static_hand_th_1 = 0.1;
+    constexpr float static_hand_th_2 = 0.2;
+    int hand_static_state = 0;  // 0 dynamic, 1 middle, 2 static
+    auto hand_speed = Vec3f_t{m_kf_impl->statePost.at<float>(S_VX), m_kf_impl->statePost.at<float>(S_VY),
+                              m_kf_impl->statePost.at<float>(S_VZ)}
+                          .norm();
+    if (hand_speed < static_hand_th_1) {
+        hand_static_state = 2;
+    } else if (hand_speed < static_hand_th_2) {
+        hand_static_state = 1;
+    }
+    double target_timestamp = 0;
+    auto predict_interval = target_ts - last_measure_time_;
+    predict_interval = std::min(predict_interval, predict_time_interval_vec[hand_static_state]);
+    target_timestamp = predict_interval + last_measure_time_;
+    return target_timestamp;
+}
 Vec3f_t KFPredictor::track_with_correct(double target_ts, PredictorState meas) {
     std::lock_guard<std::mutex> lock(m_mutex);
     update_transition_matrix(target_ts);
     auto pred = this->predict();
     auto cpred = this->correct(meas);
     last_correct_time_ = target_ts;
+    last_measure_time_ = target_ts;
 
     return cpred.pos;
 }
