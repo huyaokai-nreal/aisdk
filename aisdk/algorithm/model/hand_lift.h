@@ -20,6 +20,13 @@ struct LiftNetOutputs {
     std::vector<Vec3f_t> res3d;
 };
 
+struct LiftNimbleNetOutputs {
+    std::vector<Eigen::Matrix<float, 1, 9>> angle;
+    std::vector<float> shape;
+    std::vector<cv::Vec3f> trans;
+    std::vector<cv::Vec3f> res3d;
+};
+
 // GMLP V1 for light only
 class GMLPLiftNet : public CalculatorBaseNet {
    public:
@@ -75,8 +82,8 @@ class GMLPLiftNimble : public CalculatorBaseNet {
    public:
     aisdk::xengine::Status Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::ModelConfig &model, aisdk::xengine::SessionConfig &session);
     void PreProcess(const LiftNetInputs &inputs);
-    void PostProcess(LiftNetOutputs &outputs, const LiftNetInputs &inputs);
-    aisdk::xengine::Status Inference(const LiftNetInputs &inputs, LiftNetOutputs &outputs);
+    void PostProcess(LiftNimbleNetOutputs &outputs, const LiftNetInputs &inputs);
+    aisdk::xengine::Status Inference(const LiftNetInputs &inputs, LiftNimbleNetOutputs &outputs);
 
     aisdk::xengine::Status SetCameraInfo(const std::shared_ptr<BaseCameraModel>& left_camera, const std::shared_ptr<BaseCameraModel>& right_camera);
    private:

@@ -3,6 +3,7 @@
 
 #include "../internal_structs/kpt2d_struct_internal.h"
 #include "../internal_structs/kpt3d_struct_internal.h"
+#include "../internal_structs/nimble_struct_internal.h"
 #include "../model/hand_lift.h"
 #include "aisdk/algorithm/common/metrics.h"
 #include "aisdk/algorithm/func/netalgo_utils.h"
@@ -27,7 +28,7 @@ namespace aisdk::algorithm {
 class HandLiftCalculator : public xgraph::CalculatorBase {
    private:
     // SeqGMLPLiftNet algo instance
-    std::shared_ptr<aisdk::algorithm::GMLPLiftNimble> netalgo;
+    std::shared_ptr<aisdk::algorithm::GMLPLiftNet3> netalgo;
     std::shared_ptr<aisdk::base::BaseCameraModel> lcam_model_ = nullptr;
     std::shared_ptr<aisdk::base::BaseCameraModel> rcam_model_ = nullptr;
 
