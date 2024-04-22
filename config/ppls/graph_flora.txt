@@ -9,6 +9,8 @@ node {
   input_side_packet: "CAM_INFO_INPUT:cam_info"
   input_stream: "HEADPOSE:head_pose"
   output_stream: "DET_BBOX_OUTPUT:detection_output"
+  output_stream: "IMAGE_OUTPUT:image_out"
+  output_stream: "HEADPOSE_OUTPUT:head_pose_out"
 }
 node {
   name: "DetBoxSmoothing"
@@ -20,7 +22,7 @@ node {
   name: "HandLandmark_2D"
   calculator: "HandLandmarkCalculator"
   input_stream: "BBOX_SMOOTHED_OUTPUT:detection_smoothed_output"
-  input_stream: "IMAGE_INPUT:image"
+  input_stream: "IMAGE_INPUT:image_out"
   output_stream: "LANDMARK_OUTPUT:kpt2d"
   node_options: {
     [type.googleapis.com/aisdk.HandLandmarkCalculatorOptions] {
@@ -50,7 +52,7 @@ node {
   input_stream: "BLOCK_IN:kpt3d"
   output_stream: "BLOCK_OUT:kpt3d_blocked"
   node_options: {
-    [type.googleapis.com/aisdk.BlockHardRulesCalculatorOptions] { 
+    [type.googleapis.com/aisdk.BlockHardRulesCalculatorOptions] {
       max_root_depth: 0.8
       score_th: 0.15
     }
@@ -62,7 +64,7 @@ node {
   name: "ConvertToWorld"
   calculator: "ConvertToWorldCalculator"
   input_stream: "INPUT:kpt3d_blocked"
-  input_stream: "HEADPOSE:head_pose"
+  input_stream: "HEADPOSE:head_pose_out"
   output_stream: "OUTPUT:kpt3d_world"
 }
 node {

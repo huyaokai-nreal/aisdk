@@ -43,13 +43,17 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
         AISDK_LOG_TRACE("[HandDetTrackCalculator] GetContract start");
 
         // Declaration of input and output, according to definitons.
-        cc->Inputs().Tag("IMAGE_INPUT").Set<std::vector<aisdk::algorithm::Image>>();
         cc->InputSidePackets()
             .Tag("CAM_INFO_INPUT")
             .Set<std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>,
                            std::shared_ptr<aisdk::base::BaseCameraModel>>>();
+
+        cc->Inputs().Tag("IMAGE_INPUT").Set<std::vector<aisdk::algorithm::Image>>();
         cc->Inputs().Tag("HEADPOSE").Set<aisdk::algorithm::HeadPoseInternal>();
+
         cc->Outputs().Tag("DET_BBOX_OUTPUT").Set<aisdk::algorithm::DetOutputInternal>();
+        cc->Outputs().Tag("IMAGE_OUTPUT").Set<std::vector<aisdk::algorithm::Image>>();
+        cc->Outputs().Tag("HEADPOSE_OUTPUT").Set<aisdk::algorithm::HeadPoseInternal>();
 
         AISDK_LOG_TRACE("[HandDetTrackCalculator] GetContract complete");
         return absl::OkStatus();
@@ -91,12 +95,12 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
         output_buffer_->clear();
 
         const auto &lastframe_kpt3d = aisdk::algorithm::GlobalPredictorService::getInstance().get_kpt3d_world();
+
+        const auto &image_data = cc->Inputs().Tag("IMAGE_INPUT").Value().Get<std::vector<aisdk::algorithm::Image>>();
         const auto &headpose_data = cc->Inputs().Tag("HEADPOSE").Get<aisdk::algorithm::HeadPoseInternal>();
 
         if (det_tracker_step_ == 0 || (!lastframe_kpt3d.lhand_valid && !lastframe_kpt3d.rhand_valid)) {
             // do detection
-            const auto &image_data = cc->Inputs().Tag("IMAGE_INPUT").Get<std::vector<aisdk::algorithm::Image>>();
-
             auto &result = *output_buffer_;
 
             // detnet inference
@@ -180,9 +184,10 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
         }
         if (output_buffer_->lhand_valid || output_buffer_->rhand_valid) {
             cc->Outputs().Tag("DET_BBOX_OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
+            cc->Outputs().Tag("IMAGE_OUTPUT").AddPacket(cc->Inputs().Tag("IMAGE_INPUT").Value());
+            cc->Outputs().Tag("HEADPOSE_OUTPUT").AddPacket(cc->Inputs().Tag("HEADPOSE").Value());
             AISDK_LOG_TRACE("[HandDetTrackCalculator] At least single hand valid, pass");
         } else {
-            cc->Outputs().Tag("DET_BBOX_OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
             AISDK_LOG_TRACE("[HandDetTrackCalculator] No valid hand, truncated here");
         }
 
