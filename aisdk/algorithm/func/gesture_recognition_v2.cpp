@@ -231,7 +231,7 @@ std::pair<HandRawFeature, HandFeature> GestureRecognitionV2::extract_hand_featur
     raw_features.abduction_angles = abduction_angles;
     raw_features.opposition_distances = opposition_distances;
     raw_features.hand_angle = hand_angle;
-    raw_features.is_thumb_up = (keypoints3d[0][4](1) - keypoints3d[0][2](1)) < 0.f;
+    raw_features.is_thumb_up = (keypoints3d[0][4](1) - keypoints3d[0][2](1)) > 0.f;
     bool is_to_face = is_face_to_head(keypoints3d, is_left_hand);
     bool ok_pinch = is_ok_pinch(keypoints3d);
     bool pinch_masked = is_pinch_masked(keypoints2d, is_to_face);

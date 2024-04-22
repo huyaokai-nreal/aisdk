@@ -65,12 +65,8 @@ class GestureRecognitionCalculator : public xgraph::CalculatorBase {
             AISDK_LOG_TRACE("[GestureRecognitionCalculator] process left hand.");
 
             std::string gesture_res;
-            std::vector<Eigen::Vector3f> points3d_in(STANDARDIZE_TARGET_POINTS);
-            for (int p = 0; p < STANDARDIZE_TARGET_POINTS; p++) {
-                points3d_in[p] = {kpt3d_data.lhand[p][0], kpt3d_data.lhand[p][1], kpt3d_data.lhand[p][2]};
-            }
             std::tie(gesture_res, std::ignore) =
-                m_gesture_classifier_lhand->predict_with_keypoints3d(points3d_in, kpt2d_data.lhand_lcam, true);
+                m_gesture_classifier_lhand->predict_with_keypoints3d(kpt3d_data.lhand, kpt2d_data.lhand_lcam, true);
 
             output_buffer_->lhand_valid = true;
             output_buffer_->lhand_score = kpt3d_data.lscore;
@@ -83,12 +79,8 @@ class GestureRecognitionCalculator : public xgraph::CalculatorBase {
         if (kpt3d_data.rhand_valid) {
             AISDK_LOG_TRACE("[GestureRecognitionCalculator] process right hand.");
             std::string gesture_res;
-            std::vector<Eigen::Vector3f> points3d_in(STANDARDIZE_TARGET_POINTS);
-            for (int p = 0; p < STANDARDIZE_TARGET_POINTS; p++) {
-                points3d_in[p] = {kpt3d_data.rhand[p][0], kpt3d_data.rhand[p][1], kpt3d_data.rhand[p][2]};
-            }
             std::tie(gesture_res, std::ignore) =
-                m_gesture_classifier_rhand->predict_with_keypoints3d(points3d_in, kpt2d_data.rhand_rcam, false);
+                m_gesture_classifier_rhand->predict_with_keypoints3d(kpt3d_data.rhand, kpt2d_data.rhand_rcam, false);
 
             output_buffer_->rhand_valid = true;
             output_buffer_->rhand_score = kpt3d_data.rscore;
@@ -100,21 +92,7 @@ class GestureRecognitionCalculator : public xgraph::CalculatorBase {
         }
 
         auto& global_kpt3d = aisdk::algorithm::GlobalPredictorService::getInstance().get_kpt3d_world();
-        global_kpt3d.lhand_valid = kpt3d_data.lhand_valid;
-        if (kpt3d_data.lhand_valid) {
-            global_kpt3d.lhand.resize(STANDARDIZE_TARGET_POINTS);
-            for (int i = 0; i < STANDARDIZE_TARGET_POINTS; i++) {
-                global_kpt3d.lhand[i] = {kpt3d_data.lhand[i][0], kpt3d_data.lhand[i][1], kpt3d_data.lhand[i][2]};
-            }
-        }
-
-        global_kpt3d.rhand_valid = kpt3d_data.rhand_valid;
-        if (kpt3d_data.rhand_valid) {
-            global_kpt3d.rhand.resize(STANDARDIZE_TARGET_POINTS);
-            for (int i = 0; i < STANDARDIZE_TARGET_POINTS; i++) {
-                global_kpt3d.rhand[i] = {kpt3d_data.rhand[i][0], kpt3d_data.rhand[i][1], kpt3d_data.rhand[i][2]};
-            }
-        }
+        global_kpt3d = kpt3d_data;
         if (output_buffer_->lhand_valid || output_buffer_->rhand_valid) {
             output_buffer_->timestamp = timestamp;
             cc->Outputs().Tag("GR_OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
