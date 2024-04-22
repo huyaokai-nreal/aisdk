@@ -17,7 +17,7 @@ class CalculatorBaseNet {
 
     void SetBaseNetAlgo(BaseNetAlgoPtr& net) { m_net = std::move(net); }
 
-    aisdk::xengine::Status Init(aisdk::xengine::NetAlgoConfig& algo, aisdk::xengine::ModelConfig& model,
+    absl::Status Init(aisdk::xengine::NetAlgoConfig& algo, aisdk::xengine::ModelConfig& model,
                                 aisdk::xengine::SessionConfig& session) {
         if (m_net) {
             // 统一以json格式输入到算子中，各算子差异化解析
@@ -25,9 +25,9 @@ class CalculatorBaseNet {
                 m_net->SetAlgoParams(std::string("algo_param_json"), algo.algo_param);
             }
 
-            aisdk::xengine::Status ret;
+            absl::Status ret;
             ret = m_net->Init(algo.net_unique_id, model, session);
-            if (ret != aisdk::xengine::Status::SUCCESS) {
+            if (!ret.ok()) {
                 return ret;
             }
 
@@ -40,10 +40,10 @@ class CalculatorBaseNet {
                 PrintfHalIoTensors(otensor);
             }
 
-            return aisdk::xengine::Status::SUCCESS;
+            return absl::OkStatus();
         }
 
-        return aisdk::xengine::Status::FAILURE;
+        return absl::InternalError("failure");
     }
 
    public:

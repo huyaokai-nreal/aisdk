@@ -6,6 +6,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <absl/status/status.h>
 
 #define SYM_EXPORT __attribute__((visibility("default")))
 
@@ -14,6 +15,7 @@
 
 namespace aisdk::xengine {
 
+// 此定义后续将废弃，目前暂时保留不再新维护
 enum class Status {
     UNKNOWN = 0,
     SUCCESS = 1,

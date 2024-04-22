@@ -7,7 +7,7 @@ ${CMAKE_CURRENT_SOURCE_DIR}/nrhal_net.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/nrnn_model.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/nrnn_session.cpp
 )
-target_link_libraries(${XENGINE_LIBRARY_NAME} PUBLIC base jsoncpp openssl::openssl opencv::opencv)
+target_link_libraries(${XENGINE_LIBRARY_NAME} PUBLIC base jsoncpp openssl::openssl opencv::opencv abseil::abseil)
 target_compile_options(${XENGINE_LIBRARY_NAME}
     PRIVATE -Wno-error
 )

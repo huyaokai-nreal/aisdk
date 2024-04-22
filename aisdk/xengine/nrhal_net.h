@@ -9,7 +9,7 @@ class SYM_EXPORT BaseNetAlgo {
    public:
     BaseNetAlgo();
     virtual ~BaseNetAlgo();
-    virtual aisdk::xengine::Status Init(std::string &netname, aisdk::xengine::ModelConfig &model, aisdk::xengine::SessionConfig &session);
+    virtual absl::Status Init(std::string &netname, aisdk::xengine::ModelConfig &model, aisdk::xengine::SessionConfig &session);
 
     virtual void SetAlgoParams(const std::string &key, const std::string &value);
     virtual bool GetAlgoParams(const std::string &key, std::string &value);
@@ -21,7 +21,7 @@ class SYM_EXPORT BaseNetAlgo {
     virtual uint32_t GetOutputTensorIndex(const std::string &tensorname);
 
     // inference
-    virtual aisdk::xengine::Status RunNet();
+    virtual absl::Status RunNet();
 
    protected:
     std::unique_ptr<aisdk::xengine::Inference> m_impl;

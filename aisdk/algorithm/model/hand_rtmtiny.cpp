@@ -17,10 +17,10 @@ namespace aisdk::algorithm {
  * @return {*}
  */
 
-aisdk::xengine::Status RTMTiny::Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::ModelConfig &model,
-                                     aisdk::xengine::SessionConfig &session) {
+absl::Status RTMTiny::Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::ModelConfig &model,
+                           aisdk::xengine::SessionConfig &session) {
     auto ret = CalculatorBaseNet::Init(algo, model, session);
-    if (ret != aisdk::xengine::Status::SUCCESS) {
+    if (!ret.ok()) {
         return ret;
     }
     itensor_format_ = itensor.m_tensors[0].m_dimtype;
@@ -29,7 +29,7 @@ aisdk::xengine::Status RTMTiny::Init(aisdk::xengine::NetAlgoConfig &algo, aisdk:
     output_shape_ = otensor.m_tensors[0].m_dims[1];
     keypoint_num_ = otensor.m_tensors[0].m_dims[0];
     mul_coeff_ = linspace<float>(0, 1, output_shape_, false);
-    return aisdk::xengine::Status::SUCCESS;
+    return ret;
 }
 
 void RTMTiny::PreProcess(const std::vector<Image> &net_input) {
@@ -104,8 +104,8 @@ void RTMTiny::PostProcess(Kpt2dResult &result) {
 absl::StatusOr<Kpt2dResult> RTMTiny::Inference(const std::vector<Image> &baseinput) {
     PreProcess(baseinput);
     Kpt2dResult baseresult;
-    aisdk::xengine::Status ret = m_net->RunNet();
-    if (ret == aisdk::xengine::Status::SUCCESS) {
+    auto ret = m_net->RunNet();
+    if (ret.ok()) {
         PostProcess(baseresult);
         return baseresult;
     }

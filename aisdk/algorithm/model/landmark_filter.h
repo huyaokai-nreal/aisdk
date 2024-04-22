@@ -14,11 +14,11 @@ class LandmarkFilter : public CalculatorBaseNet {
     LandmarkFilter() : CalculatorBaseNet(){};
     ~LandmarkFilter(){};
 
-    aisdk::xengine::Status Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::ModelConfig &model,
+    absl::Status Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::ModelConfig &model,
                                 aisdk::xengine::SessionConfig &session);
     void PreProcess(const std::vector<std::vector<Vec2f_t>> &net_input);
     void PostProcess(std::vector<Vec2f_t> &result);
-    aisdk::xengine::Status Inference(const std::vector<std::vector<Vec2f_t>> &baseinput,
+    absl::Status Inference(const std::vector<std::vector<Vec2f_t>> &baseinput,
                                      std::vector<Vec2f_t> &baseresult);
 
    private:

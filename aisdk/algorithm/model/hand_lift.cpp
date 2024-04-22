@@ -9,10 +9,10 @@
 
 namespace aisdk::algorithm {
 
-aisdk::xengine::Status GMLPLiftNet::Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::ModelConfig &model,
-                                         aisdk::xengine::SessionConfig &session) {
+absl::Status GMLPLiftNet::Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::ModelConfig &model,
+                               aisdk::xengine::SessionConfig &session) {
     auto ret = CalculatorBaseNet::Init(algo, model, session);
-    if (ret != aisdk::xengine::Status::SUCCESS) {
+    if (!ret.ok()) {
         return ret;
     }
 
@@ -23,7 +23,7 @@ aisdk::xengine::Status GMLPLiftNet::Init(aisdk::xengine::NetAlgoConfig &algo, ai
     m_rightcam_x.resize(kAlgoKeypointNum);
     m_rightcam_y.resize(kAlgoKeypointNum);
 
-    return aisdk::xengine::Status::SUCCESS;
+    return ret;
 }
 
 void GMLPLiftNet::PreProcess(const LiftNetInputs &inputs, const CamInfo &cam_info) {
@@ -159,19 +159,18 @@ void GMLPLiftNet::PostProcess(LiftNetOutputs &outputs, const CamInfo &cam_info) 
     }
 }
 
-aisdk::xengine::Status GMLPLiftNet::Inference(const LiftNetInputs &inputs, const CamInfo &cam_info,
-                                              LiftNetOutputs &outputs) {
+absl::Status GMLPLiftNet::Inference(const LiftNetInputs &inputs, const CamInfo &cam_info, LiftNetOutputs &outputs) {
     PreProcess(inputs, cam_info);
-    aisdk::xengine::Status ret = m_net->RunNet();
+    auto ret = m_net->RunNet();
     PostProcess(outputs, cam_info);
     return ret;
 }
 
-aisdk::xengine::Status GMLPLiftNet3::Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::ModelConfig &model,
-                                          aisdk::xengine::SessionConfig &session) {
+absl::Status GMLPLiftNet3::Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::ModelConfig &model,
+                                aisdk::xengine::SessionConfig &session) {
     auto ret = CalculatorBaseNet::Init(algo, model, session);
 
-    if (ret != aisdk::xengine::Status::SUCCESS) {
+    if (!ret.ok()) {
         return ret;
     }
 
@@ -182,7 +181,7 @@ aisdk::xengine::Status GMLPLiftNet3::Init(aisdk::xengine::NetAlgoConfig &algo, a
     mem_left_hand.resize(86);
     mem_right_hand.resize(86);
 
-    return aisdk::xengine::Status::SUCCESS;
+    return ret;
 }
 
 void GMLPLiftNet3::transfer_to_standard_stereo_input() {
@@ -207,8 +206,8 @@ void GMLPLiftNet3::transfer_to_standard_stereo_input() {
     }
 }
 
-aisdk::xengine::Status GMLPLiftNet3::SetCameraInfo(const std::shared_ptr<BaseCameraModel> &left_camera,
-                                                   const std::shared_ptr<BaseCameraModel> &right_camera) {
+absl::Status GMLPLiftNet3::SetCameraInfo(const std::shared_ptr<BaseCameraModel> &left_camera,
+                                         const std::shared_ptr<BaseCameraModel> &right_camera) {
     left_camera_ = left_camera;
     right_camera_ = right_camera;
     auto [rot_left, rot_right, baseline] =
@@ -216,13 +215,13 @@ aisdk::xengine::Status GMLPLiftNet3::SetCameraInfo(const std::shared_ptr<BaseCam
     rot_left_ = rot_left.cast<float>();
     rot_right_ = rot_right.cast<float>();
     baseline_ = baseline;
-    return aisdk::xengine::Status::SUCCESS;
+    return absl::OkStatus();
 }
 
-aisdk::xengine::Status GMLPLiftNet3::Inference(const LiftNetInputs &inputs, LiftNetOutputs &outputs) {
+absl::Status GMLPLiftNet3::Inference(const LiftNetInputs &inputs, LiftNetOutputs &outputs) {
     AISDK_LOG_TRACE("[GMLPLiftNet3] Inference");
     PreProcess(inputs);
-    aisdk::xengine::Status ret = m_net->RunNet();
+    auto ret = m_net->RunNet();
     PostProcess(outputs, inputs);
     return ret;
 }

@@ -59,7 +59,7 @@ class XGraphServiceUtils {
                     BaseNetAlgoPtr net_ptr(net, XGraphServiceUtils::DeleteNetAlgoBase);
                     handle->SetBaseNetAlgo(net_ptr);
                     auto ret = handle->Init(pc, pa, pb);
-                    if (ret != aisdk::xengine::Status::SUCCESS) {
+                    if (!ret.ok()) {
                         handle = nullptr;
                     }
 

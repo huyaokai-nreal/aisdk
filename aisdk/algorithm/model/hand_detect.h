@@ -20,13 +20,13 @@ class HandDetectNet : public CalculatorBaseNet {
     HandDetectNet() : CalculatorBaseNet(){};
     ~HandDetectNet(){};
 
-    aisdk::xengine::Status Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::ModelConfig &model,
+    absl::Status Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::ModelConfig &model,
                                 aisdk::xengine::SessionConfig &session);
     void PreProcess(const std::vector<Image> &net_input);
     void PostProcess(DetOutputInternal &result);
     void PreProcessSingle(const std::vector<Image> &net_input, uint32_t batchn);
     void PostProcessSingle(DetOutputInternal &result, uint32_t batchn);
-    aisdk::xengine::Status Inference(const std::vector<Image> &baseinput, DetOutputInternal &baseresult);
+    absl::Status Inference(const std::vector<Image> &baseinput, DetOutputInternal &baseresult);
 
    protected:
     aisdk::xengine::TensorFormat itensor_format;
@@ -59,9 +59,9 @@ class HandDetectNetv2 : public HandDetectNet {
     HandDetectNetv2() : HandDetectNet(){};
     ~HandDetectNetv2(){};
 
-    aisdk::xengine::Status Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::ModelConfig &model,
+    absl::Status Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::ModelConfig &model,
                                 aisdk::xengine::SessionConfig &session);
-    aisdk::xengine::Status Inference(const std::vector<Image> &baseinput, DetOutputInternal &baseresult);
+    absl::Status Inference(const std::vector<Image> &baseinput, DetOutputInternal &baseresult);
     void PostProcess(DetOutputInternal &result);
     // void PostProcessSingle(DetOutputInternal &result, uint32_t batchn);  // TODO: develop中的 PostProcessSingle
     // 目前就还没改

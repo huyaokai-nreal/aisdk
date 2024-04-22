@@ -26,10 +26,10 @@ class GMLPLiftNet : public CalculatorBaseNet {
     GMLPLiftNet() : CalculatorBaseNet(){};
     ~GMLPLiftNet(){};
 
-    aisdk::xengine::Status Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::ModelConfig &model, aisdk::xengine::SessionConfig &session);
+    absl::Status Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::ModelConfig &model, aisdk::xengine::SessionConfig &session);
     void PreProcess(const LiftNetInputs &inputs, const CamInfo &cam_info);
     void PostProcess(LiftNetOutputs &outputs, const CamInfo &cam_info);
-    aisdk::xengine::Status Inference(const LiftNetInputs &inputs, const CamInfo &cam_info, LiftNetOutputs &outputs);
+    absl::Status Inference(const LiftNetInputs &inputs, const CamInfo &cam_info, LiftNetOutputs &outputs);
 
    protected:
     aisdk::xengine::TensorFormat itensor_format;
@@ -41,12 +41,12 @@ class GMLPLiftNet : public CalculatorBaseNet {
 // GMLP V3
 class GMLPLiftNet3:public CalculatorBaseNet {
    public:
-    aisdk::xengine::Status Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::ModelConfig &model, aisdk::xengine::SessionConfig &session);
+    absl::Status Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::ModelConfig &model, aisdk::xengine::SessionConfig &session);
     void PreProcess(const LiftNetInputs &inputs);
     void PostProcess(LiftNetOutputs &outputs, const LiftNetInputs &inputs);
-    aisdk::xengine::Status Inference(const LiftNetInputs &inputs, LiftNetOutputs &outputs);
+    absl::Status Inference(const LiftNetInputs &inputs, LiftNetOutputs &outputs);
 
-    aisdk::xengine::Status SetCameraInfo(const std::shared_ptr<BaseCameraModel>& left_camera, const std::shared_ptr<BaseCameraModel>& right_camera);
+    absl::Status SetCameraInfo(const std::shared_ptr<BaseCameraModel>& left_camera, const std::shared_ptr<BaseCameraModel>& right_camera);
 
    private:
     void transfer_to_standard_stereo_input();

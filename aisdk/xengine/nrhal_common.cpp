@@ -29,6 +29,27 @@
 #endif
 #endif  // __APPLE__
 
+absl::Status ConvertOldStatus(aisdk::xengine::Status old_status) {
+    if (old_status == aisdk::xengine::Status::SUCCESS) {
+        return absl::OkStatus();
+    } else if (old_status == aisdk::xengine::Status::UNKNOWN) {
+        return absl::UnknownError("unknown");
+    } else if (old_status == aisdk::xengine::Status::FAILURE) {
+        return absl::InternalError("failure");
+    } else if (old_status == aisdk::xengine::Status::PLATFORM_NO_SUPPORT) {
+        return absl::InternalError("platform no support");
+    } else if (old_status == aisdk::xengine::Status::MODEL_LOAD_FAILURE) {
+        return absl::InternalError("model load failure");
+    } else if (old_status == aisdk::xengine::Status::MODEL_INIT_FAILURE) {
+        return absl::InternalError("model init failure");
+    } else if (old_status == aisdk::xengine::Status::SESSION_INIT_FAILURE) {
+        return absl::InternalError("session init failure");
+    } else if (old_status == aisdk::xengine::Status::FORWORD_FAILURE) {
+        return absl::InternalError("forward failure");
+    }
+    return absl::UnknownError("unknown");
+}
+
 void PrintfHalModelConfig(aisdk::xengine::ModelConfig& info) {
     (void)info;
     AISDK_LOG_TRACE("[HalModelConfig] model_path={} model_mem={} model_size={} vendor_type={}", info.model_path.c_str(),

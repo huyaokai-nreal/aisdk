@@ -12,8 +12,8 @@ BaseNetAlgo::BaseNetAlgo() {}
 
 BaseNetAlgo::~BaseNetAlgo() { m_impl = nullptr; }
 
-aisdk::xengine::Status BaseNetAlgo::Init(std::string &netname, aisdk::xengine::ModelConfig &model,
-                                         aisdk::xengine::SessionConfig &session) {
+absl::Status BaseNetAlgo::Init(std::string &netname, aisdk::xengine::ModelConfig &model,
+                               aisdk::xengine::SessionConfig &session) {
     // 根据模型类型，添加对应的runtime
     if (aisdk::base::DebugProfiling::Get().GetOpt().aisdk_init_report) {
         PrintfHalModelConfig(model);
@@ -28,7 +28,7 @@ aisdk::xengine::Status BaseNetAlgo::Init(std::string &netname, aisdk::xengine::M
             AISDK_LOG_TRACE("BaseNetAlgo::Init netname=%s error=%d", netname.c_str(), (int)ret);
         }
     }
-    return ret;
+    return ConvertOldStatus(ret);
 }
 
 void BaseNetAlgo::SetAlgoParams(const std::string &key, const std::string &value) { m_params[key] = value; }
@@ -71,12 +71,12 @@ uint32_t BaseNetAlgo::GetOutputTensorIndex(const std::string &tensorname) {
 }
 
 // inference
-aisdk::xengine::Status BaseNetAlgo::RunNet() {
+absl::Status BaseNetAlgo::RunNet() {
     if (m_impl) {
-        return m_impl->RunNet();
+        return ConvertOldStatus(m_impl->RunNet());
     }
 
-    return aisdk::xengine::Status::UNKNOWN;
+    return absl::UnknownError("unhnown");
 }
 
 }  // namespace aisdk::xengine

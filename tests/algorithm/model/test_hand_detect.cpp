@@ -52,7 +52,7 @@ TEST_CASE("testing create netalgo") {
                 CHECK(basealgo);
 
                 auto ret = detect_handle->Init(pc, pa, pb);
-                if (ret == aisdk::xengine::Status::SUCCESS) {
+                if (ret.ok()) {
                     aisdk::xengine::IoTensors iots = basealgo->GetInputTensors();
                     PrintfHalIoTensors(iots);
                     aisdk::xengine::IoTensors oots = basealgo->GetOutputTensors();

@@ -6,10 +6,10 @@
 
 namespace aisdk::algorithm {
 
-aisdk::xengine::Status LandmarkFilter::Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::ModelConfig &model,
-                                            aisdk::xengine::SessionConfig &session) {
+absl::Status LandmarkFilter::Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::ModelConfig &model,
+                                  aisdk::xengine::SessionConfig &session) {
     auto ret = CalculatorBaseNet::Init(algo, model, session);
-    if (ret != aisdk::xengine::Status::SUCCESS) {
+    if (!ret.ok()) {
         return ret;
     }
 
@@ -22,7 +22,7 @@ aisdk::xengine::Status LandmarkFilter::Init(aisdk::xengine::NetAlgoConfig &algo,
     itensor_format = checkshapeformat(model.vendor_type, itensor.m_tensors[0].m_rank);
     otensor_format = checkshapeformat(model.vendor_type, otensor.m_tensors[0].m_rank);
     abs_scale.resize(42);
-    return aisdk::xengine::Status::SUCCESS;
+    return ret;
 }
 
 void LandmarkFilter::PreProcess(const std::vector<std::vector<Vec2f_t>> &net_input) {
@@ -98,10 +98,10 @@ void LandmarkFilter::PostProcess(std::vector<Vec2f_t> &result) {
     }
 }
 
-aisdk::xengine::Status LandmarkFilter::Inference(const std::vector<std::vector<Vec2f_t>> &baseinput,
-                                                 std::vector<Vec2f_t> &baseresult) {
+absl::Status LandmarkFilter::Inference(const std::vector<std::vector<Vec2f_t>> &baseinput,
+                                       std::vector<Vec2f_t> &baseresult) {
     PreProcess(baseinput);
-    aisdk::xengine::Status ret = m_net->RunNet();
+    auto ret = m_net->RunNet();
     PostProcess(baseresult);
     return ret;
 }

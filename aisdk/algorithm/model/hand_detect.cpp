@@ -7,8 +7,8 @@
 
 namespace aisdk::algorithm {
 
-aisdk::xengine::Status HandDetectNet::Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::ModelConfig &model,
-                                           aisdk::xengine::SessionConfig &session) {
+absl::Status HandDetectNet::Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::ModelConfig &model,
+                                 aisdk::xengine::SessionConfig &session) {
     if (model.dont_batch && session.batch > 1) {
         session_batch = session.batch;
         net_batch1 = true;
@@ -16,7 +16,7 @@ aisdk::xengine::Status HandDetectNet::Init(aisdk::xengine::NetAlgoConfig &algo, 
     }
 
     auto ret = CalculatorBaseNet::Init(algo, model, session);
-    if (ret != aisdk::xengine::Status::SUCCESS) {
+    if (!ret.ok()) {
         return ret;
     }
 
@@ -51,7 +51,7 @@ aisdk::xengine::Status HandDetectNet::Init(aisdk::xengine::NetAlgoConfig &algo, 
     auto &prof = aisdk::base::DebugProfiling::Get().GetOpt();
     export_netalgo_exec_info = prof.export_pipeline_exec_info_jsonstring;
     AISDK_LOG_TRACE("HandDetectNet::Inference  export_netalgo_exec_info={}", export_netalgo_exec_info);
-    return aisdk::xengine::Status::SUCCESS;
+    return ret;
 }
 
 void HandDetectNet::PreProcess(const std::vector<Image> &net_input) {
@@ -431,10 +431,10 @@ void HandDetectNet::PostProcessSingle(DetOutputInternal &result, uint32_t batchn
     }
 }
 
-aisdk::xengine::Status HandDetectNet::Inference(const std::vector<Image> &baseinput, DetOutputInternal &baseresult) {
+absl::Status HandDetectNet::Inference(const std::vector<Image> &baseinput, DetOutputInternal &baseresult) {
     if (net_batch1) {
         // 后期会删除
-        aisdk::xengine::Status ret;
+        absl::Status ret;
         baseresult.images_lhand_rects.resize(session_batch);
         baseresult.images_rhand_rects.resize(session_batch);
         if (export_netalgo_exec_info) {
@@ -445,7 +445,7 @@ aisdk::xengine::Status HandDetectNet::Inference(const std::vector<Image> &basein
         for (uint32_t i = 0; i < session_batch; i++) {
             PreProcessSingle(baseinput, i);
             ret = m_net->RunNet();
-            if (ret == aisdk::xengine::Status::SUCCESS) {
+            if (ret.ok()) {
                 PostProcessSingle(baseresult, i);
             } else {
                 AISDK_LOG_TRACE("HandDetectNet::Inference  Error!");
@@ -454,8 +454,8 @@ aisdk::xengine::Status HandDetectNet::Inference(const std::vector<Image> &basein
         return ret;
     } else {
         PreProcess(baseinput);
-        aisdk::xengine::Status ret = m_net->RunNet();
-        if (ret == aisdk::xengine::Status::SUCCESS) {
+        absl::Status ret = m_net->RunNet();
+        if (ret.ok()) {
             PostProcess(baseresult);
 
             AISDK_LOG_TRACE("baseresult.images_lhand_rects[0].size(): {}", baseresult.images_lhand_rects[0].size());
@@ -478,8 +478,8 @@ aisdk::xengine::Status HandDetectNet::Inference(const std::vector<Image> &basein
     }
 }
 
-aisdk::xengine::Status HandDetectNetv2::Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::ModelConfig &model,
-                                             aisdk::xengine::SessionConfig &session) {
+absl::Status HandDetectNetv2::Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::ModelConfig &model,
+                                   aisdk::xengine::SessionConfig &session) {
     if (model.dont_batch && session.batch > 1) {
         session_batch = session.batch;
         net_batch1 = true;
@@ -487,7 +487,7 @@ aisdk::xengine::Status HandDetectNetv2::Init(aisdk::xengine::NetAlgoConfig &algo
     }
 
     auto ret = CalculatorBaseNet::Init(algo, model, session);
-    if (ret != aisdk::xengine::Status::SUCCESS) {
+    if (!ret.ok()) {
         return ret;
     }
 
@@ -522,13 +522,13 @@ aisdk::xengine::Status HandDetectNetv2::Init(aisdk::xengine::NetAlgoConfig &algo
     auto &prof = aisdk::base::DebugProfiling::Get().GetOpt();
     export_netalgo_exec_info = prof.export_pipeline_exec_info_jsonstring;
     AISDK_LOG_TRACE("HandDetectNetv2::Inference  export_netalgo_exec_info={}", export_netalgo_exec_info);
-    return aisdk::xengine::Status::SUCCESS;
+    return ret;
 }
 
-aisdk::xengine::Status HandDetectNetv2::Inference(const std::vector<Image> &baseinput, DetOutputInternal &baseresult) {
+absl::Status HandDetectNetv2::Inference(const std::vector<Image> &baseinput, DetOutputInternal &baseresult) {
     if (net_batch1) {
         // 后期会删除
-        aisdk::xengine::Status ret;
+        absl::Status ret;
         baseresult.images_lhand_rects.resize(session_batch);
         baseresult.images_rhand_rects.resize(session_batch);
         if (export_netalgo_exec_info) {
@@ -539,7 +539,7 @@ aisdk::xengine::Status HandDetectNetv2::Inference(const std::vector<Image> &base
         for (uint32_t i = 0; i < session_batch; i++) {
             PreProcessSingle(baseinput, i);
             ret = m_net->RunNet();
-            if (ret == aisdk::xengine::Status::SUCCESS) {
+            if (ret.ok()) {
                 PostProcessSingle(baseresult, i);
             } else {
                 AISDK_LOG_TRACE("HandDetectNetv2::Inference  Error!");
@@ -548,8 +548,8 @@ aisdk::xengine::Status HandDetectNetv2::Inference(const std::vector<Image> &base
         return ret;
     } else {
         PreProcess(baseinput);
-        aisdk::xengine::Status ret = m_net->RunNet();
-        if (ret == aisdk::xengine::Status::SUCCESS) {
+        absl::Status ret = m_net->RunNet();
+        if (ret.ok()) {
             PostProcess(baseresult);
 
             AISDK_LOG_TRACE("baseresult.images_lhand_rects[0].size(): {}", baseresult.images_lhand_rects[0].size());

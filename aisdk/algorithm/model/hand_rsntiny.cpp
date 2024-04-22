@@ -33,10 +33,10 @@ void RSNTiny::ipr(float *__restrict input_hm, float *__restrict kpt_x_out, float
     reduce_sum_h(hm_reduce_row_col_.data(), kpt_y_out, keypoint_num_, output_shape_, 1);
 }
 
-aisdk::xengine::Status RSNTiny::Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::ModelConfig &model,
-                                     aisdk::xengine::SessionConfig &session) {
+absl::Status RSNTiny::Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::ModelConfig &model,
+                           aisdk::xengine::SessionConfig &session) {
     auto ret = CalculatorBaseNet::Init(algo, model, session);
-    if (ret != aisdk::xengine::Status::SUCCESS) {
+    if (!ret.ok()) {
         return ret;
     }
     itensor_format_ = itensor.m_tensors[0].m_dimtype;
@@ -53,7 +53,7 @@ aisdk::xengine::Status RSNTiny::Init(aisdk::xengine::NetAlgoConfig &algo, aisdk:
     hm_reduce_row_col_.resize(keypoint_num_ * output_shape_);
     // init ipr coeff map
     mul_coeff_ = linspace<float>(0, 1, output_shape_, false);
-    return aisdk::xengine::Status::SUCCESS;
+    return ret;
 }
 
 void RSNTiny::PreProcess(const std::vector<Image> &net_input) {
@@ -135,8 +135,8 @@ void RSNTiny::PostProcess(Kpt2dResult &result) {
 absl::StatusOr<Kpt2dResult> RSNTiny::Inference(const std::vector<Image> &baseinput) {
     PreProcess(baseinput);
     Kpt2dResult baseresult;
-    aisdk::xengine::Status ret = m_net->RunNet();
-    if (ret == aisdk::xengine::Status::SUCCESS) {
+    absl::Status ret = m_net->RunNet();
+    if (ret.ok()) {
         PostProcess(baseresult);
         return baseresult;
     }

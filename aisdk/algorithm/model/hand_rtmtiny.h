@@ -13,7 +13,7 @@ namespace aisdk::algorithm {
 class RTMTiny : public HandLandmarkBaseNet {
    public:
     RTMTiny()=default;
-    aisdk::xengine::Status Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::ModelConfig &model,
+    absl::Status Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::ModelConfig &model,
                                 aisdk::xengine::SessionConfig &session);
     void PreProcess(const std::vector<Image> &net_input);
     void PostProcess(Kpt2dResult &result);
