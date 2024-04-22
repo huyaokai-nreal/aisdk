@@ -84,9 +84,10 @@ int KFPredictor::init() {
 }
 void KFPredictor::reset_predict_smoother() {
     OneEuroParams center_params;
-    center_params.mincutoff = {0.2, 0.2, 0.2};  // 调静止状态下的稳定性,越小稳定性越好
-    center_params.beta = {20.0, 20.0, 10.0};    // 运动状态下alpha的变化速率，alpha越大，跟踪越及时
-    center_params.dcutoff = {1.0, 1.0, 0.5};    // 速度滤波的固定效果
+    center_params.mincutoff = {0.15, 0.15, 0.1};  // 调静止状态下的稳定性,越小稳定性越好
+    center_params.beta = {12.0, 12.0, 10.0};      // 运动状态下alpha的变化速率，alpha越大，跟踪越及时
+    center_params.dcutoff = {0.8, 0.8, 0.5};      // 速度滤波的固定效果
+
     center_params.freq = 60;
     predict_smoother_ = std::make_unique<SeqManager3D>(1, center_params);
 }

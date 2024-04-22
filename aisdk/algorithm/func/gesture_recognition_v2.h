@@ -142,12 +142,12 @@ class HandFeatureUpdator {
     float abduction_other_open_th = 12;
     float abduction_other_closed_th = 10;
     // in 1.5cm, out 3.5 cm
-    float opposition_closed_th = 0.0275;  // 2.5 cm
+    float opposition_closed_th = 0.025;  // 2.5 cm
     float opposition_open_th = 0.08;      // 8 cm
-    float opposition_th_width = 0.015;    // 1.5 cm
+    float opposition_th_width = 0.02;    // 1.5 cm
     // pinch relax th, in 2cm, out 3.5 cm
-    float opposition_relax_closed_th = 0.0275 + 0.0025;  // 2 cm
-    float opposition_relax_th_width = 0.015 - 0.005;     // 1 cm
+    float opposition_relax_closed_th = 0.0225 + 0.0025;  // 2 cm
+    float opposition_relax_th_width = 0.02 - 0.005;     // 1 cm
     std::unique_ptr<HandFeature> cur_hand_feature;
 };
 

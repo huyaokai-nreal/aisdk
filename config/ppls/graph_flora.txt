@@ -54,7 +54,7 @@ node {
   node_options: {
     [type.googleapis.com/aisdk.BlockHardRulesCalculatorOptions] {
       max_root_depth: 0.8
-      score_th: 0.15
+      score_th: 0.85
     }
   }
 }

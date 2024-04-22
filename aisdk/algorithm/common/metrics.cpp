@@ -37,7 +37,7 @@ float compute_score_with_reprojection(const std::vector<Vec3f_t>& pred_xyz, cons
     auto right_reproj_kpt2d = right_cam->world_to_window(pred_xyz);
     auto right_error = compute_rmse(right_reproj_kpt2d, rightcam_uv_ori);
 
-    return std::max(left_error, right_error);
+    return 1 - std::max(left_error, right_error);
 }
 
 float get_bbox_distance(cv::Rect src, cv::Rect dst) {
