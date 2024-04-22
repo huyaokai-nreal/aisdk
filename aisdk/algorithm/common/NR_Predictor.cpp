@@ -155,14 +155,14 @@ PredictorState KFPredictor::correct(PredictorState meas) {
     return {m_momentum.pos, pred_vec};
 }
 
-Vec3f_t KFPredictor::track_only_pred(double target_ts) {
+Vec3f_t KFPredictor::track_only_pred(double target_ts, bool with_smooth) {
     std::lock_guard<std::mutex> lock(m_mutex);
     update_transition_matrix(target_ts);
     auto pred = this->predict();
-    // auto cpred = this->correct(pred);
-    // last_correct_time_ = target_ts;
     std::vector<Vec3f_t> pred_pose{pred.pos};
-    predict_smoother_->getFilterHandData(pred_pose);
+    if (with_smooth) {
+        predict_smoother_->getFilterHandData(pred_pose);
+    }
     return pred_pose[0];
 }
 

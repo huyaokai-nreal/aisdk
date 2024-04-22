@@ -178,12 +178,12 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
 
                 if (i == 0) {
                     if (predictor_lhand.get_tracking_status()) {
-                        root_kf_predicted = predictor_lhand.track_only_pred(target_timestamp);
+                        root_kf_predicted = predictor_lhand.track_only_pred(target_timestamp, true);
                     }
 
                 } else {
                     if (predictor_rhand.get_tracking_status())
-                        root_kf_predicted = predictor_rhand.track_only_pred(target_timestamp);
+                        root_kf_predicted = predictor_rhand.track_only_pred(target_timestamp, true);
                 }
                 AISDK_LOG_TRACE("predict root is {}, {}, {}", root_kf_predicted[0], root_kf_predicted[1],
                                 root_kf_predicted[2]);

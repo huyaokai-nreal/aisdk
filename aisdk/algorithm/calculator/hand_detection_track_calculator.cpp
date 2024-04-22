@@ -128,7 +128,7 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
                 Vec3f_t root_meas = lhand_predict_frame[21];
 
                 auto &predictor_lhand = aisdk::algorithm::GlobalPredictorService::getInstance().get_predictor_lhand();
-                root_kf_predicted = predictor_lhand.track_only_pred(timestamp);
+                root_kf_predicted = predictor_lhand.track_only_pred(timestamp, false);
 
                 for (int k = 0; k < EZXR_DEFINED_JOINTS; k++) {
                     lhand_predict_frame[k] = lhand_predict_frame[k] + root_kf_predicted - root_meas;
@@ -152,7 +152,7 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
                 Vec3f_t root_meas = rhand_predict_frame[21];
 
                 auto &predictor_rhand = aisdk::algorithm::GlobalPredictorService::getInstance().get_predictor_rhand();
-                root_kf_predicted = predictor_rhand.track_only_pred(timestamp);
+                root_kf_predicted = predictor_rhand.track_only_pred(timestamp, false);
 
                 for (int k = 0; k < EZXR_DEFINED_JOINTS; k++) {
                     rhand_predict_frame[k] = rhand_predict_frame[k] + root_kf_predicted - root_meas;

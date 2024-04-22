@@ -49,7 +49,7 @@ class KFPredictor {
     int start_tracking(double target_ts, PredictorState meas);
     void stop_tracking();
 
-    Vec3f_t track_only_pred(double target_ts);
+    Vec3f_t track_only_pred(double target_ts, bool with_smooth);
     Vec3f_t track_with_correct(double target_ts, PredictorState meas);
 
     bool get_tracking_status() const;
