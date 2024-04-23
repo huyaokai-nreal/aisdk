@@ -17,8 +17,8 @@ class GMLPLiftNimble : public LiftBaseNet {
     absl::Status Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::ModelConfig &model, aisdk::xengine::SessionConfig &session);
     void PreProcess(const LiftNetInputs &inputs);
     void PostProcess(const LiftNetInputs &inputs, LiftNetOutputs &outputs);
-    absl::StatusOr<LiftNetOutputs> Inference(const LiftNetInputs &inputs);
-    absl::Status SetCameraInfo(const std::shared_ptr<BaseCameraModel>& left_camera, const std::shared_ptr<BaseCameraModel>& right_camera);
+    absl::StatusOr<LiftNetOutputs> Inference(const LiftNetInputs &inputs) override;
+    absl::Status SetCameraInfo(const std::shared_ptr<BaseCameraModel>& left_camera, const std::shared_ptr<BaseCameraModel>& right_camera) override;
    private:
     void transfer_to_standard_stereo_input();
     Eigen::Matrix3f rot_left_ = Eigen::Matrix3f::Identity();

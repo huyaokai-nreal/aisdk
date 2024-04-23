@@ -27,7 +27,8 @@ absl::Status GMLPLiftNimble::Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xe
     m_leftcam_y.resize(kAlgoKeypointNum);
     m_rightcam_x.resize(kAlgoKeypointNum);
     m_rightcam_y.resize(kAlgoKeypointNum);
-
+    mem_left_hand.resize(86);
+    mem_right_hand.resize(86);
     return ret;
 }
 
@@ -80,16 +81,8 @@ void GMLPLiftNimble::PreProcess(const LiftNetInputs &inputs) {
     float *temp = (float *)mem;
 
     auto l_K = left_camera_->get_camera_intrinsics();
-    AISDK_LOG_TRACE("[GMLPLiftNimble] lcam cx={}, cy={}, fx={}, fy={}", l_K.cx_, l_K.cy_, l_K.fx_, l_K.fy_);
     auto r_K = right_camera_->get_camera_intrinsics();
-    AISDK_LOG_TRACE("[GMLPLiftNimble] rcam cx={}, cy={}, fx={}, fy={}", r_K.cx_, r_K.cy_, r_K.fx_, r_K.fy_);
-
     for (int idx = 0; idx < kAlgoKeypointNum; idx++) {
-        AISDK_LOG_TRACE("[GMLPLiftNimble] lkpt({}): 0={}, 1={}", idx, inputs.input_kpt_lcam[idx][0],
-                        inputs.input_kpt_lcam[idx][1]);
-        AISDK_LOG_TRACE("[GMLPLiftNimble] rkpt({}): 0={}, 1={}", idx, inputs.input_kpt_lcam[idx][0],
-                        inputs.input_kpt_lcam[idx][1]);
-
         m_leftcam_x[idx] = (inputs.input_kpt_lcam[idx][0] - l_K.cx_) / l_K.fx_;
         m_leftcam_y[idx] = (inputs.input_kpt_lcam[idx][1] - l_K.cy_) / l_K.fy_;
         m_rightcam_x[idx] = (inputs.input_kpt_rcam[idx][0] - r_K.cx_) / r_K.fx_;
@@ -104,16 +97,11 @@ void GMLPLiftNimble::PreProcess(const LiftNetInputs &inputs) {
     for (int i = 0; i < kAlgoKeypointNum; i++) {
         buffer_x[i * 2] = m_leftcam_x[i];
         buffer_x[i * 2 + 1] = m_leftcam_y[i];
-
-        AISDK_LOG_TRACE("[GMLPLiftNimble] buffer_x, {}: {}, {}: {}", i * 2, buffer_x[i * 2], i * 2 + 1,
-                        buffer_x[i * 2 + 1]);
     }
     buffer_x[42] = inputs.is_left;
     for (int i = 0; i < kAlgoKeypointNum; i++) {
         buffer_y[i * 2] = m_rightcam_x[i];
         buffer_y[i * 2 + 1] = m_rightcam_y[i];
-        AISDK_LOG_TRACE("[GMLPLiftNimble] buffer_y, {}: {}, {}: {}", i * 2, buffer_y[i * 2], i * 2 + 1,
-                        buffer_y[i * 2 + 1]);
     }
     buffer_y[42] = inputs.is_left;
 
@@ -143,10 +131,6 @@ void GMLPLiftNimble::PreProcess(const LiftNetInputs &inputs) {
         for (int i = 0; i < mem_size; i++) {
             mem_hand[i] = 0;
         }
-    }
-
-    for (int i = 0; i < mem_size; i++) {
-        AISDK_LOG_TRACE("[GMLPLiftNimble] mem_hand[{}] = {}", i, mem_hand[i]);
     }
 }
 
@@ -182,6 +166,7 @@ void GMLPLiftNimble::PostProcess(const LiftNetInputs &inputs, LiftNetOutputs &ou
     for (int i = 0; i < kAlgoKeypointNum; i++) {
         outputs.res3d[i] = Vec3f_t{global_kpt(i, 0), global_kpt(i, 1), global_kpt(i, 2)};
     }
+    AISDK_LOG_TRACE("[GMLPLiftNimble] run GMLPLiftNimble infer kpt success");
 
     int index_mem = this->m_net->GetOutputTensorIndex("mem_out");
 
@@ -203,6 +188,7 @@ void GMLPLiftNimble::PostProcess(const LiftNetInputs &inputs, LiftNetOutputs &ou
         }
         last_right_time = inputs.timestamp;
     }
+    AISDK_LOG_TRACE("[GMLPLiftNimble] run GMLPLiftNimble infer mem success");
 }
 
 absl::StatusOr<LiftNetOutputs> GMLPLiftNimble::Inference(const LiftNetInputs &inputs) {
@@ -210,7 +196,7 @@ absl::StatusOr<LiftNetOutputs> GMLPLiftNimble::Inference(const LiftNetInputs &in
     PreProcess(inputs);
     auto ret = m_net->RunNet();
     if (ret.ok()) {
-        AISDK_LOG_TRACE("[GMLPLiftNimble] run GMLPLiftNimble success");
+        AISDK_LOG_TRACE("[GMLPLiftNimble] run GMLPLiftNimble infer success");
         LiftNetOutputs outputs;
         PostProcess(inputs, outputs);
         AISDK_LOG_TRACE("[GMLPLiftNimble] run GMLPLiftNimble PostProcess success");

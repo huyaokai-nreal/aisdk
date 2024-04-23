@@ -41,6 +41,7 @@ option(BUILD_HANDTRACKING_FPTOOL_SDK "build lib for detect fp_tool sdk" OFF)
 option(BUILD_EXAMPLE "Build examples." ON)
 option(BUILD_TOOL "Build tools."  OFF)
 option(ENABLE_CLANG_TIDY_CHECK       "Analyze code with clang-tidy."                OFF)
+# log
 option(ENABLE_LOG_LEVEL_RELEASE  "enable log level for release" ON)
 option(ENABLE_LOG_LEVEL_ALL "enable trace log level" OFF)
 # build algorithm
