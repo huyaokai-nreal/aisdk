@@ -53,6 +53,7 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
             return absl::Status(absl::StatusCode::kInvalidArgument,
                                 "[LiftCalculator] CreateNetAlgoBase nodename error");
         }
+
         const auto& cam_info = cc->InputSidePackets()
                                    .Tag("CAM_INFO_INPUT")
                                    .Get<std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>,

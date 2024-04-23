@@ -67,7 +67,6 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
                                 "[HandDetTrackCalculator] CreateNetAlgoBase nodename error");
         }
 
-        det_tracker_step_ = 0;
         const auto &cam_info = cc->InputSidePackets()
                                    .Tag("CAM_INFO_INPUT")
                                    .Get<std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>,
@@ -76,6 +75,8 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
         rcam_model_ = cam_info.second;
         video_width_ = lcam_model_->video_width_;
         video_height_ = lcam_model_->video_height_;
+
+        det_tracker_step_ = 0;
 
         AISDK_LOG_TRACE("[HandDetTrackCalculator] Open complete.");
         return absl::OkStatus();
@@ -87,15 +88,13 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
 #endif
         AISDK_LOG_TRACE("[HandDetTrackCalculator] Process start");
 
-        const auto &timestamp = cc->InputTimestamp().Seconds();
-
-        std::unique_ptr<DetOutputInternal> output_buffer_ = absl::make_unique<DetOutputInternal>();
-        output_buffer_->clear();
-
-        const auto &lastframe_kpt3d = GlobalPredictorService::getInstance().get_kpt3d_world();
-
         const auto &image_data = cc->Inputs().Tag("IMAGE_INPUT").Value().Get<std::vector<Image>>();
         const auto &headpose_data = cc->Inputs().Tag("HEADPOSE").Get<HeadPoseInternal>();
+
+        const auto &timestamp = cc->InputTimestamp().Seconds();
+        const auto &lastframe_kpt3d = GlobalPredictorService::getInstance().get_kpt3d_world();
+
+        std::unique_ptr<DetOutputInternal> output_buffer_ = absl::make_unique<DetOutputInternal>();
 
         if (det_tracker_step_ == 0 || (!lastframe_kpt3d.lhand_valid && !lastframe_kpt3d.rhand_valid)) {
             // do detection
