@@ -2,6 +2,7 @@
 
 #include "aisdk/algorithm/common/bbox.h"
 #include "aisdk/base/type.h"
+namespace aisdk::algorithm {
 
 void get_dir(const float* const src_point, const float rot_rad, float* src_res) {
     float sn = sin(rot_rad);
@@ -43,10 +44,11 @@ cv::Mat get_affine_transform(const aisdk::Vec4f_t& bbox_cs, const aisdk::Vec2f_t
 }
 
 cv::Mat generate_roi_image(const cv::Mat& input_img, cv::Rect input_bbox, int output_width, int output_hight) {
-    aisdk::Vec4f_t bbox_cs =
-        aisdk::algorithm::bbox_xywh2cs({input_bbox.x, input_bbox.y, input_bbox.width, input_bbox.height});
+    aisdk::Vec4f_t bbox_cs = bbox_xywh2cs({input_bbox.x, input_bbox.y, input_bbox.width, input_bbox.height});
     cv::Mat warp_matrix = get_affine_transform(bbox_cs, {0, 0}, 0., output_hight, output_width, false);
     cv::Mat result;
     cv::warpAffine(input_img, result, warp_matrix, {output_width, output_hight}, cv::INTER_LINEAR);
     return result;
 }
+
+}  // namespace aisdk::algorithm

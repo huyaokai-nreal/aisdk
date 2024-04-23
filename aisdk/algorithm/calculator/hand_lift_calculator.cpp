@@ -3,10 +3,10 @@
 
 #include "../internal_structs/kpt2d_struct_internal.h"
 #include "../internal_structs/kpt3d_struct_internal.h"
-#include "../internal_structs/nimble_struct_internal.h"
 #include "../model/hand_lift.h"
 #include "aisdk/algorithm/common/metrics.h"
 #include "aisdk/algorithm/func/netalgo_utils.h"
+#include "aisdk/algorithm/model/calculator_basenet.h"
 #include "aisdk/base/camera_model.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/time.h"
@@ -28,9 +28,9 @@ namespace aisdk::algorithm {
 class HandLiftCalculator : public xgraph::CalculatorBase {
    private:
     // SeqGMLPLiftNet algo instance
-    std::shared_ptr<aisdk::algorithm::GMLPLiftNet3> netalgo;
-    std::shared_ptr<aisdk::base::BaseCameraModel> lcam_model_ = nullptr;
-    std::shared_ptr<aisdk::base::BaseCameraModel> rcam_model_ = nullptr;
+    std::shared_ptr<LiftBaseNet> netalgo;
+    std::shared_ptr<base::BaseCameraModel> lcam_model_ = nullptr;
+    std::shared_ptr<base::BaseCameraModel> rcam_model_ = nullptr;
 
    public:
     static absl::Status GetContract(xgraph::CalculatorContract* cc) {
@@ -39,8 +39,8 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
             .Tag("CAM_INFO_INPUT")
             .Set<std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>,
                            std::shared_ptr<aisdk::base::BaseCameraModel>>>();
-        cc->Inputs().Tag("LANDMARK_INPUT").Set<aisdk::algorithm::Kpt2dInternal>();
-        cc->Outputs().Tag("LIFT_OUTPUT").Set<aisdk::algorithm::Kpt3dInternal>();
+        cc->Inputs().Tag("LANDMARK_INPUT").Set<Kpt2dInternal>();
+        cc->Outputs().Tag("LIFT_OUTPUT").Set<Kpt3dInternal>();
         AISDK_LOG_TRACE("[LiftCalculator] GetContract complete");
         return absl::OkStatus();
     }
@@ -48,8 +48,7 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
     absl::Status Open(xgraph::CalculatorContext* cc) final {
         AISDK_LOG_TRACE("[LiftCalculator] Open start");
         // 3d_lift
-        netalgo = aisdk::algorithm::XGraphServiceUtils::CreateNetAlgoBase<aisdk::algorithm::GMLPLiftNet3>(
-            (void*)0x202310, "3d_lift");
+        netalgo = XGraphServiceUtils::CreateNetAlgoBase<GMLPLiftNet3>((void*)0x202310, "3d_lift");
         if (!netalgo) {
             return absl::Status(absl::StatusCode::kInvalidArgument,
                                 "[LiftCalculator] CreateNetAlgoBase nodename error");
@@ -70,40 +69,45 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
         TIMER_ONCE_WITH_TAG(LiftCalculator::Process);
 #endif
         AISDK_LOG_TRACE("[LiftCalculator] Process start");
-        const auto& kpt2d = cc->Inputs().Tag("LANDMARK_INPUT").Get<aisdk::algorithm::Kpt2dInternal>();
+        const auto& kpt2d = cc->Inputs().Tag("LANDMARK_INPUT").Get<Kpt2dInternal>();
         const auto& timestamp = cc->InputTimestamp().Seconds();
-        std::unique_ptr<aisdk::algorithm::Kpt3dInternal> output_buffer_ =
-            absl::make_unique<aisdk::algorithm::Kpt3dInternal>();
+        std::unique_ptr<Kpt3dInternal> output_buffer_ = absl::make_unique<Kpt3dInternal>();
         if (kpt2d.lhand_valid) {
-            aisdk::algorithm::LiftNetInputs lift_inputs;
-            aisdk::algorithm::LiftNetOutputs lift_outputs;
+            LiftNetInputs lift_inputs;
             lift_inputs.input_kpt_lcam = lcam_model_->undistort(kpt2d.lhand_lcam);
             lift_inputs.input_kpt_rcam = rcam_model_->undistort(kpt2d.lhand_rcam);
             lift_inputs.is_left = 1.;
             lift_inputs.timestamp = timestamp;
-            netalgo->Inference(lift_inputs, lift_outputs);
-            output_buffer_->lhand_valid = true;
-            output_buffer_->lhand = constrain_hand(lift_outputs.res3d, true);
-            float kpt3d_score = compute_score_with_reprojection(output_buffer_->lhand, kpt2d.lhand_lcam,
-                                                                kpt2d.lhand_rcam, lcam_model_, rcam_model_);
-            AISDK_LOG_TRACE("[LiftCalculator] left hand score is {}", kpt3d_score);
-            output_buffer_->lscore = kpt3d_score;
+            const auto lift_outputs = netalgo->Inference(lift_inputs);
+            if (lift_outputs.ok()) {
+                output_buffer_->lhand_valid = true;
+                output_buffer_->lhand = constrain_hand(lift_outputs->res3d, true);
+                float kpt3d_score = compute_score_with_reprojection(output_buffer_->lhand, kpt2d.lhand_lcam,
+                                                                    kpt2d.lhand_rcam, lcam_model_, rcam_model_);
+                AISDK_LOG_TRACE("[LiftCalculator] left hand score is {}", kpt3d_score);
+                output_buffer_->lscore = kpt3d_score;
+            } else {
+                output_buffer_->lhand_valid = false;
+            }
         }
 
         if (kpt2d.rhand_valid) {
-            aisdk::algorithm::LiftNetInputs lift_inputs;
-            aisdk::algorithm::LiftNetOutputs lift_outputs;
+            LiftNetInputs lift_inputs;
             lift_inputs.input_kpt_lcam = lcam_model_->undistort(kpt2d.rhand_lcam);
             lift_inputs.input_kpt_rcam = rcam_model_->undistort(kpt2d.rhand_rcam);
             lift_inputs.is_left = 0.;
             lift_inputs.timestamp = timestamp;
-            netalgo->Inference(lift_inputs, lift_outputs);
-            output_buffer_->rhand_valid = true;
-            output_buffer_->rhand = constrain_hand(lift_outputs.res3d, false);
-            float kpt3d_score = compute_score_with_reprojection(output_buffer_->rhand, kpt2d.rhand_lcam,
-                                                                kpt2d.rhand_rcam, lcam_model_, rcam_model_);
-            AISDK_LOG_TRACE("[LiftCalculator] right hand score is {}", kpt3d_score);
-            output_buffer_->rscore = kpt3d_score;
+            const auto lift_outputs = netalgo->Inference(lift_inputs);
+            if (lift_outputs.ok()) {
+                output_buffer_->rhand_valid = true;
+                output_buffer_->rhand = constrain_hand(lift_outputs->res3d, false);
+                float kpt3d_score = compute_score_with_reprojection(output_buffer_->rhand, kpt2d.rhand_lcam,
+                                                                    kpt2d.rhand_rcam, lcam_model_, rcam_model_);
+                AISDK_LOG_TRACE("[LiftCalculator] right hand score is {}", kpt3d_score);
+                output_buffer_->rscore = kpt3d_score;
+            } else {
+                output_buffer_->rhand_valid = false;
+            }
         }
         if (output_buffer_->lhand_valid || output_buffer_->rhand_valid) {
             cc->Outputs().Tag("LIFT_OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());

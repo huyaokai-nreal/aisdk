@@ -27,8 +27,8 @@ class BlockHardRulesCalculator : public xgraph::CalculatorBase {
    public:
     static absl::Status GetContract(xgraph::CalculatorContract* cc) {
         AISDK_LOG_TRACE("[BlockHardRulesCalculator] GetContract start");
-        cc->Inputs().Tag("BLOCK_IN").Set<aisdk::algorithm::Kpt3dInternal>();
-        cc->Outputs().Tag("BLOCK_OUT").Set<aisdk::algorithm::Kpt3dInternal>();
+        cc->Inputs().Tag("BLOCK_IN").Set<Kpt3dInternal>();
+        cc->Outputs().Tag("BLOCK_OUT").Set<Kpt3dInternal>();
         AISDK_LOG_TRACE("[BlockHardRulesCalculator] GetContract complete");
         return absl::OkStatus();
     }
@@ -50,10 +50,9 @@ class BlockHardRulesCalculator : public xgraph::CalculatorBase {
         TIMER_ONCE_WITH_TAG(BlockHardRulesCalculator::Process);
 #endif
         AISDK_LOG_TRACE("[BlockHardRulesCalculator] Process start");
-        const auto& input_data = cc->Inputs().Tag("BLOCK_IN").Get<aisdk::algorithm::Kpt3dInternal>();
+        const auto& input_data = cc->Inputs().Tag("BLOCK_IN").Get<Kpt3dInternal>();
 
-        std::unique_ptr<aisdk::algorithm::Kpt3dInternal> output_buffer_ =
-            absl::make_unique<aisdk::algorithm::Kpt3dInternal>();
+        std::unique_ptr<Kpt3dInternal> output_buffer_ = absl::make_unique<Kpt3dInternal>();
         *output_buffer_ = input_data;
         if (input_data.lhand_valid) {
             AISDK_LOG_TRACE("[BlockHardRulesCalculator] Checking left hand");

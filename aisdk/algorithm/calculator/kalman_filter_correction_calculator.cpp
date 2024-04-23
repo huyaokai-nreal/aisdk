@@ -46,8 +46,8 @@ class KalmanFilterCorrectionCalculator : public xgraph::CalculatorBase {
         const auto& timestamp = cc->InputTimestamp().Seconds();
         std::unique_ptr<Kpt3dInternal> output_buffer_ = absl::make_unique<Kpt3dInternal>();
 
-        auto& predictor_lhand = aisdk::algorithm::GlobalPredictorService::getInstance().get_predictor_lhand();
-        auto& predictor_rhand = aisdk::algorithm::GlobalPredictorService::getInstance().get_predictor_rhand();
+        auto& predictor_lhand = GlobalPredictorService::getInstance().get_predictor_lhand();
+        auto& predictor_rhand = GlobalPredictorService::getInstance().get_predictor_rhand();
 
         if (kpt3d_world.lhand_valid == false) {
             predictor_lhand.stop_tracking();

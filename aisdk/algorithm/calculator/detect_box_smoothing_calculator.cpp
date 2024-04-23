@@ -18,17 +18,17 @@ namespace aisdk::algorithm {
 
 class DetectBoxSmoothingCalculator : public xgraph::CalculatorBase {
    private:
-    std::shared_ptr<aisdk::algorithm::SeqManager> m_seq_lcam_lhand;
-    std::shared_ptr<aisdk::algorithm::SeqManager> m_seq_lcam_rhand;
-    std::shared_ptr<aisdk::algorithm::SeqManager> m_seq_rcam_lhand;
-    std::shared_ptr<aisdk::algorithm::SeqManager> m_seq_rcam_rhand;
+    std::shared_ptr<SeqManager> m_seq_lcam_lhand;
+    std::shared_ptr<SeqManager> m_seq_lcam_rhand;
+    std::shared_ptr<SeqManager> m_seq_rcam_lhand;
+    std::shared_ptr<SeqManager> m_seq_rcam_rhand;
 
    public:
     static absl::Status GetContract(xgraph::CalculatorContract* cc) {
         AISDK_LOG_TRACE("[DetectBoxSmoothingCalculator] GetContract start");
 
-        cc->Inputs().Tag("BBOX_INPUT").Set<aisdk::algorithm::DetOutputInternal>();
-        cc->Outputs().Tag("BBOX_SMOOTHED_OUTPUT").Set<aisdk::algorithm::DetOutputInternal>();
+        cc->Inputs().Tag("BBOX_INPUT").Set<DetOutputInternal>();
+        cc->Outputs().Tag("BBOX_SMOOTHED_OUTPUT").Set<DetOutputInternal>();
 
         AISDK_LOG_TRACE("[DetectBoxSmoothingCalculator] GetContract complete");
         return absl::OkStatus();
@@ -37,10 +37,10 @@ class DetectBoxSmoothingCalculator : public xgraph::CalculatorBase {
     absl::Status Open(xgraph::CalculatorContext* cc) final {
         AISDK_LOG_TRACE("[DetectBoxSmoothingCalculator] Open start");
 
-        m_seq_lcam_lhand = std::make_shared<aisdk::algorithm::SeqManager>();
-        m_seq_lcam_rhand = std::make_shared<aisdk::algorithm::SeqManager>();
-        m_seq_rcam_lhand = std::make_shared<aisdk::algorithm::SeqManager>();
-        m_seq_rcam_rhand = std::make_shared<aisdk::algorithm::SeqManager>();
+        m_seq_lcam_lhand = std::make_shared<SeqManager>();
+        m_seq_lcam_rhand = std::make_shared<SeqManager>();
+        m_seq_rcam_lhand = std::make_shared<SeqManager>();
+        m_seq_rcam_rhand = std::make_shared<SeqManager>();
 
         AISDK_LOG_TRACE("[DetectBoxSmoothingCalculator] Open complete");
         return absl::OkStatus();
@@ -51,10 +51,9 @@ class DetectBoxSmoothingCalculator : public xgraph::CalculatorBase {
         TIMER_ONCE_WITH_TAG(DetectBoxSmoothingCalculator::Process);
 #endif
         AISDK_LOG_TRACE("[DetectBoxSmoothingCalculator] Process start");
-        const auto& input_data = cc->Inputs().Tag("BBOX_INPUT").Get<aisdk::algorithm::DetOutputInternal>();
+        const auto& input_data = cc->Inputs().Tag("BBOX_INPUT").Get<DetOutputInternal>();
 
-        std::unique_ptr<aisdk::algorithm::DetOutputInternal> output_buffer_ =
-            absl::make_unique<aisdk::algorithm::DetOutputInternal>();
+        std::unique_ptr<DetOutputInternal> output_buffer_ = absl::make_unique<DetOutputInternal>();
         output_buffer_->clear();
 
         if (input_data.lhand_valid) {

@@ -7,7 +7,7 @@ namespace aisdk::algorithm {
 bool HandFilters::init() {
     float freq = 60.;
 
-    aisdk::algorithm::OneEuroParams center_params, palm_params, finger_params;
+    OneEuroParams center_params, palm_params, finger_params;
 
     center_params.freq = freq;
     palm_params.freq = freq;
@@ -23,11 +23,11 @@ bool HandFilters::init() {
     finger_params.dcutoff = {2.0, 2.0, 1.0};
 
     // finger
-    m_seq3d_lhand = std::make_shared<aisdk::algorithm::SeqManager3D>(16, finger_params);
-    m_seq3d_rhand = std::make_shared<aisdk::algorithm::SeqManager3D>(16, finger_params);
+    m_seq3d_lhand = std::make_shared<SeqManager3D>(16, finger_params);
+    m_seq3d_rhand = std::make_shared<SeqManager3D>(16, finger_params);
     // palm
-    m_seq3d_palm_lhand = std::make_shared<aisdk::algorithm::SeqManager3D>(6, palm_params);
-    m_seq3d_palm_rhand = std::make_shared<aisdk::algorithm::SeqManager3D>(6, palm_params);
+    m_seq3d_palm_lhand = std::make_shared<SeqManager3D>(6, palm_params);
+    m_seq3d_palm_rhand = std::make_shared<SeqManager3D>(6, palm_params);
 
     return true;
 }

@@ -62,7 +62,7 @@ class SeqManager final {
     int mStepCount;
     float mSeqParam[5];
     std::deque<HandStepData> mHandDataSavedSeq;
-    std::vector<std::unique_ptr<aisdk::algorithm::OneEuroFilter>> mOneEuroFilterList;
+    std::vector<std::unique_ptr<OneEuroFilter>> mOneEuroFilterList;
 };
 
 class SeqManager2D final {
@@ -148,7 +148,7 @@ class SeqManager3D final {
 
    private:
     int mSampleNum;
-    std::vector<std::unique_ptr<aisdk::algorithm::OneEuroFilter>> mOneEuroFilterList;
+    std::vector<std::unique_ptr<OneEuroFilter>> mOneEuroFilterList;
 };
 class SeqManagerVec final {
    public:
@@ -160,7 +160,7 @@ class SeqManagerVec final {
     bool reset();
 
    private:
-    std::vector<std::unique_ptr<aisdk::algorithm::OneEuroFilter>> mOneEuroFilterList;
+    std::vector<std::unique_ptr<OneEuroFilter>> mOneEuroFilterList;
 };
 
 }  // namespace XrealAI

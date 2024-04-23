@@ -1,11 +1,14 @@
 #pragma once
+#include <absl/status/status.h>
 #include <absl/status/statusor.h>
 #include "aisdk/algorithm/common/nrnet_define.h"
 #include "aisdk/algorithm/internal_structs/kpt2d_struct_internal.h"
+#include "aisdk/algorithm/internal_structs/kpt3d_struct_internal.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/profiling.h"
 #include "aisdk/xengine/nr_model_mgr.h"
 #include "aisdk/xengine/nrhal_net.h"
+#include "aisdk/base/camera_model.h"
 
 namespace aisdk::algorithm {
 using BaseNetAlgoPtr = std::unique_ptr<aisdk::xengine::BaseNetAlgo,std::function<void(aisdk::xengine::BaseNetAlgo*)>>;
@@ -55,6 +58,12 @@ class HandLandmarkBaseNet: public CalculatorBaseNet {
     public:
     virtual absl::StatusOr<Kpt2dResult> Inference(const std::vector<Image> &input) = 0;
 
+};
+
+class LiftBaseNet: public CalculatorBaseNet {
+    public:
+    virtual absl::StatusOr<LiftNetOutputs> Inference(const LiftNetInputs& input) = 0;
+    virtual absl::Status SetCameraInfo(const std::shared_ptr<base::BaseCameraModel>& left_camera, const std::shared_ptr<base::BaseCameraModel>& right_camera) = 0;
 };
 
 }  // namespace aisdk::algorithm

@@ -23,15 +23,15 @@ namespace aisdk::algorithm {
 class HandDetectionCalculator : public xgraph::CalculatorBase {
    private:
     // DetNet algo instance
-    std::shared_ptr<aisdk::algorithm::HandDetectNetv2> netalgo;
+    std::shared_ptr<HandDetectNetv2> netalgo;
 
    public:
     static absl::Status GetContract(xgraph::CalculatorContract *cc) {
         AISDK_LOG_TRACE("[HandDetectionCalculator] GetContract start");
 
         // Declaration of input and output, according to definitons.
-        cc->Inputs().Tag("IMAGE_INPUT").Set<std::vector<aisdk::algorithm::Image>>();
-        cc->Outputs().Tag("DET_BBOX_OUTPUT").Set<aisdk::algorithm::DetOutputInternal>();
+        cc->Inputs().Tag("IMAGE_INPUT").Set<std::vector<Image>>();
+        cc->Outputs().Tag("DET_BBOX_OUTPUT").Set<DetOutputInternal>();
 
         AISDK_LOG_TRACE("[HandDetectionCalculator] GetContract complete");
         return absl::OkStatus();
@@ -39,8 +39,7 @@ class HandDetectionCalculator : public xgraph::CalculatorBase {
 
     absl::Status Open(xgraph::CalculatorContext *cc) final {
         AISDK_LOG_TRACE("[HandDetectionCalculator] Open start");
-        netalgo = aisdk::algorithm::XGraphServiceUtils::CreateNetAlgoBase<aisdk::algorithm::HandDetectNetv2>(
-            (void *)0x202310, "detect");
+        netalgo = XGraphServiceUtils::CreateNetAlgoBase<HandDetectNetv2>((void *)0x202310, "detect");
         if (!netalgo) {
             return absl::Status(absl::StatusCode::kInvalidArgument,
                                 "[HandDetectionCalculator] CreateNetAlgoBase nodename error");
@@ -55,10 +54,9 @@ class HandDetectionCalculator : public xgraph::CalculatorBase {
 #endif
         AISDK_LOG_TRACE("[HandDetectionCalculator] Process start");
 
-        const auto &image_data = cc->Inputs().Tag("IMAGE_INPUT").Get<std::vector<aisdk::algorithm::Image>>();
+        const auto &image_data = cc->Inputs().Tag("IMAGE_INPUT").Get<std::vector<Image>>();
 
-        std::unique_ptr<aisdk::algorithm::DetOutputInternal> output_buffer_ =
-            absl::make_unique<aisdk::algorithm::DetOutputInternal>();
+        std::unique_ptr<DetOutputInternal> output_buffer_ = absl::make_unique<DetOutputInternal>();
         output_buffer_->clear();
 
         auto &result = *output_buffer_;

@@ -16,8 +16,7 @@ SeqManager::SeqManager() : mSlideWindowSize(5), mStepCount(0) {
 
     mOneEuroFilterList.resize(46);
     for (int i = 0; i < 46; i++) {
-        mOneEuroFilterList[i] =
-            std::unique_ptr<aisdk::algorithm::OneEuroFilter>(new aisdk::algorithm::OneEuroFilter(30, 4.0, 0.005, 5.0));
+        mOneEuroFilterList[i] = std::unique_ptr<OneEuroFilter>(new OneEuroFilter(30, 4.0, 0.005, 5.0));
     }
 }
 
@@ -340,12 +339,12 @@ bool DynamicFilter2D::getDynamicFilterHandData(std::vector<Vec2f_t>& kpt_2d) {
 SeqManager3D::SeqManager3D(int sample_num, const OneEuroParams& params) : mSampleNum(sample_num) {
     mOneEuroFilterList.resize(sample_num * 3);
     for (int i = 0; i < sample_num; i++) {  // 30, 0.0005, 20.0, 3.0
-        mOneEuroFilterList[i * 3] = std::unique_ptr<aisdk::algorithm::OneEuroFilter>(
-            new aisdk::algorithm::OneEuroFilter(params.freq, params.mincutoff[0], params.beta[0], params.dcutoff[0]));
-        mOneEuroFilterList[i * 3 + 1] = std::unique_ptr<aisdk::algorithm::OneEuroFilter>(
-            new aisdk::algorithm::OneEuroFilter(params.freq, params.mincutoff[1], params.beta[1], params.dcutoff[1]));
-        mOneEuroFilterList[i * 3 + 2] = std::unique_ptr<aisdk::algorithm::OneEuroFilter>(
-            new aisdk::algorithm::OneEuroFilter(params.freq, params.mincutoff[2], params.beta[2], params.dcutoff[2]));
+        mOneEuroFilterList[i * 3] = std::unique_ptr<OneEuroFilter>(
+            new OneEuroFilter(params.freq, params.mincutoff[0], params.beta[0], params.dcutoff[0]));
+        mOneEuroFilterList[i * 3 + 1] = std::unique_ptr<OneEuroFilter>(
+            new OneEuroFilter(params.freq, params.mincutoff[1], params.beta[1], params.dcutoff[1]));
+        mOneEuroFilterList[i * 3 + 2] = std::unique_ptr<OneEuroFilter>(
+            new OneEuroFilter(params.freq, params.mincutoff[2], params.beta[2], params.dcutoff[2]));
     }
 }
 
@@ -362,12 +361,12 @@ bool SeqManager3D::getFilterHandData(std::vector<Vec3f_t>& kpt_3d) {
 
 SeqManagerVec::SeqManagerVec(const OneEuroParams& params) {
     mOneEuroFilterList.resize(3);
-    mOneEuroFilterList[0] = std::unique_ptr<aisdk::algorithm::OneEuroFilter>(
-        new aisdk::algorithm::OneEuroFilter(params.freq, params.mincutoff[0], params.beta[0], params.dcutoff[0]));
-    mOneEuroFilterList[1] = std::unique_ptr<aisdk::algorithm::OneEuroFilter>(
-        new aisdk::algorithm::OneEuroFilter(params.freq, params.mincutoff[1], params.beta[1], params.dcutoff[1]));
-    mOneEuroFilterList[2] = std::unique_ptr<aisdk::algorithm::OneEuroFilter>(
-        new aisdk::algorithm::OneEuroFilter(params.freq, params.mincutoff[2], params.beta[2], params.dcutoff[2]));
+    mOneEuroFilterList[0] = std::unique_ptr<OneEuroFilter>(
+        new OneEuroFilter(params.freq, params.mincutoff[0], params.beta[0], params.dcutoff[0]));
+    mOneEuroFilterList[1] = std::unique_ptr<OneEuroFilter>(
+        new OneEuroFilter(params.freq, params.mincutoff[1], params.beta[1], params.dcutoff[1]));
+    mOneEuroFilterList[2] = std::unique_ptr<OneEuroFilter>(
+        new OneEuroFilter(params.freq, params.mincutoff[2], params.beta[2], params.dcutoff[2]));
 }
 
 bool SeqManagerVec::reset() { return true; }

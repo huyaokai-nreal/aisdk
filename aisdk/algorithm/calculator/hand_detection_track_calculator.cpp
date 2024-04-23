@@ -31,7 +31,7 @@ namespace aisdk::algorithm {
 class HandDetTrackCalculator : public xgraph::CalculatorBase {
    private:
     // DetNet algo instance
-    std::shared_ptr<aisdk::algorithm::HandDetectNetv2> netalgo;
+    std::shared_ptr<HandDetectNetv2> netalgo;
     std::shared_ptr<aisdk::base::BaseCameraModel> lcam_model_ = nullptr;
     std::shared_ptr<aisdk::base::BaseCameraModel> rcam_model_ = nullptr;
     uint32_t video_width_;
@@ -48,12 +48,12 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
             .Set<std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>,
                            std::shared_ptr<aisdk::base::BaseCameraModel>>>();
 
-        cc->Inputs().Tag("IMAGE_INPUT").Set<std::vector<aisdk::algorithm::Image>>();
-        cc->Inputs().Tag("HEADPOSE").Set<aisdk::algorithm::HeadPoseInternal>();
+        cc->Inputs().Tag("IMAGE_INPUT").Set<std::vector<Image>>();
+        cc->Inputs().Tag("HEADPOSE").Set<HeadPoseInternal>();
 
-        cc->Outputs().Tag("DET_BBOX_OUTPUT").Set<aisdk::algorithm::DetOutputInternal>();
-        cc->Outputs().Tag("IMAGE_OUTPUT").Set<std::vector<aisdk::algorithm::Image>>();
-        cc->Outputs().Tag("HEADPOSE_OUTPUT").Set<aisdk::algorithm::HeadPoseInternal>();
+        cc->Outputs().Tag("DET_BBOX_OUTPUT").Set<DetOutputInternal>();
+        cc->Outputs().Tag("IMAGE_OUTPUT").Set<std::vector<Image>>();
+        cc->Outputs().Tag("HEADPOSE_OUTPUT").Set<HeadPoseInternal>();
 
         AISDK_LOG_TRACE("[HandDetTrackCalculator] GetContract complete");
         return absl::OkStatus();
@@ -61,8 +61,7 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
 
     absl::Status Open(xgraph::CalculatorContext *cc) final {
         AISDK_LOG_TRACE("[HandDetTrackCalculator] Open start");
-        netalgo = aisdk::algorithm::XGraphServiceUtils::CreateNetAlgoBase<aisdk::algorithm::HandDetectNetv2>(
-            (void *)0x202310, "detect");
+        netalgo = XGraphServiceUtils::CreateNetAlgoBase<HandDetectNetv2>((void *)0x202310, "detect");
         if (!netalgo) {
             return absl::Status(absl::StatusCode::kInvalidArgument,
                                 "[HandDetTrackCalculator] CreateNetAlgoBase nodename error");
@@ -90,14 +89,13 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
 
         const auto &timestamp = cc->InputTimestamp().Seconds();
 
-        std::unique_ptr<aisdk::algorithm::DetOutputInternal> output_buffer_ =
-            absl::make_unique<aisdk::algorithm::DetOutputInternal>();
+        std::unique_ptr<DetOutputInternal> output_buffer_ = absl::make_unique<DetOutputInternal>();
         output_buffer_->clear();
 
-        const auto &lastframe_kpt3d = aisdk::algorithm::GlobalPredictorService::getInstance().get_kpt3d_world();
+        const auto &lastframe_kpt3d = GlobalPredictorService::getInstance().get_kpt3d_world();
 
-        const auto &image_data = cc->Inputs().Tag("IMAGE_INPUT").Value().Get<std::vector<aisdk::algorithm::Image>>();
-        const auto &headpose_data = cc->Inputs().Tag("HEADPOSE").Get<aisdk::algorithm::HeadPoseInternal>();
+        const auto &image_data = cc->Inputs().Tag("IMAGE_INPUT").Value().Get<std::vector<Image>>();
+        const auto &headpose_data = cc->Inputs().Tag("HEADPOSE").Get<HeadPoseInternal>();
 
         if (det_tracker_step_ == 0 || (!lastframe_kpt3d.lhand_valid && !lastframe_kpt3d.rhand_valid)) {
             // do detection
@@ -131,16 +129,15 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
                 Vec3f_t root_kf_predicted;
                 Vec3f_t root_meas = lhand_predict_frame[21];
 
-                auto &predictor_lhand = aisdk::algorithm::GlobalPredictorService::getInstance().get_predictor_lhand();
+                auto &predictor_lhand = GlobalPredictorService::getInstance().get_predictor_lhand();
                 root_kf_predicted = predictor_lhand.track_only_pred(timestamp, false);
 
                 for (int k = 0; k < EZXR_DEFINED_JOINTS; k++) {
                     lhand_predict_frame[k] = lhand_predict_frame[k] + root_kf_predicted - root_meas;
                 }
 
-                aisdk::algorithm::reproj_bbox_with_new_headpose(lcam_model_, rcam_model_, headpose_data.transform,
-                                                                lhand_predict_frame, proj_bbox_lcam_lhand,
-                                                                proj_bbox_rcam_lhand);
+                reproj_bbox_with_new_headpose(lcam_model_, rcam_model_, headpose_data.transform, lhand_predict_frame,
+                                              proj_bbox_lcam_lhand, proj_bbox_rcam_lhand);
                 if (check_if_rect_valid_relax(proj_bbox_lcam_lhand, video_width_, video_height_) &&
                     check_if_rect_valid_relax(proj_bbox_rcam_lhand, video_width_, video_height_)) {
                     output_buffer_->lhand_valid = true;
@@ -155,16 +152,15 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
                 Vec3f_t root_kf_predicted;
                 Vec3f_t root_meas = rhand_predict_frame[21];
 
-                auto &predictor_rhand = aisdk::algorithm::GlobalPredictorService::getInstance().get_predictor_rhand();
+                auto &predictor_rhand = GlobalPredictorService::getInstance().get_predictor_rhand();
                 root_kf_predicted = predictor_rhand.track_only_pred(timestamp, false);
 
                 for (int k = 0; k < EZXR_DEFINED_JOINTS; k++) {
                     rhand_predict_frame[k] = rhand_predict_frame[k] + root_kf_predicted - root_meas;
                 }
 
-                aisdk::algorithm::reproj_bbox_with_new_headpose(lcam_model_, rcam_model_, headpose_data.transform,
-                                                                rhand_predict_frame, proj_bbox_lcam_rhand,
-                                                                proj_bbox_rcam_rhand);
+                reproj_bbox_with_new_headpose(lcam_model_, rcam_model_, headpose_data.transform, rhand_predict_frame,
+                                              proj_bbox_lcam_rhand, proj_bbox_rcam_rhand);
 
                 if (check_if_rect_valid_relax(proj_bbox_lcam_rhand, video_width_, video_height_) &&
                     check_if_rect_valid_relax(proj_bbox_rcam_rhand, video_width_, video_height_)) {

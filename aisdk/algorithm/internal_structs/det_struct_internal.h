@@ -9,8 +9,8 @@ namespace aisdk::algorithm {
 struct DetOutputInternal {
     std::vector<std::vector<cv::Rect>> images_lhand_rects;                            // 左手 左目，右目
     std::vector<std::vector<cv::Rect>> images_rhand_rects;                            // 右手 左目，右目
-    std::vector<std::vector<aisdk::algorithm::DetectRect>> images_lhand_model_rects;  // 左手 左目，右目
-    std::vector<std::vector<aisdk::algorithm::DetectRect>> images_rhand_model_rects;  // 右手 左目，右目
+    std::vector<std::vector<DetectRect>> images_lhand_model_rects;  // 左手 左目，右目
+    std::vector<std::vector<DetectRect>> images_rhand_model_rects;  // 右手 左目，右目
 
     // std::vector<float> lcam_lhand;
     // std::vector<float> lcam_rhand;

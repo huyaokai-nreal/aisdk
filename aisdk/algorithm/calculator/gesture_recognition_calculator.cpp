@@ -26,23 +26,23 @@ namespace aisdk::algorithm {
 
 class GestureRecognitionCalculator : public xgraph::CalculatorBase {
    private:
-    std::unique_ptr<aisdk::algorithm::GestureRecognitionV2> m_gesture_classifier_lhand;
-    std::unique_ptr<aisdk::algorithm::GestureRecognitionV2> m_gesture_classifier_rhand;
+    std::unique_ptr<GestureRecognitionV2> m_gesture_classifier_lhand;
+    std::unique_ptr<GestureRecognitionV2> m_gesture_classifier_rhand;
 
    public:
     static absl::Status GetContract(xgraph::CalculatorContract* cc) {
         AISDK_LOG_TRACE("[GestureRecognitionCalculator] GetContract start.");
         cc->Inputs().Tag("GR_KPT_INPUT").Set<Kpt3dInternal>();
-        cc->Inputs().Tag("GR_KPT2D_INPUT").Set<aisdk::algorithm::Kpt2dInternal>();
-        cc->Outputs().Tag("GR_OUTPUT").Set<aisdk::algorithm::HandOutputInternal>();
+        cc->Inputs().Tag("GR_KPT2D_INPUT").Set<Kpt2dInternal>();
+        cc->Outputs().Tag("GR_OUTPUT").Set<HandOutputInternal>();
         AISDK_LOG_TRACE("[GestureRecognitionCalculator] GetContract complete.");
         return absl::OkStatus();
     }
 
     absl::Status Open(xgraph::CalculatorContext* cc) final {
         AISDK_LOG_TRACE("[GestureRecognitionCalculator] Open start.");
-        m_gesture_classifier_lhand = std::make_unique<aisdk::algorithm::GestureRecognitionV2>();
-        m_gesture_classifier_rhand = std::make_unique<aisdk::algorithm::GestureRecognitionV2>();
+        m_gesture_classifier_lhand = std::make_unique<GestureRecognitionV2>();
+        m_gesture_classifier_rhand = std::make_unique<GestureRecognitionV2>();
         AISDK_LOG_TRACE("[GestureRecognitionCalculator] Open complete.");
         return absl::OkStatus();
     }
@@ -54,10 +54,9 @@ class GestureRecognitionCalculator : public xgraph::CalculatorBase {
         AISDK_LOG_TRACE("[GestureRecognitionCalculator] Process start.");
         const auto& kpt3d_data = cc->Inputs().Tag("GR_KPT_INPUT").Get<Kpt3dInternal>();
         const auto& timestamp = cc->InputTimestamp().Seconds();
-        const auto& kpt2d_data = cc->Inputs().Tag("GR_KPT2D_INPUT").Get<aisdk::algorithm::Kpt2dInternal>();
+        const auto& kpt2d_data = cc->Inputs().Tag("GR_KPT2D_INPUT").Get<Kpt2dInternal>();
 
-        std::unique_ptr<aisdk::algorithm::HandOutputInternal> output_buffer_ =
-            absl::make_unique<aisdk::algorithm::HandOutputInternal>();
+        std::unique_ptr<HandOutputInternal> output_buffer_ = absl::make_unique<HandOutputInternal>();
         output_buffer_->clear();
         AISDK_LOG_TRACE("[GestureRecognitionCalculator] Process start 2.");
 
@@ -91,7 +90,7 @@ class GestureRecognitionCalculator : public xgraph::CalculatorBase {
                             output_buffer_->rhand_gesture);
         }
 
-        auto& global_kpt3d = aisdk::algorithm::GlobalPredictorService::getInstance().get_kpt3d_world();
+        auto& global_kpt3d = GlobalPredictorService::getInstance().get_kpt3d_world();
         global_kpt3d = kpt3d_data;
         if (output_buffer_->lhand_valid || output_buffer_->rhand_valid) {
             output_buffer_->timestamp = timestamp;

@@ -20,8 +20,8 @@ class StandardizeKeypointsCalculator : public xgraph::CalculatorBase {
    public:
     static absl::Status GetContract(xgraph::CalculatorContract* cc) {
         AISDK_LOG_TRACE("[StandardizeKeypointsCalculator] GetContract start.");
-        cc->Inputs().Tag("INPUT").Set<aisdk::algorithm::Kpt3dInternal>();
-        cc->Outputs().Tag("OUTPUT").Set<aisdk::algorithm::Kpt3dInternal>();
+        cc->Inputs().Tag("INPUT").Set<Kpt3dInternal>();
+        cc->Outputs().Tag("OUTPUT").Set<Kpt3dInternal>();
         AISDK_LOG_TRACE("[StandardizeKeypointsCalculator] GetContract complete.");
         return absl::OkStatus();
     }
@@ -37,9 +37,9 @@ class StandardizeKeypointsCalculator : public xgraph::CalculatorBase {
         TIMER_ONCE_WITH_TAG(StandardizeKeypointsCalculator::Process);
 #endif
         AISDK_LOG_TRACE("[StandardizeKeypointsCalculator] Process start.");
-        const auto& input_data = cc->Inputs().Tag("INPUT").Get<aisdk::algorithm::Kpt3dInternal>();
+        const auto& input_data = cc->Inputs().Tag("INPUT").Get<Kpt3dInternal>();
 
-        std::unique_ptr<aisdk::algorithm::Kpt3dInternal> output_buffer_ = absl::make_unique<Kpt3dInternal>();
+        std::unique_ptr<Kpt3dInternal> output_buffer_ = absl::make_unique<Kpt3dInternal>();
         output_buffer_->clear();
 
         if (input_data.lhand_valid) {

@@ -13,9 +13,9 @@ namespace aisdk::algorithm {
 std::vector<Vec3f_t> transfer_from_cvL_to_world(NRTransform headpose, const std::vector<Vec3f_t>& points_lcam_cv) {
     std::vector<Vec3f_t> points_lcam_gl, points_head, points_world;
 
-    aisdk::algorithm::TransferCVToGL(points_lcam_cv, points_lcam_gl);
-    aisdk::algorithm::TransferLeftCamToHead(points_lcam_gl, points_head);
-    aisdk::algorithm::TransferHeadToWorld(headpose, points_head, points_world);
+    TransferCVToGL(points_lcam_cv, points_lcam_gl);
+    TransferLeftCamToHead(points_lcam_gl, points_head);
+    TransferHeadToWorld(headpose, points_head, points_world);
 
     return points_world;
 }
@@ -34,9 +34,9 @@ class ConvertToWorldCalculator : public xgraph::CalculatorBase {
    public:
     static absl::Status GetContract(xgraph::CalculatorContract* cc) {
         AISDK_LOG_TRACE("[ConvertToWorldCalculator] GetContract start.");
-        cc->Inputs().Tag("INPUT").Set<aisdk::algorithm::Kpt3dInternal>();
-        cc->Inputs().Tag("HEADPOSE").Set<aisdk::algorithm::HeadPoseInternal>();
-        cc->Outputs().Tag("OUTPUT").Set<aisdk::algorithm::Kpt3dInternal>();
+        cc->Inputs().Tag("INPUT").Set<Kpt3dInternal>();
+        cc->Inputs().Tag("HEADPOSE").Set<HeadPoseInternal>();
+        cc->Outputs().Tag("OUTPUT").Set<Kpt3dInternal>();
         AISDK_LOG_TRACE("[ConvertToWorldCalculator] GetContract complete.");
         return absl::OkStatus();
     }
@@ -54,11 +54,10 @@ class ConvertToWorldCalculator : public xgraph::CalculatorBase {
         AISDK_LOG_TRACE("[ConvertToWorldCalculator] Process start.");
 
         if (!cc->Inputs().Tag("HEADPOSE").IsEmpty() && !cc->Inputs().Tag("INPUT").IsEmpty()) {
-            const auto& input_data = cc->Inputs().Tag("INPUT").Get<aisdk::algorithm::Kpt3dInternal>();
-            const auto& headpose_data = cc->Inputs().Tag("HEADPOSE").Get<aisdk::algorithm::HeadPoseInternal>();
+            const auto& input_data = cc->Inputs().Tag("INPUT").Get<Kpt3dInternal>();
+            const auto& headpose_data = cc->Inputs().Tag("HEADPOSE").Get<HeadPoseInternal>();
 
-            std::unique_ptr<aisdk::algorithm::Kpt3dInternal> output_buffer_ =
-                absl::make_unique<aisdk::algorithm::Kpt3dInternal>();
+            std::unique_ptr<Kpt3dInternal> output_buffer_ = absl::make_unique<Kpt3dInternal>();
             output_buffer_->clear();
 
             if (input_data.lhand_valid) {

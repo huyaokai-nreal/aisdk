@@ -20,19 +20,19 @@ namespace aisdk::algorithm {
 
 class LandmarkFilterCalculator : public xgraph::CalculatorBase {
    private:
-    std::shared_ptr<aisdk::algorithm::LandmarkFilter> netalgo;
+    std::shared_ptr<LandmarkFilter> netalgo;
 
-    std::shared_ptr<aisdk::algorithm::SeqManager2D> m_seq2d_lcam_lhand;
-    std::shared_ptr<aisdk::algorithm::SeqManager2D> m_seq2d_lcam_rhand;
-    std::shared_ptr<aisdk::algorithm::SeqManager2D> m_seq2d_rcam_lhand;
-    std::shared_ptr<aisdk::algorithm::SeqManager2D> m_seq2d_rcam_rhand;
+    std::shared_ptr<SeqManager2D> m_seq2d_lcam_lhand;
+    std::shared_ptr<SeqManager2D> m_seq2d_lcam_rhand;
+    std::shared_ptr<SeqManager2D> m_seq2d_rcam_lhand;
+    std::shared_ptr<SeqManager2D> m_seq2d_rcam_rhand;
 
    public:
     static absl::Status GetContract(xgraph::CalculatorContract* cc) {
         AISDK_LOG_TRACE("[LandmarkFilterCalculator] GetContract start");
 
-        cc->Inputs().Tag("LANDMARK_INPUT").Set<aisdk::algorithm::Kpt2dInternal>();
-        cc->Outputs().Tag("LANDMARK_OUTPUT").Set<aisdk::algorithm::Kpt2dInternal>();
+        cc->Inputs().Tag("LANDMARK_INPUT").Set<Kpt2dInternal>();
+        cc->Outputs().Tag("LANDMARK_OUTPUT").Set<Kpt2dInternal>();
 
         AISDK_LOG_TRACE("[LandmarkFilterCalculator] GetContract complete");
         return absl::OkStatus();
@@ -41,17 +41,16 @@ class LandmarkFilterCalculator : public xgraph::CalculatorBase {
     absl::Status Open(xgraph::CalculatorContext* cc) final {
         AISDK_LOG_TRACE("[LandmarkFilterCalculator] Open start");
 
-        netalgo = aisdk::algorithm::XGraphServiceUtils::CreateNetAlgoBase<aisdk::algorithm::LandmarkFilter>(
-            (void*)0x202310, "2d_filter");
+        netalgo = XGraphServiceUtils::CreateNetAlgoBase<LandmarkFilter>((void*)0x202310, "2d_filter");
         if (!netalgo) {
             return absl::Status(absl::StatusCode::kInvalidArgument,
                                 "[HandLandmarkCalculator] CreateNetAlgoBase nodename error");
         }
 
-        m_seq2d_lcam_lhand = std::make_shared<aisdk::algorithm::SeqManager2D>();
-        m_seq2d_lcam_rhand = std::make_shared<aisdk::algorithm::SeqManager2D>();
-        m_seq2d_rcam_lhand = std::make_shared<aisdk::algorithm::SeqManager2D>();
-        m_seq2d_rcam_rhand = std::make_shared<aisdk::algorithm::SeqManager2D>();
+        m_seq2d_lcam_lhand = std::make_shared<SeqManager2D>();
+        m_seq2d_lcam_rhand = std::make_shared<SeqManager2D>();
+        m_seq2d_rcam_lhand = std::make_shared<SeqManager2D>();
+        m_seq2d_rcam_rhand = std::make_shared<SeqManager2D>();
 
         AISDK_LOG_TRACE("[LandmarkFilterCalculator] Open complete");
         return absl::OkStatus();
@@ -62,10 +61,9 @@ class LandmarkFilterCalculator : public xgraph::CalculatorBase {
         TIMER_ONCE_WITH_TAG(LandmarkFilterCalculator::Process);
 #endif
         AISDK_LOG_TRACE("[LandmarkFilterCalculator] Process start");
-        const auto& input_data = cc->Inputs().Tag("LANDMARK_INPUT").Get<aisdk::algorithm::Kpt2dInternal>();
+        const auto& input_data = cc->Inputs().Tag("LANDMARK_INPUT").Get<Kpt2dInternal>();
 
-        std::unique_ptr<aisdk::algorithm::Kpt2dInternal> output_buffer_ =
-            absl::make_unique<aisdk::algorithm::Kpt2dInternal>();
+        std::unique_ptr<Kpt2dInternal> output_buffer_ = absl::make_unique<Kpt2dInternal>();
         output_buffer_->clear();
 
         if (input_data.lhand_valid) {
