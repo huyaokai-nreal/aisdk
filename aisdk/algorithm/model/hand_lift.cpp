@@ -346,30 +346,28 @@ void GMLPLiftNet3::PostProcess(LiftNetOutputs &outputs, const LiftNetInputs &inp
 }
 
 // liftnimble
-
-aisdk::xengine::Status GMLPLiftNimble::Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::ModelConfig &model,
-                                            aisdk::xengine::SessionConfig &session) {
+absl::Status GMLPLiftNimble::Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::ModelConfig &model,
+                                  aisdk::xengine::SessionConfig &session) {
     auto ret = CalculatorBaseNet::Init(algo, model, session);
-
-    if (ret != aisdk::xengine::Status::SUCCESS) {
+    if (!ret.ok()) {
         return ret;
     }
 
-    m_leftcam_x.resize(kKeypointNum);
-    m_leftcam_y.resize(kKeypointNum);
-    m_rightcam_x.resize(kKeypointNum);
-    m_rightcam_y.resize(kKeypointNum);
-    mem_left_hand.resize(86);
-    mem_right_hand.resize(86);
+    itensor_format = checkshapeformat(model.vendor_type, itensor.m_tensors[0].m_rank);
+    otensor_format = checkshapeformat(model.vendor_type, otensor.m_tensors[0].m_rank);
+    m_leftcam_x.resize(kAlgoKeypointNum);
+    m_leftcam_y.resize(kAlgoKeypointNum);
+    m_rightcam_x.resize(kAlgoKeypointNum);
+    m_rightcam_y.resize(kAlgoKeypointNum);
 
-    return aisdk::xengine::Status::SUCCESS;
+    return ret;
 }
 
 void GMLPLiftNimble::transfer_to_standard_stereo_input() {
     using KptMatrix = Eigen::Matrix<float, 21, 3>;
     KptMatrix left_kpt_homo = KptMatrix::Ones();
     KptMatrix right_kpt_homo = KptMatrix::Ones();
-    for (size_t i = 0; i < kKeypointNum; i++) {
+    for (size_t i = 0; i < kAlgoKeypointNum; i++) {
         left_kpt_homo(i, 0) = m_leftcam_x[i];
         left_kpt_homo(i, 1) = m_leftcam_y[i];
         right_kpt_homo(i, 0) = m_rightcam_x[i];
@@ -379,7 +377,7 @@ void GMLPLiftNimble::transfer_to_standard_stereo_input() {
     right_kpt_homo.noalias() = (rot_right_ * right_kpt_homo.transpose()).transpose();
     left_kpt_homo = left_kpt_homo.array().colwise() / left_kpt_homo.array().col(2);
     right_kpt_homo = right_kpt_homo.array().colwise() / right_kpt_homo.array().col(2);
-    for (size_t i = 0; i < kKeypointNum; i++) {
+    for (size_t i = 0; i < kAlgoKeypointNum; i++) {
         m_leftcam_x[i] = left_kpt_homo(i, 0);
         m_leftcam_y[i] = left_kpt_homo(i, 1);
         m_rightcam_x[i] = right_kpt_homo(i, 0);
@@ -387,8 +385,8 @@ void GMLPLiftNimble::transfer_to_standard_stereo_input() {
     }
 }
 
-aisdk::xengine::Status GMLPLiftNimble::SetCameraInfo(const std::shared_ptr<BaseCameraModel> &left_camera,
-                                                     const std::shared_ptr<BaseCameraModel> &right_camera) {
+absl::Status GMLPLiftNimble::SetCameraInfo(const std::shared_ptr<BaseCameraModel> &left_camera,
+                                           const std::shared_ptr<BaseCameraModel> &right_camera) {
     left_camera_ = left_camera;
     right_camera_ = right_camera;
     if (!init_camera_info_) {
@@ -399,7 +397,7 @@ aisdk::xengine::Status GMLPLiftNimble::SetCameraInfo(const std::shared_ptr<BaseC
         init_camera_info_ = true;
         baseline_scale_ = baseline;
     }
-    return aisdk::xengine::Status::SUCCESS;
+    return absl::OkStatus();
 }
 
 void GMLPLiftNimble::PreProcess(const LiftNetInputs &inputs) {
@@ -418,7 +416,7 @@ void GMLPLiftNimble::PreProcess(const LiftNetInputs &inputs) {
     auto r_K = right_camera_->get_camera_intrinsics();
     AISDK_LOG_TRACE("[GMLPLiftNimble] rcam cx={}, cy={}, fx={}, fy={}", r_K.cx_, r_K.cy_, r_K.fx_, r_K.fy_);
 
-    for (int idx = 0; idx < kKeypointNum; idx++) {
+    for (int idx = 0; idx < kAlgoKeypointNum; idx++) {
         AISDK_LOG_TRACE("[GMLPLiftNimble] lkpt({}): 0={}, 1={}", idx, inputs.input_kpt_lcam[idx][0],
                         inputs.input_kpt_lcam[idx][1]);
         AISDK_LOG_TRACE("[GMLPLiftNimble] rkpt({}): 0={}, 1={}", idx, inputs.input_kpt_lcam[idx][0],
@@ -435,7 +433,7 @@ void GMLPLiftNimble::PreProcess(const LiftNetInputs &inputs) {
     auto buffer_x = temp;
     auto buffer_y = temp + 43;
 
-    for (int i = 0; i < kKeypointNum; i++) {
+    for (int i = 0; i < kAlgoKeypointNum; i++) {
         buffer_x[i * 2] = m_leftcam_x[i];
         buffer_x[i * 2 + 1] = m_leftcam_y[i];
 
@@ -443,7 +441,7 @@ void GMLPLiftNimble::PreProcess(const LiftNetInputs &inputs) {
                         buffer_x[i * 2 + 1]);
     }
     buffer_x[42] = inputs.is_left;
-    for (int i = 0; i < kKeypointNum; i++) {
+    for (int i = 0; i < kAlgoKeypointNum; i++) {
         buffer_y[i * 2] = m_rightcam_x[i];
         buffer_y[i * 2 + 1] = m_rightcam_y[i];
         AISDK_LOG_TRACE("[GMLPLiftNimble] buffer_y, {}: {}, {}: {}", i * 2, buffer_y[i * 2], i * 2 + 1,
@@ -513,8 +511,8 @@ void GMLPLiftNimble::PostProcess(LiftNetOutputs &outputs, const LiftNetInputs &i
         ((global_rotation * local_kpt.transpose()).transpose().rowwise() + global_translation.transpose()) *
         baseline_scale_ / standard_baseline_;
     outputs.res3d.resize(21);
-    for (int i = 0; i < kKeypointNum; i++) {
-        outputs.res3d[i] = cv::Vec3f{global_kpt(i, 0), global_kpt(i, 1), global_kpt(i, 2)};
+    for (int i = 0; i < kAlgoKeypointNum; i++) {
+        outputs.res3d[i] = Vec3f_t{global_kpt(i, 0), global_kpt(i, 1), global_kpt(i, 2)};
     }
 
     int index_mem = this->m_net->GetOutputTensorIndex("mem_out");
@@ -539,10 +537,10 @@ void GMLPLiftNimble::PostProcess(LiftNetOutputs &outputs, const LiftNetInputs &i
     }
 }
 
-aisdk::xengine::Status GMLPLiftNimble::Inference(const LiftNetInputs &inputs, LiftNetOutputs &outputs) {
+absl::Status GMLPLiftNimble::Inference(const LiftNetInputs &inputs, LiftNetOutputs &outputs) {
     AISDK_LOG_TRACE("[GMLPLiftNimble] Inference");
     PreProcess(inputs);
-    aisdk::xengine::Status ret = m_net->RunNet();
+    auto ret = m_net->RunNet();
     AISDK_LOG_INFO("[GMLPLiftNimble] run GMLPLiftNimble success");
     PostProcess(outputs, inputs);
     AISDK_LOG_INFO("[GMLPLiftNimble] run GMLPLiftNimble PostProcess success");
