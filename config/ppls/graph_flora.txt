@@ -2,6 +2,17 @@ input_stream: "IMAGE:image"
 input_stream: "HEADPOSE:head_pose"
 output_stream: "ALL_RESULTS:hand_result"
 
+input_stream_handler {
+  input_stream_handler: "FixedSizeInputStreamHandler"
+  options {
+    [mediapipe.FixedSizeInputStreamHandlerOptions.ext] { 
+      trigger_queue_size: 2 
+      target_queue_size: 1
+      fixed_min_size: false
+    }
+  }
+}
+
 node {
   name: "HandDetectionTrack"
   calculator: "HandDetTrackCalculator"

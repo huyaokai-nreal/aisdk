@@ -31,15 +31,6 @@ std::map<std::string, int> gesture_map = {
     {"Click", GESTURE_TYPE_POINT},        {"Victory", GESTURE_TYPE_VICTORY},   {"Call", GESTURE_TYPE_CALL},
     {"Home", GESTURE_TYPE_SYSTEM},        {"ThumbUp", GESTURE_TYPE_THUMBS_UP}, {"Invalid", GESTURE_TYPE_UNKNOWN}};
 
-#define MP_RETURN_IF_ERROR_WITH_LOG(expr)              \
-    do {                                               \
-        const ::absl::Status _status = (expr);         \
-        if (!_status.ok()) {                           \
-            AISDK_LOG_ERROR(_status.message().data()); \
-            return aisdk::algorithm::Status::FAILURE;  \
-        }                                              \
-    } while (0)
-
 namespace aisdk::task {
 
 HandTrackingXGraph::HandTrackingXGraph() {
@@ -61,10 +52,15 @@ aisdk::algorithm::Status HandTrackingXGraph::PushData(uint64_t timestamp,
     auto status = SetInputStreamCache(timestamp_micro);
     if (status == algorithm::Status::SUCCESS) {
         // 这里根据stream输入的返回值做
-        MP_RETURN_IF_ERROR_WITH_LOG(
-            m_calculator_graph->AddPacketToInputStream("image", image_packet.At(xgraph::Timestamp(timestamp_micro))));
-        MP_RETURN_IF_ERROR_WITH_LOG(m_calculator_graph->AddPacketToInputStream(
-            "head_pose", headpose_packet.At(xgraph::Timestamp(timestamp_micro))));
+        auto _status =
+            m_calculator_graph->AddPacketToInputStream("image", image_packet.At(xgraph::Timestamp(timestamp_micro)));
+        auto _status1 = m_calculator_graph->AddPacketToInputStream(
+            "head_pose", headpose_packet.At(xgraph::Timestamp(timestamp_micro)));
+        if (!_status.ok() || !_status1.ok()) {
+            AISDK_LOG_ERROR("HandTrackingXGraph::PushData image {}", _status.message().data());
+            AISDK_LOG_ERROR("HandTrackingXGraph::PushData head_pose {}", _status1.message().data());
+            push_failure = true;
+        }
         // 若push失败，清除cahce
         if (push_failure) {
             ClearInputStreamCache(timestamp_micro);
@@ -146,6 +142,7 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
                 Vec3f_t root_meas = ontracked_points[i][21];
                 Vec3f_t root_kf_predicted = ontracked_points[i][21];
 
+                uint64_t target_timestamp = 0;
                 AISDK_LOG_TRACE("{}, {}, {}, {}, {}, {}", query_time, hand_data_internal.timestamp, target_timestamp,
                                 root_meas[0], root_meas[1], root_meas[2]);
 

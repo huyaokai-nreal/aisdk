@@ -41,6 +41,8 @@ class BaseXGraph : public PipeGraphImpl {
    private:
     std::mutex m_inference_lock;
     std::map<int64_t, std::shared_ptr<StreamCache>> m_inference_stream_cache;
+    // 删除推理过程中被graph主动drop的StreamCache
+    bool ClearMediapipeDropedInferenceCache(int64_t graph_stream_stamp);
 
     std::mutex m_output_lock;
     uint32_t m_max_output_cahce_num = 3;

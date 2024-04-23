@@ -39,9 +39,11 @@ NaiveTimer::NaiveTimer(int line, const char *func, std::string _tag) {
     tag_ = std::move(_tag);
 }
 NaiveTimer::~NaiveTimer() {
-    auto timeInUs = durationInUs();
-    AISDK_LOG_WARN("[Name:{}],[Line:{}],[fun:{}],[cost:{:.3f}ms]", name_, line_, tag_.c_str(),
-                   (double)timeInUs / 1000.0F);
+    if (valid) {
+        auto timeInUs = durationInUs();
+        AISDK_LOG_WARN("[Name:{}],[Line:{}],[fun:{}],[cost:{:.3f}ms]", name_, line_, tag_.c_str(),
+                       (double)timeInUs / 1000.0F);
+    }
 }
 
 }  // namespace aisdk::base

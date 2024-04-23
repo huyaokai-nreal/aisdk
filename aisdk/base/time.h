@@ -40,6 +40,8 @@ class NaiveTimer : TimerBase {
     int line_;
     char* name_;
     std::string tag_;
+    public:
+    bool valid = true;
 };
 }  // namespace aisdk::base
 

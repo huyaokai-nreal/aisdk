@@ -61,6 +61,24 @@ aisdk::algorithm::Status BaseXGraph::ClearInputStreamCache(int64_t graph_stream_
     return aisdk::algorithm::Status::SUCCESS;
 }
 
+bool BaseXGraph::ClearMediapipeDropedInferenceCache(int64_t graph_stream_stamp) {
+    std::lock_guard<std::mutex> guard(m_inference_lock);
+    for (auto iter = m_inference_stream_cache.begin(); iter != m_inference_stream_cache.end();) {
+        if (iter->first < graph_stream_stamp) {
+#if defined(ENABLE_ALGORITHM_GRAPH_STREAM_EVAL_TIME)
+            iter->second->m_stream_time->valid = false;
+#endif
+            AISDK_LOG_WARN("BaseXGraph::ClearMediapipeDropedInferenceCache stream_stamp {} < {} is droped !!!!!",
+                           iter->first, graph_stream_stamp)
+            iter = m_inference_stream_cache.erase(iter);
+        } else {
+            iter++;
+            break;
+        }
+    }
+    return true;
+}
+
 bool BaseXGraph::MoveOutputCache(std::shared_ptr<StreamCache> &stream) {
 #if defined(ENABLE_ALGORITHM_GRAPH_STREAM_EVAL_TIME)
     // 销毁计时器，打印耗时
@@ -104,6 +122,10 @@ bool BaseXGraph::CallBackInferenceResult(const xgraph::Packet &packet, int64_t o
         MoveOutputCache(cache);
     }
 
+    if (m_inference_stream_cache.size() >= 5) {
+        // 删除已经被MediapipeDroped的cache
+        ClearMediapipeDropedInferenceCache(graph_stream_stamp);
+    }
     return ret;
 }
 
