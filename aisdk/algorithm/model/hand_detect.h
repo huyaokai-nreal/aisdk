@@ -64,8 +64,6 @@ class HandDetectNetv2 : public HandDetectNet {
     absl::Status Inference(const std::vector<Image> &baseinput, DetOutputInternal &baseresult);
     void PostProcess(DetOutputInternal &result);
     // void PostProcessSingle(DetOutputInternal &result, uint32_t batchn);  // TODO: develop中的 PostProcessSingle
-    // 目前就还没改
-    void myprint();
 };
 
 }  // namespace aisdk::algorithm

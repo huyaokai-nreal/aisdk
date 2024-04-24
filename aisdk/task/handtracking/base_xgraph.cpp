@@ -264,6 +264,8 @@ ConvertCameraModel(const aisdk::algorithm::CamInfo &cam_info) {
     } else if (cam_info.camera_type == 3) {  // flora fisheye624
         AISDK_LOG_TRACE("BaseXGraph::Init use flora fisheye624 camera model");
         camera_model = format_fisheye624_camera_model(cam_info);
+    } else {
+        AISDK_LOG_WARN("Not Support camera_type = {}", cam_info.camera_type);
     }
     return camera_model;
 }

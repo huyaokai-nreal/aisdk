@@ -743,8 +743,4 @@ void HandDetectNetv2::PostProcess(DetOutputInternal &result) {
     }
 }
 
-// void __attribute__((visibility("default"))) HandDetectNetv2::myprint() { std::cout << "hello world!!!" << std::endl;
-// }
-void SYM_EXPORT HandDetectNetv2::myprint() { std::cout << "hello world!!!" << std::endl; }
-
 }  // namespace aisdk::algorithm
