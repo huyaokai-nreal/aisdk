@@ -1,5 +1,9 @@
 #pragma once
 
+#if defined(__linux__)
+#include <cmath>
+#include <ctime>
+#endif
 #include <stdexcept>
 
 // -----------------------------------------------------------------
