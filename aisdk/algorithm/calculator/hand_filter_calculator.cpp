@@ -20,7 +20,6 @@ namespace aisdk::algorithm {
 
 class HandFilterCalculator : public xgraph::CalculatorBase {
    private:
-    Kpt3dInternal kpt3d_world_pre;
     double last_timestamp_;  // in seconds
     std::unique_ptr<HandFilters> m_post_filter;
 
@@ -51,11 +50,11 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
         std::unique_ptr<Kpt3dInternal> output_buffer_ = absl::make_unique<Kpt3dInternal>();
         auto& predictor_lhand = GlobalPredictorService::getInstance().get_predictor_lhand();
         auto& predictor_rhand = GlobalPredictorService::getInstance().get_predictor_rhand();
+        const auto& kpt3d_world_pre = GlobalPredictorService::getInstance().get_kpt3d_world();
 
         if (!kpt3d_world.lhand_valid) {
             predictor_lhand.stop_tracking();
             output_buffer_->lhand_valid = false;
-            kpt3d_world_pre.lhand_valid = false;
         } else {
             output_buffer_->lhand_kpt = convert_to_23points(kpt3d_world.lhand_kpt);
             if (!predictor_lhand.get_tracking_status()) {
@@ -68,8 +67,6 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
                     predictor_lhand.track_with_correct(timestamp, {output_buffer_->lhand_kpt[21], measure_v});
                 }
             }
-            kpt3d_world_pre.lhand_kpt = output_buffer_->lhand_kpt;
-            kpt3d_world_pre.lhand_valid = true;
             m_post_filter->kpt_seq_3d_filter(0, output_buffer_->lhand_kpt);
             output_buffer_->lhand_valid = true;
         }
@@ -77,7 +74,6 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
         if (!kpt3d_world.rhand_valid) {
             predictor_rhand.stop_tracking();
             output_buffer_->rhand_valid = false;
-            kpt3d_world_pre.rhand_valid = false;
         } else {
             output_buffer_->rhand_kpt = convert_to_23points(kpt3d_world.rhand_kpt);
             if (!predictor_rhand.get_tracking_status()) {
@@ -90,8 +86,6 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
                     predictor_rhand.track_with_correct(timestamp, {output_buffer_->rhand_kpt[21], measure_v});
                 }
             }
-            kpt3d_world_pre.rhand_kpt = output_buffer_->rhand_kpt;
-            kpt3d_world_pre.rhand_valid = true;
             m_post_filter->kpt_seq_3d_filter(1, output_buffer_->rhand_kpt);
             output_buffer_->rhand_valid = true;
         }

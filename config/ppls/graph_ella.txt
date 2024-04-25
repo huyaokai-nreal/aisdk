@@ -78,6 +78,14 @@ node {
   input_stream: "HEADPOSE:head_pose_out"
   output_stream: "OUTPUT:kpt3d_world"
 }
+
+node {
+  name: "GestureRecognition"
+  calculator: "GestureRecognitionCalculator"
+  input_stream: "GR_KPT2D_INPUT:kpt2d"
+  input_stream: "GR_KPT_INPUT:kpt3d_world"
+  output_stream: "GR_OUTPUT:gesture"
+}
 node {
   name: "HandFilter"
   calculator: "HandFilterCalculator"
@@ -88,13 +96,7 @@ node {
 node {
   name: "StandardizeKeypoints"
   calculator: "StandardizeKeypointsCalculator"
-  input_stream: "INPUT:kpt3d_filtered"
-  output_stream: "OUTPUT:kpt3d_standard"
-}
-node {
-  name: "GestureRecognition"
-  calculator: "GestureRecognitionCalculator"
-  input_stream: "GR_KPT2D_INPUT:kpt2d"
-  input_stream: "GR_KPT_INPUT:kpt3d_standard"
-  output_stream: "GR_OUTPUT:hand_result"
+  input_stream: "INPUT_KPT:kpt3d_filtered"
+  input_stream: "INPUT_GR:gesture"
+  output_stream: "OUTPUT:hand_result"
 }
