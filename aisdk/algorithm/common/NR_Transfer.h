@@ -6,7 +6,6 @@
 #include "aisdk/base/type.h"
 #include "interface/handtracking_sdk/public/nr_plugin_types.h"
 
-#define REPROJ_POINT_NUM 21
 namespace aisdk::algorithm {
 
 void TransferCVToGL(const std::vector<Vec3f_t>& _point3d_src, std::vector<Vec3f_t>& _point3d_dst);

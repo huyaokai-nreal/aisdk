@@ -7,8 +7,6 @@
 
 namespace aisdk::algorithm {
 
-#define KEYPOINT_NUM 21
-
 class LandmarkFilter : public CalculatorBaseNet {
    public:
     LandmarkFilter() : CalculatorBaseNet(){};

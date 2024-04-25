@@ -14,9 +14,6 @@
 #include "xgraph_service_utils.h"
 
 // TODO: update codes in batch=1 branch
-
-#define EZXR_DEFINED_JOINTS 23
-
 namespace aisdk::algorithm {
 
 // A calculator generate bbox detection result, based on detnet inference result.
@@ -131,7 +128,7 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
                 auto &predictor_lhand = GlobalPredictorService::getInstance().get_predictor_lhand();
                 root_kf_predicted = predictor_lhand.track_only_pred(timestamp, false);
 
-                for (int k = 0; k < EZXR_DEFINED_JOINTS; k++) {
+                for (int k = 0; k < lhand_predict_frame.size(); k++) {
                     lhand_predict_frame[k] = lhand_predict_frame[k] + root_kf_predicted - root_meas;
                 }
 
@@ -154,7 +151,7 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
                 auto &predictor_rhand = GlobalPredictorService::getInstance().get_predictor_rhand();
                 root_kf_predicted = predictor_rhand.track_only_pred(timestamp, false);
 
-                for (int k = 0; k < EZXR_DEFINED_JOINTS; k++) {
+                for (int k = 0; k < rhand_predict_frame.size(); k++) {
                     rhand_predict_frame[k] = rhand_predict_frame[k] + root_kf_predicted - root_meas;
                 }
 

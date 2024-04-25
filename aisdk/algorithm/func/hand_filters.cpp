@@ -2,8 +2,6 @@
 
 namespace aisdk::algorithm {
 
-#define EZXR_DEFINED_JOINTS 23
-
 bool HandFilters::init() {
     float freq = 60.;
 
@@ -33,7 +31,7 @@ bool HandFilters::init() {
 
 void HandFilters::kpt_seq_3d_filter(int hand_side, std::vector<Vec3f_t>& point3d) {
     std::vector<Vec3f_t> rel_points, palm_points;
-    for (int i = 0; i < EZXR_DEFINED_JOINTS; i++) {
+    for (int i = 0; i < point3d.size(); i++) {
         if (i == 21) continue;
         if (i == 0 || i == 5 || i == 9 || i == 13 || i == 17 || i == 22) {
             palm_points.emplace_back(point3d[i] - point3d[21]);
@@ -50,7 +48,7 @@ void HandFilters::kpt_seq_3d_filter(int hand_side, std::vector<Vec3f_t>& point3d
         m_seq3d_palm_rhand->getFilterHandData(palm_points);
     }
 
-    for (int i = 0, p = 0, q = 0; i < EZXR_DEFINED_JOINTS; i++) {
+    for (int i = 0, p = 0, q = 0; i < point3d.size(); i++) {
         if (i == 21)
             point3d[i] = root_point;
         else if (i == 0 || i == 5 || i == 9 || i == 13 || i == 17 || i == 22) {

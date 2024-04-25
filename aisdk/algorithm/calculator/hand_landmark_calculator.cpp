@@ -10,6 +10,7 @@
 #include "aisdk/algorithm/internal_structs/det_struct_internal.h"
 #include "aisdk/algorithm/internal_structs/kpt2d_struct_internal.h"
 #include "aisdk/algorithm/model/calculator_basenet.h"
+#include "aisdk/algorithm/model/hand_rsnnano.h"
 #include "aisdk/algorithm/model/hand_rsntiny.h"
 #include "aisdk/algorithm/model/hand_rtmtiny.h"
 #include "aisdk/base/log.h"
@@ -65,6 +66,10 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
             AISDK_LOG_TRACE("[HandLandmarkCalculator] start init rtmtiny");
             netalgo = XGraphServiceUtils::CreateNetAlgoBase<RTMTiny>((void*)0x202310, model_name_);
             AISDK_LOG_TRACE("[HandLandmarkCalculator] finish init rtmtiny");
+        } else if (model_name_ == "2d_rsnnano") {
+            AISDK_LOG_TRACE("[HandLandmarkCalculator] start init rsnnano");
+            netalgo = XGraphServiceUtils::CreateNetAlgoBase<RSNNano>((void*)0x202310, model_name_);
+            AISDK_LOG_TRACE("[HandLandmarkCalculator] finish init rsnnano");
         } else {
             return absl::AbortedError(fmt::format("can not init model with {}", model_name_));
         }
