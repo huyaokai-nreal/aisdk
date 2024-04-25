@@ -10,6 +10,8 @@
 #include <mediapipe/framework/port/parse_text_proto.h>
 #include <mediapipe/framework/thread_pool_executor.h>
 #include <mediapipe/framework/timestamp.h>
+#include <mediapipe/framework/collection_item_id.h>
+
 namespace aisdk::xgraph {
     using mediapipe::CalculatorBase;
     using mediapipe::CalculatorGraph;
@@ -23,5 +25,5 @@ namespace aisdk::xgraph {
     using mediapipe::Timestamp;
     using mediapipe::CalculatorRunner;
     using mediapipe::Adopt;
-
+    using mediapipe::CollectionItemId;
 }

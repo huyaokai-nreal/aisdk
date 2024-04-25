@@ -38,6 +38,46 @@ namespace aisdk::task {
 HandTrackingXGraph::HandTrackingXGraph() {}
 HandTrackingXGraph::~HandTrackingXGraph() {}
 
+std::string AddDataRecordCalculater(std::string& graph_config) {
+    // clang-format off
+    // 参考："aisdk/algorithm/calculator/hand_data_record_calculator.cpp"
+    // 一定需要整体graph和calcutor的实现同时匹配
+    std::string new_node_config = 
+        "\n"
+        "executor {\n"
+        "  name: \"handtracking_data_exector\"\n"
+        "  type: \"ThreadPoolExecutor\"\n"
+        "  options {\n"
+        "    [mediapipe.ThreadPoolExecutorOptions.ext] {\n"
+        "      num_threads: 1\n"
+        "    }\n"
+        "  }\n"
+        "}\n"
+        "node {\n"
+        "  name: \"HandDataRecord\"\n"
+        "  executor: \"handtracking_data_exector\"\n"
+        "  calculator: \"HandDataRecordCalculator\"\n"
+        "  input_stream: \"IMAGE_INPUT:image\"\n"
+        "  input_stream: \"HEADPOSE_INPUT:head_pose\"\n"
+        "  input_stream: \"DET_BBOX_OUTPUT:detection_output\"\n"
+        "  input_stream: \"LANDMARK_OUTPUT:kpt2d\"\n"
+        "  input_stream: \"LIFT_OUTPUT:kpt3d\"\n"
+        "  input_stream_handler {\n"
+        "    input_stream_handler: \"ImmediateInputStreamHandler\"\n"
+        "  }\n"
+        "}\n";
+    // clang-format on
+    return graph_config + new_node_config;
+}
+
+aisdk::algorithm::Status HandTrackingXGraph::Init(aisdk::xengine::DlSymFuncs& funcs,
+                                                  aisdk::xengine::PipelineConfig& config, CameraParams& camera) {
+#if defined(ENABLE_ALGORITHM_DATA_RECORD_CALCULATOR)
+    config.graph_config = AddDataRecordCalculater(config.graph_config);
+#endif
+    return BaseXGraph::Init(funcs, config, camera);
+}
+
 aisdk::algorithm::Status HandTrackingXGraph::PushData(uint64_t timestamp,
                                                       std::vector<aisdk::algorithm::Image>& in_image,
                                                       NRTransform headpose) {

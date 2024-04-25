@@ -21,7 +21,7 @@ class BaseXGraph : public PipeGraphImpl {
     BaseXGraph() : PipeGraphImpl() {}
     virtual ~BaseXGraph() {}
 
-    aisdk::algorithm::Status Init(aisdk::xengine::DlSymFuncs &funcs, aisdk::xengine::PipelineConfig &config,
+    virtual aisdk::algorithm::Status Init(aisdk::xengine::DlSymFuncs &funcs, aisdk::xengine::PipelineConfig &config,
                                   CameraParams &camera) override;
     aisdk::algorithm::Status Start() override;
     aisdk::algorithm::Status Stop() override;
@@ -35,10 +35,10 @@ class BaseXGraph : public PipeGraphImpl {
     bool CallBackInferenceResult(const xgraph::Packet &packet, int64_t output_packs_order);
 
     std::unique_ptr<xgraph::CalculatorGraph> m_calculator_graph;
+   private:
     std::vector<std::string> m_input_stream_name;
     std::vector<std::string> m_output_stream_name;
 
-   private:
     std::mutex m_inference_lock;
     std::map<int64_t, std::shared_ptr<StreamCache>> m_inference_stream_cache;
     // 删除推理过程中被graph主动drop的StreamCache

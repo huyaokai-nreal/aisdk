@@ -4,6 +4,7 @@
 #include "aisdk/algorithm/calculator/convert_to_world_calculator.cpp"
 #include "aisdk/algorithm/calculator/detect_box_smoothing_calculator.cpp"
 #include "aisdk/algorithm/calculator/gesture_recognition_calculator.cpp"
+#include "aisdk/algorithm/calculator/hand_data_record_calculator.cpp"
 #include "aisdk/algorithm/calculator/hand_detection_calculator.cpp"
 #include "aisdk/algorithm/calculator/hand_detection_track_calculator.cpp"
 #include "aisdk/algorithm/calculator/hand_filter_calculator.cpp"
@@ -28,6 +29,7 @@ void TriggerGloalGraphCalculatorsConstructForHandTracking() {
     REGISTER_CALCULATOR(StandardizeKeypointsCalculator);  // ok！
     REGISTER_CALCULATOR(LandmarkFilterCalculator);        // ok！
     REGISTER_CALCULATOR(HandDetTrackCalculator);          // ok！
+    REGISTER_CALCULATOR(HandDataRecordCalculator);        // ok！
 }
 // 这里是要规避全局类不构造的问题, 以后找到原因解决
 void TriggerGloalGraphCalculatorsConstruct() {

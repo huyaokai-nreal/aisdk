@@ -8,6 +8,9 @@ ${CMAKE_CURRENT_SOURCE_DIR}/nrcore_pipeline.cpp
 if(ENABLE_ALGORITHM_GRAPH_STREAM_EVAL_TIME)
     target_compile_options(handtracking PRIVATE -DENABLE_ALGORITHM_GRAPH_STREAM_EVAL_TIME)
 endif()
+if(ENABLE_ALGORITHM_DATA_RECORD_CALCULATOR)
+    target_compile_options(handtracking PRIVATE -DENABLE_ALGORITHM_DATA_RECORD_CALCULATOR)
+endif()
 
 target_link_libraries(handtracking PRIVATE base algorithm opencv::opencv)
 target_include_directories(handtracking PRIVATE ${PROJECT_SOURCE_DIR}/interface/handtracking_sdk)
