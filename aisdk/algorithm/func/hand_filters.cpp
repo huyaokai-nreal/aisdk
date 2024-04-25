@@ -7,9 +7,8 @@ namespace aisdk::algorithm {
 bool HandFilters::init() {
     float freq = 60.;
 
-    OneEuroParams center_params, palm_params, finger_params;
+    OneEuroParams palm_params, finger_params;
 
-    center_params.freq = freq;
     palm_params.freq = freq;
     finger_params.freq = freq;
     // 手掌

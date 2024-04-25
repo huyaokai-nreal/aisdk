@@ -1,4 +1,5 @@
 #include "../internal_structs/kpt3d_struct_internal.h"
+#include "aisdk/algorithm/func/hand_rotation.h"
 #include "aisdk/algorithm/func/netalgo_utils.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/time.h"
@@ -40,15 +41,13 @@ class StandardizeKeypointsCalculator : public xgraph::CalculatorBase {
         const auto& input_data = cc->Inputs().Tag("INPUT").Get<Kpt3dInternal>();
 
         std::unique_ptr<Kpt3dInternal> output_buffer_ = absl::make_unique<Kpt3dInternal>();
-        output_buffer_->clear();
+        *output_buffer_ = input_data;
 
         if (input_data.lhand_valid) {
-            output_buffer_->lhand_valid = true;
-            output_buffer_->lhand = convert_to_23points(input_data.lhand);
+            compute_joint_rotation(input_data.lhand_kpt, true, output_buffer_->lhand_rotation);
         }
         if (input_data.rhand_valid) {
-            output_buffer_->rhand_valid = true;
-            output_buffer_->rhand = convert_to_23points(input_data.rhand);
+            compute_joint_rotation(input_data.rhand_kpt, false, output_buffer_->rhand_rotation);
         }
 
         cc->Outputs().Tag("OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());

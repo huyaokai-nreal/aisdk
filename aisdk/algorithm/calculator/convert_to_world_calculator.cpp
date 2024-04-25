@@ -62,13 +62,13 @@ class ConvertToWorldCalculator : public xgraph::CalculatorBase {
 
             if (input_data.lhand_valid) {
                 AISDK_LOG_TRACE("[ConvertToWorldCalculator] Transform left hand 3d kpt form cv left to world!");
-                output_buffer_->lhand = transfer_from_cvL_to_world(headpose_data.transform, input_data.lhand);
+                output_buffer_->lhand_kpt = transfer_from_cvL_to_world(headpose_data.transform, input_data.lhand_kpt);
                 output_buffer_->lhand_valid = true;
                 AISDK_LOG_TRACE("[ConvertToWorldCalculator] Transform left hand 3d kpt complete!");
             }
             if (input_data.rhand_valid) {
                 AISDK_LOG_TRACE("[ConvertToWorldCalculator] Transform right hand 3d kpt form cv left to world!");
-                output_buffer_->rhand = transfer_from_cvL_to_world(headpose_data.transform, input_data.rhand);
+                output_buffer_->rhand_kpt = transfer_from_cvL_to_world(headpose_data.transform, input_data.rhand_kpt);
                 output_buffer_->rhand_valid = true;
                 AISDK_LOG_TRACE("[ConvertToWorldCalculator] Transform right hand 3d kpt complete!");
             }

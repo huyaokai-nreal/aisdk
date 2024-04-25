@@ -19,8 +19,8 @@ struct HandOutputInternal {
     Vec3f_t rhand_v{0,0,0};
 
 
-    std::vector<Eigen::Matrix3f> lhand_rot;
-    std::vector<Eigen::Matrix3f> rhand_rot;
+    std::vector<Eigen::Matrix3f> lhand_rotation;
+    std::vector<Eigen::Matrix3f> rhand_rotation;
 
     std::string lhand_gesture = "Invalid";
     std::string rhand_gesture = "Invalid";
@@ -35,8 +35,11 @@ struct HandOutputInternal {
         lhand_kpt.clear();
         rhand_kpt.clear();
 
-        lhand_rot.clear();
-        rhand_rot.clear();
+        lhand_rotation.clear();
+        rhand_rotation.clear();
+        
+        lhand_gesture = "Invalid";
+        rhand_gesture = "Invalid";
 
         lhand_valid = false;
         rhand_valid = false;
@@ -45,15 +48,6 @@ struct HandOutputInternal {
         rhand_score = 0.0;
     }
 
-    bool isValid() const {
-        if (lhand_valid && lhand_kpt.size() != 23 && lhand_rot.size() != 23) {
-            return false;
-        }
-        if (rhand_valid && rhand_kpt.size() != 23 && rhand_rot.size() != 23) {
-            return false;
-        }
-        return true;
-    }
 };
 
 }  // namespace aisdk::algorithm

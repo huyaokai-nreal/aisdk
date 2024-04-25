@@ -82,11 +82,11 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
             const auto lift_outputs = netalgo->Inference(lift_inputs);
             if (lift_outputs.ok()) {
                 output_buffer_->lhand_valid = true;
-                output_buffer_->lhand = constrain_hand(lift_outputs->res3d, true);
-                float kpt3d_score = compute_score_with_reprojection(output_buffer_->lhand, kpt2d.lhand_lcam,
+                output_buffer_->lhand_kpt = constrain_hand(lift_outputs->res3d, true);
+                float kpt3d_score = compute_score_with_reprojection(output_buffer_->lhand_kpt, kpt2d.lhand_lcam,
                                                                     kpt2d.lhand_rcam, lcam_model_, rcam_model_);
                 AISDK_LOG_TRACE("[LiftCalculator] left hand score is {}", kpt3d_score);
-                output_buffer_->lscore = kpt3d_score;
+                output_buffer_->lhand_score = kpt3d_score;
             } else {
                 output_buffer_->lhand_valid = false;
             }
@@ -101,11 +101,11 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
             const auto lift_outputs = netalgo->Inference(lift_inputs);
             if (lift_outputs.ok()) {
                 output_buffer_->rhand_valid = true;
-                output_buffer_->rhand = constrain_hand(lift_outputs->res3d, false);
-                float kpt3d_score = compute_score_with_reprojection(output_buffer_->rhand, kpt2d.rhand_lcam,
+                output_buffer_->rhand_kpt = constrain_hand(lift_outputs->res3d, false);
+                float kpt3d_score = compute_score_with_reprojection(output_buffer_->rhand_kpt, kpt2d.rhand_lcam,
                                                                     kpt2d.rhand_rcam, lcam_model_, rcam_model_);
                 AISDK_LOG_TRACE("[LiftCalculator] right hand score is {}", kpt3d_score);
-                output_buffer_->rscore = kpt3d_score;
+                output_buffer_->rhand_score = kpt3d_score;
             } else {
                 output_buffer_->rhand_valid = false;
             }

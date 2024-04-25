@@ -57,7 +57,6 @@ class GestureRecognitionCalculator : public xgraph::CalculatorBase {
         const auto& kpt2d_data = cc->Inputs().Tag("GR_KPT2D_INPUT").Get<Kpt2dInternal>();
 
         std::unique_ptr<HandOutputInternal> output_buffer_ = absl::make_unique<HandOutputInternal>();
-        output_buffer_->clear();
         AISDK_LOG_TRACE("[GestureRecognitionCalculator] Process start 2.");
 
         if (kpt3d_data.lhand_valid) {
@@ -65,12 +64,13 @@ class GestureRecognitionCalculator : public xgraph::CalculatorBase {
 
             std::string gesture_res;
             std::tie(gesture_res, std::ignore) =
-                m_gesture_classifier_lhand->predict_with_keypoints3d(kpt3d_data.lhand, kpt2d_data.lhand_lcam, true);
+                m_gesture_classifier_lhand->predict_with_keypoints3d(kpt3d_data.lhand_kpt, kpt2d_data.lhand_lcam, true);
 
             output_buffer_->lhand_valid = true;
-            output_buffer_->lhand_score = kpt3d_data.lscore;
-            output_buffer_->lhand_kpt = kpt3d_data.lhand;
+            output_buffer_->lhand_score = kpt3d_data.lhand_score;
+            output_buffer_->lhand_kpt = kpt3d_data.lhand_kpt;
             output_buffer_->lhand_v = kpt3d_data.lhand_v;
+            output_buffer_->lhand_rotation = kpt3d_data.lhand_rotation;
             output_buffer_->lhand_gesture = gesture_res;
             AISDK_LOG_TRACE("[GestureRecognitionCalculator] process left hand complete. {}",
                             output_buffer_->lhand_gesture);
@@ -78,13 +78,14 @@ class GestureRecognitionCalculator : public xgraph::CalculatorBase {
         if (kpt3d_data.rhand_valid) {
             AISDK_LOG_TRACE("[GestureRecognitionCalculator] process right hand.");
             std::string gesture_res;
-            std::tie(gesture_res, std::ignore) =
-                m_gesture_classifier_rhand->predict_with_keypoints3d(kpt3d_data.rhand, kpt2d_data.rhand_rcam, false);
+            std::tie(gesture_res, std::ignore) = m_gesture_classifier_rhand->predict_with_keypoints3d(
+                kpt3d_data.rhand_kpt, kpt2d_data.rhand_rcam, false);
 
             output_buffer_->rhand_valid = true;
-            output_buffer_->rhand_score = kpt3d_data.rscore;
-            output_buffer_->rhand_kpt = kpt3d_data.rhand;
+            output_buffer_->rhand_score = kpt3d_data.rhand_score;
+            output_buffer_->rhand_kpt = kpt3d_data.rhand_kpt;
             output_buffer_->rhand_v = kpt3d_data.rhand_v;
+            output_buffer_->rhand_rotation = kpt3d_data.rhand_rotation;
             output_buffer_->rhand_gesture = gesture_res;
             AISDK_LOG_TRACE("[GestureRecognitionCalculator] process right hand complete. {}",
                             output_buffer_->rhand_gesture);

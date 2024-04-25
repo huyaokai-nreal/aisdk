@@ -79,22 +79,22 @@ node {
   output_stream: "OUTPUT:kpt3d_world"
 }
 node {
-  name: "KalmanFilterCorrection"
-  calculator: "KalmanFilterCorrectionCalculator"
-  input_stream: "INPUT:kpt3d_standard"
+  name: "HandFilter"
+  calculator: "HandFilterCalculator"
+  input_stream: "INPUT:kpt3d_world"
   output_stream: "OUTPUT:kpt3d_filtered"
 }
 
 node {
   name: "StandardizeKeypoints"
   calculator: "StandardizeKeypointsCalculator"
-  input_stream: "INPUT:kpt3d_world"
+  input_stream: "INPUT:kpt3d_filtered"
   output_stream: "OUTPUT:kpt3d_standard"
 }
 node {
   name: "GestureRecognition"
   calculator: "GestureRecognitionCalculator"
   input_stream: "GR_KPT2D_INPUT:kpt2d"
-  input_stream: "GR_KPT_INPUT:kpt3d_filtered"
+  input_stream: "GR_KPT_INPUT:kpt3d_standard"
   output_stream: "GR_OUTPUT:hand_result"
 }

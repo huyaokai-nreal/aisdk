@@ -1,4 +1,5 @@
 #include "../common/NR_GlobalPredictorService.h"
+#include "aisdk/algorithm/func/hand_filters.h"
 #include "aisdk/algorithm/func/netalgo_utils.h"
 #include "aisdk/algorithm/internal_structs/kpt3d_struct_internal.h"
 #include "aisdk/base/log.h"
@@ -17,10 +18,11 @@ namespace aisdk::algorithm {
 //   output_stream: "OUTPUT:kpt3d_filtered"
 // }
 
-class KalmanFilterCorrectionCalculator : public xgraph::CalculatorBase {
+class HandFilterCalculator : public xgraph::CalculatorBase {
    private:
     Kpt3dInternal kpt3d_world_pre;
     double last_timestamp_;  // in seconds
+    std::unique_ptr<HandFilters> m_post_filter;
 
    public:
     static absl::Status GetContract(xgraph::CalculatorContract* cc) {
@@ -33,6 +35,8 @@ class KalmanFilterCorrectionCalculator : public xgraph::CalculatorBase {
 
     absl::Status Open(xgraph::CalculatorContext* cc) final {
         AISDK_LOG_TRACE("[KalmanFilterCorrectionCalculator] Open start.");
+        m_post_filter = std::make_unique<algorithm::HandFilters>();
+        m_post_filter->init();
         AISDK_LOG_TRACE("[KalmanFilterCorrectionCalculator] Open complete.");
         return absl::OkStatus();
     }
@@ -45,51 +49,50 @@ class KalmanFilterCorrectionCalculator : public xgraph::CalculatorBase {
         const auto& kpt3d_world = cc->Inputs().Tag("INPUT").Get<Kpt3dInternal>();
         const auto& timestamp = cc->InputTimestamp().Seconds();
         std::unique_ptr<Kpt3dInternal> output_buffer_ = absl::make_unique<Kpt3dInternal>();
-
         auto& predictor_lhand = GlobalPredictorService::getInstance().get_predictor_lhand();
         auto& predictor_rhand = GlobalPredictorService::getInstance().get_predictor_rhand();
 
-        if (kpt3d_world.lhand_valid == false) {
+        if (!kpt3d_world.lhand_valid) {
             predictor_lhand.stop_tracking();
             output_buffer_->lhand_valid = false;
             kpt3d_world_pre.lhand_valid = false;
         } else {
-            if (predictor_lhand.get_tracking_status() == false) {
-                predictor_lhand.start_tracking(timestamp, {kpt3d_world.lhand[21], {0., 0., 0.}});
+            output_buffer_->lhand_kpt = convert_to_23points(kpt3d_world.lhand_kpt);
+            if (!predictor_lhand.get_tracking_status()) {
+                predictor_lhand.start_tracking(timestamp, {output_buffer_->lhand_kpt[21], {0., 0., 0.}});
             } else {
                 if (kpt3d_world_pre.lhand_valid) {
                     auto measure_v =
-                        (kpt3d_world.lhand[21] - kpt3d_world_pre.lhand[21]) / (timestamp - last_timestamp_);
+                        (output_buffer_->lhand_kpt[21] - kpt3d_world_pre.lhand_kpt[21]) / (timestamp - last_timestamp_);
                     output_buffer_->lhand_v = measure_v;
-                    predictor_lhand.track_with_correct(timestamp, {kpt3d_world.lhand[21], measure_v});
+                    predictor_lhand.track_with_correct(timestamp, {output_buffer_->lhand_kpt[21], measure_v});
                 }
             }
-            kpt3d_world_pre.lhand = kpt3d_world.lhand;
+            kpt3d_world_pre.lhand_kpt = output_buffer_->lhand_kpt;
             kpt3d_world_pre.lhand_valid = true;
-            output_buffer_->lhand = constrain_hand(kpt3d_world.lhand, true);
-            output_buffer_->lhand = convert_to_23points(output_buffer_->lhand);
+            m_post_filter->kpt_seq_3d_filter(0, output_buffer_->lhand_kpt);
             output_buffer_->lhand_valid = true;
         }
 
-        if (kpt3d_world.rhand_valid == false) {
+        if (!kpt3d_world.rhand_valid) {
             predictor_rhand.stop_tracking();
             output_buffer_->rhand_valid = false;
             kpt3d_world_pre.rhand_valid = false;
         } else {
-            if (predictor_rhand.get_tracking_status() == false) {
-                predictor_rhand.start_tracking(timestamp, {kpt3d_world.rhand[21], {0., 0., 0.}});
+            output_buffer_->rhand_kpt = convert_to_23points(kpt3d_world.rhand_kpt);
+            if (!predictor_rhand.get_tracking_status()) {
+                predictor_rhand.start_tracking(timestamp, {output_buffer_->rhand_kpt[21], {0., 0., 0.}});
             } else {
                 if (kpt3d_world_pre.rhand_valid) {
                     auto measure_v =
-                        (kpt3d_world.rhand[21] - kpt3d_world_pre.rhand[21]) / (timestamp - last_timestamp_);
+                        (output_buffer_->rhand_kpt[21] - kpt3d_world_pre.rhand_kpt[21]) / (timestamp - last_timestamp_);
                     output_buffer_->rhand_v = measure_v;
-                    predictor_rhand.track_with_correct(timestamp, {kpt3d_world.rhand[21], measure_v});
+                    predictor_rhand.track_with_correct(timestamp, {output_buffer_->rhand_kpt[21], measure_v});
                 }
             }
-            kpt3d_world_pre.rhand = kpt3d_world.rhand;
+            kpt3d_world_pre.rhand_kpt = output_buffer_->rhand_kpt;
             kpt3d_world_pre.rhand_valid = true;
-            output_buffer_->rhand = constrain_hand(kpt3d_world.rhand, false);
-            output_buffer_->rhand = convert_to_23points(output_buffer_->rhand);
+            m_post_filter->kpt_seq_3d_filter(1, output_buffer_->rhand_kpt);
             output_buffer_->rhand_valid = true;
         }
         cc->Outputs().Tag("OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());

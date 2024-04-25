@@ -9,20 +9,22 @@ namespace aisdk::algorithm {
 
 struct Kpt3dInternal {
     // Hand 3d output data, a single hand data size should be 21.
-    std::vector<Vec3f_t> lhand;
-    std::vector<Vec3f_t> rhand;
+    std::vector<Vec3f_t> lhand_kpt;
+    std::vector<Vec3f_t> rhand_kpt;
+    std::vector<Eigen::Matrix3f> lhand_rotation;
+    std::vector<Eigen::Matrix3f> rhand_rotation;
     Vec3f_t lhand_v{0, 0, 0};
     Vec3f_t rhand_v{0, 0, 0};
-    float lscore = 0;
-    float rscore = 0;
-
+    float lhand_score = 0;
+    float rhand_score = 0;
     bool lhand_valid = false;
     bool rhand_valid = false;
 
     void clear() {
-        lhand.clear();
-        rhand.clear();
-
+        lhand_kpt.clear();
+        rhand_kpt.clear();
+        lhand_rotation.clear();
+        rhand_rotation.clear();
         lhand_valid = false;
         rhand_valid = false;
     }

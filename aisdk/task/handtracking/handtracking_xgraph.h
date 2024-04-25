@@ -17,9 +17,6 @@ class HandTrackingXGraph : public BaseXGraph {
     algorithm::Status PopResult(uint64_t hmd_time_nanos, uint32_t* hand_num, HandData* out_hand_array);
     // 其他接口自定义
 
-   private:
-    // This is only a step, not real timestamp.
-    std::unique_ptr<algorithm::HandFilters> m_post_filter;
 };
 
 }  // namespace aisdk::task

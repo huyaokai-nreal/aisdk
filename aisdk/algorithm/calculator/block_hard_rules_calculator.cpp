@@ -56,15 +56,15 @@ class BlockHardRulesCalculator : public xgraph::CalculatorBase {
         *output_buffer_ = input_data;
         if (input_data.lhand_valid) {
             AISDK_LOG_TRACE("[BlockHardRulesCalculator] Checking left hand");
-            if (block_rule_root_distance(input_data.lhand, max_root_depth_) || input_data.lscore < score_th_) {
-                AISDK_LOG_TRACE("[BlockHardRulesCalculator] block left hand {}", input_data.lscore);
+            if (block_rule_root_distance(input_data.lhand_kpt, max_root_depth_) || input_data.lhand_score < score_th_) {
+                AISDK_LOG_TRACE("[BlockHardRulesCalculator] block left hand {}", input_data.lhand_score);
                 output_buffer_->lhand_valid = false;
             }
         }
         if (input_data.rhand_valid) {
             AISDK_LOG_TRACE("[BlockHardRulesCalculator] Checking right hand");
-            if (block_rule_root_distance(input_data.rhand, max_root_depth_) || input_data.rscore < score_th_) {
-                AISDK_LOG_TRACE("[BlockHardRulesCalculator] block right hand {}", input_data.rscore);
+            if (block_rule_root_distance(input_data.rhand_kpt, max_root_depth_) || input_data.rhand_score < score_th_) {
+                AISDK_LOG_TRACE("[BlockHardRulesCalculator] block right hand {}", input_data.rhand_score);
                 output_buffer_->rhand_valid = false;
             }
         }

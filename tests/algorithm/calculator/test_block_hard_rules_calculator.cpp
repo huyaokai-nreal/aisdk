@@ -54,8 +54,8 @@ TEST_CASE("test block hard rule calculator") {
     auto input = absl::make_unique<Kpt3dData>();
 
     for (int i = 0; i < 21; i++) {
-        input->lhand.push_back({0, 0, 0.9});
-        input->rhand.push_back({0, 0, 1.9});
+        input->lhand_kpt.push_back({0, 0, 0.9});
+        input->rhand_kpt.push_back({0, 0, 1.9});
     }
     input->lhand_valid = true;
     input->rhand_valid = true;

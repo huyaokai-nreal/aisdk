@@ -1,11 +1,13 @@
 #include "handtracking_xgraph.h"
 
+#include <Eigen/src/Core/Matrix.h>
 #include <fmt/core.h>
 
 #include <algorithm>
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "aisdk/algorithm/common/NR_GlobalPredictorService.h"
 #include "aisdk/algorithm/common/nrcore_define.h"
@@ -33,10 +35,7 @@ std::map<std::string, int> gesture_map = {
 
 namespace aisdk::task {
 
-HandTrackingXGraph::HandTrackingXGraph() {
-    m_post_filter = std::make_unique<algorithm::HandFilters>();
-    m_post_filter->init();
-}
+HandTrackingXGraph::HandTrackingXGraph() {}
 HandTrackingXGraph::~HandTrackingXGraph() {}
 
 aisdk::algorithm::Status HandTrackingXGraph::PushData(uint64_t timestamp,
@@ -114,6 +113,7 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
 
         bool tracked_internal[2] = {false, false};
         std::vector<std::vector<Vec3f_t>> ontracked_points(2);
+        std::vector<std::vector<Eigen::Matrix3f>> ontracked_rotations(2);
         for (int i = 0; i < 2; i++) {
             out_hand_array[i].version = 0;
 
@@ -128,9 +128,11 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
             if (i == 0) {
                 tracked_internal[i] = hand_data_internal.lhand_valid;
                 ontracked_points[i] = hand_data_internal.lhand_kpt;
+                ontracked_rotations[i] = hand_data_internal.lhand_rotation;
             } else {
                 tracked_internal[i] = hand_data_internal.rhand_valid;
                 ontracked_points[i] = hand_data_internal.rhand_kpt;
+                ontracked_rotations[i] = hand_data_internal.rhand_rotation;
             }
 
             out_hand_array[i].is_tracked = tracked_internal[i];
@@ -163,15 +165,6 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
                 }
             }
 
-            std::vector<Eigen::Matrix3d> rotations_local, rotations_world;
-
-            if (out_hand_array[i].is_tracked) {
-                AISDK_LOG_TRACE("WorldKpt3dSeqFilter after pred");
-                m_post_filter->kpt_seq_3d_filter(i, predicted_points);
-
-                algorithm::compute_joint_rotation(predicted_points, (i == 0), rotations_world, rotations_local);
-            }
-
             if (out_hand_array[i].is_tracked) {
                 AISDK_LOG_TRACE("[PopResult Predict] {} hand begin", i);
                 for (int j = 0; j < EZXR_DEFINED_JOINTS; j++) {
@@ -185,7 +178,7 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
                                     ontracked_points[i][j][2], predicted_points[j][0], predicted_points[j][1],
                                     predicted_points[j][2]);
 
-                    Eigen::Quaterniond q(rotations_world[j]);
+                    Eigen::Quaternionf q(ontracked_rotations[i][j]);
 
                     _handjoint_pose_tmp.rotation = {(float)q.x(), (float)q.y(), (float)q.z(), (float)q.w()};
 
