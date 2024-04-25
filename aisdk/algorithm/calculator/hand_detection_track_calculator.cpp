@@ -92,7 +92,7 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
         const auto &headpose_data = cc->Inputs().Tag("HEADPOSE").Get<HeadPoseInternal>();
 
         const auto &timestamp = cc->InputTimestamp().Seconds();
-        const auto &lastframe_kpt3d = GlobalPredictorService::getInstance().get_kpt3d_world();
+        auto &lastframe_kpt3d = GlobalPredictorService::getInstance().get_kpt3d_world();
 
         std::unique_ptr<DetOutputInternal> output_buffer_ = absl::make_unique<DetOutputInternal>();
 
@@ -177,6 +177,9 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
                 det_tracker_step_ = 0;
             }
         }
+        // update last world kpt validation
+        lastframe_kpt3d.lhand_valid = output_buffer_->lhand_valid;
+        lastframe_kpt3d.rhand_valid = output_buffer_->rhand_valid;
         if (output_buffer_->lhand_valid || output_buffer_->rhand_valid) {
             cc->Outputs().Tag("DET_BBOX_OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
             cc->Outputs().Tag("IMAGE_OUTPUT").AddPacket(cc->Inputs().Tag("IMAGE_INPUT").Value());
