@@ -1,4 +1,5 @@
 from conan import ConanFile
+import subprocess
 class AISDK(ConanFile):
     python_requires = "project_base/1.0"
     python_requires_extend = "project_base.ProjectBase"
@@ -11,6 +12,12 @@ class AISDK(ConanFile):
         if self.settings.os == "Android": 
             self.tool_requires("android-ndk/r25c")
         self.test_requires("doctest/2.4.11")
+    
+    def build(self):
+        update_model_cmd = "git submodule init && git submodule update"
+        subprocess.run(update_model_cmd, shell=True, check=True)
+        super().build()
+
     def requirements(self):
         self.requires("fmt/9.1.0", transitive_headers=True, transitive_libs=True)
         self.requires("opencv/4.5.5", transitive_headers=True, transitive_libs=True)
