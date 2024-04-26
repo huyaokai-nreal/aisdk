@@ -3,7 +3,7 @@
 namespace aisdk::algorithm {
 
 bool HandFilters::init() {
-    float freq = 60.;
+    float freq = 30.;
 
     OneEuroParams palm_params, finger_params;
 
