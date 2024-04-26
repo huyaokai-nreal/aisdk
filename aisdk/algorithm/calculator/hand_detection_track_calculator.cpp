@@ -174,15 +174,17 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
                 det_tracker_step_ = 0;
             }
         }
-        // update last world kpt validation
-        lastframe_kpt3d.lhand_valid = output_buffer_->lhand_valid;
-        lastframe_kpt3d.rhand_valid = output_buffer_->rhand_valid;
+
         if (output_buffer_->lhand_valid || output_buffer_->rhand_valid) {
             cc->Outputs().Tag("DET_BBOX_OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
             cc->Outputs().Tag("IMAGE_OUTPUT").AddPacket(cc->Inputs().Tag("IMAGE_INPUT").Value());
             cc->Outputs().Tag("HEADPOSE_OUTPUT").AddPacket(cc->Inputs().Tag("HEADPOSE").Value());
             AISDK_LOG_TRACE("[HandDetTrackCalculator] At least single hand valid, pass");
         } else {
+            // update lastframe kpt3d
+            lastframe_kpt3d.lhand_valid = output_buffer_->lhand_valid;
+            lastframe_kpt3d.rhand_valid = output_buffer_->rhand_valid;
+
             AISDK_LOG_TRACE("[HandDetTrackCalculator] No valid hand, truncated here");
         }
 
