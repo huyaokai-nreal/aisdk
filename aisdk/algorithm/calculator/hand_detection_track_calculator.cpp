@@ -93,29 +93,9 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
 
         std::unique_ptr<DetOutputInternal> output_buffer_ = absl::make_unique<DetOutputInternal>();
 
-        if (det_tracker_step_ == 0 || (!lastframe_kpt3d.lhand_valid && !lastframe_kpt3d.rhand_valid)) {
-            // do detection
-            auto &result = *output_buffer_;
+        bool det_flag = true;
 
-            // detnet inference
-            netalgo->Inference(image_data, result);
-            // check stereo det bbox pair valid
-            if (result.images_lhand_rects.size() == 2 && result.images_lhand_rects[0].size() > 0 &&
-                result.images_lhand_rects[1].size() > 0) {
-                result.lhand_valid = true;
-            } else {
-                result.lhand_valid = false;
-            }
-
-            if (result.images_rhand_rects.size() == 2 && result.images_rhand_rects[0].size() > 0 &&
-                result.images_rhand_rects[1].size() > 0) {
-                result.rhand_valid = true;
-            } else {
-                result.rhand_valid = false;
-            }
-
-            det_tracker_step_ = 1;
-        } else {
+        if ((det_tracker_step_ != 0) && (lastframe_kpt3d.lhand_valid || lastframe_kpt3d.rhand_valid)) {
             output_buffer_->images_lhand_rects.resize(2);
             output_buffer_->images_rhand_rects.resize(2);
 
@@ -165,14 +145,40 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
                     output_buffer_->images_rhand_rects[1].emplace_back(proj_bbox_rcam_rhand);
                 }
             }
-            if (!output_buffer_->lhand_valid && !output_buffer_->rhand_valid) {
-                det_tracker_step_ = 1;
+
+            if (output_buffer_->lhand_valid || output_buffer_->rhand_valid) {
+                det_flag = false;
+
+                det_tracker_step_++;
+                if (det_tracker_step_ > 4) {
+                    det_tracker_step_ = 0;
+                }
+            }
+        }
+
+        if (det_flag) {
+            // do detection
+            auto &result = *output_buffer_;
+
+            // detnet inference
+            netalgo->Inference(image_data, result);
+
+            // check stereo det bbox pair valid
+            if (result.images_lhand_rects.size() == 2 && result.images_lhand_rects[0].size() > 0 &&
+                result.images_lhand_rects[1].size() > 0) {
+                result.lhand_valid = true;
+            } else {
+                result.lhand_valid = false;
             }
 
-            det_tracker_step_++;
-            if (det_tracker_step_ > 4) {
-                det_tracker_step_ = 0;
+            if (result.images_rhand_rects.size() == 2 && result.images_rhand_rects[0].size() > 0 &&
+                result.images_rhand_rects[1].size() > 0) {
+                result.rhand_valid = true;
+            } else {
+                result.rhand_valid = false;
             }
+
+            det_tracker_step_ = 1;
         }
 
         if (output_buffer_->lhand_valid || output_buffer_->rhand_valid) {
