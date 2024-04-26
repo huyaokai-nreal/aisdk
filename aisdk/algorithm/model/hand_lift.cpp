@@ -7,7 +7,6 @@
 #include <cstring>
 
 #include "../func/netalgo_utils.h"
-#include "../func/pose_solver.h"
 #include "aisdk/algorithm/common/hand_define.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/type.h"
@@ -31,7 +30,14 @@ absl::Status GMLPLiftNet::Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengi
     return ret;
 }
 
-void GMLPLiftNet::PreProcess(const LiftNetInputs &inputs, const CamInfo &cam_info) {
+absl::Status GMLPLiftNet::SetCameraInfo(const std::shared_ptr<BaseCameraModel> &left_camera,
+                                        const std::shared_ptr<BaseCameraModel> &right_camera) {
+    left_camera_ = left_camera;
+    right_camera_ = right_camera;
+    return absl::OkStatus();
+}
+
+void GMLPLiftNet::PreProcess(const LiftNetInputs &inputs) {
     int ai = itensor.m_batch * itensor.m_multishape_num;
     int bi = 1;
     if (ai != bi || itensor.m_packed_bybatch == false) {
@@ -58,26 +64,23 @@ void GMLPLiftNet::PreProcess(const LiftNetInputs &inputs, const CamInfo &cam_inf
         // printf("PreProcess: {}, {}, {}, {}\n", height, width,
         // channels, element_byte);
         float *temp = (float *)mem;
+        const auto l_K = left_camera_->get_camera_intrinsics();
+        const auto r_K = right_camera_->get_camera_intrinsics();
 
         for (int idx = 0; idx < kAlgoKeypointNum; idx++) {
-            m_leftcam_x[idx] = (inputs.input_kpt_lcam[idx][0] - cam_info.lcam_intrinsics.at<float>(0, 2)) /
-                               cam_info.lcam_intrinsics.at<float>(0, 0);
-            m_leftcam_y[idx] = (inputs.input_kpt_lcam[idx][1] - cam_info.lcam_intrinsics.at<float>(1, 2)) /
-                               cam_info.lcam_intrinsics.at<float>(1, 1);
-
-            m_rightcam_x[idx] = (inputs.input_kpt_rcam[idx][0] - cam_info.rcam_intrinsics.at<float>(0, 2)) /
-                                cam_info.rcam_intrinsics.at<float>(0, 0);
-            m_rightcam_y[idx] = (inputs.input_kpt_rcam[idx][1] - cam_info.rcam_intrinsics.at<float>(1, 2)) /
-                                cam_info.rcam_intrinsics.at<float>(1, 1);
+            m_leftcam_x[idx] = (inputs.input_kpt_lcam[idx][0] - l_K.cx_) / l_K.fx_;
+            m_leftcam_y[idx] = (inputs.input_kpt_lcam[idx][1] - l_K.cy_) / l_K.fy_;
+            m_rightcam_x[idx] = (inputs.input_kpt_rcam[idx][0] - r_K.cx_) / r_K.fx_;
+            m_rightcam_y[idx] = (inputs.input_kpt_rcam[idx][1] - r_K.cy_) / r_K.fy_;
         }
         std::vector<float> Tmatrix_leftcam = {0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1};
 
         std::vector<float> joint_seq(kAlgoKeypointNum * 3, 0);
+        const auto cvL_T_cvR = right_camera_->get_cam_to_world_transform();
 
-        std::vector<float> Tmatrix_lr = {cam_info.cvL_T_cvR(0, 3), cam_info.cvL_T_cvR(1, 3), cam_info.cvL_T_cvR(2, 3),
-                                         cam_info.cvL_T_cvR(0, 0), cam_info.cvL_T_cvR(0, 1), cam_info.cvL_T_cvR(0, 2),
-                                         cam_info.cvL_T_cvR(1, 0), cam_info.cvL_T_cvR(1, 1), cam_info.cvL_T_cvR(1, 2),
-                                         cam_info.cvL_T_cvR(2, 0), cam_info.cvL_T_cvR(2, 1), cam_info.cvL_T_cvR(2, 2)};
+        std::vector<float> Tmatrix_lr = {cvL_T_cvR(0, 3), cvL_T_cvR(1, 3), cvL_T_cvR(2, 3), cvL_T_cvR(0, 0),
+                                         cvL_T_cvR(0, 1), cvL_T_cvR(0, 2), cvL_T_cvR(1, 0), cvL_T_cvR(1, 1),
+                                         cvL_T_cvR(1, 2), cvL_T_cvR(2, 0), cvL_T_cvR(2, 1), cvL_T_cvR(2, 2)};
 
         auto buffer_x = temp;
         auto buffer_y = temp + 128;
@@ -123,7 +126,7 @@ void GMLPLiftNet::PreProcess(const LiftNetInputs &inputs, const CamInfo &cam_inf
     }
 }
 
-void GMLPLiftNet::PostProcess(LiftNetOutputs &outputs, const CamInfo &cam_info) {
+void GMLPLiftNet::PostProcess(LiftNetOutputs &outputs) {
     if (otensor.m_packed_bybatch == false) {
         return;
     }
@@ -155,7 +158,7 @@ void GMLPLiftNet::PostProcess(LiftNetOutputs &outputs, const CamInfo &cam_info) 
                 Vec3f_t rightcam_XYZ{rightZ[i] * m_rightcam_x[i], rightZ[i] * m_rightcam_y[i], rightZ[i]};
 
                 Vec3f_t rightcam_root_cv(rightcam_XYZ[0], rightcam_XYZ[1], rightcam_XYZ[2]);
-                Vec3f_t rightcam_root_cv_to_left = cam_info.cvL_T_cvR * rightcam_root_cv;
+                Vec3f_t rightcam_root_cv_to_left = right_camera_->get_cam_to_world_transform() * rightcam_root_cv;
                 Vec3f_t rightcam_to_left_XYZ{rightcam_root_cv_to_left.x(), rightcam_root_cv_to_left.y(),
                                              rightcam_root_cv_to_left.z()};
                 outputs.res3d[i] = corruption_cam * leftcam_XYZ + (1 - corruption_cam) * rightcam_to_left_XYZ;
@@ -164,11 +167,17 @@ void GMLPLiftNet::PostProcess(LiftNetOutputs &outputs, const CamInfo &cam_info) 
     }
 }
 
-absl::Status GMLPLiftNet::Inference(const LiftNetInputs &inputs, const CamInfo &cam_info, LiftNetOutputs &outputs) {
-    PreProcess(inputs, cam_info);
+absl::StatusOr<LiftNetOutputs> GMLPLiftNet::Inference(const LiftNetInputs &inputs) {
+    AISDK_LOG_TRACE("[GMLPLiftNet] Inference");
+    PreProcess(inputs);
     auto ret = m_net->RunNet();
-    PostProcess(outputs, cam_info);
-    return ret;
+    if (ret.ok()) {
+        LiftNetOutputs outputs;
+        PostProcess(outputs);
+        return outputs;
+    }
+    AISDK_LOG_WARN(ret.message());
+    return absl::UnavailableError("failed to get resutl form gmlpliftnet v3");
 }
 
 absl::Status GMLPLiftNet3::Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::ModelConfig &model,

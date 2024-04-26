@@ -60,6 +60,8 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
             netalgo = XGraphServiceUtils::CreateNetAlgoBase<GMLPLiftNet3>((void*)0x202310, "3d_lift");
         } else if (model_name_ == "3d_liftnimble") {
             netalgo = XGraphServiceUtils::CreateNetAlgoBase<GMLPLiftNimble>((void*)0x202310, "3d_liftnimble");
+        } else if (model_name_ == "3d_lift_ella") {
+            netalgo = XGraphServiceUtils::CreateNetAlgoBase<GMLPLiftNet>((void*)0x202310, "3d_lift_ella");
         } else {
             return absl::AbortedError(fmt::format("can not init model with {}", model_name_));
         }

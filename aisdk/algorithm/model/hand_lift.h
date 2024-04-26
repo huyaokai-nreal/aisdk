@@ -19,20 +19,19 @@ struct LiftNimbleNetOutputs {
 };
 
 // GMLP V1 for light only
-class GMLPLiftNet : public CalculatorBaseNet {
+class GMLPLiftNet : public LiftBaseNet {
    public:
-    GMLPLiftNet() : CalculatorBaseNet(){};
-    ~GMLPLiftNet(){};
-
     absl::Status Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::ModelConfig &model, aisdk::xengine::SessionConfig &session);
-    void PreProcess(const LiftNetInputs &inputs, const CamInfo &cam_info);
-    void PostProcess(LiftNetOutputs &outputs, const CamInfo &cam_info);
-    absl::Status Inference(const LiftNetInputs &inputs, const CamInfo &cam_info, LiftNetOutputs &outputs);
+    absl::Status SetCameraInfo(const std::shared_ptr<BaseCameraModel>& left_camera, const std::shared_ptr<BaseCameraModel>& right_camera) override;
+    void PreProcess(const LiftNetInputs &inputs);
+    void PostProcess(LiftNetOutputs &outputso);
+    absl::StatusOr<LiftNetOutputs> Inference(const LiftNetInputs &inputs) override;
 
    protected:
     aisdk::xengine::TensorFormat itensor_format;
     aisdk::xengine::TensorFormat otensor_format;
-
+    std::shared_ptr<BaseCameraModel> left_camera_;
+    std::shared_ptr<BaseCameraModel> right_camera_;
     std::vector<float> m_leftcam_x, m_leftcam_y, m_rightcam_x, m_rightcam_y;
 };
 
@@ -70,5 +69,3 @@ class GMLPLiftNet3:public LiftBaseNet {
 
 
 }  // namespace aisdk::algorithm
-
-

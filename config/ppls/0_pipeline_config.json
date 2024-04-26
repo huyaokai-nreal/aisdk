@@ -9,6 +9,7 @@
             "2d_rsnnano",
             "2d_filter",
             "3d_lift",
+            "3d_lift_ella",
             "3d_mano",
             "transfer",
             "globalfilter",
@@ -97,6 +98,21 @@
             ],
             "netalgo_config": {
                 "name": "nano25_v1.0.0"
+            }
+        },
+        "3d_lift_ella": {
+            "model_config": {
+                "file_name": "models/GMLP_20230417.mnn",
+                "vendor": "mnn"
+            },
+            "session_config": {
+                "batch": 1,
+                "precision": "float32",
+                "thread_num": 1,
+                "runtime": "cpu"
+            },
+            "netalgo_config": {
+                "name": "gmlplift_v1.0.0"
             }
         },
         "3d_lift": {
