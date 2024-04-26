@@ -1,5 +1,5 @@
 from conan import ConanFile
-import subprocess
+import os
 class AISDK(ConanFile):
     python_requires = "project_base/1.0"
     python_requires_extend = "project_base.ProjectBase"
@@ -15,7 +15,7 @@ class AISDK(ConanFile):
     
     def build(self):
         update_model_cmd = "git submodule init && git submodule update"
-        subprocess.run(update_model_cmd, shell=True, check=True)
+        os.system(update_model_cmd)
         super().build()
 
     def requirements(self):
