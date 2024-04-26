@@ -124,10 +124,17 @@ execute_process(
     OUTPUT_VARIABLE output                          # 可选：捕获标准输出
     ERROR_VARIABLE error                            # 可选：捕获标准错误
 )
+message(STATUS "tool/tar_pipeline.sh result_code: ${result_code}")
+message(STATUS "tool/tar_pipeline.sh output: ${output}")
+message(STATUS "tool/tar_pipeline.sh error: ${error}")
+
 # build xengine model package
 set(MODEL_TAR_NAME "handtracking_pipeline_v2.0.0.tar")
 set(DEFAULT_PIPELINE_TAR_PATH "${CMAKE_CURRENT_BINARY_DIR}/${MODEL_TAR_NAME}.enc")
 set(DEFAULT_PIPELINE_TAR_KEY_PATH "${CMAKE_CURRENT_BINARY_DIR}/${MODEL_TAR_NAME}.key")
+if(NOT EXISTS ${DEFAULT_PIPELINE_TAR_PATH})
+    message(FATAL_ERROR "${DEFAULT_PIPELINE_TAR_PATH} does not exist!!!!!!")
+endif()
 file(STRINGS ${DEFAULT_PIPELINE_TAR_KEY_PATH} file_content)
 list(GET file_content 2 DEFAULT_PIPELINE_TAR_KEY)
 message(STATUS "MODEL_KEY: ${DEFAULT_PIPELINE_TAR_KEY}")
