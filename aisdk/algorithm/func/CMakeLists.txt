@@ -9,6 +9,7 @@ ${CMAKE_CURRENT_SOURCE_DIR}/netalgo_utils.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/warpaffine.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/generate_bbox.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/hand_filters.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/hand_nimble.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/hand_rotation.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/gesture_recognition_v2.cpp
 

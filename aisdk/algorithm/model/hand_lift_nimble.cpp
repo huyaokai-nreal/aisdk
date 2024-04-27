@@ -5,10 +5,12 @@
 #include <fmt/format.h>
 
 #include <cstring>
+#include <vector>
 
 #include "../func/netalgo_utils.h"
 #include "../func/pose_solver.h"
 #include "aisdk/algorithm/common/hand_define.h"
+#include "aisdk/algorithm/func/hand_nimble.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/type.h"
 
@@ -154,11 +156,15 @@ void GMLPLiftNimble::PostProcess(const LiftNetInputs &inputs, LiftNetOutputs &ou
         flip_x << -1, 0, 0, 0, 1, 0, 0, 0, 1;
         global_rotation.noalias() = global_rotation * flip_x;
     }
-
+    // shape
+    int index_shape = this->m_net->GetOutputTensorIndex("shape");
+    float shape_param = *((float *)otensor.m_tensors[index_shape].m_viraddr);
+    // angle
     // kpt
-    int index_output = this->m_net->GetOutputTensorIndex("kpt");
-    float *kpt_ptr = (float *)otensor.m_tensors[index_output].m_viraddr;
-    Eigen::Map<Eigen::Matrix<float, 21, 3, Eigen::RowMajor>> local_kpt(kpt_ptr);
+    int index_angle = this->m_net->GetOutputTensorIndex("angle");
+    float *angle_ptr = (float *)otensor.m_tensors[index_angle].m_viraddr;
+    std::vector<float> local_angles(angle_ptr, angle_ptr + 171);
+    auto local_kpt = decode_hand_joints(shape_param, local_angles);
     Eigen::Matrix<float, 21, 3> global_kpt =
         ((global_rotation * local_kpt.transpose()).transpose().rowwise() + global_translation.transpose()) *
         baseline_scale_ / standard_baseline_;
