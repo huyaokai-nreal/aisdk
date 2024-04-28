@@ -4,6 +4,7 @@
 #include "Eigen/Dense"
 #include "aisdk/base/camera_model.h"
 #include "aisdk/base/type.h"
+#include "aisdk/algorithm/common/nrnet_define.h"
 #include "interface/handtracking_sdk/public/nr_plugin_types.h"
 
 namespace aisdk::algorithm {
@@ -23,7 +24,7 @@ std::vector<Vec3f_t> cal_lcam_kpt3d_cv_to_world(NRTransform extrinsic_world,
 void reproj_bbox_with_new_headpose(std::shared_ptr<aisdk::base::BaseCameraModel> lcam_model,
                                    std::shared_ptr<aisdk::base::BaseCameraModel> rcam_model,
                                    NRTransform extrinsics_world, const std::vector<Vec3f_t>& points_3d,
-                                   cv::Rect& proj_bbox_lcam, cv::Rect& proj_bbox_rcam);
+                                   DetectRect& proj_bbox_lcam, DetectRect& proj_bbox_rcam);
 
 }  // namespace aisdk::algorithm
 

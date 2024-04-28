@@ -5,6 +5,7 @@
 #include <opencv2/opencv.hpp>
 #include "aisdk/base/type.h"
 #include "ofxOneEuroFilter.h"
+#include "aisdk/algorithm/common/nrnet_define.h"
 
 namespace aisdk::algorithm {
 
@@ -53,7 +54,7 @@ class SeqManager final {
     bool getCurrentHandData(cv::Rect& bbox, float& score, std::vector<Vec2f_t>& kpt_2d,
                             std::vector<float>& score_kpt);
     // 1 Euro
-    bool getFilterBoxData(cv::Rect& bbox, float& score);
+    bool getFilterBoxData(DetectRect& bbox, float& score);
     bool getFilterKptData(std::vector<Vec2f_t>& kpt_2d, std::vector<float>& score_kpt);
     bool reset();
 

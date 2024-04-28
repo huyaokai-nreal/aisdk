@@ -7,6 +7,7 @@
 #include "Eigen/Dense"
 #include "aisdk/base/camera_model.h"
 #include "aisdk/base/type.h"
+#include "aisdk/algorithm/common/nrnet_define.h"
 namespace aisdk::algorithm {
 float compute_score_with_reprojection(const std::vector<Vec3f_t>& pred_xyz, const std::vector<Vec2f_t>& leftcam_uv_ori,
                                       const std::vector<Vec2f_t>& rightcam_uv_ori,
@@ -16,7 +17,7 @@ float compute_score_with_reprojection(const std::vector<Vec3f_t>& pred_xyz, cons
 float get_bbox_distance(cv::Rect src, cv::Rect dst);
 
 bool check_if_rect_valid(cv::Rect rect, int max_width, int max_height);
-bool check_if_rect_valid_relax(cv::Rect rect, int max_width, int max_height);
+bool check_if_rect_valid_relax(DetectRect rect, int max_width, int max_height);
 bool isNaN(const std::vector<Vec3f_t>& kpts);
 
 }  // namespace aisdk::algorithm

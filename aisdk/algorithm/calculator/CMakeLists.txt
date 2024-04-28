@@ -20,13 +20,12 @@ if(BUILD_PROTO_FILES)
 endif()
 target_sources(${ALGORITHM_LIBRARY_NAME} PRIVATE
 ${CMAKE_CURRENT_SOURCE_DIR}/xgraph_service_utils.cpp
-${CMAKE_CURRENT_SOURCE_DIR}/hand_detection_calculator.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/hand_detection_track_calculator.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/hand_landmark_calculator.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/hand_landmark_calculator.pb.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/block_hard_rules_calculator.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/block_hard_rules_calculator.pb.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/convert_to_world_calculator.cpp
-${CMAKE_CURRENT_SOURCE_DIR}/hand_detection_track_calculator.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/detect_box_smoothing_calculator.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/hand_filter_calculator.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/landmark_filter_calculator.cpp

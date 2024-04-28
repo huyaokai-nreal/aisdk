@@ -100,7 +100,7 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
             output_buffer_->images_rhand_rects.resize(2);
 
             if (lastframe_kpt3d.lhand_valid) {
-                cv::Rect proj_bbox_lcam_lhand, proj_bbox_rcam_lhand;
+                DetectRect proj_bbox_lcam_lhand, proj_bbox_rcam_lhand;
                 std::vector<Vec3f_t> lhand_predict_frame = lastframe_kpt3d.lhand_kpt;
                 Vec3f_t root_kf_predicted;
                 Vec3f_t root_meas = lhand_predict_frame[21];
@@ -123,7 +123,7 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
             }
 
             if (lastframe_kpt3d.rhand_valid) {
-                cv::Rect proj_bbox_lcam_rhand, proj_bbox_rcam_rhand;
+                DetectRect proj_bbox_lcam_rhand, proj_bbox_rcam_rhand;
                 std::vector<Vec3f_t> rhand_predict_frame = lastframe_kpt3d.rhand_kpt;
                 Vec3f_t root_kf_predicted;
                 Vec3f_t root_meas = rhand_predict_frame[21];

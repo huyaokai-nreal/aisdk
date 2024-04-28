@@ -86,9 +86,9 @@ TEST_CASE("testing create netalgo") {
                     result.lhand_valid = true;
 
                     auto lcam_lhand = result.images_lhand_rects[0][0];
-                    AISDK_LOG_TRACE("[HandDetectionCalculator] left hand + left cam: x: {}, y: {}, w: {}, h: {}", lcam_lhand.x, lcam_lhand.y, lcam_lhand.width, lcam_lhand.height);
+                    AISDK_LOG_TRACE("[HandDetectionCalculator] left hand + left cam: x: {}, y: {}, w: {}, h: {}", lcam_lhand.x, lcam_lhand.y, lcam_lhand.w, lcam_lhand.h);
                     auto rcam_lhand = result.images_lhand_rects[1][0];
-                    AISDK_LOG_TRACE("[HandDetectionCalculator] left hand + right cam: x: {}, y: {}, w: {}, h: {}", rcam_lhand.x, rcam_lhand.y, rcam_lhand.width, rcam_lhand.height);
+                    AISDK_LOG_TRACE("[HandDetectionCalculator] left hand + right cam: x: {}, y: {}, w: {}, h: {}", rcam_lhand.x, rcam_lhand.y, rcam_lhand.w, rcam_lhand.h);
                 } else {
                     AISDK_LOG_TRACE("[HandDetectionCalculator], ERROR!!!");
                     result.lhand_valid = false;
@@ -98,9 +98,9 @@ TEST_CASE("testing create netalgo") {
                     result.rhand_valid = true;
 
                     auto lcam_rhand = result.images_rhand_rects[0][0];
-                    AISDK_LOG_TRACE("[HandDetectionCalculator] right hand + left cam: x: {}, y: {}, w: {}, h: {}", lcam_rhand.x, lcam_rhand.y, lcam_rhand.width, lcam_rhand.height);
+                    AISDK_LOG_TRACE("[HandDetectionCalculator] right hand + left cam: x: {}, y: {}, w: {}, h: {}", lcam_rhand.x, lcam_rhand.y, lcam_rhand.w, lcam_rhand.h);
                     auto rcam_rhand = result.images_rhand_rects[1][0];
-                    AISDK_LOG_TRACE("[HandDetectionCalculator] right hand + right cam: x: {}, y: {}, w: {}, h: {}", rcam_rhand.x, rcam_rhand.y, rcam_rhand.width, rcam_rhand.height);
+                    AISDK_LOG_TRACE("[HandDetectionCalculator] right hand + right cam: x: {}, y: {}, w: {}, h: {}", rcam_rhand.x, rcam_rhand.y, rcam_rhand.w, rcam_rhand.h);
                 } else {
                     result.rhand_valid = false;
                 }

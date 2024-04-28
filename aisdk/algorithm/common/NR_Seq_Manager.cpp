@@ -87,21 +87,24 @@ bool SeqManager::getCurrentHandData(cv::Rect& bbox, float& score, std::vector<Ve
     return true;
 }
 
-bool SeqManager::getFilterBoxData(cv::Rect& bbox, float& score) {
+bool SeqManager::getFilterBoxData(DetectRect& bbox, float& score) {
     int x1, y1, x2, y2;
     int x1_r, y1_r, x2_r, y2_r;
 
     x1 = bbox.x;
-    x2 = bbox.x + bbox.width;
+    x2 = bbox.x + bbox.w;
     y1 = bbox.y;
-    y2 = bbox.y + bbox.height;
+    y2 = bbox.y + bbox.h;
 
     x1_r = mOneEuroFilterList[42]->filter(x1);
     y1_r = mOneEuroFilterList[43]->filter(y1);
     x2_r = mOneEuroFilterList[44]->filter(x2);
     y2_r = mOneEuroFilterList[45]->filter(y2);
 
-    bbox = {x1_r, y1_r, x2_r - x1_r, y2_r - y1_r};
+    bbox.x = x1_r;
+    bbox.y = y1_r;
+    bbox.w = x2_r - x1_r;
+    bbox.h = y2_r - y1_r;
 
     return true;
 }

@@ -5,7 +5,6 @@
 #include "aisdk/algorithm/calculator/detect_box_smoothing_calculator.cpp"
 #include "aisdk/algorithm/calculator/gesture_recognition_calculator.cpp"
 #include "aisdk/algorithm/calculator/hand_data_record_calculator.cpp"
-#include "aisdk/algorithm/calculator/hand_detection_calculator.cpp"
 #include "aisdk/algorithm/calculator/hand_detection_track_calculator.cpp"
 #include "aisdk/algorithm/calculator/hand_filter_calculator.cpp"
 #include "aisdk/algorithm/calculator/hand_landmark_calculator.cpp"
@@ -21,7 +20,6 @@ void TriggerGloalGraphCalculatorsConstructForHandTracking() {
     REGISTER_CALCULATOR(BlockHardRulesCalculator);        // ok!
     REGISTER_CALCULATOR(ConvertToWorldCalculator);        // ok!
     REGISTER_CALCULATOR(DetectBoxSmoothingCalculator);    // ok!
-    REGISTER_CALCULATOR(HandDetectionCalculator);         // ok!
     REGISTER_CALCULATOR(GestureRecognitionCalculator);    // ok!
     REGISTER_CALCULATOR(HandLandmarkCalculator);          // ok!
     REGISTER_CALCULATOR(HandFilterCalculator);            // ok!

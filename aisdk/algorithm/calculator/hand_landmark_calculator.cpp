@@ -101,8 +101,8 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
             const Image& lcam_proto_image = image_data[0];
             const Image& rcam_proto_image = image_data[1];
 
-            const cv::Rect& lhand_lcam_rect = bbox_data.images_lhand_rects[0][0];
-            const cv::Rect& lhand_rcam_rect = bbox_data.images_lhand_rects[1][0];
+            const DetectRect& lhand_lcam_rect = bbox_data.images_lhand_rects[0][0];
+            const DetectRect& lhand_rcam_rect = bbox_data.images_lhand_rects[1][0];
 
             cv::Mat lhand_lcam_roi =
                 generate_roi_image(lcam_proto_image.m_mat, lhand_lcam_rect, input_width_, input_height_);
@@ -127,19 +127,17 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
                 for (int kpt_index = 0; kpt_index < kAlgoKeypointNum; kpt_index++) {
                     // 左手左目xy
                     output_buffer_->lhand_lcam[kpt_index][0] =
-                        ((input_width_ - 1) - rsn_result->kpts[0][kpt_index][0]) * lhand_lcam_rect.width /
-                            input_width_ +
+                        ((input_width_ - 1) - rsn_result->kpts[0][kpt_index][0]) * lhand_lcam_rect.w / input_width_ +
                         lhand_lcam_rect.x;
                     output_buffer_->lhand_lcam[kpt_index][1] =
-                        rsn_result->kpts[0][kpt_index][1] * lhand_lcam_rect.height / input_height_ + lhand_lcam_rect.y;
+                        rsn_result->kpts[0][kpt_index][1] * lhand_lcam_rect.h / input_height_ + lhand_lcam_rect.y;
 
                     // 左手右目xy
                     output_buffer_->lhand_rcam[kpt_index][0] =
-                        ((input_width_ - 1) - rsn_result->kpts[1][kpt_index][0]) * lhand_rcam_rect.width /
-                            input_width_ +
+                        ((input_width_ - 1) - rsn_result->kpts[1][kpt_index][0]) * lhand_rcam_rect.w / input_width_ +
                         lhand_rcam_rect.x;
                     output_buffer_->lhand_rcam[kpt_index][1] =
-                        rsn_result->kpts[1][kpt_index][1] * lhand_rcam_rect.height / input_height_ + lhand_rcam_rect.y;
+                        rsn_result->kpts[1][kpt_index][1] * lhand_rcam_rect.h / input_height_ + lhand_rcam_rect.y;
                 }
             }
         }
@@ -148,8 +146,8 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
             const Image& lcam_proto_image = image_data[0];
             const Image& rcam_proto_image = image_data[1];
 
-            const cv::Rect& rhand_lcam_rect = bbox_data.images_rhand_rects[0][0];
-            const cv::Rect& rhand_rcam_rect = bbox_data.images_rhand_rects[1][0];
+            const DetectRect& rhand_lcam_rect = bbox_data.images_rhand_rects[0][0];
+            const DetectRect& rhand_rcam_rect = bbox_data.images_rhand_rects[1][0];
 
             cv::Mat rhand_lcam_roi =
                 generate_roi_image(lcam_proto_image.m_mat, rhand_lcam_rect, input_width_, input_height_);
@@ -166,15 +164,15 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
                 for (int kpt_index = 0; kpt_index < kAlgoKeypointNum; kpt_index++) {
                     // 右手左目xy
                     output_buffer_->rhand_lcam[kpt_index][0] =
-                        rsn_result->kpts[0][kpt_index][0] * rhand_lcam_rect.width / input_width_ + rhand_lcam_rect.x;
+                        rsn_result->kpts[0][kpt_index][0] * rhand_lcam_rect.w / input_width_ + rhand_lcam_rect.x;
                     output_buffer_->rhand_lcam[kpt_index][1] =
-                        rsn_result->kpts[0][kpt_index][1] * rhand_lcam_rect.height / input_height_ + rhand_lcam_rect.y;
+                        rsn_result->kpts[0][kpt_index][1] * rhand_lcam_rect.h / input_height_ + rhand_lcam_rect.y;
 
                     // 右手右目xy
                     output_buffer_->rhand_rcam[kpt_index][0] =
-                        rsn_result->kpts[1][kpt_index][0] * rhand_rcam_rect.width / input_width_ + rhand_rcam_rect.x;
+                        rsn_result->kpts[1][kpt_index][0] * rhand_rcam_rect.w / input_width_ + rhand_rcam_rect.x;
                     output_buffer_->rhand_rcam[kpt_index][1] =
-                        rsn_result->kpts[1][kpt_index][1] * rhand_rcam_rect.height / input_height_ + rhand_rcam_rect.y;
+                        rsn_result->kpts[1][kpt_index][1] * rhand_rcam_rect.h / input_height_ + rhand_rcam_rect.y;
                 }
             }
         }

@@ -4,57 +4,9 @@
 
 #include "aisdk/algorithm/common/hand_define.h"
 #include "aisdk/base/type.h"
-#include "generate_bbox.h"
 #include "thirdparty/MANO_IK-main/mano/AIK.h"
 
 namespace aisdk::algorithm {
-
-void expand_bbox(int min_x, int min_y, int max_x, int max_y, float* bbox) {
-    cv::Rect res;
-    float center_x, center_y, w, h;
-    int crop_margin;
-
-    float cx = (min_x + max_x) * 0.5;
-    float cy = (min_y + max_y) * 0.5;
-
-    min_x = (min_x - cx) * 1.5 + cx;
-    min_y = (min_y - cy) * 1.4 + cy;
-    max_x = (max_x - cx) * 1.5 + cx;
-    max_y = (max_y - cy) * 1.4 + cy;
-
-    bbox[0] = min_x;
-    bbox[1] = min_y;
-    bbox[2] = max_x - min_x;
-    bbox[3] = max_y - min_y;
-}
-
-cv::Rect add_bbox_margin(int min_x, int min_y, int max_x, int max_y, int max_w, int max_h) {
-    float center[2], scale[2];
-    float bbox[4], bbox_crop[4];
-
-    expand_bbox(min_x, min_y, max_x, max_y, bbox);
-
-    // std::cout << bbox[0] << " " << bbox[1] << " " << bbox[2] << " " << bbox[3] << std::endl;
-
-    adjust_bbox(bbox, max_h - 1, max_w - 1, bbox_crop, center, scale);
-
-    bbox_to_center_and_scale(bbox_crop, center, scale);
-
-    //   scale[0] *= 1.25;
-    //   scale[1] *= 1.25;
-
-    if (scale[0] > scale[1]) {
-        scale[1] = scale[0];
-    } else {
-        scale[0] = scale[1];
-    }
-
-    center_scale_to_bbox(bbox_crop, center, scale);
-
-    cv::Rect bbox_res = {int(bbox_crop[0]), int(bbox_crop[1]), int(bbox_crop[2]), int(bbox_crop[3])};
-
-    return bbox_res;
-}
 
 void nms(std::vector<DetectRect>& rect, float iou_threshold) {
     std::stable_sort(rect.begin(), rect.end(),

@@ -5,7 +5,6 @@
 #include <algorithm>
 
 #include "NR_GlobalCoordService.h"
-#include "aisdk/algorithm/func/generate_bbox.h"
 
 namespace aisdk::algorithm {
 
@@ -97,10 +96,33 @@ std::vector<Vec3f_t> lcam_cv_to_rcam_cv(const std::vector<Vec3f_t>& points3d_src
     return points3d_dst;
 }
 
+template <typename T>
+DetectRect kpts_to_bbox(const T& kps) {
+    float min_x = FLT_MAX;
+    float min_y = FLT_MAX;
+    float max_x = FLT_MIN;
+    float max_y = FLT_MIN;
+
+    for (int i = 0; i < kps.size(); i++) {
+        min_x = std::min(min_x, kps[i][0]);
+        min_y = std::min(min_y, kps[i][1]);
+        max_x = std::max(max_x, kps[i][0]);
+        max_y = std::max(max_y, kps[i][1]);
+    }
+
+    DetectRect detect_rect;
+    detect_rect.x = min_x;
+    detect_rect.y = min_y;
+    detect_rect.w = max_x - min_x;
+    detect_rect.h = max_y - min_y;
+
+    return detect_rect;
+}
+
 void reproj_bbox_with_new_headpose(std::shared_ptr<aisdk::base::BaseCameraModel> lcam_model,
                                    std::shared_ptr<aisdk::base::BaseCameraModel> rcam_model,
                                    NRTransform extrinsics_world, const std::vector<Vec3f_t>& points_3d,
-                                   cv::Rect& proj_bbox_lcam, cv::Rect& proj_bbox_rcam) {
+                                   DetectRect& proj_bbox_lcam, DetectRect& proj_bbox_rcam) {
     auto kpt3d_cv_lcam = recal_lcam_kpt3d_cv_with_new_headpose(extrinsics_world, points_3d);
 
     auto kpt3d_cv_rcam = lcam_cv_to_rcam_cv(kpt3d_cv_lcam);
@@ -108,8 +130,8 @@ void reproj_bbox_with_new_headpose(std::shared_ptr<aisdk::base::BaseCameraModel>
     auto kpt2d_lcam = lcam_model->eye_to_window(kpt3d_cv_lcam);
     auto kpt2d_rcam = rcam_model->eye_to_window(kpt3d_cv_rcam);
 
-    proj_bbox_lcam = generate_bbox(lcam_model->video_width_ - 1, lcam_model->video_height_ - 1, kpt2d_lcam);
-    proj_bbox_rcam = generate_bbox(rcam_model->video_width_ - 1, rcam_model->video_height_ - 1, kpt2d_rcam);
+    proj_bbox_lcam = kpts_to_bbox(kpt2d_lcam);
+    proj_bbox_rcam = kpts_to_bbox(kpt2d_rcam);
 }
 
 }  // namespace aisdk::algorithm
