@@ -60,12 +60,12 @@ class DetectBoxSmoothingCalculator : public xgraph::CalculatorBase {
             AISDK_LOG_TRACE("[DetectBoxSmoothingCalculator] Do smoothing on left hand bboxes (lhand_lcam, lhand_rcam)");
             output_buffer_->lhand_valid = true;
 
-            output_buffer_->images_lhand_rects.push_back(input_data.images_lhand_rects[0]);
-            output_buffer_->images_lhand_rects.push_back(input_data.images_lhand_rects[1]);
+            output_buffer_->lhand_rects.push_back(input_data.lhand_rects[0]);
+            output_buffer_->lhand_rects.push_back(input_data.lhand_rects[1]);
 
             float p_score = 1.0f;
-            m_seq_lcam_lhand->getFilterBoxData(output_buffer_->images_lhand_rects[0][0], p_score);
-            m_seq_rcam_lhand->getFilterBoxData(output_buffer_->images_lhand_rects[1][0], p_score);
+            m_seq_lcam_lhand->getFilterBoxData(output_buffer_->lhand_rects[0], p_score);
+            m_seq_rcam_lhand->getFilterBoxData(output_buffer_->lhand_rects[1], p_score);
 
             AISDK_LOG_TRACE("[DetectBoxSmoothingCalculator] Smoothing left hand bboxes complete");
         }
@@ -74,12 +74,12 @@ class DetectBoxSmoothingCalculator : public xgraph::CalculatorBase {
                 "[DetectBoxSmoothingCalculator] Do smoothing on right hand bboxes (rhand_lcam, rhand_rcam)");
             output_buffer_->rhand_valid = true;
 
-            output_buffer_->images_rhand_rects.push_back(input_data.images_rhand_rects[0]);
-            output_buffer_->images_rhand_rects.push_back(input_data.images_rhand_rects[1]);
+            output_buffer_->rhand_rects.push_back(input_data.rhand_rects[0]);
+            output_buffer_->rhand_rects.push_back(input_data.rhand_rects[1]);
 
             float p_score = 1.0f;
-            m_seq_lcam_rhand->getFilterBoxData(output_buffer_->images_rhand_rects[0][0], p_score);
-            m_seq_rcam_rhand->getFilterBoxData(output_buffer_->images_rhand_rects[1][0], p_score);
+            m_seq_lcam_rhand->getFilterBoxData(output_buffer_->rhand_rects[0], p_score);
+            m_seq_rcam_rhand->getFilterBoxData(output_buffer_->rhand_rects[1], p_score);
 
             AISDK_LOG_TRACE("[DetectBoxSmoothingCalculator] Smoothing right hand bboxes complete");
         }

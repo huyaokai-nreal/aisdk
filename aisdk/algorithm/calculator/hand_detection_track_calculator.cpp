@@ -95,9 +95,6 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
         output_buffer_->det_flag = true;
 
         if ((det_tracker_step_ != 0) && (lastframe_kpt3d.lhand_valid || lastframe_kpt3d.rhand_valid)) {
-            output_buffer_->images_lhand_rects.resize(2);
-            output_buffer_->images_rhand_rects.resize(2);
-
             if (lastframe_kpt3d.lhand_valid) {
                 DetectRect proj_bbox_lcam_lhand, proj_bbox_rcam_lhand;
                 std::vector<Vec3f_t> lhand_predict_frame = lastframe_kpt3d.lhand_kpt;
@@ -116,8 +113,8 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
                 if (check_if_rect_valid_relax(proj_bbox_lcam_lhand, video_width_, video_height_) &&
                     check_if_rect_valid_relax(proj_bbox_rcam_lhand, video_width_, video_height_)) {
                     output_buffer_->lhand_valid = true;
-                    output_buffer_->images_lhand_rects[0].emplace_back(proj_bbox_lcam_lhand);
-                    output_buffer_->images_lhand_rects[1].emplace_back(proj_bbox_rcam_lhand);
+                    output_buffer_->lhand_rects.emplace_back(proj_bbox_lcam_lhand);
+                    output_buffer_->lhand_rects.emplace_back(proj_bbox_rcam_lhand);
                 }
             }
 
@@ -140,8 +137,8 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
                 if (check_if_rect_valid_relax(proj_bbox_lcam_rhand, video_width_, video_height_) &&
                     check_if_rect_valid_relax(proj_bbox_rcam_rhand, video_width_, video_height_)) {
                     output_buffer_->rhand_valid = true;
-                    output_buffer_->images_rhand_rects[0].emplace_back(proj_bbox_lcam_rhand);
-                    output_buffer_->images_rhand_rects[1].emplace_back(proj_bbox_rcam_rhand);
+                    output_buffer_->rhand_rects.emplace_back(proj_bbox_lcam_rhand);
+                    output_buffer_->rhand_rects.emplace_back(proj_bbox_rcam_rhand);
                 }
             }
 
@@ -166,6 +163,8 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
             if (result.images_lhand_rects.size() == 2 && result.images_lhand_rects[0].size() > 0 &&
                 result.images_lhand_rects[1].size() > 0) {
                 result.lhand_valid = true;
+                result.lhand_rects.emplace_back(result.images_lhand_rects[0][0]);
+                result.lhand_rects.emplace_back(result.images_lhand_rects[1][0]);
             } else {
                 result.lhand_valid = false;
             }
@@ -173,6 +172,8 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
             if (result.images_rhand_rects.size() == 2 && result.images_rhand_rects[0].size() > 0 &&
                 result.images_rhand_rects[1].size() > 0) {
                 result.rhand_valid = true;
+                result.rhand_rects.emplace_back(result.images_rhand_rects[0][0]);
+                result.rhand_rects.emplace_back(result.images_rhand_rects[1][0]);
             } else {
                 result.rhand_valid = false;
             }

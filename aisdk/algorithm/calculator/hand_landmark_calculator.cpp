@@ -117,9 +117,9 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
             // refs
             const Image& lcam_proto_image = image_data[0];
             const Image& rcam_proto_image = image_data[1];
-            const auto& lhand_bboxes = bbox_data.images_lhand_rects;
-            auto left_rect = GetCropBboxShape(lhand_bboxes[0][0]);
-            auto right_rect = GetCropBboxShape(lhand_bboxes[1][0]);
+            const auto& lhand_bboxes = bbox_data.lhand_rects;
+            auto left_rect = GetCropBboxShape(lhand_bboxes[0]);
+            auto right_rect = GetCropBboxShape(lhand_bboxes[1]);
             cv::Mat lhand_lcam_roi = generate_roi_image(lcam_proto_image.m_mat, left_rect, input_width_, input_height_);
             cv::Mat lhand_rcam_roi =
                 generate_roi_image(rcam_proto_image.m_mat, right_rect, input_width_, input_height_);
@@ -162,9 +162,9 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
             // refs
             const Image& lcam_proto_image = image_data[0];
             const Image& rcam_proto_image = image_data[1];
-            const auto& rhand_bboxes = bbox_data.images_rhand_rects;
-            auto left_rect = GetCropBboxShape(rhand_bboxes[0][0]);
-            auto right_rect = GetCropBboxShape(rhand_bboxes[1][0]);
+            const auto& rhand_bboxes = bbox_data.rhand_rects;
+            auto left_rect = GetCropBboxShape(rhand_bboxes[0]);
+            auto right_rect = GetCropBboxShape(rhand_bboxes[1]);
 
             cv::Mat rhand_lcam_roi = generate_roi_image(lcam_proto_image.m_mat, left_rect, input_width_, input_height_);
             cv::Mat rhand_rcam_roi =
