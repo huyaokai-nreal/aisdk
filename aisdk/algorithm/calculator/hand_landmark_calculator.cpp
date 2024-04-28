@@ -1,9 +1,11 @@
 #include <absl/status/status.h>
 
+#include <algorithm>
 #include <memory>
 #include <vector>
 
 #include "aisdk/algorithm/calculator/hand_landmark_calculator.pb.h"
+#include "aisdk/algorithm/common/bbox.h"
 #include "aisdk/algorithm/common/hand_define.h"
 #include "aisdk/algorithm/common/nrnet_define.h"
 #include "aisdk/algorithm/func/warpaffine.h"
@@ -15,6 +17,7 @@
 #include "aisdk/algorithm/model/hand_rtmtiny.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/time.h"
+#include "aisdk/base/type.h"
 #include "aisdk/xgraph/xgraph.h"
 #include "xgraph_service_utils.h"
 
@@ -41,6 +44,7 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
     int32_t input_width_;
     int32_t input_height_;
     std::string model_name_;
+    float bbox_expand_ratio_ = 1.3;
 
    public:
     static absl::Status GetContract(xgraph::CalculatorContract* cc) {
@@ -60,6 +64,9 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
         input_height_ = options.input_height();
         input_width_ = options.input_width();
         model_name_ = options.model_name();
+        if (options.bbox_expand_ration() > 0) {
+            bbox_expand_ratio_ = options.bbox_expand_ration();
+        }
         if (model_name_ == "2d_rsntiny") {
             netalgo = XGraphServiceUtils::CreateNetAlgoBase<RSNTiny>((void*)0x202310, model_name_);
         } else if (model_name_ == "2d_rtmtiny") {
@@ -81,6 +88,16 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
         return absl::OkStatus();
     }
 
+    [[nodiscard]] Vec4f_t GetCropBboxShape(const DetectRect& bbox) const {
+        Vec4f_t bbox_xywh{bbox.x, bbox.y, bbox.w, bbox.h};
+        Vec4f_t bbox_cs = bbox_xywh2cs(bbox_xywh);
+        bbox_cs.block<2, 1>(2, 0) *= bbox_expand_ratio_;
+        auto max_shape = std::max(bbox_cs[2], bbox_cs[3]);
+        bbox_cs[2] = max_shape;
+        bbox_cs[3] = max_shape;
+        return bbox_cs;
+    }
+
     absl::Status Process(xgraph::CalculatorContext* cc) final {
 #if defined(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
         TIMER_ONCE_WITH_TAG(HandLandmarkCalculator::Process);
@@ -100,14 +117,12 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
             // refs
             const Image& lcam_proto_image = image_data[0];
             const Image& rcam_proto_image = image_data[1];
-
-            const DetectRect& lhand_lcam_rect = bbox_data.images_lhand_rects[0][0];
-            const DetectRect& lhand_rcam_rect = bbox_data.images_lhand_rects[1][0];
-
-            cv::Mat lhand_lcam_roi =
-                generate_roi_image(lcam_proto_image.m_mat, lhand_lcam_rect, input_width_, input_height_);
+            const auto& lhand_bboxes = bbox_data.images_lhand_rects;
+            auto left_rect = GetCropBboxShape(lhand_bboxes[0][0]);
+            auto right_rect = GetCropBboxShape(lhand_bboxes[1][0]);
+            cv::Mat lhand_lcam_roi = generate_roi_image(lcam_proto_image.m_mat, left_rect, input_width_, input_height_);
             cv::Mat lhand_rcam_roi =
-                generate_roi_image(rcam_proto_image.m_mat, lhand_rcam_rect, input_width_, input_height_);
+                generate_roi_image(rcam_proto_image.m_mat, right_rect, input_width_, input_height_);
 
             cv::Mat lhand_lcam_flipped_roi;
             cv::Mat lhand_rcam_flipped_roi;
@@ -127,17 +142,19 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
                 for (int kpt_index = 0; kpt_index < kAlgoKeypointNum; kpt_index++) {
                     // 左手左目xy
                     output_buffer_->lhand_lcam[kpt_index][0] =
-                        ((input_width_ - 1) - rsn_result->kpts[0][kpt_index][0]) * lhand_lcam_rect.w / input_width_ +
-                        lhand_lcam_rect.x;
+                        ((input_width_ - 1) - rsn_result->kpts[0][kpt_index][0]) * left_rect[2] / input_width_ +
+                        left_rect[0] - left_rect[2] * 0.5;
                     output_buffer_->lhand_lcam[kpt_index][1] =
-                        rsn_result->kpts[0][kpt_index][1] * lhand_lcam_rect.h / input_height_ + lhand_lcam_rect.y;
+                        rsn_result->kpts[0][kpt_index][1] * left_rect[3] / input_height_ + left_rect[1] -
+                        left_rect[3] * 0.5;
 
                     // 左手右目xy
                     output_buffer_->lhand_rcam[kpt_index][0] =
-                        ((input_width_ - 1) - rsn_result->kpts[1][kpt_index][0]) * lhand_rcam_rect.w / input_width_ +
-                        lhand_rcam_rect.x;
+                        ((input_width_ - 1) - rsn_result->kpts[1][kpt_index][0]) * right_rect[2] / input_width_ +
+                        right_rect[0] - right_rect[2] * 0.5;
                     output_buffer_->lhand_rcam[kpt_index][1] =
-                        rsn_result->kpts[1][kpt_index][1] * lhand_rcam_rect.h / input_height_ + lhand_rcam_rect.y;
+                        rsn_result->kpts[1][kpt_index][1] * right_rect[3] / input_height_ + right_rect[1] -
+                        right_rect[3] * 0.5;
                 }
             }
         }
@@ -145,14 +162,13 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
             // refs
             const Image& lcam_proto_image = image_data[0];
             const Image& rcam_proto_image = image_data[1];
+            const auto& rhand_bboxes = bbox_data.images_rhand_rects;
+            auto left_rect = GetCropBboxShape(rhand_bboxes[0][0]);
+            auto right_rect = GetCropBboxShape(rhand_bboxes[1][0]);
 
-            const DetectRect& rhand_lcam_rect = bbox_data.images_rhand_rects[0][0];
-            const DetectRect& rhand_rcam_rect = bbox_data.images_rhand_rects[1][0];
-
-            cv::Mat rhand_lcam_roi =
-                generate_roi_image(lcam_proto_image.m_mat, rhand_lcam_rect, input_width_, input_height_);
+            cv::Mat rhand_lcam_roi = generate_roi_image(lcam_proto_image.m_mat, left_rect, input_width_, input_height_);
             cv::Mat rhand_rcam_roi =
-                generate_roi_image(rcam_proto_image.m_mat, rhand_rcam_rect, input_width_, input_height_);
+                generate_roi_image(rcam_proto_image.m_mat, right_rect, input_width_, input_height_);
             std::vector<Image> rhand_cropped_rois;
             rhand_cropped_rois.emplace_back(rhand_lcam_roi);
             rhand_cropped_rois.emplace_back(rhand_rcam_roi);
@@ -164,15 +180,19 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
                 for (int kpt_index = 0; kpt_index < kAlgoKeypointNum; kpt_index++) {
                     // 右手左目xy
                     output_buffer_->rhand_lcam[kpt_index][0] =
-                        rsn_result->kpts[0][kpt_index][0] * rhand_lcam_rect.w / input_width_ + rhand_lcam_rect.x;
+                        rsn_result->kpts[0][kpt_index][0] * left_rect[2] / input_width_ + left_rect[0] -
+                        left_rect[2] * 0.5;
                     output_buffer_->rhand_lcam[kpt_index][1] =
-                        rsn_result->kpts[0][kpt_index][1] * rhand_lcam_rect.h / input_height_ + rhand_lcam_rect.y;
+                        rsn_result->kpts[0][kpt_index][1] * left_rect[3] / input_height_ + left_rect[1] -
+                        left_rect[3] * 0.5;
 
                     // 右手右目xy
                     output_buffer_->rhand_rcam[kpt_index][0] =
-                        rsn_result->kpts[1][kpt_index][0] * rhand_rcam_rect.w / input_width_ + rhand_rcam_rect.x;
+                        rsn_result->kpts[1][kpt_index][0] * right_rect[2] / input_width_ + right_rect[0] -
+                        right_rect[2] * 0.5;
                     output_buffer_->rhand_rcam[kpt_index][1] =
-                        rsn_result->kpts[1][kpt_index][1] * rhand_rcam_rect.h / input_height_ + rhand_rcam_rect.y;
+                        rsn_result->kpts[1][kpt_index][1] * right_rect[3] / input_height_ + right_rect[1] -
+                        right_rect[3] * 0.5;
                 }
             }
         }

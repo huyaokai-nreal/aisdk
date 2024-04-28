@@ -43,8 +43,7 @@ cv::Mat get_affine_transform(const aisdk::Vec4f_t& bbox_cs, const aisdk::Vec2f_t
     return warp_mat;
 }
 
-cv::Mat generate_roi_image(const cv::Mat& input_img, DetectRect input_bbox, int output_width, int output_hight) {
-    aisdk::Vec4f_t bbox_cs = bbox_xywh2cs({input_bbox.x, input_bbox.y, input_bbox.w, input_bbox.h});
+cv::Mat generate_roi_image(const cv::Mat& input_img, const Vec4f_t& bbox_cs, int output_width, int output_hight) {
     cv::Mat warp_matrix = get_affine_transform(bbox_cs, {0, 0}, 0., output_hight, output_width, false);
     cv::Mat result;
     cv::warpAffine(input_img, result, warp_matrix, {output_width, output_hight}, cv::INTER_LINEAR);
