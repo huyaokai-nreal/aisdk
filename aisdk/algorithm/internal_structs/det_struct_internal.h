@@ -13,6 +13,8 @@ struct DetOutputInternal {
     bool lhand_valid = false;
     bool rhand_valid = false;
 
+    bool det_flag = true;  // det or track
+
     void clear() {
         lhand_valid = false;
         rhand_valid = false;

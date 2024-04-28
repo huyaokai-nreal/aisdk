@@ -92,8 +92,7 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
         auto &lastframe_kpt3d = GlobalPredictorService::getInstance().get_kpt3d_world();
 
         std::unique_ptr<DetOutputInternal> output_buffer_ = absl::make_unique<DetOutputInternal>();
-
-        bool det_flag = true;
+        output_buffer_->det_flag = true;
 
         if ((det_tracker_step_ != 0) && (lastframe_kpt3d.lhand_valid || lastframe_kpt3d.rhand_valid)) {
             output_buffer_->images_lhand_rects.resize(2);
@@ -147,7 +146,7 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
             }
 
             if (output_buffer_->lhand_valid || output_buffer_->rhand_valid) {
-                det_flag = false;
+                output_buffer_->det_flag = false;
 
                 det_tracker_step_++;
                 if (det_tracker_step_ > 4) {
@@ -156,7 +155,7 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
             }
         }
 
-        if (det_flag) {
+        if (output_buffer_->det_flag) {
             // do detection
             auto &result = *output_buffer_;
 
