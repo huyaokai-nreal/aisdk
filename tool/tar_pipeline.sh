@@ -9,7 +9,7 @@ model_src_path=${pp}/thirdparty/ai_model_zoo/hand_tracking
 cp -r ${model_src_path} ${tar_path}/models
 # 需要进入目录后打包
 cd ${tar_path}
-tar -cvf ${tar_out} *_pipeline_config.json *.txt models
+tar -cvf ${tar_out} *.json *.txt models
 ${aes_tools} ${tar_out} ${tar_out}.enc enc > ${tar_out}.key
 # 删除中间文件
 rm ${tar_out}

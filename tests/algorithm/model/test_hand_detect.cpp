@@ -33,13 +33,14 @@ TEST_CASE("testing create netalgo") {
             continue;
 
         auto& config = pipelineConfig[j];
+        auto& global_shared_config = *config.global_shared_config;
         AISDK_LOG_INFO("j={} pipeline_name={}", j, config.pipeline_name.c_str());
 
-        for (uint32_t i = 0; i < config.node_name.size(); i++) {
-            AISDK_LOG_INFO("i={} node_name={}", i, config.node_name[i].c_str());
+        for (uint32_t i = 0; i < global_shared_config.netalgo_model_name.size(); i++) {
+            AISDK_LOG_INFO("i={} node_name={}", i, global_shared_config.netalgo_model_name[i].c_str());
             // netalgo_node的初始化
-            if (aisdk::xengine::NodeType::NET_ALGO == config.node_type[i] && "detect" == config.node_name[i]) {
-                auto &algo_tp = config.netnode_config[i];
+            if ("detect" == global_shared_config.netalgo_model_name[i]) {
+                auto &algo_tp = global_shared_config.netalgo_config[i];
                 aisdk::xengine::ModelConfig& pa = std::get<0>(algo_tp);
                 aisdk::xengine::SessionConfig& pb = std::get<1>(algo_tp);
                 aisdk::xengine::NetAlgoConfig& pc = std::get<2>(algo_tp);

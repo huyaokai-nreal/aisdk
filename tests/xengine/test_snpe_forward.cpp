@@ -61,6 +61,7 @@ TEST_CASE("testing snpe forward") {
     // 顺序找一个snpe模型
     for(uint32_t j = 0; j < pipelineConfig.size(); j++) {
         auto& config = pipelineConfig[j];
+        auto& global_shared_config = *config.global_shared_config;
         AISDK_LOG_INFO("j={} pipeline_name={} bind_runtime={}", j, config.pipeline_name.c_str(),
         config.related_feature.bind_runtime.c_str());
         if(config.related_feature.bind_runtime != "snpe_dsp" || config.related_feature.bind_sensor_orientation != "vertical") {
@@ -69,50 +70,48 @@ TEST_CASE("testing snpe forward") {
         
         std::vector<aisdk::xengine::BaseNetAlgo*> algolist;
 
-        for (uint32_t i = 0; i < config.node_name.size(); i++) {
-            AISDK_LOG_INFO("i={} node_name={}", i, config.node_name[i].c_str());
+        for (uint32_t i = 0; i < global_shared_config.netalgo_model_name.size(); i++) {
+            AISDK_LOG_INFO("i={} global_shared_config={}", i, global_shared_config.netalgo_model_name[i].c_str());
             // netalgo_node的初始化
-            if (aisdk::xengine::NodeType::NET_ALGO == config.node_type[i]) {
-                auto &algo_tp = config.netnode_config[i];
-                aisdk::xengine::ModelConfig pa = std::get<0>(algo_tp);
-                aisdk::xengine::SessionConfig pb = std::get<1>(algo_tp);
-                aisdk::xengine::NetAlgoConfig &pc = std::get<2>(algo_tp);
-                AISDK_LOG_INFO("algo_name={}", pc.algo_name.c_str());
-                if (pc.has_param) {
-                    AISDK_LOG_INFO("algo_param={}", pc.algo_param.c_str());
-                }
-
-                if(pa.vendor_type != aisdk::xengine::VendorType::SNPE) {
-                    continue;
-                }
-                aisdk::xengine::BaseNetAlgo* basealgo = symfuncs->m_createnetalgo(nullptr, nullptr, nullptr, nullptr);
-                CHECK(basealgo);
-                auto initok = basealgo->Init(pc.net_unique_id, pa, pb);
-                if(initok.ok()) {
-                    aisdk::xengine::IoTensors iots = basealgo->GetInputTensors();
-                    PrintfHalIoTensors(iots);
-                    aisdk::xengine::IoTensors oots = basealgo->GetOutputTensors();
-                    PrintfHalIoTensors(oots);
-
-                    std::random_device rd;  // 随机设备用于生成种子
-                    std::mt19937 gen(rd());  // 使用 Mersenne Twister 引擎
-
-                    // 创建一个均匀分布的随机数生成器，范围为 [0.0, 1.0)
-                    std::uniform_real_distribution<float> dis(0.0f, 1.0f);
-                    for (uint32_t i = 0; i < iots.m_multishape_num; ++i) {
-                        aisdk::xengine::Tensor& tensor = iots.m_tensors[i];
-                        for(uint32_t j = 0; j <  tensor.m_elementsize; j++) {
-                            float random_float = dis(gen);
-                            // printf("random_float= %f \n",random_float);
-                            ((float*)tensor.m_viraddr)[j] = random_float;
-                        }
-                    }
-                } else {
-                    symfuncs->m_destorynetalgo(basealgo);
-                    continue;
-                }
-                algolist.push_back(basealgo);
+            auto &algo_tp = global_shared_config.netalgo_config[i];
+            aisdk::xengine::ModelConfig pa = std::get<0>(algo_tp);
+            aisdk::xengine::SessionConfig pb = std::get<1>(algo_tp);
+            aisdk::xengine::NetAlgoConfig &pc = std::get<2>(algo_tp);
+            AISDK_LOG_INFO("algo_name={}", pc.algo_name.c_str());
+            if (pc.has_param) {
+                AISDK_LOG_INFO("algo_param={}", pc.algo_param.c_str());
             }
+
+            if(pa.vendor_type != aisdk::xengine::VendorType::SNPE) {
+                continue;
+            }
+            aisdk::xengine::BaseNetAlgo* basealgo = symfuncs->m_createnetalgo(nullptr, nullptr, nullptr, nullptr);
+            CHECK(basealgo);
+            auto initok = basealgo->Init(pc.net_unique_id, pa, pb);
+            if(initok.ok()) {
+                aisdk::xengine::IoTensors iots = basealgo->GetInputTensors();
+                PrintfHalIoTensors(iots);
+                aisdk::xengine::IoTensors oots = basealgo->GetOutputTensors();
+                PrintfHalIoTensors(oots);
+
+                std::random_device rd;  // 随机设备用于生成种子
+                std::mt19937 gen(rd());  // 使用 Mersenne Twister 引擎
+
+                // 创建一个均匀分布的随机数生成器，范围为 [0.0, 1.0)
+                std::uniform_real_distribution<float> dis(0.0f, 1.0f);
+                for (uint32_t i = 0; i < iots.m_multishape_num; ++i) {
+                    aisdk::xengine::Tensor& tensor = iots.m_tensors[i];
+                    for(uint32_t j = 0; j <  tensor.m_elementsize; j++) {
+                        float random_float = dis(gen);
+                        // printf("random_float= %f \n",random_float);
+                        ((float*)tensor.m_viraddr)[j] = random_float;
+                    }
+                }
+            } else {
+                symfuncs->m_destorynetalgo(basealgo);
+                continue;
+            }
+            algolist.push_back(basealgo);
         }
 
         AISDK_LOG_INFO("---------start forward");

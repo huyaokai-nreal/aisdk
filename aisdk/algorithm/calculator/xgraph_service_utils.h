@@ -35,38 +35,36 @@ class XGraphServiceUtils {
         }
 
         std::shared_ptr<T> handle;
-        auto& config = m_pipelineconfig[parent_graph];
-        for (uint32_t i = 0; i < config.node_name.size(); i++) {
-            if (config.node_name[i] == node_name) {
+        auto& config = m_pipelineconfig[parent_graph].global_shared_config;
+        for (uint32_t i = 0; i < config->netalgo_model_name.size(); i++) {
+            if (config->netalgo_model_name[i] == node_name) {
                 AISDK_LOG_TRACE("XrMediaServiceUtils::CreateNetAlgoBase node_name={}", node_name.c_str());
                 // netalgo_node的初始化
-                if (aisdk::xengine::NodeType::NET_ALGO == config.node_type[i]) {
-                    auto& algo_tp = config.netnode_config[i];
-                    aisdk::xengine::ModelConfig& pa = std::get<0>(algo_tp);
-                    aisdk::xengine::SessionConfig& pb = std::get<1>(algo_tp);
-                    aisdk::xengine::NetAlgoConfig& pc = std::get<2>(algo_tp);
-                    if (aisdk::base::DebugProfiling::Get().GetOpt().aisdk_init_report) {
-                        AISDK_LOG_TRACE("CreateNetAlgoBase algo_name={}", pc.algo_name.c_str());
-                    }
+                auto& algo_tp = config->netalgo_config[i];
+                aisdk::xengine::ModelConfig& pa = std::get<0>(algo_tp);
+                aisdk::xengine::SessionConfig& pb = std::get<1>(algo_tp);
+                aisdk::xengine::NetAlgoConfig& pc = std::get<2>(algo_tp);
+                if (aisdk::base::DebugProfiling::Get().GetOpt().aisdk_init_report) {
+                    AISDK_LOG_TRACE("CreateNetAlgoBase algo_name={}", pc.algo_name.c_str());
+                }
 
-                    handle = std::make_shared<T>();
-                    auto net = m_funcs.m_createnetalgo(NULL, NULL, NULL, NULL);
-                    if (nullptr == net) {
-                        AISDK_LOG_TRACE("CreateNetAlgo algo_name={} Failure !!!", pc.algo_name.c_str());
-                        break;
-                    }
-                    AISDK_LOG_TRACE("CreateNetAlgoBase: {}", (void *)net);
-                    BaseNetAlgoPtr net_ptr(net, XGraphServiceUtils::DeleteNetAlgoBase);
-                    handle->SetBaseNetAlgo(net_ptr);
-                    auto ret = handle->Init(pc, pa, pb);
-                    if (!ret.ok()) {
-                        handle = nullptr;
-                    }
+                handle = std::make_shared<T>();
+                auto net = m_funcs.m_createnetalgo(NULL, NULL, NULL, NULL);
+                if (nullptr == net) {
+                    AISDK_LOG_TRACE("CreateNetAlgo algo_name={} Failure !!!", pc.algo_name.c_str());
+                    break;
+                }
+                AISDK_LOG_TRACE("CreateNetAlgoBase: {}", (void *)net);
+                BaseNetAlgoPtr net_ptr(net, XGraphServiceUtils::DeleteNetAlgoBase);
+                handle->SetBaseNetAlgo(net_ptr);
+                auto ret = handle->Init(pc, pa, pb);
+                if (!ret.ok()) {
+                    handle = nullptr;
+                }
 
-                    if (nullptr == handle) {
-                        AISDK_LOG_TRACE("CreateNetAlgoBase algo_name={} Failure !!!", pc.algo_name.c_str());
-                        break;
-                    }
+                if (nullptr == handle) {
+                    AISDK_LOG_TRACE("CreateNetAlgoBase algo_name={} Failure !!!", pc.algo_name.c_str());
+                    break;
                 }
             }
         }

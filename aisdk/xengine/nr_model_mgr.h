@@ -1,6 +1,7 @@
 #ifndef _NRHAL_MODEL_MGR_H_
 #define _NRHAL_MODEL_MGR_H_
 
+#include <memory>
 #include "nrhal_common.h"
 
 #define N2S(x) #x
@@ -46,8 +47,20 @@ using NetAlgoNodeTupleConfig = std::tuple<aisdk::xengine::ModelConfig, aisdk::xe
 using LogicAlgoNodeTupleConfig = std::tuple<aisdk::xengine::LogicAlgoConfig>;
 
 struct PipelineRelatedFeature {
+    std::string bind_glass;               // "ella / flora"
     std::string bind_sensor_orientation;  // "horizontal / vertical"
     std::string bind_runtime;             // "snpe_dsp / cpu"
+};
+
+struct GlobalSharedConfig {
+    // 网络模型名称
+    std::vector<std::string> netalgo_model_name;
+    // 网络算法配置
+    std::vector<aisdk::xengine::NetAlgoNodeTupleConfig> netalgo_config;
+    // 逻辑算法名称
+    std::vector<std::string> logicalgo_name;
+    // 逻辑算法配置
+    std::vector<aisdk::xengine::LogicAlgoNodeTupleConfig> logicalgo_config;
 };
 
 struct PipelineConfig {
@@ -57,14 +70,8 @@ struct PipelineConfig {
     aisdk::xengine::FrameworkType framework_type;
     // graph 配置
     std::string graph_config;
-    // node名称
-    std::vector<std::string> node_name;
-    // node类型
-    std::vector<aisdk::xengine::NodeType> node_type;
-    // 网络node配置
-    std::vector<aisdk::xengine::NetAlgoNodeTupleConfig> netnode_config;
-    // 逻辑node配置
-    std::vector<aisdk::xengine::LogicAlgoNodeTupleConfig> logicnode_config;
+    // 共享的模型配置
+    std::shared_ptr<GlobalSharedConfig> global_shared_config;
     // pipeline关联的特性
     PipelineRelatedFeature related_feature;
 };
@@ -88,6 +95,7 @@ class AnalysisTar {
     // 解析tar包转换pipeline
     bool Analysis(unsigned char *tar_mem, uint32_t tar_len);
     std::vector<PipelineConfig> m_config;
+    std::shared_ptr<GlobalSharedConfig> m_global_shared_config;
 };
 
 }  // namespace aisdk::xengine

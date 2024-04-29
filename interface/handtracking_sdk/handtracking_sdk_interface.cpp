@@ -97,17 +97,15 @@ NRPluginResult HandTracking::GetHandData(NRPluginHandle handle, uint64_t hmd_tim
     }
     auto* ins = Plugin::GetInstance();
     auto& pipeline = ins->GetPipeline();
-    if (ins->pipeline_name == "handtracking_bino_graph_v2.0.0") {
-        std::shared_ptr<task::HandTrackingXGraph> impl =
-            std::dynamic_pointer_cast<task::HandTrackingXGraph>(pipeline.Impl());
-        aisdk::algorithm::Status status = impl->PopResult(hmd_time_nanos, out_hand_num, out_hand_array);
-        if (status == aisdk::algorithm::Status::SUCCESS) {
-            return NR_PLUGIN_RESULT_SUCCESS;
-            AISDK_LOG_TRACE("HandTracking: pop result success!");
-        } else {
-            *out_hand_num = 0;
-            // AISDK_LOG_TRACE("HandTracking: pop result failed!");
-        }
+    std::shared_ptr<task::HandTrackingXGraph> impl =
+        std::dynamic_pointer_cast<task::HandTrackingXGraph>(pipeline.Impl());
+    aisdk::algorithm::Status status = impl->PopResult(hmd_time_nanos, out_hand_num, out_hand_array);
+    if (status == aisdk::algorithm::Status::SUCCESS) {
+        return NR_PLUGIN_RESULT_SUCCESS;
+        AISDK_LOG_TRACE("HandTracking: pop result success!");
+    } else {
+        *out_hand_num = 0;
+        // AISDK_LOG_TRACE("HandTracking: pop result failed!");
     }
 
     return NR_PLUGIN_RESULT_FAILURE;
@@ -117,20 +115,18 @@ int HandTracking::GetHandTrackingMidExecInfo(ProfilingInfo* info) {
     (void)info;
     auto* ins = Plugin::GetInstance();
     auto& pipline = ins->GetPipeline();
-    if (ins->pipeline_name == "handtracking_bino_graph_v2.0.0") {
-        std::shared_ptr<task::HandTrackingXGraph> impl =
-            std::dynamic_pointer_cast<task::HandTrackingXGraph>(pipline.Impl());
-        // NrCore::Status status = impl->PopExecInfo(tmp);
-        // if (status == NrCore::Status::SUCCESS) {
-        //     info->timestamp = result->timestamp;
-        //     uint32_t lens = result->noderesult_jsonstring.size();
-        //     // 使用者释放
-        //     info->noderesult_jsonstring = (char*)malloc(lens + 1);
-        //     memcpy(info->noderesult_jsonstring, result->noderesult_jsonstring.data(), lens);
-        //     info->noderesult_jsonstring[lens] = '\0';
-        //     return 0;
-        // }
-    }
+    std::shared_ptr<task::HandTrackingXGraph> impl =
+        std::dynamic_pointer_cast<task::HandTrackingXGraph>(pipline.Impl());
+    // NrCore::Status status = impl->PopExecInfo(tmp);
+    // if (status == NrCore::Status::SUCCESS) {
+    //     info->timestamp = result->timestamp;
+    //     uint32_t lens = result->noderesult_jsonstring.size();
+    //     // 使用者释放
+    //     info->noderesult_jsonstring = (char*)malloc(lens + 1);
+    //     memcpy(info->noderesult_jsonstring, result->noderesult_jsonstring.data(), lens);
+    //     info->noderesult_jsonstring[lens] = '\0';
+    //     return 0;
+    // }
     return -1;
 }
 
@@ -605,15 +601,13 @@ NRPluginResult HandTracking::ParseAllCameraData(const NRGrayscaleCameraFrameData
     head_pose = headpose_proto.transform;
 
     auto& pipeline = ins->GetPipeline();
-    if (ins->pipeline_name == "handtracking_bino_graph_v2.0.0") {
-        std::shared_ptr<task::HandTrackingXGraph> impl =
-            std::dynamic_pointer_cast<task::HandTrackingXGraph>(pipeline.Impl());
-        std::vector<aisdk::algorithm::Image> images;
-        images.emplace_back(std::move(d1));
-        images.emplace_back(std::move(d2));
-        impl->PushData(nano_time_[0], images, head_pose);
-        AISDK_LOG_TRACE("interface HandTrackingXGraph::PushData");
-    }
+    std::shared_ptr<task::HandTrackingXGraph> impl =
+        std::dynamic_pointer_cast<task::HandTrackingXGraph>(pipeline.Impl());
+    std::vector<aisdk::algorithm::Image> images;
+    images.emplace_back(std::move(d1));
+    images.emplace_back(std::move(d2));
+    impl->PushData(nano_time_[0], images, head_pose);
+    AISDK_LOG_TRACE("interface HandTrackingXGraph::PushData");
 
     return errorcode;
 }
@@ -749,7 +743,7 @@ std::vector<int> SelectPipeline(std::vector<aisdk::xengine::PipelineConfig>& pip
     for (uint32_t i = 0; i < pipelines.size(); i++) {
         auto& config = pipelines[i];
         if (cam_is_horizontal && config.related_feature.bind_sensor_orientation == "horizontal") {
-            if (plat.is_snpe_support && config.related_feature.bind_runtime == "snpe_dsp") {
+            if (plat.is_snpe_support && config.related_feature.bind_runtime == "snpedsp") {
                 pipeline_policy.push_back(i);
                 continue;
             }
@@ -759,7 +753,7 @@ std::vector<int> SelectPipeline(std::vector<aisdk::xengine::PipelineConfig>& pip
                 continue;
             }
         } else if (false == cam_is_horizontal && config.related_feature.bind_sensor_orientation == "vertical") {
-            if (plat.is_snpe_support && config.related_feature.bind_runtime == "snpe_dsp") {
+            if (plat.is_snpe_support && config.related_feature.bind_runtime == "snpedsp") {
                 pipeline_policy.push_back(i);
                 continue;
             }
@@ -904,13 +898,8 @@ NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
                     auto& pipline = ins->GetPipeline();
                     // 需要指定具体的实现
                     aisdk::algorithm::Status status;
-                    if (tmp[pipeline_index].pipeline_name == "handtracking_bino_graph_v2.0.0") {
-                        status = pipline.Init<task::HandTrackingXGraph>(ins->m_handtracking.m_funcs,
-                                                                        tmp[pipeline_index], ins->m_hmd.m_cam_param);
-                    } else {
-                        AISDK_LOG_INFO("HandTracking: not found XGraph!");
-                        continue;
-                    }
+                    status = pipline.Init<task::HandTrackingXGraph>(ins->m_handtracking.m_funcs, tmp[pipeline_index],
+                                                                    ins->m_hmd.m_cam_param);
                     if (status == aisdk::algorithm::Status::SUCCESS) {
                         ins->pipeline_name = tmp[pipeline_index].pipeline_name;
                         AISDK_LOG_WARN("HandTracking: Initialized!");

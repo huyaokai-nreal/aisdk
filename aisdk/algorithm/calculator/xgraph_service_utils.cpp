@@ -23,23 +23,14 @@ std::string XGraphServiceUtils::GetPipelineNodeAlgoParam(void *parent_graph, std
     }
 
     std::string params;
-    auto &config = m_pipelineconfig[parent_graph];
-    for (uint32_t i = 0; i < config.node_name.size(); i++) {
-        if (config.node_name[i] == node_name) {
-            if (aisdk::xengine::NodeType::NET_ALGO == config.node_type[i]) {
-                auto &algo_tp = config.netnode_config[i];
-                aisdk::xengine::NetAlgoConfig &pc = std::get<2>(algo_tp);
-                if (pc.has_param) {
-                    AISDK_LOG_TRACE("GetPipelineNodeAlgoParam algo_param={}", pc.algo_param.c_str());
-                    params = pc.algo_param;
-                }
-            } else {
-                auto &logicnode_tp = config.logicnode_config[i];
-                aisdk::xengine::LogicAlgoConfig pa = std::get<0>(logicnode_tp);
-                if (pa.has_param) {
-                    AISDK_LOG_TRACE("GetPipelineNodeAlgoParam algo_param={}", pa.algo_param.c_str());
-                    params = pa.algo_param;
-                }
+    auto &config = m_pipelineconfig[parent_graph].global_shared_config;
+    for (uint32_t i = 0; i < config->netalgo_model_name.size(); i++) {
+        if (config->netalgo_model_name[i] == node_name) {
+            auto &algo_tp = config->netalgo_config[i];
+            aisdk::xengine::NetAlgoConfig &pc = std::get<2>(algo_tp);
+            if (pc.has_param) {
+                AISDK_LOG_TRACE("GetPipelineNodeAlgoParam algo_param={}", pc.algo_param.c_str());
+                params = pc.algo_param;
             }
         }
     }

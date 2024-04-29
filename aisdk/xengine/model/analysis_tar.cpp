@@ -1,5 +1,8 @@
 #include <stdlib.h>
 
+#include <memory>
+#include <string>
+
 #include "aes.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/profiling.h"
@@ -48,32 +51,36 @@ class DecodeAes {
 };
 
 void CleanPipelineConfig(PipelineConfig &configs) {
+    // 目前里面为空
+}
+
+void CleanGlobalSharedConfig(GlobalSharedConfig &configs) {
     // 清除中间过程中产生的file的copy
-    for (uint32_t i = 0; i < configs.node_type.size(); i++) {
-        if (NodeType::NET_ALGO == configs.node_type[i]) {
-            auto &netnode = configs.netnode_config[i];
-            aisdk::xengine::ModelConfig &model = std::get<0>(netnode);
-            if (model.model_mem) {
-                free((void *)model.model_mem);
-                model.model_mem = nullptr;
-            }
-        } else {
-            auto &logicnode = configs.logicnode_config[i];
-            aisdk::xengine::LogicAlgoConfig &tmp = std::get<0>(logicnode);
-            for (auto &iter : tmp.files) {
-                if (iter.file_mem) {
-                    free((void *)iter.file_mem);
-                    iter.file_mem = nullptr;
-                }
-            }
-            tmp.files.clear();
+    for (uint32_t i = 0; i < configs.netalgo_model_name.size(); i++) {
+        auto &netnode = configs.netalgo_config[i];
+        aisdk::xengine::ModelConfig &model = std::get<0>(netnode);
+        if (model.model_mem) {
+            free((void *)model.model_mem);
+            model.model_mem = nullptr;
         }
     }
 
-    configs.node_name.clear();
-    configs.node_type.clear();
-    configs.netnode_config.clear();
-    configs.logicnode_config.clear();
+    for (uint32_t i = 0; i < configs.logicalgo_name.size(); i++) {
+        auto &logicnode = configs.logicalgo_config[i];
+        aisdk::xengine::LogicAlgoConfig &tmp = std::get<0>(logicnode);
+        for (auto &iter : tmp.files) {
+            if (iter.file_mem) {
+                free((void *)iter.file_mem);
+                iter.file_mem = nullptr;
+            }
+        }
+        tmp.files.clear();
+    }
+
+    configs.netalgo_model_name.clear();
+    configs.netalgo_config.clear();
+    configs.logicalgo_name.clear();
+    configs.logicalgo_config.clear();
 }
 
 aisdk::xengine::VendorType ConvertVendorType(const std::string &mode) {
@@ -283,85 +290,35 @@ bool GenerateNetalgoConfig(Json::Value &root, aisdk::xengine::NetAlgoConfig &con
             Json::FastWriter writer;
             config.algo_param = writer.write(netalgo_config["params"]);
         }
-        return true;
     }
-    // 必须参数
-    return false;
-}
-
-bool GeneratePipelineMainConfig(Json::Value &root, mtar_t &tar, PipelineConfig &config) {
-    auto &pipeline = root["pipeline"];
-    // 必须参数
-    config.pipeline_name = pipeline["name"].asString();
-    config.related_feature.bind_sensor_orientation = pipeline["feature"]["bind_sensor_orientation"].asString();
-    config.related_feature.bind_runtime = pipeline["feature"]["bind_runtime"].asString();
-
-    // 必须参数
-    if (pipeline.isMember("framework") && pipeline["framework"].isString()) {
-        std::string framework = pipeline["framework"].asString();
-        if (framework == "xgraph") {
-            config.framework_type = aisdk::xengine::FrameworkType::XGRAPH;
-
-            if (pipeline.isMember("xgraph_prototxt") && pipeline["xgraph_prototxt"].isString()) {
-                mtar_header_t h;
-                if (MTAR_ESUCCESS == mtar_find(&tar, pipeline["xgraph_prototxt"].asCString(), &h)) {
-                    void *p = nullptr;
-                    mtar_mem_read_data(&tar, &p, h.size);
-                    config.graph_config = std::string((const char *)p, h.size);
-                    if (aisdk::base::DebugProfiling::Get().GetOpt().aisdk_init_report) {
-                        AISDK_LOG_TRACE("\n\n{}\n\n", config.graph_config.c_str());
-                    }
-                } else {
-                    return false;
-                }
-            } else {
-                return false;
-            }
-        } else {
-            config.framework_type = aisdk::xengine::FrameworkType::XREAL_SIMPLE_SERIAL;
-        }
-    } else {
-        config.framework_type = aisdk::xengine::FrameworkType::XREAL_SIMPLE_SERIAL;
-    }
-    // 必须参数
+    // 非必须参数
     return true;
 }
 
-bool GeneratePipelineConfig(Json::Value &root, mtar_t &tar, PipelineConfig &config) {
-    // 3个核心关键字检查
-    if (root.isMember("pipeline") && root["pipeline"].isObject() && root.isMember("netalgo_node") &&
-        root["netalgo_node"].isObject() && root.isMember("logicalgo_node") && root["logicalgo_node"].isObject()) {
-        if (false == GeneratePipelineMainConfig(root, tar, config)) {
-            return false;
-        }
+bool GenerateGlobalSharedConfig(Json::Value &root, mtar_t &tar, aisdk::xengine::GlobalSharedConfig &config) {
+    // 核心关键字检查
+    if (root.isMember("models_mgr") && root["models_mgr"].isObject()) {
+        auto &models_mgr = root["models_mgr"];
+        if (models_mgr.isMember("models_name") && models_mgr["models_name"].isArray()) {
+            auto &models_name = models_mgr["models_name"];
+            config.netalgo_model_name.resize(models_name.size());
+            config.netalgo_config.resize(models_name.size());
 
-        auto &pipeline = root["pipeline"];
-        auto &netalgo_node = root["netalgo_node"];
-        auto &logicalgo_node = root["logicalgo_node"];
-
-        // 遍历node信息
-        if (pipeline.isMember("node") && pipeline["node"].isArray()) {
-            auto &node = pipeline["node"];
-
-            config.node_name.resize(node.size());
-            config.node_type.resize(node.size());
-            config.netnode_config.resize(node.size());
-            config.logicnode_config.resize(node.size());
-            // 遍历node信息
-            for (uint32_t i = 0; i < node.size(); i++) {
+            // 遍历模型信息
+            for (uint32_t i = 0; i < models_name.size(); i++) {
                 // 加载node关联的algo的配置
-                config.node_name[i] = node[i].asString();
+                config.netalgo_model_name[i] = models_name[i].asString();
                 // std::cout << config.node_name[i] << std::endl;
                 // 优先确定是netalgo
-                if (netalgo_node.isMember(node[i].asString()) && netalgo_node[node[i].asString()].isObject()) {
-                    auto &node_config = netalgo_node[node[i].asString()];
+                if (models_mgr.isMember(models_name[i].asString()) &&
+                    models_mgr[models_name[i].asString()].isObject()) {
+                    auto &node_config = models_mgr[models_name[i].asString()];
                     NetAlgoNodeTupleConfig tp;
                     // 按步找关键配置
                     if (GenerateNetalgoConfig(node_config, std::get<2>(tp))) {
                         if (GenerateSessionConfig(node_config, tar, std::get<1>(tp))) {
                             if (GenerateModelConfig(node_config, tar, std::get<0>(tp), std::get<2>(tp))) {
-                                config.node_type[i] = NodeType::NET_ALGO;
-                                config.netnode_config[i] = std::move(tp);
+                                config.netalgo_config[i] = std::move(tp);
                             } else {
                                 return false;
                             }
@@ -371,21 +328,8 @@ bool GeneratePipelineConfig(Json::Value &root, mtar_t &tar, PipelineConfig &conf
                     } else {
                         return false;
                     }
-                } else {
-                    // 这里是无需model推理执行的纯逻辑代码node, node可能没有任何参数
-                    LogicAlgoNodeTupleConfig lp;
-                    if (logicalgo_node.isMember(node[i].asString()) && logicalgo_node[node[i].asString()].isObject()) {
-                        auto &logic_node_config = logicalgo_node[node[i].asString()];
-                        if (GenerateLogicAlgoConfig(logic_node_config, tar, std::get<0>(lp))) {
-                        } else {
-                            return false;
-                        }
-                    }
-                    config.node_type[i] = NodeType::LOGIC_ALGO;
-                    config.logicnode_config[i] = std::move(lp);
                 }
             }
-
             return true;
         }
     }
@@ -399,6 +343,10 @@ void AnalysisTar::ReleaseCache() {
         CleanPipelineConfig(iter);
     }
     configs.clear();
+    if (m_global_shared_config) {
+        CleanGlobalSharedConfig(*m_global_shared_config);
+        m_global_shared_config = nullptr;
+    }
 }
 
 AnalysisTar::AnalysisTar() {}
@@ -408,6 +356,7 @@ bool AnalysisTar::Analysis(unsigned char *tar_mem, uint32_t tar_len) {
     // 清空历史缓存的
     ReleaseCache();
     std::vector<PipelineConfig> &configs = GetPipelineConfig();
+    m_global_shared_config = std::make_shared<GlobalSharedConfig>();
 
     mtar_t tar;
     mtar_header_t h;
@@ -419,35 +368,72 @@ bool AnalysisTar::Analysis(unsigned char *tar_mem, uint32_t tar_len) {
         return false;
     }
 
-    // 目前我们支持1个tar包最多3条pipeline
-    for (uint32_t i = 0; i < MAX_PIPELINE_NUMS_INTAR; i++) {
-        // 查找固定的名称"0_pipeline_config.json"
-        std::string tar_pipelinename = std::to_string(i) + std::string("_pipeline_config.json");
+    if (1) {
+        // 查找固定的名称
+        std::string tar_global_shared_config = "global_shared_config.json";
         // 读取config.json并解析
-        if (MTAR_ESUCCESS == mtar_find(&tar, tar_pipelinename.c_str(), &h)) {
+        if (MTAR_ESUCCESS == mtar_find(&tar, tar_global_shared_config.c_str(), &h)) {
             void *p = nullptr;
             // 这里引用tar内存即可
             mtar_mem_read_data(&tar, &p, h.size);
             if (p) {
                 if (aisdk::base::DebugProfiling::Get().GetOpt().aisdk_init_report) {
-                    AISDK_LOG_TRACE("AnalysisTar::Analysis tar_pipelinename={}", tar_pipelinename.c_str());
+                    AISDK_LOG_TRACE("AnalysisTar::Analysis tar_pipelinename={}", tar_global_shared_config.c_str());
                     std::string tmp((char *)p, h.size);
                     AISDK_LOG_TRACE("\n\n{}\n\n", tmp.c_str());
                 }
-                Json::Value pipeline_config_json;
+                Json::Value global_shared_config_json;
                 Json::Reader reader;
-                if (!reader.parse((char *)p, (char *)p + h.size, pipeline_config_json)) {
+                if (!reader.parse((char *)p, (char *)p + h.size, global_shared_config_json)) {
                     AISDK_LOG_TRACE("load pipeline_config.json error");
-                    continue;
+                    return false;
                 } else {
-                    PipelineConfig conifg;
-                    if (GeneratePipelineConfig(pipeline_config_json, tar, conifg)) {
-                        configs.emplace_back(std::move(conifg));
+                    auto &global_shared_config = *m_global_shared_config;
+                    if (GenerateGlobalSharedConfig(global_shared_config_json, tar, global_shared_config)) {
                     } else {
                         // 中间生成报错，清除中间资源
-                        CleanPipelineConfig(conifg);
+                        CleanGlobalSharedConfig(global_shared_config);
+                        AISDK_LOG_TRACE("AnalysisTar::Analysis GenerateGlobalSharedConfig failure\n");
+                        return false;
                     }
                 }
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+
+    // 目前我们支持1个tar包最多4条pipeline
+    std::vector<std::string> hand_graphs = {"graph_ella_snpedsp.txt", "graph_ella_cpu.txt", "graph_flora_snpedsp.txt",
+                                            "graph_flora_cpu.txt"};
+    for (uint32_t i = 0; i < hand_graphs.size(); i++) {
+        // 查找固定的名称
+        std::string tar_hand_graph = hand_graphs[i];
+        // 读取config.json并解析
+        if (MTAR_ESUCCESS == mtar_find(&tar, tar_hand_graph.c_str(), &h)) {
+            void *p = nullptr;
+            // 这里引用tar内存即可
+            mtar_mem_read_data(&tar, &p, h.size);
+            if (p) {
+                PipelineConfig pipelineconifg;
+                pipelineconifg.pipeline_name = tar_hand_graph;
+                pipelineconifg.framework_type = aisdk::xengine::FrameworkType::XGRAPH;
+                pipelineconifg.graph_config = std::string((const char *)p, h.size);
+                pipelineconifg.global_shared_config = m_global_shared_config;
+                pipelineconifg.related_feature.bind_glass =
+                    (tar_hand_graph.find("ella") != std::string::npos) ? "ella" : "flora";
+                pipelineconifg.related_feature.bind_sensor_orientation =
+                    (tar_hand_graph.find("ella") != std::string::npos) ? "horizontal" : "vertical";
+                pipelineconifg.related_feature.bind_runtime =
+                    (tar_hand_graph.find("snpedsp") != std::string::npos) ? "snpedsp" : "cpu";
+
+                if (aisdk::base::DebugProfiling::Get().GetOpt().aisdk_init_report) {
+                    AISDK_LOG_TRACE("AnalysisTar::Analysis tar_hand_graph={}", tar_hand_graph.c_str());
+                    AISDK_LOG_TRACE("\n\n{}\n\n", pipelineconifg.graph_config.c_str());
+                }
+                configs.emplace_back(std::move(pipelineconifg));
             }
         }
     }

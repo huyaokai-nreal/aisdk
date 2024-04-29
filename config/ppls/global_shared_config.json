@@ -1,26 +1,15 @@
 {
-    "pipeline": {
-        "name": "handtracking_bino_graph_v2.0.0",
-        "framework": "xgraph",
-        "xgraph_prototxt": "graph_flora.txt",
-        "node": [
+    "models_mgr": {
+        "_statement": "the models name is globally unique",
+        "models_name": [
             "detect",
             "2d_rtmtiny",
             "2d_rsnnano",
             "2d_filter",
             "3d_lift",
-            "3d_liftnimble",
-            "3d_mano",
-            "transfer",
-            "globalfilter",
-            "gesture"
+            "3d_lift_ella",
+            "3d_liftnimble"
         ],
-        "feature": {
-            "bind_sensor_orientation": "vertical",
-            "bind_runtime": "snpe_dsp"
-        }
-    },
-    "netalgo_node": {
         "detect": {
             "model_config": {
                 "file_name": "models/det_tiny_240415.h2.s.B.ppq.snpe.quantized.dlc",
@@ -35,13 +24,6 @@
                     "output_box",
                     "output_cls"
                 ]
-            },
-            "netalgo_config": {
-                "name": "handdetect_v2.0.0",
-                "params": {
-                    "iou_threshod": 0.45,
-                    "score_threshod": 0.5
-                }
             }
         },
         "2d_rtmtiny": {
@@ -58,9 +40,6 @@
                     "feat_x",
                     "feat_y"
                 ]
-            },
-            "netalgo_config": {
-                "name": "rtmtiny_v1.0.0"
             }
         },
         "2d_filter": {
@@ -74,9 +53,6 @@
                 "precision": "float32",
                 "thread_num": 1,
                 "runtime": "cpu"
-            },
-            "netalgo_config": {
-                "name": "hand2dfilter_v1.0.0"
             }
         },
         "2d_rsnnano": {
@@ -85,13 +61,28 @@
                 "vendor": "mnn"
             },
             "session_config": {
-                "batch": 1,
+                "batch": 2,
                 "precision": "float16",
                 "thread_num": 1,
-                "runtime": "cpu"
+                "runtime": "cpu",
+                "input_tensors": [
+                    "input"
+                ],
+                "output_tensors": [
+                    "kpt"
+                ]
+            }
+        },
+        "3d_lift_ella": {
+            "model_config": {
+                "file_name": "models/GMLP_20230417.mnn",
+                "vendor": "mnn"
             },
-            "netalgo_config": {
-                "name": "nano25_v1.0.0"
+            "session_config": {
+                "batch": 1,
+                "precision": "float32",
+                "thread_num": 1,
+                "runtime": "cpu"
             }
         },
         "3d_lift": {
@@ -104,17 +95,6 @@
                 "precision": "float32",
                 "thread_num": 1,
                 "runtime": "cpu"
-            },
-            "input_tensors": [
-                "feat",
-                "mem_in"
-            ],
-            "output_tensors": [
-                "kpt",
-                "mem_out"
-            ],
-            "netalgo_config": {
-                "name": "gmlplift_v3.0.0"
             }
         },
         "3d_liftnimble": {
@@ -127,32 +107,6 @@
                 "precision": "float32",
                 "thread_num": 1,
                 "runtime": "cpu"
-            },
-            "input_tensors": [
-                "feat",
-                "mem_in"
-            ],
-            "output_tensors": [
-                "shape",
-                "angle",
-                "svd_pt",
-                "mem_out"
-            ],
-            "netalgo_config": {
-                "name": "gmlplift_v3.0.0"
-            }
-        }
-    },
-    "logicalgo_node": {
-        "3d_mano": {
-            "params": {
-                "3dscore_threshod": 0.2
-            }
-        },
-        "gesture": {
-            "params": {
-                "exitPinchDisntace": 0.03,
-                "enterPinchDistance": 0.025
             }
         }
     }
