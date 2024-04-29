@@ -4,6 +4,7 @@
         "models_name": [
             "detect",
             "2d_rtmtiny",
+            "2d_rsntiny",
             "2d_rsnnano",
             "2d_filter",
             "3d_lift",
@@ -23,6 +24,21 @@
                 "output_tensors": [
                     "output_box",
                     "output_cls"
+                ]
+            }
+        },
+        "2d_rsntiny": {
+            "model_config": {
+                "file_name": "models/rsntiny_affine_25d_bs2_128_240312_5c3d96_quantized.dlc",
+                "vendor": "snpe"
+            },
+            "session_config": {
+                "batch": 2,
+                "precision": "int8",
+                "thread_num": 1,
+                "runtime": "dsp",
+                "output_tensors": [
+                    "feat"
                 ]
             }
         },
