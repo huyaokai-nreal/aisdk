@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <unistd.h>
 
+#include <cstdint>
 #include <string>
 
 std::string _CutParenthesesNTail(std::string&& prettyFuncon);
@@ -42,6 +43,7 @@ class NaiveTimer : TimerBase {
     std::string tag_;
     public:
     bool valid = true;
+    uint64_t id = 0;
 };
 }  // namespace aisdk::base
 

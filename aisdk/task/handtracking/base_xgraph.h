@@ -36,6 +36,7 @@ class BaseXGraph : public PipeGraphImpl {
 
     std::unique_ptr<xgraph::CalculatorGraph> m_calculator_graph;
    private:
+    bool graph_started = false; 
     std::vector<std::string> m_input_stream_name;
     std::vector<std::string> m_output_stream_name;
 

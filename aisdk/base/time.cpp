@@ -41,7 +41,7 @@ NaiveTimer::NaiveTimer(int line, const char *func, std::string _tag) {
 NaiveTimer::~NaiveTimer() {
     if (valid) {
         auto timeInUs = durationInUs();
-        AISDK_LOG_WARN("[Name:{}],[Line:{}],[fun:{}],[cost:{:.3f}ms]", name_, line_, tag_.c_str(),
+        AISDK_LOG_WARN("[Name:{}],[Line:{}],[fun:{}],[id:{}],[cost:{:.3f}ms]", name_, line_, tag_.c_str(), id,
                        (double)timeInUs / 1000.0F);
     }
 }

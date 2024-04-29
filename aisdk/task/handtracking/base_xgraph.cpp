@@ -29,6 +29,7 @@ aisdk::algorithm::Status BaseXGraph::Start() {
     if (m_calculator_graph) {
         MP_RETURN_IF_ERROR_WITH_LOG(m_calculator_graph->StartRun({}));
         MP_RETURN_IF_ERROR_WITH_LOG(m_calculator_graph->WaitUntilIdle());
+        graph_started = true;
     }
     return aisdk::algorithm::Status::SUCCESS;
 }
@@ -37,17 +38,25 @@ aisdk::algorithm::Status BaseXGraph::Stop() {
     if (m_calculator_graph) {
         MP_RETURN_IF_ERROR_WITH_LOG(m_calculator_graph->CloseAllInputStreams());
         auto res_done = m_calculator_graph->WaitUntilDone();
+        graph_started = false;
     }
     return aisdk::algorithm::Status::SUCCESS;
 }
 
 aisdk::algorithm::Status BaseXGraph::SetInputStreamCache(int64_t graph_stream_stamp) {
+    if (false == graph_started) {
+        return aisdk::algorithm::Status::FAILURE;
+    }
+
+    // AISDK_LOG_WARN("BaseXGraph::SetInputStreamCache stamp={}", graph_stream_stamp);
     std::shared_ptr<StreamCache> stream = std::make_shared<StreamCache>();
     stream->m_output_packs_sum = 0;
     stream->m_output_packs.resize(m_output_stream_name.size());
 #if defined(ENABLE_ALGORITHM_GRAPH_STREAM_EVAL_TIME)
     stream->m_stream_time =
         std::make_shared<aisdk::base::NaiveTimer>(__LINE__, "XGraph", std::string("XGraph::inference"));
+    stream->m_stream_time->valid = true;
+    stream->m_stream_time->id = graph_stream_stamp;
 #endif
 
     std::lock_guard<std::mutex> guard(m_inference_lock);
@@ -56,6 +65,7 @@ aisdk::algorithm::Status BaseXGraph::SetInputStreamCache(int64_t graph_stream_st
 }
 
 aisdk::algorithm::Status BaseXGraph::ClearInputStreamCache(int64_t graph_stream_stamp) {
+    // AISDK_LOG_WARN("BaseXGraph::ClearInputStreamCache stamp={}", graph_stream_stamp);
     std::lock_guard<std::mutex> guard(m_inference_lock);
     m_inference_stream_cache.erase(graph_stream_stamp);
     return aisdk::algorithm::Status::SUCCESS;
@@ -99,6 +109,7 @@ bool BaseXGraph::CallBackInferenceResult(const xgraph::Packet &packet, int64_t o
     bool ret = false;
     std::shared_ptr<StreamCache> cache;
     int64_t graph_stream_stamp = packet.Timestamp().Value();
+    // AISDK_LOG_WARN("BaseXGraph::CallBackInferenceResult stamp={}", graph_stream_stamp);
     bool is_move = false;
     {
         std::lock_guard<std::mutex> guard(m_inference_lock);
