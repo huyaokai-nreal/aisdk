@@ -27,8 +27,10 @@ class AISDK(ConanFile):
         self.requires("nreal_mnn/2.0.0", transitive_headers=True, transitive_libs=True)
         self.requires("snpe/2.17.0", transitive_headers=False, transitive_libs=False)
         self.requires("camera_model/develop", transitive_libs=True)
-        # self.requires("framework/jenkins#c6267a1decb4846582cf18e15d5e22ad6a7f6150")
-        self.requires(super().override_require("framework/jenkins"), run=True)
+        if self.settings.os == "Linux":
+            self.requires("framework/jenkins#c6267a1decb4846582cf18e15d5e22ad6a7f6150")
+        else:
+            self.requires(super().override_require("framework/jenkins"), run=True)
         self.requires("xgraph/main", transitive_libs=True)
         self.requires("abseil/20230125.3", transitive_libs=True)
         self.requires("protobuf/3.21.9", transitive_libs=True)

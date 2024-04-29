@@ -42,8 +42,8 @@ option(BUILD_EXAMPLE "Build examples." ON)
 option(BUILD_TOOL "Build tools."  OFF)
 option(ENABLE_CLANG_TIDY_CHECK       "Analyze code with clang-tidy."                OFF)
 # log
-option(ENABLE_LOG_LEVEL_RELEASE  "enable log level for release" OFF)
-option(ENABLE_LOG_LEVEL_ALL "enable trace log level" ON)
+option(ENABLE_LOG_LEVEL_RELEASE  "enable log level for release" ON)
+option(ENABLE_LOG_LEVEL_ALL "enable trace log level" OFF)
 # build algorithm
 option(ENABLE_ALGORITHM_GRAPH_STREAM_EVAL_TIME "enable algorithm mediapipe graph stream eval time."  ON)
 option(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME "enable algorithm mediapipe calculator process eval time."  OFF)
