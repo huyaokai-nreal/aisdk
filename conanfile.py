@@ -37,4 +37,4 @@ class AISDK(ConanFile):
         self.requires("glog/0.6.0", transitive_libs=True)
         
     def package_info(self):
-        self.cpp_info.libs = ["test"]
+        self.cpp_info.libs = ["nr_hand_tracking","handtracking","xengine","xr_base_graph"]
