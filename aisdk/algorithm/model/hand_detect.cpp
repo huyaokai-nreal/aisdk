@@ -572,10 +572,11 @@ void HandDetectNetv2::PostProcess(DetOutputInternal &result) {
         // }
 
         AISDK_LOG_TRACE("HandDetectNetv2::Get Results");
+        // clang-format off
         AISDK_LOG_TRACE(
-            "HandDetectNetv2:: cls_c: {}, cls_h: {}, cls_w: {}, box_c: "
-            "{}, box_h: {}, bow_w: {}",
+            "HandDetectNetv2:: cls_c: {}, cls_h: {}, cls_w: {}, box_c: {}, box_h: {}, bow_w: {}",
             cls_c, cls_h, cls_w, box_c, box_h, box_w);
+        // clang-format on
 
         std::vector<DetectRect> tmp_result;
         int cls_idx_group, cls_idx_score, cls_idx_left, cls_idx_right;

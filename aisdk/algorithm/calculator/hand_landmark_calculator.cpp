@@ -197,12 +197,13 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
             }
         }
         if (output_buffer_->lhand_valid || output_buffer_->rhand_valid) {
+            // clang-format off
             AISDK_LOG_TRACE(
-                "[HandLandmarkCalculator] lhand_valid: {}, lhand_lcam: {}, lhand_rcam: {} / rhand_valid: {}, "
-                "rhand_lcam: {}, rhand_rcam: {}",
+                "[HandLandmarkCalculator] lhand_valid: {}, lhand_lcam: {}, lhand_rcam: {} / rhand_valid: {}, rhand_lcam: {}, rhand_rcam: {}",
                 output_buffer_->lhand_valid, output_buffer_->lhand_lcam.size(), output_buffer_->lhand_rcam.size(),
                 output_buffer_->rhand_valid, output_buffer_->rhand_lcam.size(), output_buffer_->rhand_rcam.size());
             cc->Outputs().Tag("LANDMARK_OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
+            // clang-format on
         } else {
             cc->Outputs().Tag("LANDMARK_OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
             AISDK_LOG_TRACE("[HandLandmarkCalculator] No valid hand, truncated here");
