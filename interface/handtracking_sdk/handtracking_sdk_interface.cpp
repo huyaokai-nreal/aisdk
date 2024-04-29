@@ -598,7 +598,19 @@ NRPluginResult HandTracking::ParseAllCameraData(const NRGrayscaleCameraFrameData
 
     // left or right timestamp should be the same
     errorcode = ins->m_handtracking.m_interface->GetDevicePose(ins->GetHandle(), &headpose_proto, nano_time_[0]);
-    head_pose = headpose_proto.transform;
+    if (isHeadPoseValid(headpose_proto.transform)) {
+        // 有效才使用，无效使用默认的值
+        head_pose = headpose_proto.transform;
+    } else {
+        head_pose.rotation.qw = 1.0;
+        head_pose.rotation.qx = 0.0;
+        head_pose.rotation.qy = 0.0;
+        head_pose.rotation.qz = 0.0;
+        head_pose.position.x = 0.0;
+        head_pose.position.y = 0.0;
+        head_pose.position.z = 0.0;
+        AISDK_LOG_ERROR("false == isHeadPoseValid");
+    }
 
     auto& pipeline = ins->GetPipeline();
     std::shared_ptr<task::HandTrackingXGraph> impl =
