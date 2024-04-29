@@ -61,6 +61,7 @@ class CameraModel : public BaseCameraModel {
     std::vector<Eigen::Vector2f> eye_to_window(const std::vector<Eigen::Vector3f>& point_3d) override;
     std::vector<Eigen::Vector3f> window_to_eye(const std::vector<Eigen::Vector2f>& point_2d) override;
     std::vector<Eigen::Vector3f> window_to_eye(const std::vector<Eigen::Vector3f>& point_3d) override;
+    DistortType get_distortion_model() const {return distortion_model_;}
 
    private:
     ProjectType projection_model_;

@@ -2,4 +2,5 @@
 target_sources(${XENGINE_LIBRARY_NAME} PRIVATE
 ${CMAKE_CURRENT_SOURCE_DIR}/xr_cv.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/warpaffine.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/perspective_crop_image.cpp
 )
