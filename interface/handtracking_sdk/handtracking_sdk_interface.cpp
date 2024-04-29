@@ -776,7 +776,7 @@ std::vector<int> SelectPipeline(std::vector<aisdk::xengine::PipelineConfig>& pip
 
 NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
     const std::string git_version = AISK_GIT_VERSION;
-    AISDK_LOG_INFO("HandTracking: git_version={:s}", git_version.c_str());
+    AISDK_LOG_WARN("HandTracking: git_version={:s}", git_version.c_str());
 
     if (handle != Plugin::GetInstance()->GetHandle()) {
         AISDK_LOG_ERROR("HandTracking::Initialize failed: get wrong handle!");
@@ -890,7 +890,7 @@ NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
         AISDK_LOG_TRACE("HandTracking: pipeline size={}", tmp.size());
         if (tmp.size() > 0) {
             aisdk::xengine::PlatformStatus* plat = ins->m_handtracking.m_funcs.m_getplatform();
-            AISDK_LOG_INFO("HandTracking: dsp_support={}", plat->is_snpe_support);
+            AISDK_LOG_WARN("HandTracking: dsp_support={}", plat->is_snpe_support);
             AISDK_LOG_TRACE("Plugin::Initialize is_snpe_support={},is_hexagon_dsp={},is_hexagon_unsignedPD_dsp={}",
                             (int)plat->is_snpe_support, (int)plat->is_hexagon_dsp,
                             (int)plat->is_hexagon_unsignedPD_dsp);
@@ -913,7 +913,7 @@ NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
                     }
                     if (status == aisdk::algorithm::Status::SUCCESS) {
                         ins->pipeline_name = tmp[pipeline_index].pipeline_name;
-                        AISDK_LOG_INFO("HandTracking: Initialized!");
+                        AISDK_LOG_WARN("HandTracking: Initialized!");
                         return NR_PLUGIN_RESULT_SUCCESS;
                     } else {
                         AISDK_LOG_ERROR("HandTracking: init failed since NrCore::Status: {}!",
@@ -937,16 +937,16 @@ NRPluginResult Plugin::Start(NRPluginHandle handle) {
         AISDK_LOG_ERROR("HandTracking::Start failed: get wrong handle!");
         return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
     }
-    AISDK_LOG_INFO("HandTracking: Start");
+    AISDK_LOG_WARN("HandTracking: Start");
     auto ins = Plugin::GetInstance();
     auto pipeline = ins->GetPipeline().Impl();
     auto ret = pipeline->Start();
     if (ret != aisdk::algorithm::Status::SUCCESS) {
-        AISDK_LOG_INFO("HandTracking: Started Failure");
+        AISDK_LOG_WARN("HandTracking: Started Failure");
         return NR_PLUGIN_RESULT_FAILURE;
     }
     ins->Start();
-    AISDK_LOG_INFO("HandTracking: Started");
+    AISDK_LOG_WARN("HandTracking: Started");
     return NR_PLUGIN_RESULT_SUCCESS;
 }
 
@@ -954,7 +954,7 @@ NRPluginResult Plugin::Update(NRPluginHandle handle) {
     if (handle != Plugin::GetInstance()->GetHandle()) {
         return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
     }
-    AISDK_LOG_INFO("HandTracking: Updated");
+    AISDK_LOG_WARN("HandTracking: Updated");
     return NR_PLUGIN_RESULT_SUCCESS;
 }
 
@@ -963,13 +963,12 @@ NRPluginResult Plugin::Pause(NRPluginHandle handle) {
         AISDK_LOG_ERROR("HandTracking::Pause failed: get wrong handle!");
         return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
     }
-    AISDK_LOG_INFO("Plugin::Pause");
-    AISDK_LOG_INFO("HandTracking: Pause");
+    AISDK_LOG_WARN("HandTracking: Pause");
     auto ins = Plugin::GetInstance();
     auto pipline = ins->GetPipeline().Impl();
     pipline->Stop();
     ins->Stop();
-    AISDK_LOG_INFO("HandTracking: Paused");
+    AISDK_LOG_WARN("HandTracking: Paused");
     return NR_PLUGIN_RESULT_SUCCESS;
 }
 
@@ -978,16 +977,16 @@ NRPluginResult Plugin::Resume(NRPluginHandle handle) {
         AISDK_LOG_ERROR("HandTracking::Resume failed: get wrong handle!");
         return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
     }
-    AISDK_LOG_INFO("HandTracking: Resume");
+    AISDK_LOG_WARN("HandTracking: Resume");
     auto ins = Plugin::GetInstance();
     auto pipline = ins->GetPipeline().Impl();
     auto ret = pipline->Start();
     if (ret != aisdk::algorithm::Status::SUCCESS) {
-        AISDK_LOG_INFO("HandTracking: Resume Failure");
+        AISDK_LOG_WARN("HandTracking: Resume Failure");
         return NR_PLUGIN_RESULT_FAILURE;
     }
     ins->Start();
-    AISDK_LOG_INFO("HandTracking: Resumed");
+    AISDK_LOG_WARN("HandTracking: Resumed");
     return NR_PLUGIN_RESULT_SUCCESS;
 }
 
@@ -996,12 +995,12 @@ NRPluginResult Plugin::Stop(NRPluginHandle handle) {
         AISDK_LOG_ERROR("HandTracking::Stop failed: get wrong handle!");
         return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
     }
-    AISDK_LOG_INFO("HandTracking: Stop");
+    AISDK_LOG_WARN("HandTracking: Stop");
     auto ins = Plugin::GetInstance();
     auto pipline = ins->GetPipeline().Impl();
     pipline->Stop();
     ins->Stop();
-    AISDK_LOG_INFO("HandTracking: Stoped");
+    AISDK_LOG_WARN("HandTracking: Stoped");
     return NR_PLUGIN_RESULT_SUCCESS;
 }
 
@@ -1010,14 +1009,14 @@ NRPluginResult Plugin::Release(NRPluginHandle handle) {
         AISDK_LOG_ERROR("HandTracking::Release failed: get wrong handle!");
         return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
     }
-    AISDK_LOG_INFO("HandTracking: Release");
+    AISDK_LOG_WARN("HandTracking: Release");
     auto ins = Plugin::GetInstance();
     ins->ReleasePipeline();
 #if defined(XENGINE_SHARED_LIB)
     ins->m_handtracking.UnLoadDlsym(false);
 #endif
     ins->m_picbuf = nullptr;
-    AISDK_LOG_INFO("HandTracking: Released");
+    AISDK_LOG_WARN("HandTracking: Released");
     return NR_PLUGIN_RESULT_SUCCESS;
 }
 
@@ -1047,9 +1046,10 @@ extern "C" void NR_INTERFACE_EXPORT NR_INTERFACE_API NRPluginCreate(NRPluginHand
 #else
 extern "C" void NRPluginCreate_HANDTRACKING(NRPluginHandle handle, NRInterfaces* interfaces) {
 #endif
-    AISDK_LOG_INFO("NRPluginCreate");
+    AISDK_LOG_WARN("NRPluginCreate");
     auto ins = aisdk::interface::Plugin::GetInstance();
     ins->Init(handle, interfaces);
+    AISDK_LOG_WARN("NRPluginCreated");
 }
 
 #ifdef HANDTRACKING_SHARED_LIBS
@@ -1057,8 +1057,9 @@ extern "C" void NR_INTERFACE_EXPORT NR_INTERFACE_API NRPluginDestroy() {
 #else
 extern "C" void NRPluginDestroy_HANDTRACKING() {
 #endif
-    AISDK_LOG_INFO("NRPluginDestroy");
+    AISDK_LOG_WARN("NRPluginDestroy");
     aisdk::interface::Plugin::DestoryInstance();
+    AISDK_LOG_WARN("NRPluginDestroied");
 }
 
 #ifdef HANDTRACKING_SHARED_LIBS
