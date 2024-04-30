@@ -69,4 +69,24 @@ bool isNaN(const std::vector<Vec3f_t>& kpts) {
     }
     return false;
 }
+
+bool isHeadPoseValid(const NRTransform& headpose) {
+    Eigen::Quaternion<float> q(headpose.rotation.qw, headpose.rotation.qx, headpose.rotation.qy, headpose.rotation.qz);
+    const float max_float = std::numeric_limits<float>::max();
+    const float min_float = std::numeric_limits<float>::lowest();
+
+    if (q.w() < min_float || q.w() > max_float || q.x() < min_float || q.x() > max_float || q.y() < min_float ||
+        q.y() > max_float || q.z() < min_float || q.z() > max_float) {
+        return false;
+    }
+
+    float length_squared = q.squaredNorm();
+    const float epsilon = 1e-6f;
+    if (std::abs(length_squared - 1.0f) > epsilon) {
+        return false;
+    }
+
+    return true;
+}
+
 }  // namespace aisdk::algorithm

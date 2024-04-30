@@ -94,6 +94,13 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
         std::unique_ptr<DetOutputInternal> output_buffer_ = absl::make_unique<DetOutputInternal>();
         output_buffer_->det_flag = true;
 
+        if (false == isHeadPoseValid(headpose_data.transform)) {
+            AISDK_LOG_ERROR("[HandDetTrackCalculator] HeadPose isn't valid !!!");
+            // headpose异常，停止tracker，并且此帧不分析。
+            det_tracker_step_ = 0;
+            output_buffer_->det_flag = false;
+        }
+
         if ((det_tracker_step_ != 0) && (lastframe_kpt3d.lhand_valid || lastframe_kpt3d.rhand_valid)) {
             if (lastframe_kpt3d.lhand_valid) {
                 DetectRect proj_bbox_lcam_lhand, proj_bbox_rcam_lhand;

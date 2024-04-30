@@ -528,25 +528,6 @@ void Hmd::GetCamerasInformation() {
     m_cam_param.m_params["generate_method"] = {(float)m_generate_method};
 }
 
-bool isHeadPoseValid(const NRTransform& headpose) {
-    Eigen::Quaternion<float> q(headpose.rotation.qw, headpose.rotation.qx, headpose.rotation.qy, headpose.rotation.qz);
-    const float max_float = std::numeric_limits<float>::max();
-    const float min_float = std::numeric_limits<float>::lowest();
-
-    if (q.w() < min_float || q.w() > max_float || q.x() < min_float || q.x() > max_float || q.y() < min_float ||
-        q.y() > max_float || q.z() < min_float || q.z() > max_float) {
-        return false;
-    }
-
-    float length_squared = q.squaredNorm();
-    const float epsilon = 1e-6f;
-    if (std::abs(length_squared - 1.0f) > epsilon) {
-        return false;
-    }
-
-    return true;
-}
-
 NRPluginResult HandTracking::ParseAllCameraData(const NRGrayscaleCameraFrameData* data) {
     // uint32_t camera_raw_data_size[4];
     // const uint8_t* camera_raw_data_[2];
@@ -598,19 +579,7 @@ NRPluginResult HandTracking::ParseAllCameraData(const NRGrayscaleCameraFrameData
 
     // left or right timestamp should be the same
     errorcode = ins->m_handtracking.m_interface->GetDevicePose(ins->GetHandle(), &headpose_proto, nano_time_[0]);
-    if (isHeadPoseValid(headpose_proto.transform)) {
-        // 有效才使用，无效使用默认的值
-        head_pose = headpose_proto.transform;
-    } else {
-        head_pose.rotation.qw = 1.0;
-        head_pose.rotation.qx = 0.0;
-        head_pose.rotation.qy = 0.0;
-        head_pose.rotation.qz = 0.0;
-        head_pose.position.x = 0.0;
-        head_pose.position.y = 0.0;
-        head_pose.position.z = 0.0;
-        AISDK_LOG_ERROR("false == isHeadPoseValid");
-    }
+    head_pose = headpose_proto.transform;
 
     auto& pipeline = ins->GetPipeline();
     std::shared_ptr<task::HandTrackingXGraph> impl =

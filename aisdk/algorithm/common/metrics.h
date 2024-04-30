@@ -8,6 +8,8 @@
 #include "aisdk/base/camera_model.h"
 #include "aisdk/base/type.h"
 #include "aisdk/algorithm/common/nrnet_define.h"
+#include "interface/handtracking_sdk/public/nr_plugin_types.h"
+
 namespace aisdk::algorithm {
 float compute_score_with_reprojection(const std::vector<Vec3f_t>& pred_xyz, const std::vector<Vec2f_t>& leftcam_uv_ori,
                                       const std::vector<Vec2f_t>& rightcam_uv_ori,
@@ -19,5 +21,5 @@ float get_bbox_distance(cv::Rect src, cv::Rect dst);
 bool check_if_rect_valid(cv::Rect rect, int max_width, int max_height);
 bool check_if_rect_valid_relax(DetectRect rect, int max_width, int max_height);
 bool isNaN(const std::vector<Vec3f_t>& kpts);
-
+bool isHeadPoseValid(const NRTransform& headpose);
 }  // namespace aisdk::algorithm
