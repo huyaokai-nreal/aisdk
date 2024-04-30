@@ -10,7 +10,44 @@
 #include "aisdk/base/log.h"
 
 namespace aisdk::base {
+std::string GetCurrentSystemTime() {
+    // 获取当前时间，包括毫秒
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    char timestamp_with_ms[128];
+    strftime(timestamp_with_ms, sizeof(timestamp_with_ms), "%Y-%m-%d %H:%M:%S", localtime(&tv.tv_sec));
+    char ms[16];
+    snprintf(ms, sizeof(ms), ".%03ld", tv.tv_usec / 1000);
+    strcat(timestamp_with_ms, ms);
+    std::string tmp(timestamp_with_ms, strlen(timestamp_with_ms));
+    return tmp;
+}
+
+bool CopyFile(const std::string &origin_file_path, const std::string &target_file_path) {
+    std::ifstream infile;
+    infile.open(origin_file_path.c_str(), std::ios::binary | std::ios::in);
+    std::ofstream outfile;
+    outfile.open(target_file_path.c_str(), std::ios::binary | std::ios::out);
+
+    if (!infile || !outfile) {
+        return false;
+    }
+
+    outfile << infile.rdbuf();
+    infile.close();
+    outfile.close();
+    return true;
+}
+
 bool IsFileExist(const std::string_view &path) { return access(path.data(), F_OK) == 0; }
+
+bool IsDirExist(const std::string &path) {
+    const char *dir = path.c_str();
+    if (0 == access(dir, 0)) {
+        return true;
+    }
+    return false;
+}
 
 bool CreateDir(std::string path) {
     const char *dir = path.c_str();

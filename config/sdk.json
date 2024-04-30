@@ -4,7 +4,10 @@
         "plugins_64": [
             {
                 "id": "nr_hand_tracking_id",
-                "path": "/sdcard/Android/data/com.xreal.HandTracking/files/libnr_hand_tracking.so"
+                "path1": "/sdcard/Android/data/com.xreal.HandTracking/files/libnr_hand_tracking.so",
+                "path2": "/sdcard/Android/data/com.xreal.HandInteractionExamples_NRSDK/files/libnr_hand_tracking.so",
+                "path3": "/sdcard/Android/data/com.xreal.HandTracking_Ultimate/files/libnr_hand_tracking.so",
+                "path": "/sdcard/Android/data/com.xreal.evapro.nebula/files/libnr_hand_tracking.so"
             }
         ]
     }
