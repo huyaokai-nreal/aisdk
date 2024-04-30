@@ -3,6 +3,8 @@
         "_statement": "the models name is globally unique",
         "models_name": [
             "detect",
+            "detect_cpu_ella",
+            "detect_cpu_flora",
             "2d_rtmtiny",
             "2d_rsntiny",
             "2d_rsnnano",
@@ -25,6 +27,31 @@
                     "output_box",
                     "output_cls"
                 ]
+            }
+        },
+        "detect_cpu_ella": {
+            "model_config": {
+                "file_name": "models/fp2302_int8.mnn",
+                "vendor": "mnn",
+                "dont_batch": 1
+            },
+            "session_config": {
+                "batch": 2,
+                "precision": "int8",
+                "thread_num": 1,
+                "runtime": "cpu"
+            }
+        },
+        "detect_cpu_flora": {
+            "model_config": {
+                "file_name": "models/det_nano_231213_fp16.mnn",
+                "vendor": "mnn"
+            },
+            "session_config": {
+                "batch": 2,
+                "precision": "float16",
+                "thread_num": 1,
+                "runtime": "cpu"
             }
         },
         "2d_rsntiny": {

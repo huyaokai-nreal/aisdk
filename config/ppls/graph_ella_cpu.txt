@@ -6,8 +6,8 @@ output_stream: "ALL_RESULTS:hand_result"
 input_stream_handler {
   input_stream_handler: "FixedSizeInputStreamHandler"
   options {
-    [mediapipe.FixedSizeInputStreamHandlerOptions.ext] { 
-      trigger_queue_size: 2 
+    [mediapipe.FixedSizeInputStreamHandlerOptions.ext] {
+      trigger_queue_size: 2
       target_queue_size: 1
       fixed_min_size: false
     }
@@ -23,6 +23,11 @@ node {
   output_stream: "DET_BBOX_OUTPUT:detection_output"
   output_stream: "IMAGE_OUTPUT:image_out"
   output_stream: "HEADPOSE_OUTPUT:head_pose_out"
+  node_options: {
+    [type.googleapis.com/aisdk.HandDetTrackCalculatorOptions] {
+      model_name: "detect_cpu_ella"
+    }
+  }
 }
 node {
   name: "DetBoxSmoothing"

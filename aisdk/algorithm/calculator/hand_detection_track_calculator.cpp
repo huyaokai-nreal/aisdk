@@ -1,12 +1,13 @@
 #include <cstdint>
 #include <memory>
 
-#include "../common/NR_GlobalPredictorService.h"
-#include "../common/NR_Transfer.h"
-#include "../common/metrics.h"
-#include "../internal_structs/det_struct_internal.h"
-#include "../internal_structs/headpose_struct_internal.h"
-#include "../model/hand_detect.h"
+#include "aisdk/algorithm/common/NR_GlobalPredictorService.h"
+#include "aisdk/algorithm/common/NR_Transfer.h"
+#include "aisdk/algorithm/common/metrics.h"
+#include "aisdk/algorithm/internal_structs/det_struct_internal.h"
+#include "aisdk/algorithm/internal_structs/headpose_struct_internal.h"
+#include "aisdk/algorithm/model/hand_detect.h"
+#include "aisdk/algorithm/calculator/hand_detection_track_calculator.pb.h"
 #include "aisdk/base/camera_model.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/time.h"
@@ -28,9 +29,13 @@ namespace aisdk::algorithm {
 class HandDetTrackCalculator : public xgraph::CalculatorBase {
    private:
     // DetNet algo instance
-    std::shared_ptr<HandDetectNetv2> netalgo;
+    std::shared_ptr<HandDetectNet> netalgo;
+
     std::shared_ptr<aisdk::base::BaseCameraModel> lcam_model_ = nullptr;
     std::shared_ptr<aisdk::base::BaseCameraModel> rcam_model_ = nullptr;
+
+    std::string model_name_;
+
     uint32_t video_width_;
     uint32_t video_height_;
     int det_tracker_step_ = 0;
@@ -58,7 +63,16 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
 
     absl::Status Open(xgraph::CalculatorContext *cc) final {
         AISDK_LOG_TRACE("[HandDetTrackCalculator] Open start");
-        netalgo = XGraphServiceUtils::CreateNetAlgoBase<HandDetectNetv2>((void *)0x202310, "detect");
+
+        const auto &options = cc->Options<aisdk::HandDetTrackCalculatorOptions>();
+        model_name_ = options.model_name();
+        if (model_name_ == "detect_cpu_ella" || model_name_ == "detect_cpu_flora") {
+            AISDK_LOG_TRACE("[HandDetTrackCalculator] start init {}", model_name_);
+            netalgo = XGraphServiceUtils::CreateNetAlgoBase<HandDetectNet>((void *)0x202310, model_name_);
+        } else {
+            AISDK_LOG_TRACE("[HandDetTrackCalculator] start init detect");
+            netalgo = XGraphServiceUtils::CreateNetAlgoBase<HandDetectNetv2>((void *)0x202310, "detect");
+        }
         if (!netalgo) {
             return absl::Status(absl::StatusCode::kInvalidArgument,
                                 "[HandDetTrackCalculator] CreateNetAlgoBase nodename error");

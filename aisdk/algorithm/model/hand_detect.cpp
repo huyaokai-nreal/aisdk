@@ -416,13 +416,14 @@ absl::Status HandDetectNet::Inference(const std::vector<Image> &baseinput, DetOu
         if (ret.ok()) {
             PostProcess(baseresult);
 
-            AISDK_LOG_TRACE("baseresult.images_lhand_rects[0].size(): {}", baseresult.images_lhand_rects[0].size());
-            AISDK_LOG_TRACE("baseresult.images_lhand_rects[1].size(): {}", baseresult.images_lhand_rects[1].size());
-            AISDK_LOG_TRACE("baseresult.images_rhand_rects[0].size(): {}", baseresult.images_rhand_rects[0].size());
-            AISDK_LOG_TRACE("baseresult.images_rhand_rects[1].size(): {}", baseresult.images_rhand_rects[1].size());
-
-            auto box = baseresult.images_rhand_rects[0][0];
-            AISDK_LOG_TRACE("baseresult x: {}, y: {}, w: {}, h: {}", box.x, box.y, box.w, box.h);
+            AISDK_LOG_TRACE("[HandDetectNet::Inference] baseresult.images_lhand_rects[0].size(): {}",
+                            baseresult.images_lhand_rects[0].size());
+            AISDK_LOG_TRACE("[HandDetectNet::Inference] baseresult.images_lhand_rects[1].size(): {}",
+                            baseresult.images_lhand_rects[1].size());
+            AISDK_LOG_TRACE("[HandDetectNet::Inference] baseresult.images_rhand_rects[0].size(): {}",
+                            baseresult.images_rhand_rects[0].size());
+            AISDK_LOG_TRACE("[HandDetectNet::Inference] baseresult.images_rhand_rects[1].size(): {}",
+                            baseresult.images_rhand_rects[1].size());
         } else {
             baseresult.images_lhand_rects.resize(otensor.m_batch);
             baseresult.images_rhand_rects.resize(otensor.m_batch);
@@ -503,11 +504,14 @@ absl::Status HandDetectNetv2::Inference(const std::vector<Image> &baseinput, Det
         if (ret.ok()) {
             PostProcess(baseresult);
 
-            AISDK_LOG_TRACE("baseresult.images_lhand_rects[0].size(): {}", baseresult.images_lhand_rects[0].size());
-            AISDK_LOG_TRACE("baseresult.images_lhand_rects[1].size(): {}", baseresult.images_lhand_rects[1].size());
-            AISDK_LOG_TRACE("baseresult.images_rhand_rects[0].size(): {}", baseresult.images_rhand_rects[0].size());
-            AISDK_LOG_TRACE("baseresult.images_rhand_rects[1].size(): {}", baseresult.images_rhand_rects[1].size());
-
+            AISDK_LOG_TRACE("[HandDetectNetv2::Inference] baseresult.images_lhand_rects[0].size(): {}",
+                            baseresult.images_lhand_rects[0].size());
+            AISDK_LOG_TRACE("[HandDetectNetv2::Inference] baseresult.images_lhand_rects[1].size(): {}",
+                            baseresult.images_lhand_rects[1].size());
+            AISDK_LOG_TRACE("[HandDetectNetv2::Inference] baseresult.images_rhand_rects[0].size(): {}",
+                            baseresult.images_rhand_rects[0].size());
+            AISDK_LOG_TRACE("[HandDetectNetv2::Inference] baseresult.images_rhand_rects[1].size(): {}",
+                            baseresult.images_rhand_rects[1].size());
         } else {
             baseresult.images_lhand_rects.resize(otensor.m_batch);
             baseresult.images_rhand_rects.resize(otensor.m_batch);

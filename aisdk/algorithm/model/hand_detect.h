@@ -26,7 +26,7 @@ class HandDetectNet : public CalculatorBaseNet {
     void PostProcess(DetOutputInternal &result);
     void PreProcessSingle(const std::vector<Image> &net_input, uint32_t batchn);
     void PostProcessSingle(DetOutputInternal &result, uint32_t batchn);
-    absl::Status Inference(const std::vector<Image> &baseinput, DetOutputInternal &baseresult);
+    virtual absl::Status Inference(const std::vector<Image> &baseinput, DetOutputInternal &baseresult);
 
    protected:
     aisdk::xengine::TensorFormat itensor_format;
