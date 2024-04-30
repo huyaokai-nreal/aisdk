@@ -38,6 +38,7 @@ target_link_libraries(${ALGORITHM_LIBRARY_NAME}
     absl_group
     glog::glog
     protobuf::protobuf
+    Ceres::ceres
 )
 
 target_compile_options(${ALGORITHM_LIBRARY_NAME}

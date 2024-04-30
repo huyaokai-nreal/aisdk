@@ -84,6 +84,7 @@ find_package(xgraph REQUIRED)
 find_package(abseil REQUIRED)
 find_package(protobuf REQUIRED)
 find_package(glog REQUIRED)
+find_package(Ceres REQUIRED)
 find_package(gflags REQUIRED)
 find_package(framework CONFIG REQUIRED)
 set_property(TARGET framework::framework
