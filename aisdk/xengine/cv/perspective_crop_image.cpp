@@ -2,6 +2,7 @@
 
 #include "xr_cv.h"
 namespace aisdk::xengine {
+#if __aarch64__
 double mysecond() {
     struct timeval tv;
     struct timezone tz;
@@ -329,4 +330,5 @@ cv::Mat perspective_crop_image(const base::Fisheye624CameraModel& src_camera,
 
     return result;
 }
+#endif
 }  // namespace aisdk::xengine
