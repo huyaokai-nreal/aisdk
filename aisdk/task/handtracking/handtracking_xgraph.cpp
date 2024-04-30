@@ -88,7 +88,7 @@ aisdk::algorithm::Status HandTrackingXGraph::PushData(uint64_t timestamp,
 
     // 先登记需要缓存的stream帧信息
     bool push_failure = false;
-    auto status = SetInputStreamCache(timestamp_micro);
+    auto status = SetInputStreamCache(timestamp, timestamp_micro);
     if (status == algorithm::Status::SUCCESS) {
         // 这里根据stream输入的返回值做
         auto _status =
@@ -223,7 +223,7 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
                 }
                 AISDK_LOG_TRACE("[PopResult Predict] {} hand end", i);
             }
-            out_hand_array[i].image_timestamp_nanos = hand_data_internal.timestamp;
+            out_hand_array[i].image_timestamp_nanos = outlist->raw_timestamp;
         }
 
         return aisdk::algorithm::Status::SUCCESS;

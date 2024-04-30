@@ -11,6 +11,7 @@ namespace aisdk::task {
 class StreamCache {
    public:
     std::mutex m_lock;
+    uint64_t raw_timestamp;
     uint32_t m_output_packs_sum;
     std::vector<xgraph::Packet> m_output_packs;
     std::shared_ptr<aisdk::base::NaiveTimer> m_stream_time;
@@ -26,7 +27,7 @@ class BaseXGraph : public PipeGraphImpl {
     aisdk::algorithm::Status Start() override;
     aisdk::algorithm::Status Stop() override;
     // 登记已经push到grapgh中的stream，后续我们将graph输出的stream结果做匹配。
-    aisdk::algorithm::Status SetInputStreamCache(int64_t graph_stream_stamp);
+    aisdk::algorithm::Status SetInputStreamCache(uint64_t raw_timestamp, int64_t graph_stream_stamp);
     // graph添加stream失败，主动删除SetInputStreamCache登记的stream
     aisdk::algorithm::Status ClearInputStreamCache(int64_t graph_stream_stamp);
     // 获取最新的stream结果，如果不被调用，也不会阻塞graph运行。MoveOutputCahce函数将会将超过m_max_output_cahce_num的stream结果删除

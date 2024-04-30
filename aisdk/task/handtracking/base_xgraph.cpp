@@ -43,13 +43,14 @@ aisdk::algorithm::Status BaseXGraph::Stop() {
     return aisdk::algorithm::Status::SUCCESS;
 }
 
-aisdk::algorithm::Status BaseXGraph::SetInputStreamCache(int64_t graph_stream_stamp) {
+aisdk::algorithm::Status BaseXGraph::SetInputStreamCache(uint64_t raw_timestamp, int64_t graph_stream_stamp) {
     if (false == graph_started) {
         return aisdk::algorithm::Status::FAILURE;
     }
 
     // AISDK_LOG_WARN("BaseXGraph::SetInputStreamCache stamp={}", graph_stream_stamp);
     std::shared_ptr<StreamCache> stream = std::make_shared<StreamCache>();
+    stream->raw_timestamp = raw_timestamp;
     stream->m_output_packs_sum = 0;
     stream->m_output_packs.resize(m_output_stream_name.size());
 #if defined(ENABLE_ALGORITHM_GRAPH_STREAM_EVAL_TIME)
