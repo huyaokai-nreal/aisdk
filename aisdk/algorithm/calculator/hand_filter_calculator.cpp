@@ -1,18 +1,20 @@
 #include "../common/NR_GlobalPredictorService.h"
+#include "aisdk/algorithm/calculator/hand_filter_calculator.pb.h"
 #include "aisdk/algorithm/func/hand_filters.h"
 #include "aisdk/algorithm/func/netalgo_utils.h"
 #include "aisdk/algorithm/internal_structs/kpt3d_struct_internal.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/time.h"
 #include "aisdk/xgraph/xgraph.h"
+#include "hand_filter_calculator.pb.h"
 
 namespace aisdk::algorithm {
 
 // A calculator doing correction step of a global kalman filter.
 // Definition:
 // node {
-//   name: "KalmanFilterCorrection"
-//   calculator: "KalmanFilterCorrectionCalculator"
+//   name: "HandFilter"
+//   calculator: "HandFilterCalculator"
 //   input_stream: "INPUT:kpt3d_standard"
 //   input_stream: "STATE:hand_state"
 //   output_stream: "OUTPUT:kpt3d_filtered"
@@ -20,31 +22,38 @@ namespace aisdk::algorithm {
 
 class HandFilterCalculator : public xgraph::CalculatorBase {
    private:
+    std::string glasses_type_;
     double last_timestamp_;  // in seconds
     std::unique_ptr<HandFilters> m_post_filter;
 
    public:
     static absl::Status GetContract(xgraph::CalculatorContract* cc) {
-        AISDK_LOG_TRACE("[KalmanFilterCorrectionCalculator] GetContract start.");
+        AISDK_LOG_TRACE("[HandFilterCalculator] GetContract start.");
         cc->Inputs().Tag("INPUT").Set<Kpt3dInternal>();
         cc->Outputs().Tag("OUTPUT").Set<Kpt3dInternal>();
-        AISDK_LOG_TRACE("[KalmanFilterCorrectionCalculator] GetContract complete.");
+        AISDK_LOG_TRACE("[HandFilterCalculator] GetContract complete.");
         return absl::OkStatus();
     }
 
     absl::Status Open(xgraph::CalculatorContext* cc) final {
-        AISDK_LOG_TRACE("[KalmanFilterCorrectionCalculator] Open start.");
-        m_post_filter = std::make_unique<algorithm::HandFilters>();
+        AISDK_LOG_TRACE("[HandFilterCalculator] Open start.");
+        const auto& config = cc->Options<HandFilterCalculatorOptions>();
+        glasses_type_ = config.glasses_type();
+        m_post_filter = std::make_unique<algorithm::HandFilters>(glasses_type_);
         m_post_filter->init();
-        AISDK_LOG_TRACE("[KalmanFilterCorrectionCalculator] Open complete.");
+        auto& predictor_lhand = GlobalPredictorService::getInstance().get_predictor_lhand();
+        auto& predictor_rhand = GlobalPredictorService::getInstance().get_predictor_rhand();
+        predictor_lhand.set_glasses_type(glasses_type_);
+        predictor_rhand.set_glasses_type(glasses_type_);
+        AISDK_LOG_TRACE("[HandFilterCalculator] Open complete.");
         return absl::OkStatus();
     }
 
     absl::Status Process(xgraph::CalculatorContext* cc) final {
 #if defined(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
-        TIMER_ONCE_WITH_TAG(KalmanFilterCorrectionCalculator::Process);
+        TIMER_ONCE_WITH_TAG(HandFilterCalculator::Process);
 #endif
-        AISDK_LOG_TRACE("[KalmanFilterCorrectionCalculator] Process start.");
+        AISDK_LOG_TRACE("[HandFilterCalculator] Process start.");
         const auto& kpt3d_world = cc->Inputs().Tag("INPUT").Get<Kpt3dInternal>();
         const auto& timestamp = cc->InputTimestamp().Seconds();
         std::unique_ptr<Kpt3dInternal> output_buffer_ = absl::make_unique<Kpt3dInternal>();
@@ -91,7 +100,7 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
         }
         cc->Outputs().Tag("OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
         last_timestamp_ = timestamp;
-        AISDK_LOG_TRACE("[KalmanFilterCorrectionCalculator] Process complete.");
+        AISDK_LOG_TRACE("[HandFilterCalculator] Process complete.");
         return absl::OkStatus();
     }
 };

@@ -9,15 +9,29 @@ bool HandFilters::init() {
 
     palm_params.freq = freq;
     finger_params.freq = freq;
-    // 手掌
-    palm_params.mincutoff = {0.4, 0.4, 0.2};  // 调静止状态下的稳定性,越小稳定性越好
-    palm_params.beta = {25.0, 25.0, 10.0};    // 运动状态下alpha的变化速率，alpha越大，跟踪越及时
-    palm_params.dcutoff = {2.0, 2.0, 1.0};    // 速度滤波的固定效果
+    if (glasses_type_ == "flora") {
+        // 手掌
+        palm_params.mincutoff = {0.4, 0.4, 0.2};  // 调静止状态下的稳定性,越小稳定性越好
+        palm_params.beta = {25.0, 25.0, 10.0};    // 运动状态下alpha的变化速率，alpha越大，跟踪越及时
+        palm_params.dcutoff = {2.0, 2.0, 1.0};    // 速度滤波的固定效果
 
-    // 手指
-    finger_params.mincutoff = {0.4, 0.4, 0.2};
-    finger_params.beta = {25.0, 25.0, 10.0};
-    finger_params.dcutoff = {2.0, 2.0, 1.0};
+        // 手指
+        finger_params.mincutoff = {0.4, 0.4, 0.2};
+        finger_params.beta = {25.0, 25.0, 10.0};
+        finger_params.dcutoff = {2.0, 2.0, 1.0};
+    } else if (glasses_type_ == "ella") {
+        //  手掌
+        palm_params.mincutoff = {0.2, 0.2, 0.1};  // 调静止状态下的稳定性,越小稳定性越好
+        palm_params.beta = {15.0, 15.0, 10.0};    // 运动状态下alpha的变化速率，alpha越大，跟踪越及时
+        palm_params.dcutoff = {2.0, 2.0, 1.0};    // 速度滤波的固定效果
+
+        // 手指
+        finger_params.mincutoff = {0.2, 0.2, 0.1};
+        finger_params.beta = {15.0, 15.0, 10.0};
+        finger_params.dcutoff = {2.0, 2.0, 1.0};
+    } else {
+        AISDK_LOG_ERROR("[Handfilters]: undedfined glasses type {}", glasses_type_);
+    }
 
     // finger
     m_seq3d_lhand = std::make_shared<SeqManager3D>(16, finger_params);

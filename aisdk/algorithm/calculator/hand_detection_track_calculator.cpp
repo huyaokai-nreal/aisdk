@@ -1,13 +1,13 @@
 #include <cstdint>
 #include <memory>
 
+#include "aisdk/algorithm/calculator/hand_detection_track_calculator.pb.h"
 #include "aisdk/algorithm/common/NR_GlobalPredictorService.h"
 #include "aisdk/algorithm/common/NR_Transfer.h"
 #include "aisdk/algorithm/common/metrics.h"
 #include "aisdk/algorithm/internal_structs/det_struct_internal.h"
 #include "aisdk/algorithm/internal_structs/headpose_struct_internal.h"
 #include "aisdk/algorithm/model/hand_detect.h"
-#include "aisdk/algorithm/calculator/hand_detection_track_calculator.pb.h"
 #include "aisdk/base/camera_model.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/time.h"

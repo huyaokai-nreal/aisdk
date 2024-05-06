@@ -49,17 +49,17 @@ node {
     }
   }
 }
-#node {
-#  name: "LandmarkFilter"
-#  calculator: "LandmarkFilterCalculator"
-#  input_stream: "LANDMARK_INPUT:kpt2d"
-#  output_stream: "LANDMARK_OUTPUT:kpt2d_filter"
-#}
+node {
+  name: "LandmarkFilter"
+  calculator: "LandmarkFilterCalculator"
+  input_stream: "LANDMARK_INPUT:kpt2d"
+  output_stream: "LANDMARK_OUTPUT:kpt2d_filter"
+}
 node {
   name: "LiftNet_3D"
   calculator: "HandLiftCalculator"
   input_side_packet: "CAM_INFO_INPUT:cam_info"
-  input_stream: "LANDMARK_INPUT:kpt2d"
+  input_stream: "LANDMARK_INPUT:kpt2d_filter"
   output_stream: "LIFT_OUTPUT:kpt3d"
   node_options: {
     [type.googleapis.com/aisdk.HandLiftCalculatorOptions] {
@@ -77,7 +77,7 @@ node {
   node_options: {
     [type.googleapis.com/aisdk.BlockHardRulesCalculatorOptions] {
       max_root_depth: 0.8
-      score_th: 0.85
+      score_th: 0.6
     }
   }
 }
@@ -94,7 +94,7 @@ node {
 node {
   name: "GestureRecognition"
   calculator: "GestureRecognitionCalculator"
-  input_stream: "GR_KPT2D_INPUT:kpt2d"
+  input_stream: "GR_KPT2D_INPUT:kpt2d_filter"
   input_stream: "GR_KPT_INPUT:kpt3d_world"
   output_stream: "GR_OUTPUT:gesture"
 }
@@ -103,6 +103,11 @@ node {
   calculator: "HandFilterCalculator"
   input_stream: "INPUT:kpt3d_world"
   output_stream: "OUTPUT:kpt3d_filtered"
+  node_options: {
+    [type.googleapis.com/aisdk.HandFilterCalculatorOptions] {
+      glasses_type: "ella"
+    }
+  }
 }
 
 node {

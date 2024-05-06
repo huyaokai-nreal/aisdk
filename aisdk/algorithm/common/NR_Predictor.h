@@ -10,6 +10,8 @@
 #include <memory>
 #include <mutex>
 #include <opencv2/opencv.hpp>
+#include <string>
+#include <utility>
 #include "aisdk/algorithm/common/NR_Seq_Manager.h"
 #include "aisdk/base/type.h"
 namespace aisdk::algorithm {
@@ -45,6 +47,7 @@ struct PredictorState {
 
 class KFPredictor {
    public:
+    KFPredictor(){}
     int init();
     int start_tracking(double target_ts, PredictorState meas);
     void stop_tracking();
@@ -53,6 +56,10 @@ class KFPredictor {
     Vec3f_t track_with_correct(double target_ts, PredictorState meas);
 
     bool get_tracking_status() const;
+    void set_glasses_type(std::string glass_type){
+        glasses_type_ = std::move(glass_type);
+        reset_predict_smoother();
+    }
 
    private:
     PredictorState predict();
@@ -70,6 +77,8 @@ class KFPredictor {
     PredictorState m_momentum;
     mutable std::mutex m_mutex;
     double last_measure_time_ = 0;
+    float predict_length_ratio_ = 1.0;
+    std::string glasses_type_ = "flora"; // flora or ella
     std::unique_ptr<SeqManager3D> predict_smoother_;
 };
 

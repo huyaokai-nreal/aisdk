@@ -1,0 +1,6 @@
+syntax = "proto3";
+
+package aisdk;
+message HandFilterCalculatorOptions  {
+  string glasses_type = 1;  // flora or ella
+}

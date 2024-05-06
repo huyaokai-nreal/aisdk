@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "aisdk/algorithm/common/NR_Seq_Manager.h"
+#include "aisdk/base/log.h"
 #include "aisdk/base/type.h"
 
 namespace aisdk::algorithm {
@@ -84,9 +85,19 @@ int KFPredictor::init() {
 }
 void KFPredictor::reset_predict_smoother() {
     OneEuroParams center_params;
-    center_params.mincutoff = {0.1, 0.1, 0.1};  // 调静止状态下的稳定性,越小稳定性越好
-    center_params.beta = {20.0, 20.0, 20.0};    // 运动状态下alpha的变化速率，alpha越大，跟踪越及时
-    center_params.dcutoff = {0.8, 0.8, 0.5};    // 速度滤波的固定效果
+    if (glasses_type_ == "flora") {
+        center_params.mincutoff = {0.1, 0.1, 0.1};  // 调静止状态下的稳定性,越小稳定性越好
+        center_params.beta = {20.0, 20.0, 20.0};  // 运动状态下alpha的变化速率，alpha越大，跟踪越及时
+        center_params.dcutoff = {0.8, 0.8, 0.5};  // 速度滤波的固定效果
+        predict_length_ratio_ = 1.0;
+    } else if (glasses_type_ == "ella") {
+        center_params.mincutoff = {0.1, 0.1, 0.1};  // 调静止状态下的稳定性,越小稳定性越好
+        center_params.beta = {10.0, 10.0, 10.0};  // 运动状态下alpha的变化速率，alpha越大，跟踪越及时
+        center_params.dcutoff = {0.8, 0.8, 0.5};  // 速度滤波的固定效果
+        predict_length_ratio_ = 0.5;
+    } else {
+        AISDK_LOG_ERROR("[KFPredict]: undedfined glasses type {}", glasses_type_);
+    }
 
     center_params.freq = 60;
     predict_smoother_ = std::make_unique<SeqManager3D>(1, center_params);
@@ -181,7 +192,7 @@ double KFPredictor::get_valid_predict_time_length(double target_ts) {
         hand_static_state = 1;
     }
     double target_timestamp = 0;
-    auto predict_interval = target_ts - last_measure_time_;
+    auto predict_interval = (target_ts - last_measure_time_) * predict_length_ratio_;
     predict_interval = std::min(predict_interval, predict_time_interval_vec[hand_static_state]);
     target_timestamp = predict_interval + last_measure_time_;
     return target_timestamp;
