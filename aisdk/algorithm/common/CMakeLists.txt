@@ -6,4 +6,5 @@ ${CMAKE_CURRENT_SOURCE_DIR}/NR_Predictor.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/metrics.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/math.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/NR_Seq_Manager.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/data_debug_record.cpp
 )

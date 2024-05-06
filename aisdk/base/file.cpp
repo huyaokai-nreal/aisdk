@@ -49,7 +49,7 @@ bool IsDirExist(const std::string &path) {
     return false;
 }
 
-bool CreateDir(std::string path) {
+bool CreateDir(const std::string &path) {
     const char *dir = path.c_str();
     if (0 == access(dir, 0)) {
         return true;

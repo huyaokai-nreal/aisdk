@@ -62,6 +62,7 @@ std::string AddDataRecordCalculater(std::string& graph_config) {
         "  input_stream: \"DET_BBOX_OUTPUT:detection_output\"\n"
         "  input_stream: \"LANDMARK_OUTPUT:kpt2d\"\n"
         "  input_stream: \"LIFT_OUTPUT:kpt3d\"\n"
+        "  input_side_packet: \"CAM_INFO_INPUT:cam_info\"\n"
         "  input_stream_handler {\n"
         "    input_stream_handler: \"ImmediateInputStreamHandler\"\n"
         "  }\n"
@@ -72,7 +73,7 @@ std::string AddDataRecordCalculater(std::string& graph_config) {
 
 aisdk::algorithm::Status HandTrackingXGraph::Init(aisdk::xengine::DlSymFuncs& funcs,
                                                   aisdk::xengine::PipelineConfig& config, CameraParams& camera) {
-#if defined(ENABLE_ALGORITHM_DATA_RECORD_CALCULATOR)
+#if defined(ENABLE_ALGORITHM_DATA_RECORD)
     config.graph_config = AddDataRecordCalculater(config.graph_config);
 #endif
     return BaseXGraph::Init(funcs, config, camera);
@@ -226,6 +227,8 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
             out_hand_array[i].image_timestamp_nanos = outlist->raw_timestamp;
         }
 
+#if defined(ENABLE_ALGORITHM_DATA_RECORD)
+#endif
         return aisdk::algorithm::Status::SUCCESS;
     }
 
