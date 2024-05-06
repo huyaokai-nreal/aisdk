@@ -41,7 +41,7 @@ struct CameraParams {
 };
 
 #define PROFILING_FLAG (111)
-struct ProfilingOption {
+extern "C" struct ProfilingOption {
     uint32_t struct_bytes = 0;
     uint32_t aisdk_init_report = 0;
     uint32_t pipeline_debug = 0;

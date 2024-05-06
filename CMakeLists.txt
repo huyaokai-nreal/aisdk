@@ -47,7 +47,7 @@ option(ENABLE_LOG_LEVEL_ALL "enable trace log level" OFF)
 # build algorithm
 option(ENABLE_ALGORITHM_GRAPH_STREAM_EVAL_TIME "enable algorithm mediapipe graph stream eval time."  ON)
 option(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME "enable algorithm mediapipe calculator process eval time."  OFF)
-option(ENABLE_ALGORITHM_DATA_RECORD_CALCULATOR "enable algorithm data record/debug calculator"  OFF)
+option(ENABLE_ALGORITHM_DATA_RECORD "enable algorithm data record/debug"  OFF)
 # build xengine nn
 option(ENABLE_XENGINE_SHARED_LIB "enable xengine shared lib."  OFF)
 option(ENABLE_XENGINE_SNPE_NN "enable snpe nn."  ON)

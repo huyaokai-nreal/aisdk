@@ -45,6 +45,10 @@ else()
     target_compile_options(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PRIVATE -DXENGINE_STATIC_LIB)
 endif()
 
+if(ENABLE_ALGORITHM_DATA_RECORD)
+    target_compile_options(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PRIVATE -DENABLE_ALGORITHM_DATA_RECORD)
+endif()
+
 target_link_libraries(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PUBLIC base algorithm handtracking jsoncpp Eigen3::Eigen opencv::opencv)
 set_target_properties(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib

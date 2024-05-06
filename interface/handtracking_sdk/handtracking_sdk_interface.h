@@ -17,7 +17,7 @@
 namespace aisdk::interface {
 
 #define PROFILING_FLAG (111)
-struct ProfilingOption {
+extern "C" struct ProfilingOption {
     uint32_t struct_bytes = 0;
     uint32_t aisdk_init_report = 0;
     uint32_t pipeline_debug = 0;
@@ -38,6 +38,12 @@ struct ProfilingInfo {
     uint32_t struct_bytes = 0;
     uint64_t timestamp = 0;
     char* noderesult_jsonstring = nullptr;
+};
+
+#define DATA_RECORD_FLAG (112) 
+extern "C" struct DataRecordOption {
+    uint32_t struct_bytes = 0;
+    uint32_t start_stop = 0;
 };
 
 class HandTracking {

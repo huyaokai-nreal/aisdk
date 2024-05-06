@@ -328,15 +328,9 @@ bool HandTracking::GetApkStorePath() {
 
         // 系统调试配置解析,需要时手动开启
         auto& prof = aisdk::base::DebugProfiling::Get().GetOpt();
-        // prof.aisdk_init_report = true;
-        // prof.pipeline_debug = true;
-        // prof.pipeline_node_time_statistics = true;
-        // prof.developer_test_all = true;
         prof.local_data_record_rootpath = apk_copydir;
-        // 目前仅支持在apk推库模式下使用
         std::string data_record_configf = apk_copydir + "record_configs.json";
         if (aisdk::base::IsFileExist(data_record_configf.c_str())) {
-            prof.pipeline_debug = true;
             prof.local_pipeline_node_data_record = true;
             aisdk::base::ReadFromFile(data_record_configf, prof.local_data_record_jsonconfig);
         }
@@ -351,10 +345,6 @@ bool HandTracking::GetApkStorePath() {
 
         // 系统调试配置解析,需要时手动开启
         auto& prof = aisdk::base::DebugProfiling::Get().GetOpt();
-        // prof.aisdk_init_report = true;
-        // prof.pipeline_debug = true;
-        // prof.pipeline_node_time_statistics = true;
-        // prof.developer_test_all = true;
         prof.local_data_record_rootpath = default_libdir;
     }
 #elif defined(__linux__)
@@ -1035,7 +1025,7 @@ extern "C" void NRPluginDestroy_HANDTRACKING() {
 #ifdef HANDTRACKING_SHARED_LIBS
 // 以下2个api是新增为profiling使用，不是对外公知接口
 extern "C" void NR_INTERFACE_EXPORT NR_INTERFACE_API NRPluginSetProfilingOption(uint32_t flag, void* c_bytestruct) {
-    AISDK_LOG_TRACE("NRPluginSetProfiling");
+    AISDK_LOG_WARN("NRPluginSetProfiling");
     auto& prof = aisdk::base::DebugProfiling::Get().GetOpt();
     if (PROFILING_FLAG == flag && c_bytestruct) {
         aisdk::interface::ProfilingOption* tmp = (aisdk::interface::ProfilingOption*)c_bytestruct;
@@ -1072,4 +1062,25 @@ extern "C" int NR_INTERFACE_EXPORT NR_INTERFACE_API NRPluginGetProfilingInfo(uin
 
     return -1;
 }
+
+// 以下api是新增为unity录制数据使用，不是对外公知接口
+extern "C" int NR_INTERFACE_EXPORT NR_INTERFACE_API NRPluginDataRecord(uint32_t flag, void* c_bytestruct) {
+    int ret = 0;
+#ifdef ENABLE_ALGORITHM_DATA_RECORD
+    if (DATA_RECORD_FLAG == flag && c_bytestruct) {
+        auto& prof = aisdk::base::DebugProfiling::Get().GetOpt();
+        aisdk::interface::DataRecordOption* tmp = (aisdk::interface::DataRecordOption*)c_bytestruct;
+        prof.pipeline_debug = (tmp->start_stop > 0);
+        ret = 0;
+    } else {
+        ret = -2;
+    }
+#else
+    ret = -1;
+#endif
+
+    AISDK_LOG_WARN("NRPluginDataRecord ret={}", ret);
+    return ret;
+}
+
 #endif
