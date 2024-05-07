@@ -86,9 +86,9 @@ int KFPredictor::init() {
 void KFPredictor::reset_predict_smoother() {
     OneEuroParams center_params;
     if (glasses_type_ == "flora") {
-        center_params.mincutoff = {0.1, 0.1, 0.1};  // 调静止状态下的稳定性,越小稳定性越好
-        center_params.beta = {20.0, 20.0, 20.0};  // 运动状态下alpha的变化速率，alpha越大，跟踪越及时
-        center_params.dcutoff = {0.8, 0.8, 0.5};  // 速度滤波的固定效果
+        center_params.mincutoff = {0.08, 0.08, 0.07};  // 调静止状态下的稳定性,越小稳定性越好
+        center_params.beta = {22.0, 22.0, 22.0};  // 运动状态下alpha的变化速率，alpha越大，跟踪越及时
+        center_params.dcutoff = {0.75, 0.75, 0.45};  // 速度滤波的固定效果
         predict_length_ratio_ = 1.0;
     } else if (glasses_type_ == "ella") {
         center_params.mincutoff = {0.1, 0.1, 0.1};  // 调静止状态下的稳定性,越小稳定性越好
@@ -170,7 +170,7 @@ Vec3f_t KFPredictor::track_only_pred(double target_ts, bool with_smooth) {
     update_transition_matrix(valid_target_ts);
     auto pred = this->predict();
     std::vector<Vec3f_t> pred_pose{pred.pos};
-    this->correct(pred);
+    // this->correct(pred);
     last_correct_time_ = target_ts;
     if (with_smooth) {
         predict_smoother_->getFilterHandData(pred_pose);
