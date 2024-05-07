@@ -25,6 +25,9 @@ struct CamInfo {
     cv::Mat rcam_dist_coeffs;
 
     int camera_type;
+    // GL系1: nrsdk_api for real_camera
+    // opencv系 2: nreal_studio/slam_raw_config for test 
+    int generate_method;
 
     uint32_t video_width;
     uint32_t video_height;

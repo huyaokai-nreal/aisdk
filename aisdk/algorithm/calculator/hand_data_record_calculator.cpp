@@ -164,12 +164,12 @@ class HandDataRecordCalculator : public xgraph::CalculatorBase {
                             cache->rhand_valid = kpt3d_data.rhand_valid;
 
                             if (kpt3d_data.lhand_valid) {
-                                cache->lhand_lcam_reproj_kpt2d = lcam_model_->eye_to_window(kpt3d_data.lhand_kpt);
-                                cache->lhand_rcam_reproj_kpt2d = rcam_model_->eye_to_window(kpt3d_data.lhand_kpt);
+                                cache->lhand_lcam_reproj_kpt2d = lcam_model_->world_to_window(kpt3d_data.lhand_kpt);
+                                cache->lhand_rcam_reproj_kpt2d = rcam_model_->world_to_window(kpt3d_data.lhand_kpt);
                             }
                             if (kpt3d_data.rhand_valid) {
-                                cache->rhand_lcam_reproj_kpt2d = lcam_model_->eye_to_window(kpt3d_data.rhand_kpt);
-                                cache->rhand_rcam_reproj_kpt2d = rcam_model_->eye_to_window(kpt3d_data.rhand_kpt);
+                                cache->rhand_lcam_reproj_kpt2d = lcam_model_->world_to_window(kpt3d_data.rhand_kpt);
+                                cache->rhand_rcam_reproj_kpt2d = rcam_model_->world_to_window(kpt3d_data.rhand_kpt);
                             }
                             recorder.DebugLift(cache, kpt3d_data);
                         }

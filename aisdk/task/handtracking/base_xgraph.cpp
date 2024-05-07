@@ -162,8 +162,13 @@ aisdk::algorithm::CamInfo ConvertCameraInfo(aisdk::algorithm::CameraParams cam_i
     glL_T_glR.pretranslate(
         Eigen::Vector3f(cam_param["glL_t_glR"][0], cam_param["glL_t_glR"][1], cam_param["glL_t_glR"][2]));
     // 输入是GL系
+    input_cam_info.generate_method = (int)cam_param["generate_method"][0];
     Eigen::Matrix3f gl_R_cv;
-    gl_R_cv << 1, 0, 0, 0, -1, 0, 0, 0, -1;
+    if (1 == input_cam_info.generate_method) {
+        gl_R_cv << 1, 0, 0, 0, -1, 0, 0, 0, -1;
+    } else {
+        gl_R_cv << 1, 0, 0, 0, 1, 0, 0, 0, 1;
+    }
     Eigen::Isometry3f gl_T_cv = Eigen::Isometry3f::Identity();
     gl_T_cv.rotate(gl_R_cv);
     input_cam_info.cvL_T_cvR = gl_T_cv * glL_T_glR * gl_T_cv;

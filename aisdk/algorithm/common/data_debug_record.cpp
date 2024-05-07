@@ -552,19 +552,25 @@ void DataDebugRecord::DetectOpRecord(Recordcache* record, const aisdk::algorithm
         lcam_local_record_rootpath + "/seq_" + aisdk::base::StringSprintf("%010d", record->sequence_id) + "_detect.jpg";
     std::string rcam_pic_name =
         rcam_local_record_rootpath + "/seq_" + aisdk::base::StringSprintf("%010d", record->sequence_id) + "_detect.jpg";
-    cv::Mat lcam = record->detect_images[0].m_mat.clone();
-    cv::Mat rcam = record->detect_images[1].m_mat.clone();
+    cv::Mat lcam;
+    cv::cvtColor(record->detect_images[0].m_mat, lcam, cv::COLOR_GRAY2BGR);
+    cv::Mat rcam;
+    cv::cvtColor(record->detect_images[1].m_mat, rcam, cv::COLOR_GRAY2BGR);
+    cv::Scalar rectcolor(255, 255, 255);
+    if (record->is_tracker_detect) {
+        rectcolor = cv::Scalar(0, 255, 0);
+    }
 
     for (uint32_t cam_id = 0; cam_id < 2; cam_id++) {
         if (detect_result.lhand_valid) {
             if (0 == cam_id) {
                 cv::Rect rt = {(int)detect_result.lhand_rects[cam_id].x, (int)detect_result.lhand_rects[cam_id].y,
                                (int)detect_result.lhand_rects[cam_id].w, (int)detect_result.lhand_rects[cam_id].h};
-                cv::rectangle(lcam, rt, cv::Scalar(255, 255, 255), 1, 1, 0);
+                cv::rectangle(lcam, rt, rectcolor, 1, 1, 0);
             } else {
                 cv::Rect rt = {(int)detect_result.lhand_rects[cam_id].x, (int)detect_result.lhand_rects[cam_id].y,
                                (int)detect_result.lhand_rects[cam_id].w, (int)detect_result.lhand_rects[cam_id].h};
-                cv::rectangle(rcam, rt, cv::Scalar(255, 255, 255), 1, 1, 0);
+                cv::rectangle(rcam, rt, rectcolor, 1, 1, 0);
             }
         }
 
@@ -572,11 +578,11 @@ void DataDebugRecord::DetectOpRecord(Recordcache* record, const aisdk::algorithm
             if (0 == cam_id) {
                 cv::Rect rt = {(int)detect_result.rhand_rects[cam_id].x, (int)detect_result.rhand_rects[cam_id].y,
                                (int)detect_result.rhand_rects[cam_id].w, (int)detect_result.rhand_rects[cam_id].h};
-                cv::rectangle(lcam, rt, cv::Scalar(255, 255, 255), 1, 1, 0);
+                cv::rectangle(lcam, rt, rectcolor, 1, 1, 0);
             } else {
                 cv::Rect rt = {(int)detect_result.rhand_rects[cam_id].x, (int)detect_result.rhand_rects[cam_id].y,
                                (int)detect_result.rhand_rects[cam_id].w, (int)detect_result.rhand_rects[cam_id].h};
-                cv::rectangle(rcam, rt, cv::Scalar(255, 255, 255), 1, 1, 0);
+                cv::rectangle(rcam, rt, rectcolor, 1, 1, 0);
             }
         }
     }
