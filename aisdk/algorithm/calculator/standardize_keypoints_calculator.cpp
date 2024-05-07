@@ -49,7 +49,7 @@ class StandardizeKeypointsCalculator : public xgraph::CalculatorBase {
         auto output_buffer_ = absl::make_unique<HandOutputInternal>();
         output_buffer_->timestamp = timestamp;
         if (kpt_data.lhand_valid) {
-            output_buffer_->lhand_kpt = kpt_data.lhand_kpt;
+            output_buffer_->lhand_kpt = convert_to_23points(kpt_data.lhand_kpt);
             output_buffer_->lhand_valid = true;
             output_buffer_->lhand_score = kpt_data.lhand_score;
             output_buffer_->lhand_v = kpt_data.lhand_v;
@@ -57,7 +57,7 @@ class StandardizeKeypointsCalculator : public xgraph::CalculatorBase {
             compute_joint_rotation(kpt_data.lhand_kpt, true, output_buffer_->lhand_rotation);
         }
         if (kpt_data.rhand_valid) {
-            output_buffer_->rhand_kpt = kpt_data.rhand_kpt;
+            output_buffer_->rhand_kpt = convert_to_23points(kpt_data.rhand_kpt);
             output_buffer_->rhand_valid = true;
             output_buffer_->rhand_score = kpt_data.rhand_score;
             output_buffer_->rhand_v = kpt_data.rhand_v;
