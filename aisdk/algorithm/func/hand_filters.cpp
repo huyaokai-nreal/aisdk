@@ -46,14 +46,14 @@ bool HandFilters::init() {
 void HandFilters::kpt_seq_3d_filter(int hand_side, std::vector<Vec3f_t>& point3d) {
     std::vector<Vec3f_t> rel_points, palm_points;
     for (int i = 0; i < point3d.size(); i++) {
-        if (i == 21) continue;
-        if (i == 0 || i == 5 || i == 9 || i == 13 || i == 17 || i == 22) {
-            palm_points.emplace_back(point3d[i] - point3d[21]);
+        if (i == 0) continue;
+        if (i == 1 || i == 5 || i == 9 || i == 13 || i == 17 || i == 21 || i == 22) {
+            palm_points.emplace_back(point3d[i] - point3d[0]);
         } else {
-            rel_points.emplace_back(point3d[i] - point3d[21]);
+            rel_points.emplace_back(point3d[i] - point3d[0]);
         }
     }
-    const auto& root_point = point3d[21];
+    const auto& root_point = point3d[0];
     if (hand_side == 0) {
         m_seq3d_lhand->getFilterHandData(rel_points);
         m_seq3d_palm_lhand->getFilterHandData(palm_points);
@@ -63,9 +63,9 @@ void HandFilters::kpt_seq_3d_filter(int hand_side, std::vector<Vec3f_t>& point3d
     }
 
     for (int i = 0, p = 0, q = 0; i < point3d.size(); i++) {
-        if (i == 21)
+        if (i == 0)
             point3d[i] = root_point;
-        else if (i == 0 || i == 5 || i == 9 || i == 13 || i == 17 || i == 22) {
+        else if (i == 1 || i == 5 || i == 9 || i == 13 || i == 17 || i == 21 || i == 22) {
             point3d[i] = root_point + palm_points[q];
             q++;
         } else {

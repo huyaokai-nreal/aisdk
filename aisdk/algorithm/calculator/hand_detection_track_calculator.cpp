@@ -120,7 +120,7 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
                 DetectRect proj_bbox_lcam_lhand, proj_bbox_rcam_lhand;
                 std::vector<Vec3f_t> lhand_predict_frame = lastframe_kpt3d.lhand_kpt;
                 Vec3f_t root_kf_predicted;
-                Vec3f_t root_meas = lhand_predict_frame[21];
+                Vec3f_t root_meas = lhand_predict_frame[0];
 
                 auto &predictor_lhand = GlobalPredictorService::getInstance().get_predictor_lhand();
                 root_kf_predicted = predictor_lhand.track_only_pred(timestamp, false);
@@ -143,7 +143,7 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
                 DetectRect proj_bbox_lcam_rhand, proj_bbox_rcam_rhand;
                 std::vector<Vec3f_t> rhand_predict_frame = lastframe_kpt3d.rhand_kpt;
                 Vec3f_t root_kf_predicted;
-                Vec3f_t root_meas = rhand_predict_frame[21];
+                Vec3f_t root_meas = rhand_predict_frame[0];
 
                 auto &predictor_rhand = GlobalPredictorService::getInstance().get_predictor_rhand();
                 root_kf_predicted = predictor_rhand.track_only_pred(timestamp, false);

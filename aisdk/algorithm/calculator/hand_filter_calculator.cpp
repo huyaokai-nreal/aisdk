@@ -67,13 +67,13 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
         } else {
             output_buffer_->lhand_kpt = convert_to_23points(kpt3d_world.lhand_kpt);
             if (!predictor_lhand.get_tracking_status()) {
-                predictor_lhand.start_tracking(timestamp, {output_buffer_->lhand_kpt[21], {0., 0., 0.}});
+                predictor_lhand.start_tracking(timestamp, {output_buffer_->lhand_kpt[0], {0., 0., 0.}});
             } else {
                 if (kpt3d_world_pre.lhand_valid) {
                     auto measure_v =
-                        (output_buffer_->lhand_kpt[21] - kpt3d_world_pre.lhand_kpt[21]) / (timestamp - last_timestamp_);
+                        (output_buffer_->lhand_kpt[0] - kpt3d_world_pre.lhand_kpt[0]) / (timestamp - last_timestamp_);
                     output_buffer_->lhand_v = measure_v;
-                    predictor_lhand.track_with_correct(timestamp, {output_buffer_->lhand_kpt[21], measure_v});
+                    predictor_lhand.track_with_correct(timestamp, {output_buffer_->lhand_kpt[0], measure_v});
                 }
             }
             m_post_filter->kpt_seq_3d_filter(0, output_buffer_->lhand_kpt);
@@ -86,13 +86,13 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
         } else {
             output_buffer_->rhand_kpt = convert_to_23points(kpt3d_world.rhand_kpt);
             if (!predictor_rhand.get_tracking_status()) {
-                predictor_rhand.start_tracking(timestamp, {output_buffer_->rhand_kpt[21], {0., 0., 0.}});
+                predictor_rhand.start_tracking(timestamp, {output_buffer_->rhand_kpt[0], {0., 0., 0.}});
             } else {
                 if (kpt3d_world_pre.rhand_valid) {
                     auto measure_v =
-                        (output_buffer_->rhand_kpt[21] - kpt3d_world_pre.rhand_kpt[21]) / (timestamp - last_timestamp_);
+                        (output_buffer_->rhand_kpt[0] - kpt3d_world_pre.rhand_kpt[0]) / (timestamp - last_timestamp_);
                     output_buffer_->rhand_v = measure_v;
-                    predictor_rhand.track_with_correct(timestamp, {output_buffer_->rhand_kpt[21], measure_v});
+                    predictor_rhand.track_with_correct(timestamp, {output_buffer_->rhand_kpt[0], measure_v});
                 }
             }
             m_post_filter->kpt_seq_3d_filter(1, output_buffer_->rhand_kpt);
