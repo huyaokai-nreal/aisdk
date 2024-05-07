@@ -25,7 +25,7 @@ node {
   output_stream: "HEADPOSE_OUTPUT:head_pose_out"
   node_options: {
     [type.googleapis.com/aisdk.HandDetTrackCalculatorOptions] {
-      model_name: "detect"
+      model_name: "detect_dsp_ella"
     }
   }
 }

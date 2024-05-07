@@ -66,7 +66,7 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
 
         const auto &options = cc->Options<aisdk::HandDetTrackCalculatorOptions>();
         model_name_ = options.model_name();
-        if (model_name_ == "detect_cpu_ella" || model_name_ == "detect_cpu_flora") {
+        if (model_name_ == "detect_cpu_ella" || model_name_ == "detect_cpu_flora" || model_name_ == "detect_dsp_ella") {
             AISDK_LOG_TRACE("[HandDetTrackCalculator] start init {}", model_name_);
             netalgo = XGraphServiceUtils::CreateNetAlgoBase<HandDetectNet>((void *)0x202310, model_name_);
         } else {

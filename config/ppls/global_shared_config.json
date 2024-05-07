@@ -3,6 +3,7 @@
         "_statement": "the models name is globally unique",
         "models_name": [
             "detect",
+            "detect_dsp_ella",
             "detect_cpu_ella",
             "detect_cpu_flora",
             "2d_rtmtiny",
@@ -27,6 +28,18 @@
                     "output_box",
                     "output_cls"
                 ]
+            }
+        },
+        "detect_dsp_ella": {
+            "model_config": {
+                "file_name": "models/yolo_hand_det_v5_ppl_230307_snpe217_quantized.dlc",
+                "vendor": "snpe"
+            },
+            "session_config": {
+                "batch": 2,
+                "precision": "int8",
+                "thread_num": 1,
+                "runtime": "dsp"
             }
         },
         "detect_cpu_ella": {
