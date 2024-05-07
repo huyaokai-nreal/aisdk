@@ -164,6 +164,7 @@ void GMLPLiftNimble::PostProcess(const LiftNetInputs &inputs, LiftNetOutputs &ou
     int index_angle = this->m_net->GetOutputTensorIndex("angle");
     float *angle_ptr = (float *)otensor.m_tensors[index_angle].m_viraddr;
     std::vector<float> local_angles(angle_ptr, angle_ptr + 171);
+    local_angles = decode_hand_angle(local_angles);
     auto local_kpt = decode_hand_joints(shape_param, local_angles);
     Eigen::Matrix<float, 21, 3> global_kpt =
         ((global_rotation * local_kpt.transpose()).transpose().rowwise() + global_translation.transpose()) *
