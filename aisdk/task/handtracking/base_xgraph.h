@@ -20,7 +20,7 @@ class StreamCache {
 class BaseXGraph : public PipeGraphImpl {
    public:
     BaseXGraph() : PipeGraphImpl() {}
-    virtual ~BaseXGraph() {}
+    virtual ~BaseXGraph();
 
     virtual aisdk::algorithm::Status Init(aisdk::xengine::DlSymFuncs &funcs, aisdk::xengine::PipelineConfig &config,
                                   CameraParams &camera) override;
@@ -43,6 +43,8 @@ class BaseXGraph : public PipeGraphImpl {
 
     std::mutex m_inference_lock;
     std::map<int64_t, std::shared_ptr<StreamCache>> m_inference_stream_cache;
+    // 删除推理过程中无结果返回的推理缓存
+    bool ClearGraphNoResultInferenceCache(int64_t graph_stream_stamp);
     // 删除推理过程中被graph主动drop的StreamCache
     bool ClearMediapipeDropedInferenceCache(int64_t graph_stream_stamp);
 

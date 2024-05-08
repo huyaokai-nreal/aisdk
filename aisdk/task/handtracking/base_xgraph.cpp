@@ -25,6 +25,15 @@
 
 namespace aisdk::task {
 
+BaseXGraph::~BaseXGraph() {
+    std::lock_guard<std::mutex> guard(m_inference_lock);
+    for (auto iter = m_inference_stream_cache.begin(); iter != m_inference_stream_cache.end(); iter++) {
+#if defined(ENABLE_ALGORITHM_GRAPH_STREAM_EVAL_TIME)
+        iter->second->m_stream_time->valid = false;
+#endif
+    }
+}
+
 aisdk::algorithm::Status BaseXGraph::Start() {
     if (m_calculator_graph) {
         MP_RETURN_IF_ERROR_WITH_LOG(m_calculator_graph->StartRun({}));
@@ -36,9 +45,9 @@ aisdk::algorithm::Status BaseXGraph::Start() {
 
 aisdk::algorithm::Status BaseXGraph::Stop() {
     if (m_calculator_graph) {
+        graph_started = false;
         MP_RETURN_IF_ERROR_WITH_LOG(m_calculator_graph->CloseAllInputStreams());
         auto res_done = m_calculator_graph->WaitUntilDone();
-        graph_started = false;
     }
     return aisdk::algorithm::Status::SUCCESS;
 }
@@ -61,6 +70,7 @@ aisdk::algorithm::Status BaseXGraph::SetInputStreamCache(uint64_t raw_timestamp,
 #endif
 
     std::lock_guard<std::mutex> guard(m_inference_lock);
+    ClearGraphNoResultInferenceCache(graph_stream_stamp);
     m_inference_stream_cache.insert(std::make_pair(graph_stream_stamp, stream));
     return aisdk::algorithm::Status::SUCCESS;
 }
@@ -72,9 +82,25 @@ aisdk::algorithm::Status BaseXGraph::ClearInputStreamCache(int64_t graph_stream_
     return aisdk::algorithm::Status::SUCCESS;
 }
 
+// 无手势结果，graph将没有任何输出，无法通过ClearMediapipeDropedInferenceCache进行清除
+bool BaseXGraph::ClearGraphNoResultInferenceCache(int64_t graph_stream_stamp) {
+    // 仅保留最新30s内的,删除旧的
+    (void)graph_stream_stamp;
+    for (auto iter = m_inference_stream_cache.begin(); iter != m_inference_stream_cache.end();) {
+        if (m_inference_stream_cache.size() >= 1800) {
+            iter = m_inference_stream_cache.erase(iter);
+        } else {
+            break;
+        }
+    }
+
+    return true;
+}
+
 bool BaseXGraph::ClearMediapipeDropedInferenceCache(int64_t graph_stream_stamp) {
     std::lock_guard<std::mutex> guard(m_inference_lock);
     for (auto iter = m_inference_stream_cache.begin(); iter != m_inference_stream_cache.end();) {
+        // 被流控主动放弃，但不会返回的帧
         if (iter->first < graph_stream_stamp) {
 #if defined(ENABLE_ALGORITHM_GRAPH_STREAM_EVAL_TIME)
             iter->second->m_stream_time->valid = false;
@@ -96,7 +122,7 @@ bool BaseXGraph::MoveOutputCache(std::shared_ptr<StreamCache> &stream) {
     stream->m_stream_time = nullptr;
 #endif
 
-    {
+    if (graph_started) {
         std::lock_guard<std::mutex> guard(m_output_lock);
         if (m_output_stream_cache.size() > m_max_output_cahce_num) {
             m_output_stream_cache.pop_back();
@@ -125,6 +151,9 @@ bool BaseXGraph::CallBackInferenceResult(const xgraph::Packet &packet, int64_t o
             }
             ret = true;
         } else {
+#if defined(ENABLE_ALGORITHM_GRAPH_STREAM_EVAL_TIME)
+            cache->m_stream_time->valid = false;
+#endif
             AISDK_LOG_ERROR("XGraph::CallBackInferenceResult graph_stream_stamp={} NOT MATCH !!!!!", graph_stream_stamp)
             ret = false;
         }
