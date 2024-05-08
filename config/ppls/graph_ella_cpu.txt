@@ -1,4 +1,5 @@
 
+max_queue_size: 10
 input_stream: "IMAGE:image"
 input_stream: "HEADPOSE:head_pose"
 output_stream: "ALL_RESULTS:hand_result"
