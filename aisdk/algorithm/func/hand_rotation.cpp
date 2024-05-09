@@ -1,13 +1,16 @@
 #include "hand_rotation.h"
+
+#include "aisdk/base/log.h"
+
 namespace aisdk::algorithm {
 
-std::map<int, int> parent_index = {{1, 0},   {5, 0},   {9, 0},   {13, 0},  {22, 0},  {2, 1},   {6, 5},
-                                   {10, 9},  {14, 13}, {17, 22}, {3, 2},   {7, 6},   {11, 10}, {15, 14},
-                                   {18, 17}, {4, 3},   {8, 7},   {12, 11}, {16, 15}, {19, 18}, {20, 19}};
-const std::vector<int> lev1_index = {1, 5, 9, 13, 22};
-const std::vector<int> lev2_index = {2, 6, 10, 14, 17};
-const std::vector<int> lev3_index = {3, 7, 11, 15, 18};
-const std::vector<int> lev4_index = {4, 8, 12, 16, 19};
+std::map<int, int> parent_index = {{1, 0},   {5, 0},   {9, 0},   {13, 0},  {17, 0},  {2, 1},   {6, 5},
+                                   {10, 9},  {14, 13}, {18, 17}, {3, 2},   {7, 6},   {11, 10}, {15, 14},
+                                   {19, 18}, {4, 3},   {8, 7},   {12, 11}, {16, 15}, {20, 19}};
+const std::vector<int> lev1_index = {1, 5, 9, 13, 17};
+const std::vector<int> lev2_index = {2, 6, 10, 14, 18};
+const std::vector<int> lev3_index = {3, 7, 11, 15, 19};
+const std::vector<int> lev4_index = {4, 8, 12, 16, 20};
 std::vector<Vec3f_t> get_metacarpal_joints_v1(const std::vector<Vec3f_t>& joints) {
     const auto& root_joint = joints[0];
     auto little_vec = ((root_joint - joints[9]) + (root_joint - joints[17])).normalized();
@@ -122,19 +125,19 @@ bool compute_joint_rotation(const std::vector<Vec3f_t>& joint, bool left_hand,
         rotations_world[lev4_index[i]] = rotations_world[lev3_index[i]];
     }
 
-    int lev4_i = 19;
-    int lev5_i = 20;
-    int lev4_parent = parent_index[lev4_i];
-    int lev5_parent = parent_index[lev5_i];
-
-    auto vec1 = joint[lev4_i] - joint[lev4_parent];
-    auto vec2 = joint[lev5_i] - joint[lev5_parent];
-    vec_1 = {vec1[0], vec1[1], vec1[2]};
-    vec_2 = {vec2[0], vec2[1], vec2[2]};
-    Eigen::Matrix3f Ri = Eigen::Quaternionf::FromTwoVectors(vec_1, vec_2).toRotationMatrix();
-
-    rotations_world[lev4_i] = Ri * rotations_world[lev4_parent];
-    rotations_world[lev5_i] = rotations_world[lev4_i];
+    std::map<int, int> parent_index_additonal = {{22, 0}};
+    std::map<int, int> chile_index_additonal = {{22, 17}};
+    const std::vector<int> lev5_index = {22};
+    for (int i = 0; i < 1; i++) {
+        int lev5_parent = parent_index_additonal[lev5_index[i]];
+        int lev5_chlid = chile_index_additonal[lev5_index[i]];
+        auto vec1 = joint[lev5_index[i]] - joint[lev5_parent];
+        auto vec2 = joint[lev5_chlid] - joint[lev5_index[i]];
+        vec_1 = {vec1[0], vec1[1], vec1[2]};
+        vec_2 = {vec2[0], vec2[1], vec2[2]};
+        Eigen::Matrix3f Ri = Eigen::Quaternionf::FromTwoVectors(vec_1, vec_2).toRotationMatrix();
+        rotations_world[lev5_index[i]] = Ri * R0;
+    }
 
     return true;
 }

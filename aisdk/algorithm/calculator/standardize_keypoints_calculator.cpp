@@ -54,7 +54,7 @@ class StandardizeKeypointsCalculator : public xgraph::CalculatorBase {
             output_buffer_->lhand_score = kpt_data.lhand_score;
             output_buffer_->lhand_v = kpt_data.lhand_v;
             output_buffer_->lhand_gesture = gesture_data.lhand_gesture;
-            compute_joint_rotation(kpt_data.lhand_kpt, true, output_buffer_->lhand_rotation);
+            compute_joint_rotation(output_buffer_->lhand_kpt, true, output_buffer_->lhand_rotation);
         }
         if (kpt_data.rhand_valid) {
             output_buffer_->rhand_kpt = convert_to_23points(kpt_data.rhand_kpt);
@@ -62,7 +62,7 @@ class StandardizeKeypointsCalculator : public xgraph::CalculatorBase {
             output_buffer_->rhand_score = kpt_data.rhand_score;
             output_buffer_->rhand_v = kpt_data.rhand_v;
             output_buffer_->rhand_gesture = gesture_data.rhand_gesture;
-            compute_joint_rotation(kpt_data.rhand_kpt, false, output_buffer_->rhand_rotation);
+            compute_joint_rotation(output_buffer_->rhand_kpt, false, output_buffer_->rhand_rotation);
         }
         auto& global_kpt3d = GlobalPredictorService::getInstance().get_kpt3d_world();
         global_kpt3d = kpt_data;
