@@ -1,0 +1,16 @@
+{
+    "enable_local_records": false,
+    "local_records_config": {
+		"record_path": "/sdcard/Android/data/com.xreal.HandTracking_Ultimate/files/",
+        "record_name": "xxx",
+        "record_raw_images": true,
+        "raw_images_interval_time_ms": 70,
+        "record_det_res_data": true,
+        "record_pf_res_data": true,
+        "record_kpt2d_res_data": true,
+        "record_kpt3d_res_data": true,
+        "record_global_kpt3d_res_data": true,
+        "record_predicted_data": true,
+        "record_gesturereg": true
+    }
+}

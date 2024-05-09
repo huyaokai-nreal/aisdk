@@ -32,7 +32,10 @@ class HandDataRecordState {
    public:
     Recordcache* FindCanExport(bool force) {
         for (auto iter = frame_datacache.begin(); iter != frame_datacache.end(); iter++) {
+            // iter->second.m_nodestatus == NodeStatus::LIFT_FINISH 当前帧被分析
+            // iter->first < image_latest_time 新帧以及到达，但是上一帧还没完成(没detect到目标)
             if (force || iter->second.m_nodestatus == NodeStatus::LIFT_FINISH || iter->first < image_latest_time) {
+                AISDK_LOG_TRACE("[HandDataRecordState] FindCanExport {}", iter->first);
                 return &iter->second;
             }
         }
@@ -129,6 +132,7 @@ class HandDataRecordCalculator : public xgraph::CalculatorBase {
                             cache->detect_images[1].m_mat = image_data[1].m_mat.clone();
                             recorder.DebugImage(cache, image_data);
                         }
+                        m_mgr.SetLatestTime(time_id);
                     } else if (coll.Name() == "head_pose") {
                         Recordcache* cache = m_mgr.FindCache(time_id, true);
                         if (cache) {
@@ -174,8 +178,8 @@ class HandDataRecordCalculator : public xgraph::CalculatorBase {
                             recorder.DebugLift(cache, kpt3d_data);
                         }
                     }
-                    // AISDK_LOG_ERROR("HandDataRecordCalculator name = {} id = {} time_id = {}\n",
-                    //                 cc->Inputs().Get(id).Name().c_str(), id.value(), time_id);
+                    AISDK_LOG_TRACE("HandDataRecordCalculator name = {} id = {} time_id = {}\n",
+                                    cc->Inputs().Get(id).Name().c_str(), id.value(), time_id);
                 } else if (coll.IsDone()) {
                     is_any_input_close = true;
                     AISDK_LOG_ERROR("HandDataRecordCalculator name = {} id = {} IsDone\n",
