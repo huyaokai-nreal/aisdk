@@ -59,8 +59,8 @@ class GestureRecognitionCalculator : public xgraph::CalculatorBase {
             AISDK_LOG_TRACE("[GestureRecognitionCalculator] process left hand.");
 
             std::string gesture_res;
-            std::tie(gesture_res, std::ignore) =
-                m_gesture_classifier_lhand->predict_with_keypoints3d(kpt3d_data.lhand_kpt, kpt2d_data.lhand_lcam, true);
+            std::tie(gesture_res, std::ignore) = m_gesture_classifier_lhand->predict_with_keypoints3d(
+                kpt3d_data.lhand_kpt, kpt2d_data.lhand_lcam_kpt, true);
             output_buffer_->lhand_gesture = gesture_res;
             AISDK_LOG_TRACE("[GestureRecognitionCalculator] process left hand complete. {}",
                             output_buffer_->lhand_gesture);
@@ -69,7 +69,7 @@ class GestureRecognitionCalculator : public xgraph::CalculatorBase {
             AISDK_LOG_TRACE("[GestureRecognitionCalculator] process right hand.");
             std::string gesture_res;
             std::tie(gesture_res, std::ignore) = m_gesture_classifier_rhand->predict_with_keypoints3d(
-                kpt3d_data.rhand_kpt, kpt2d_data.rhand_rcam, false);
+                kpt3d_data.rhand_kpt, kpt2d_data.rhand_rcam_kpt, false);
             output_buffer_->rhand_gesture = gesture_res;
             AISDK_LOG_TRACE("[GestureRecognitionCalculator] process right hand complete. {}",
                             output_buffer_->rhand_gesture);

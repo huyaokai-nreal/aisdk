@@ -50,6 +50,14 @@ node {
     }
   }
 }
+#node {
+#  name: "MonoHand_3D"
+#  calculator: "MonoHandKpt3DCalculator"
+#  input_side_packet: "CAM_INFO_INPUT:cam_info"
+#  input_stream: "LANDMARK_INPUT:kpt2d"
+#  output_stream: "KPT3D_OUTPUT:kpt3d"
+#}
+
 node {
   name: "LiftNet_3D"
   calculator: "HandLiftCalculator"

@@ -91,8 +91,8 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
         std::unique_ptr<Kpt3dInternal> output_buffer_ = absl::make_unique<Kpt3dInternal>();
         if (kpt2d.lhand_valid) {
             LiftNetInputs lift_inputs;
-            lift_inputs.input_kpt_lcam = lcam_model_->undistort(kpt2d.lhand_lcam);
-            lift_inputs.input_kpt_rcam = rcam_model_->undistort(kpt2d.lhand_rcam);
+            lift_inputs.input_kpt_lcam = lcam_model_->undistort(kpt2d.lhand_lcam_kpt);
+            lift_inputs.input_kpt_rcam = rcam_model_->undistort(kpt2d.lhand_rcam_kpt);
             lift_inputs.is_left = 1.;
             lift_inputs.timestamp = timestamp;
             const auto lift_outputs = netalgo->Inference(lift_inputs);
@@ -104,8 +104,15 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
                     output_buffer_->lhand_kpt = constrain_hand(output_buffer_->lhand_kpt, true);
                     AISDK_LOG_TRACE("[LiftCalculator] left constrain finish");
                 }
+<<<<<<< HEAD
                 AISDK_LOG_TRACE("[LiftCalculator] left hand score is {}", lift_outputs->kpt3d_score);
                 output_buffer_->lhand_score = lift_outputs->kpt3d_score;
+=======
+                float kpt3d_score = compute_score_with_reprojection(output_buffer_->lhand_kpt, kpt2d.lhand_lcam_kpt,
+                                                                    kpt2d.lhand_rcam_kpt, lcam_model_, rcam_model_);
+                AISDK_LOG_TRACE("[LiftCalculator] left hand score is {}", kpt3d_score);
+                output_buffer_->lhand_score = kpt3d_score;
+>>>>>>> feat(algo): add mono hand kpt3d calculator
             } else {
                 output_buffer_->lhand_valid = false;
             }
@@ -113,8 +120,8 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
 
         if (kpt2d.rhand_valid) {
             LiftNetInputs lift_inputs;
-            lift_inputs.input_kpt_lcam = lcam_model_->undistort(kpt2d.rhand_lcam);
-            lift_inputs.input_kpt_rcam = rcam_model_->undistort(kpt2d.rhand_rcam);
+            lift_inputs.input_kpt_lcam = lcam_model_->undistort(kpt2d.rhand_lcam_kpt);
+            lift_inputs.input_kpt_rcam = rcam_model_->undistort(kpt2d.rhand_rcam_kpt);
             lift_inputs.is_left = 0.;
             lift_inputs.timestamp = timestamp;
             const auto lift_outputs = netalgo->Inference(lift_inputs);
@@ -124,8 +131,15 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
                 if (enable_constrain_) {
                     output_buffer_->rhand_kpt = constrain_hand(output_buffer_->rhand_kpt, false);
                 }
+<<<<<<< HEAD
                 AISDK_LOG_TRACE("[LiftCalculator] right hand score is {}", lift_outputs->kpt3d_score);
                 output_buffer_->rhand_score = lift_outputs->kpt3d_score;
+=======
+                float kpt3d_score = compute_score_with_reprojection(output_buffer_->rhand_kpt, kpt2d.rhand_lcam_kpt,
+                                                                    kpt2d.rhand_rcam_kpt, lcam_model_, rcam_model_);
+                AISDK_LOG_TRACE("[LiftCalculator] right hand score is {}", kpt3d_score);
+                output_buffer_->rhand_score = kpt3d_score;
+>>>>>>> feat(algo): add mono hand kpt3d calculator
             } else {
                 output_buffer_->rhand_valid = false;
             }

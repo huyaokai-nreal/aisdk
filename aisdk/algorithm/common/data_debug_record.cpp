@@ -632,19 +632,19 @@ void DataDebugRecord::RsnOpRecord(Recordcache* record, const aisdk::algorithm::K
 
     if (kpt2d_result.lhand_valid) {
         for (int kpt_index = 0; kpt_index < kAlgoKeypointNum; kpt_index++) {
-            cv::circle(lcam, {kpt2d_result.lhand_lcam[kpt_index][0], kpt2d_result.lhand_lcam[kpt_index][1]}, 2,
+            cv::circle(lcam, {kpt2d_result.lhand_lcam_kpt[kpt_index][0], kpt2d_result.lhand_lcam_kpt[kpt_index][1]}, 2,
                        cv::Scalar(255, 255, 255));
-            cv::circle(rcam, {kpt2d_result.lhand_rcam[kpt_index][0], kpt2d_result.lhand_rcam[kpt_index][1]}, 2,
+            cv::circle(rcam, {kpt2d_result.lhand_rcam_kpt[kpt_index][0], kpt2d_result.lhand_rcam_kpt[kpt_index][1]}, 2,
                        cv::Scalar(255, 255, 255));
         }
     }
 
     if (kpt2d_result.rhand_valid) {
         for (int kpt_index = 0; kpt_index < kAlgoKeypointNum; kpt_index++) {
-            cv::circle(lcam, {kpt2d_result.rhand_lcam[kpt_index][0], kpt2d_result.rhand_lcam[kpt_index][1]}, 2,
+            cv::circle(lcam, {kpt2d_result.rhand_lcam_kpt[kpt_index][0], kpt2d_result.rhand_lcam_kpt[kpt_index][1]}, 2,
                        cv::Scalar(255, 255, 255));
 
-            cv::circle(rcam, {kpt2d_result.rhand_rcam[kpt_index][0], kpt2d_result.rhand_rcam[kpt_index][1]}, 2,
+            cv::circle(rcam, {kpt2d_result.rhand_rcam_kpt[kpt_index][0], kpt2d_result.rhand_rcam_kpt[kpt_index][1]}, 2,
                        cv::Scalar(255, 255, 255));
         }
     }
@@ -657,7 +657,8 @@ void DataDebugRecord::RsnOpToJsonString(Recordcache* record, const aisdk::algori
     for (uint32_t cam_id = 0; cam_id < 2; cam_id++) {
         if (kpt2d_result.lhand_valid) {
             Json::Value root1;
-            const std::vector<Vec2f_t>& kpt2d = (0 == cam_id) ? kpt2d_result.lhand_lcam : kpt2d_result.lhand_rcam;
+            const std::vector<Vec2f_t>& kpt2d =
+                (0 == cam_id) ? kpt2d_result.lhand_lcam_kpt : kpt2d_result.lhand_rcam_kpt;
             for (int kpt_index = 0; kpt_index < kAlgoKeypointNum; kpt_index++) {
                 Json::Value root2;
                 root2[0] = kpt2d[kpt_index][0];
@@ -674,7 +675,8 @@ void DataDebugRecord::RsnOpToJsonString(Recordcache* record, const aisdk::algori
 
         if (kpt2d_result.rhand_valid) {
             Json::Value root1;
-            const std::vector<Vec2f_t>& kpt2d = (0 == cam_id) ? kpt2d_result.rhand_lcam : kpt2d_result.rhand_rcam;
+            const std::vector<Vec2f_t>& kpt2d =
+                (0 == cam_id) ? kpt2d_result.rhand_lcam_kpt : kpt2d_result.rhand_rcam_kpt;
             for (int kpt_index = 0; kpt_index < kAlgoKeypointNum; kpt_index++) {
                 Json::Value root2;
                 root2[0] = kpt2d[kpt_index][0];

@@ -141,20 +141,26 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
                 output_buffer_->lhand_valid = true;
                 for (int kpt_index = 0; kpt_index < kAlgoKeypointNum; kpt_index++) {
                     // 左手左目xy
-                    output_buffer_->lhand_lcam[kpt_index][0] =
+                    output_buffer_->lhand_lcam_kpt[kpt_index][0] =
                         ((input_width_ - 1) - rsn_result->kpts[0][kpt_index][0]) * left_rect[2] / input_width_ +
                         left_rect[0] - left_rect[2] * 0.5;
-                    output_buffer_->lhand_lcam[kpt_index][1] =
+                    output_buffer_->lhand_lcam_kpt[kpt_index][1] =
                         rsn_result->kpts[0][kpt_index][1] * left_rect[3] / input_height_ + left_rect[1] -
                         left_rect[3] * 0.5;
 
                     // 左手右目xy
-                    output_buffer_->lhand_rcam[kpt_index][0] =
+                    output_buffer_->lhand_rcam_kpt[kpt_index][0] =
                         ((input_width_ - 1) - rsn_result->kpts[1][kpt_index][0]) * right_rect[2] / input_width_ +
                         right_rect[0] - right_rect[2] * 0.5;
-                    output_buffer_->lhand_rcam[kpt_index][1] =
+                    output_buffer_->lhand_rcam_kpt[kpt_index][1] =
                         rsn_result->kpts[1][kpt_index][1] * right_rect[3] / input_height_ + right_rect[1] -
                         right_rect[3] * 0.5;
+                }
+                if (!rsn_result->rdepths.empty()) {
+                    std::copy(rsn_result->rdepths[0].begin(), rsn_result->rdepths[0].end(),
+                              output_buffer_->lhand_lcam_rdepth.begin());
+                    std::copy(rsn_result->rdepths[1].begin(), rsn_result->rdepths[1].end(),
+                              output_buffer_->lhand_rcam_rdepth.begin());
                 }
             }
         }
@@ -179,20 +185,26 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
                 output_buffer_->rhand_valid = true;
                 for (int kpt_index = 0; kpt_index < kAlgoKeypointNum; kpt_index++) {
                     // 右手左目xy
-                    output_buffer_->rhand_lcam[kpt_index][0] =
+                    output_buffer_->rhand_lcam_kpt[kpt_index][0] =
                         rsn_result->kpts[0][kpt_index][0] * left_rect[2] / input_width_ + left_rect[0] -
                         left_rect[2] * 0.5;
-                    output_buffer_->rhand_lcam[kpt_index][1] =
+                    output_buffer_->rhand_lcam_kpt[kpt_index][1] =
                         rsn_result->kpts[0][kpt_index][1] * left_rect[3] / input_height_ + left_rect[1] -
                         left_rect[3] * 0.5;
 
                     // 右手右目xy
-                    output_buffer_->rhand_rcam[kpt_index][0] =
+                    output_buffer_->rhand_rcam_kpt[kpt_index][0] =
                         rsn_result->kpts[1][kpt_index][0] * right_rect[2] / input_width_ + right_rect[0] -
                         right_rect[2] * 0.5;
-                    output_buffer_->rhand_rcam[kpt_index][1] =
+                    output_buffer_->rhand_rcam_kpt[kpt_index][1] =
                         rsn_result->kpts[1][kpt_index][1] * right_rect[3] / input_height_ + right_rect[1] -
                         right_rect[3] * 0.5;
+                }
+                if (!rsn_result->rdepths.empty()) {
+                    std::copy(rsn_result->rdepths[0].begin(), rsn_result->rdepths[0].end(),
+                              output_buffer_->rhand_lcam_rdepth.begin());
+                    std::copy(rsn_result->rdepths[1].begin(), rsn_result->rdepths[1].end(),
+                              output_buffer_->rhand_rcam_rdepth.begin());
                 }
             }
         }
@@ -200,8 +212,8 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
             // clang-format off
             AISDK_LOG_TRACE(
                 "[HandLandmarkCalculator] lhand_valid: {}, lhand_lcam: {}, lhand_rcam: {} / rhand_valid: {}, rhand_lcam: {}, rhand_rcam: {}",
-                output_buffer_->lhand_valid, output_buffer_->lhand_lcam.size(), output_buffer_->lhand_rcam.size(),
-                output_buffer_->rhand_valid, output_buffer_->rhand_lcam.size(), output_buffer_->rhand_rcam.size());
+                output_buffer_->lhand_valid, output_buffer_->lhand_lcam_kpt.size(), output_buffer_->lhand_rcam_kpt.size(),
+                output_buffer_->rhand_valid, output_buffer_->rhand_lcam_kpt.size(), output_buffer_->rhand_rcam_kpt.size());
             cc->Outputs().Tag("LANDMARK_OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
             // clang-format on
         } else {

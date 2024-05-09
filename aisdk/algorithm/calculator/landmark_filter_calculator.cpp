@@ -70,11 +70,11 @@ class LandmarkFilterCalculator : public xgraph::CalculatorBase {
             AISDK_LOG_TRACE("[LandmarkFilterCalculator] seq left hand kpt2d");
             output_buffer_->lhand_valid = true;
 
-            m_seq2d_lcam_lhand->updateSeq2D(input_data.lhand_lcam);
-            m_seq2d_rcam_lhand->updateSeq2D(input_data.lhand_rcam);
+            m_seq2d_lcam_lhand->updateSeq2D(input_data.lhand_lcam_kpt);
+            m_seq2d_rcam_lhand->updateSeq2D(input_data.lhand_rcam_kpt);
 
-            netalgo->Inference(m_seq2d_lcam_lhand->getSeq(), output_buffer_->lhand_lcam);
-            netalgo->Inference(m_seq2d_rcam_lhand->getSeq(), output_buffer_->lhand_rcam);
+            netalgo->Inference(m_seq2d_lcam_lhand->getSeq(), output_buffer_->lhand_lcam_kpt);
+            netalgo->Inference(m_seq2d_rcam_lhand->getSeq(), output_buffer_->lhand_rcam_kpt);
         } else {
             m_seq2d_lcam_lhand->reset();
             m_seq2d_rcam_lhand->reset();
@@ -84,11 +84,11 @@ class LandmarkFilterCalculator : public xgraph::CalculatorBase {
             AISDK_LOG_TRACE("[LandmarkFilterCalculator] seq right hand kpt2d");
             output_buffer_->rhand_valid = true;
 
-            m_seq2d_lcam_rhand->updateSeq2D(input_data.rhand_lcam);
-            m_seq2d_rcam_rhand->updateSeq2D(input_data.rhand_rcam);
+            m_seq2d_lcam_rhand->updateSeq2D(input_data.rhand_lcam_kpt);
+            m_seq2d_rcam_rhand->updateSeq2D(input_data.rhand_rcam_kpt);
 
-            netalgo->Inference(m_seq2d_lcam_rhand->getSeq(), output_buffer_->rhand_lcam);
-            netalgo->Inference(m_seq2d_rcam_rhand->getSeq(), output_buffer_->rhand_rcam);
+            netalgo->Inference(m_seq2d_lcam_rhand->getSeq(), output_buffer_->rhand_lcam_kpt);
+            netalgo->Inference(m_seq2d_rcam_rhand->getSeq(), output_buffer_->rhand_rcam_kpt);
         } else {
             m_seq2d_lcam_rhand->reset();
             m_seq2d_rcam_rhand->reset();

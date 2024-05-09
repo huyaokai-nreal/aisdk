@@ -10,29 +10,42 @@ namespace aisdk::algorithm {
 struct Kpt2dResult {
     std::vector<std::vector<Vec2f_t>> kpts;  // 单手 左目，右目
     std::vector<std::vector<float>> scores;
+    std::vector<std::vector<float>> rdepths;
 };
 struct Kpt2dInternal {
     Kpt2dInternal() {
-        lhand_lcam.resize(kAlgoKeypointNum);
-        lhand_rcam.resize(kAlgoKeypointNum);
-        rhand_lcam.resize(kAlgoKeypointNum);
-        rhand_rcam.resize(kAlgoKeypointNum);
+        lhand_lcam_kpt.resize(kAlgoKeypointNum);
+        lhand_rcam_kpt.resize(kAlgoKeypointNum);
+        rhand_lcam_kpt.resize(kAlgoKeypointNum);
+        rhand_rcam_kpt.resize(kAlgoKeypointNum);
+        lhand_lcam_rdepth.resize(kAlgoKeypointNum);
+        lhand_rcam_rdepth.resize(kAlgoKeypointNum);
+        rhand_lcam_rdepth.resize(kAlgoKeypointNum);
+        rhand_rcam_rdepth.resize(kAlgoKeypointNum);
     }
 
     // Hand 2d output data, a single eand data size should be 21.
-    std::vector<Vec2f_t> lhand_lcam;
-    std::vector<Vec2f_t> lhand_rcam;
-    std::vector<Vec2f_t> rhand_lcam;
-    std::vector<Vec2f_t> rhand_rcam;
+    std::vector<Vec2f_t> lhand_lcam_kpt;
+    std::vector<Vec2f_t> lhand_rcam_kpt;
+    std::vector<Vec2f_t> rhand_lcam_kpt;
+    std::vector<Vec2f_t> rhand_rcam_kpt;
+    std::vector<float> lhand_lcam_rdepth;
+    std::vector<float> lhand_rcam_rdepth;
+    std::vector<float> rhand_lcam_rdepth;
+    std::vector<float> rhand_rcam_rdepth;
 
     bool lhand_valid = false;
     bool rhand_valid = false;
 
     void clear() {
-        lhand_lcam.clear();
-        lhand_rcam.clear();
-        rhand_lcam.clear();
-        rhand_rcam.clear();
+        lhand_lcam_kpt.clear();
+        lhand_rcam_kpt.clear();
+        rhand_lcam_kpt.clear();
+        rhand_rcam_kpt.clear();
+        lhand_lcam_rdepth.clear();
+        lhand_rcam_rdepth.clear();
+        rhand_lcam_rdepth.clear();
+        rhand_rcam_rdepth.clear();
         lhand_valid = false;
         rhand_valid = false;
     }

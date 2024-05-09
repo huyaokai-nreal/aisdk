@@ -56,6 +56,7 @@ void RSNNano::PostProcess(Kpt2dResult &result) {
         return;
     }
     result.kpts.resize(otensor.m_batch);
+    result.rdepths.resize(otensor.m_batch);
     unsigned int _h, _w, _c, element_byte;
     for (size_t multi_i = 0; multi_i < otensor.m_multishape_num; multi_i++) {
         for (size_t batch_i = 0; batch_i < otensor.m_batch; batch_i++) {
@@ -67,13 +68,16 @@ void RSNNano::PostProcess(Kpt2dResult &result) {
             float *_data = (float *)mem;
 
             auto &rsnkpt = result.kpts[batch_i];
+            auto &rdepth = result.rdepths[batch_i];
             if (rsnkpt.size() != keypoint_num_) {
                 rsnkpt.resize(keypoint_num_);
+                rdepth.resize(keypoint_num_);
             }
 
             for (size_t i = 0; i < keypoint_num_; i++) {
                 rsnkpt[i][0] = _data[i * 3] * static_cast<float>(input_shape_);
                 rsnkpt[i][1] = _data[i * 3 + 1] * static_cast<float>(input_shape_);
+                rdepth[i] = (_data[i * 3 + 2] - 0.5) * 0.4;
             }
         }
     }
