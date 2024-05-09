@@ -38,6 +38,7 @@ struct LiftNetInputs {
 
 struct LiftNetOutputs {
     std::vector<Vec3f_t> res3d;
+    float kpt3d_score = 0;
 };
 
 }  // namespace aisdk::algorithm

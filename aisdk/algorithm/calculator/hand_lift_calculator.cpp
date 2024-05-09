@@ -104,10 +104,8 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
                     output_buffer_->lhand_kpt = constrain_hand(output_buffer_->lhand_kpt, true);
                     AISDK_LOG_TRACE("[LiftCalculator] left constrain finish");
                 }
-                float kpt3d_score = compute_score_with_reprojection(output_buffer_->lhand_kpt, kpt2d.lhand_lcam,
-                                                                    kpt2d.lhand_rcam, lcam_model_, rcam_model_);
-                AISDK_LOG_TRACE("[LiftCalculator] left hand score is {}", kpt3d_score);
-                output_buffer_->lhand_score = kpt3d_score;
+                AISDK_LOG_TRACE("[LiftCalculator] left hand score is {}", lift_outputs->kpt3d_score);
+                output_buffer_->lhand_score = lift_outputs->kpt3d_score;
             } else {
                 output_buffer_->lhand_valid = false;
             }
@@ -126,10 +124,8 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
                 if (enable_constrain_) {
                     output_buffer_->rhand_kpt = constrain_hand(output_buffer_->rhand_kpt, false);
                 }
-                float kpt3d_score = compute_score_with_reprojection(output_buffer_->rhand_kpt, kpt2d.rhand_lcam,
-                                                                    kpt2d.rhand_rcam, lcam_model_, rcam_model_);
-                AISDK_LOG_TRACE("[LiftCalculator] right hand score is {}", kpt3d_score);
-                output_buffer_->rhand_score = kpt3d_score;
+                AISDK_LOG_TRACE("[LiftCalculator] right hand score is {}", lift_outputs->kpt3d_score);
+                output_buffer_->rhand_score = lift_outputs->kpt3d_score;
             } else {
                 output_buffer_->rhand_valid = false;
             }

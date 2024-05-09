@@ -175,6 +175,11 @@ void GMLPLiftNimble::PostProcess(const LiftNetInputs &inputs, LiftNetOutputs &ou
     }
     AISDK_LOG_TRACE("[GMLPLiftNimble] run GMLPLiftNimble infer kpt success");
 
+    // score
+    int index_score = this->m_net->GetOutputTensorIndex("score");
+    float score = *((float *)otensor.m_tensors[index_score].m_viraddr);
+    outputs.kpt3d_score = score;
+
     int index_mem = this->m_net->GetOutputTensorIndex("mem_out");
 
     int mem_channels = otensor.m_tensors[index_mem].m_dims[0];
