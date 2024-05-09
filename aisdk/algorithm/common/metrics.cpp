@@ -51,14 +51,14 @@ float get_bbox_distance(cv::Rect src, cv::Rect dst) {
     return dis;
 }
 
-bool check_if_rect_valid(cv::Rect rect, int max_width, int max_height) {
-    return !(rect.x < 0 || rect.x >= max_width || rect.y < 0 || rect.y >= max_height || rect.width <= 0 ||
-             rect.x + rect.width >= max_width || rect.height <= 0 || rect.y + rect.height >= max_height);
-}
-bool check_if_rect_valid_relax(DetectRect rect, int max_width, int max_height) {
-    int cx = rect.x + 0.5 * rect.w;
-    int cy = rect.y + 0.5 * rect.h;
-    return cx > 0 && cx < max_width && cy > 0 && cy < max_height;
+bool check_if_rect_valid(const DetectRect& rect, float max_width, float max_height, float bbox_in_image_ratio_th,
+                         float min_bbox_area) {
+    float valid_x1 = std::max(0.0F, rect.x);
+    float valid_y1 = std::max(0.0F, rect.y);
+    float valid_x2 = std::min(max_width, rect.x + rect.w);
+    float valid_y2 = std::min(max_height, rect.y + rect.h);
+    float valid_area_ratio = (valid_x2 - valid_x1) * (valid_y2 - valid_y1) / (rect.w * rect.h);
+    return valid_area_ratio > bbox_in_image_ratio_th && rect.w * rect.h > min_bbox_area;
 }
 
 bool isNaN(const std::vector<Vec3f_t>& kpts) {
@@ -82,11 +82,7 @@ bool isHeadPoseValid(const NRTransform& headpose) {
 
     float length_squared = q.squaredNorm();
     const float epsilon = 1e-6f;
-    if (std::abs(length_squared - 1.0f) > epsilon) {
-        return false;
-    }
-
-    return true;
+    return std::abs(length_squared - 1.0f) <= epsilon;
 }
 
 }  // namespace aisdk::algorithm

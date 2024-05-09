@@ -38,6 +38,7 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
 
     uint32_t video_width_;
     uint32_t video_height_;
+    float min_bbox_area_th_ = 24 * 24;
     int det_tracker_step_ = 0;
 
    public:
@@ -74,8 +75,7 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
             netalgo = XGraphServiceUtils::CreateNetAlgoBase<HandDetectNetv2>((void *)0x202310, "detect");
         }
         if (!netalgo) {
-            return absl::Status(absl::StatusCode::kInvalidArgument,
-                                "[HandDetTrackCalculator] CreateNetAlgoBase nodename error");
+            return {absl::StatusCode::kInvalidArgument, "[HandDetTrackCalculator] CreateNetAlgoBase nodename error"};
         }
 
         const auto &cam_info = cc->InputSidePackets()
@@ -114,15 +114,17 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
             det_tracker_step_ = 0;
             output_buffer_->det_flag = false;
         }
+        auto &predictor_lhand = GlobalPredictorService::getInstance().get_predictor_lhand();
+        auto &predictor_rhand = GlobalPredictorService::getInstance().get_predictor_rhand();
 
-        if ((det_tracker_step_ != 0) && (lastframe_kpt3d.lhand_valid || lastframe_kpt3d.rhand_valid)) {
+        if ((det_tracker_step_ != 0) &&
+            (predictor_rhand.get_tracking_status() || predictor_lhand.get_tracking_status())) {
             if (lastframe_kpt3d.lhand_valid) {
                 DetectRect proj_bbox_lcam_lhand, proj_bbox_rcam_lhand;
                 std::vector<Vec3f_t> lhand_predict_frame = lastframe_kpt3d.lhand_kpt;
                 Vec3f_t root_kf_predicted;
                 Vec3f_t root_meas = lhand_predict_frame[0];
 
-                auto &predictor_lhand = GlobalPredictorService::getInstance().get_predictor_lhand();
                 root_kf_predicted = predictor_lhand.track_only_pred(timestamp, false);
 
                 for (int k = 0; k < lhand_predict_frame.size(); k++) {
@@ -131,8 +133,8 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
 
                 reproj_bbox_with_new_headpose(lcam_model_, rcam_model_, headpose_data.transform, lhand_predict_frame,
                                               proj_bbox_lcam_lhand, proj_bbox_rcam_lhand);
-                if (check_if_rect_valid_relax(proj_bbox_lcam_lhand, video_width_, video_height_) &&
-                    check_if_rect_valid_relax(proj_bbox_rcam_lhand, video_width_, video_height_)) {
+                if (check_if_rect_valid(proj_bbox_lcam_lhand, video_width_, video_height_, 0.6, min_bbox_area_th_) &&
+                    check_if_rect_valid(proj_bbox_rcam_lhand, video_width_, video_height_, 0.6, min_bbox_area_th_)) {
                     output_buffer_->lhand_valid = true;
                     output_buffer_->lhand_rects.emplace_back(proj_bbox_lcam_lhand);
                     output_buffer_->lhand_rects.emplace_back(proj_bbox_rcam_lhand);
@@ -145,7 +147,6 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
                 Vec3f_t root_kf_predicted;
                 Vec3f_t root_meas = rhand_predict_frame[0];
 
-                auto &predictor_rhand = GlobalPredictorService::getInstance().get_predictor_rhand();
                 root_kf_predicted = predictor_rhand.track_only_pred(timestamp, false);
 
                 for (int k = 0; k < rhand_predict_frame.size(); k++) {
@@ -155,8 +156,8 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
                 reproj_bbox_with_new_headpose(lcam_model_, rcam_model_, headpose_data.transform, rhand_predict_frame,
                                               proj_bbox_lcam_rhand, proj_bbox_rcam_rhand);
 
-                if (check_if_rect_valid_relax(proj_bbox_lcam_rhand, video_width_, video_height_) &&
-                    check_if_rect_valid_relax(proj_bbox_rcam_rhand, video_width_, video_height_)) {
+                if (check_if_rect_valid(proj_bbox_lcam_rhand, video_width_, video_height_, 0.6, min_bbox_area_th_) &&
+                    check_if_rect_valid(proj_bbox_rcam_rhand, video_width_, video_height_, 0.6, min_bbox_area_th_)) {
                     output_buffer_->rhand_valid = true;
                     output_buffer_->rhand_rects.emplace_back(proj_bbox_lcam_rhand);
                     output_buffer_->rhand_rects.emplace_back(proj_bbox_rcam_rhand);
@@ -211,7 +212,10 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
             // update lastframe kpt3d
             lastframe_kpt3d.lhand_valid = output_buffer_->lhand_valid;
             lastframe_kpt3d.rhand_valid = output_buffer_->rhand_valid;
-
+            auto &predictor_lhand = GlobalPredictorService::getInstance().get_predictor_lhand();
+            predictor_lhand.stop_tracking();
+            auto &predictor_rhand = GlobalPredictorService::getInstance().get_predictor_rhand();
+            predictor_rhand.stop_tracking();
             AISDK_LOG_TRACE("[HandDetTrackCalculator] No valid hand, truncated here");
         }
 

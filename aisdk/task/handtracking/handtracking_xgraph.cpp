@@ -167,11 +167,11 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
             out_hand_array[i].hand_joint_count = JOINTS_COUNT;
 
             if (i == 0) {
-                tracked_internal[i] = hand_data_internal.lhand_valid;
+                tracked_internal[i] = predictor_lhand.get_tracking_status();
                 ontracked_points[i] = hand_data_internal.lhand_kpt;
                 ontracked_rotations[i] = hand_data_internal.lhand_rotation;
             } else {
-                tracked_internal[i] = hand_data_internal.rhand_valid;
+                tracked_internal[i] = predictor_rhand.get_tracking_status();
                 ontracked_points[i] = hand_data_internal.rhand_kpt;
                 ontracked_rotations[i] = hand_data_internal.rhand_rotation;
             }

@@ -64,8 +64,8 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
         input_height_ = options.input_height();
         input_width_ = options.input_width();
         model_name_ = options.model_name();
-        if (options.bbox_expand_ration() > 0) {
-            bbox_expand_ratio_ = options.bbox_expand_ration();
+        if (options.bbox_expand_ratio() > 0) {
+            bbox_expand_ratio_ = options.bbox_expand_ratio();
         }
         if (model_name_ == "2d_rsntiny") {
             netalgo = XGraphServiceUtils::CreateNetAlgoBase<RSNTiny>((void*)0x202310, model_name_);

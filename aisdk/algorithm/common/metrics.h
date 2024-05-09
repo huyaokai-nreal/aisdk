@@ -18,8 +18,7 @@ float compute_score_with_reprojection(const std::vector<Vec3f_t>& pred_xyz, cons
 
 float get_bbox_distance(cv::Rect src, cv::Rect dst);
 
-bool check_if_rect_valid(cv::Rect rect, int max_width, int max_height);
-bool check_if_rect_valid_relax(DetectRect rect, int max_width, int max_height);
+bool check_if_rect_valid(const DetectRect& rect, float max_width, float max_height,float bbox_in_image_ratio_th, float min_bbox_area);
 bool isNaN(const std::vector<Vec3f_t>& kpts);
 bool isHeadPoseValid(const NRTransform& headpose);
 }  // namespace aisdk::algorithm

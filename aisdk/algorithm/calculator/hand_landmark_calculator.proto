@@ -6,5 +6,5 @@ message HandLandmarkCalculatorOptions  {
   int32 input_width = 1;
   int32 input_height = 2; 
   string  model_name = 3;
-  float bbox_expand_ration = 4;
+  float bbox_expand_ratio = 4;
 }
