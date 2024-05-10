@@ -178,7 +178,7 @@ void GMLPLiftNimble::PostProcess(const LiftNetInputs &inputs, LiftNetOutputs &ou
     // score
     int index_score = this->m_net->GetOutputTensorIndex("score");
     float score = *((float *)otensor.m_tensors[index_score].m_viraddr);
-    outputs.kpt3d_score = score;
+    outputs.kpt3d_score = 1 - score;
 
     int index_mem = this->m_net->GetOutputTensorIndex("mem_out");
 
