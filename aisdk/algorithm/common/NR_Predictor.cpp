@@ -171,7 +171,7 @@ Vec3f_t KFPredictor::track_only_pred(double target_ts, bool with_smooth) {
     auto pred = this->predict();
     std::vector<Vec3f_t> pred_pose{pred.pos};
     // this->correct(pred);
-    last_correct_time_ = target_ts;
+    // last_correct_time_ = target_ts;
     if (with_smooth) {
         predict_smoother_->getFilterHandData(pred_pose);
     }
@@ -194,6 +194,12 @@ double KFPredictor::get_valid_predict_time_length(double target_ts) {
     double target_timestamp = 0;
     auto predict_interval = (target_ts - last_measure_time_) * predict_length_ratio_;
     predict_interval = std::min(predict_interval, predict_time_interval_vec[hand_static_state]);
+    if ((m_kf_impl->statePost.at<float>(S_AX) < -0.1) || (m_kf_impl->statePost.at<float>(S_AY) < -0.1)) {
+        predict_interval = std::min(predict_interval, 0.02);
+    }
+    if ((m_kf_impl->statePost.at<float>(S_AX) < -0.2) || (m_kf_impl->statePost.at<float>(S_AY) < -0.2)) {
+        predict_interval = std::min(predict_interval, 0.01);
+    }
     target_timestamp = predict_interval + last_measure_time_;
     return target_timestamp;
 }
