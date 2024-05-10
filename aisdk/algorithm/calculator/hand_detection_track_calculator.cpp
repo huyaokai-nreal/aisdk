@@ -40,6 +40,7 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
     uint32_t video_height_;
     float min_bbox_area_th_ = 24 * 24;
     int det_tracker_step_ = 0;
+    int det_interval_ = 4;
 
    public:
     static absl::Status GetContract(xgraph::CalculatorContract *cc) {
@@ -78,6 +79,10 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
             return {absl::StatusCode::kInvalidArgument, "[HandDetTrackCalculator] CreateNetAlgoBase nodename error"};
         }
 
+        if (options.det_interval() > 0) {
+            det_interval_ = options.det_interval();
+        }
+
         const auto &cam_info = cc->InputSidePackets()
                                    .Tag("CAM_INFO_INPUT")
                                    .Get<std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>,
@@ -103,7 +108,7 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
         const auto &headpose_data = cc->Inputs().Tag("HEADPOSE").Get<HeadPoseInternal>();
 
         const auto &timestamp = cc->InputTimestamp().Seconds();
-        auto &lastframe_kpt3d = GlobalPredictorService::getInstance().get_kpt3d_world();
+        auto &lastframe_kpt3d = GlobalPredictorService::getInstance().get_last_pt3d_world();
 
         std::unique_ptr<DetOutputInternal> output_buffer_ = absl::make_unique<DetOutputInternal>();
         output_buffer_->det_flag = true;
@@ -168,7 +173,7 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
                 output_buffer_->det_flag = false;
 
                 det_tracker_step_++;
-                if (det_tracker_step_ > 4) {
+                if (det_tracker_step_ > det_interval_) {
                     det_tracker_step_ = 0;
                 }
             }
