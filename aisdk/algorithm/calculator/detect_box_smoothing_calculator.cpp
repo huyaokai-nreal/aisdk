@@ -56,34 +56,53 @@ class DetectBoxSmoothingCalculator : public xgraph::CalculatorBase {
         std::unique_ptr<DetOutputInternal> output_buffer_ = absl::make_unique<DetOutputInternal>();
         output_buffer_->clear();
 
-        if (input_data.lhand_valid) {
-            AISDK_LOG_TRACE("[DetectBoxSmoothingCalculator] Do smoothing on left hand bboxes (lhand_lcam, lhand_rcam)");
-            output_buffer_->lhand_valid = true;
+        if (input_data.lhand_lcam_valid) {
+            AISDK_LOG_TRACE("[DetectBoxSmoothingCalculator] Do smoothing on lhand lcam bboxes");
+            output_buffer_->lhand_lcam_valid = true;
 
-            output_buffer_->lhand_rects.push_back(input_data.lhand_rects[0]);
-            output_buffer_->lhand_rects.push_back(input_data.lhand_rects[1]);
-
-            float p_score = 1.0f;
-            m_seq_lcam_lhand->getFilterBoxData(output_buffer_->lhand_rects[0], p_score);
-            m_seq_rcam_lhand->getFilterBoxData(output_buffer_->lhand_rects[1], p_score);
-
-            AISDK_LOG_TRACE("[DetectBoxSmoothingCalculator] Smoothing left hand bboxes complete");
-        }
-        if (input_data.rhand_valid) {
-            AISDK_LOG_TRACE(
-                "[DetectBoxSmoothingCalculator] Do smoothing on right hand bboxes (rhand_lcam, rhand_rcam)");
-            output_buffer_->rhand_valid = true;
-
-            output_buffer_->rhand_rects.push_back(input_data.rhand_rects[0]);
-            output_buffer_->rhand_rects.push_back(input_data.rhand_rects[1]);
+            output_buffer_->lhand_lcam_rect = input_data.lhand_lcam_rect;
 
             float p_score = 1.0f;
-            m_seq_lcam_rhand->getFilterBoxData(output_buffer_->rhand_rects[0], p_score);
-            m_seq_rcam_rhand->getFilterBoxData(output_buffer_->rhand_rects[1], p_score);
+            m_seq_lcam_lhand->getFilterBoxData(output_buffer_->lhand_lcam_rect, p_score);
 
-            AISDK_LOG_TRACE("[DetectBoxSmoothingCalculator] Smoothing right hand bboxes complete");
+            AISDK_LOG_TRACE("[DetectBoxSmoothingCalculator] Done smoothing on lhand lcam bboxes");
         }
-        if (output_buffer_->lhand_valid || output_buffer_->rhand_valid) {
+        if (input_data.lhand_rcam_valid) {
+            AISDK_LOG_TRACE("[DetectBoxSmoothingCalculator] Do smoothing on lhand rcam bboxes");
+            output_buffer_->lhand_rcam_valid = true;
+
+            output_buffer_->lhand_rcam_rect = input_data.lhand_rcam_rect;
+
+            float p_score = 1.0f;
+            m_seq_rcam_lhand->getFilterBoxData(output_buffer_->lhand_rcam_rect, p_score);
+
+            AISDK_LOG_TRACE("[DetectBoxSmoothingCalculator] Done smoothing on lhand rcam bboxes");
+        }
+        if (input_data.rhand_lcam_valid) {
+            AISDK_LOG_TRACE("[DetectBoxSmoothingCalculator] Do smoothing on rhand lcam bboxes");
+            output_buffer_->rhand_lcam_valid = true;
+
+            output_buffer_->rhand_lcam_rect = input_data.rhand_lcam_rect;
+
+            float p_score = 1.0f;
+            m_seq_lcam_rhand->getFilterBoxData(output_buffer_->rhand_lcam_rect, p_score);
+
+            AISDK_LOG_TRACE("[DetectBoxSmoothingCalculator] Done smoothing on rhand lcam bboxes");
+        }
+        if (input_data.rhand_rcam_valid) {
+            AISDK_LOG_TRACE("[DetectBoxSmoothingCalculator] Do smoothing on rhand rcam bboxes");
+            output_buffer_->rhand_rcam_valid = true;
+
+            output_buffer_->rhand_rcam_rect = input_data.rhand_rcam_rect;
+
+            float p_score = 1.0f;
+            m_seq_rcam_rhand->getFilterBoxData(output_buffer_->rhand_rcam_rect, p_score);
+
+            AISDK_LOG_TRACE("[DetectBoxSmoothingCalculator] Done smoothing on rhand rcam bboxes");
+        }
+
+        if (output_buffer_->lhand_lcam_valid || output_buffer_->lhand_rcam_valid || output_buffer_->rhand_lcam_valid ||
+            output_buffer_->rhand_rcam_valid) {
             cc->Outputs().Tag("BBOX_SMOOTHED_OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
         } else {
             cc->Outputs().Tag("BBOX_SMOOTHED_OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());

@@ -564,28 +564,26 @@ void DataDebugRecord::DetectOpRecord(Recordcache* record, const aisdk::algorithm
     }
 
     for (uint32_t cam_id = 0; cam_id < 2; cam_id++) {
-        if (detect_result.lhand_valid) {
-            if (0 == cam_id) {
-                cv::Rect rt = {(int)detect_result.lhand_rects[cam_id].x, (int)detect_result.lhand_rects[cam_id].y,
-                               (int)detect_result.lhand_rects[cam_id].w, (int)detect_result.lhand_rects[cam_id].h};
-                cv::rectangle(lcam, rt, rectcolor, 1, 1, 0);
-            } else {
-                cv::Rect rt = {(int)detect_result.lhand_rects[cam_id].x, (int)detect_result.lhand_rects[cam_id].y,
-                               (int)detect_result.lhand_rects[cam_id].w, (int)detect_result.lhand_rects[cam_id].h};
-                cv::rectangle(rcam, rt, rectcolor, 1, 1, 0);
-            }
+        if (detect_result.lhand_lcam_valid) {
+            cv::Rect rt = {(int)detect_result.lhand_lcam_rect.x, (int)detect_result.lhand_lcam_rect.y,
+                           (int)detect_result.lhand_lcam_rect.w, (int)detect_result.lhand_lcam_rect.h};
+            cv::rectangle(lcam, rt, rectcolor, 1, 1, 0);
+        }
+        if (detect_result.lhand_rcam_valid) {
+            cv::Rect rt = {(int)detect_result.lhand_rcam_rect.x, (int)detect_result.lhand_rcam_rect.y,
+                           (int)detect_result.lhand_rcam_rect.w, (int)detect_result.lhand_rcam_rect.h};
+            cv::rectangle(rcam, rt, rectcolor, 1, 1, 0);
         }
 
-        if (detect_result.rhand_valid) {
-            if (0 == cam_id) {
-                cv::Rect rt = {(int)detect_result.rhand_rects[cam_id].x, (int)detect_result.rhand_rects[cam_id].y,
-                               (int)detect_result.rhand_rects[cam_id].w, (int)detect_result.rhand_rects[cam_id].h};
-                cv::rectangle(lcam, rt, rectcolor, 1, 1, 0);
-            } else {
-                cv::Rect rt = {(int)detect_result.rhand_rects[cam_id].x, (int)detect_result.rhand_rects[cam_id].y,
-                               (int)detect_result.rhand_rects[cam_id].w, (int)detect_result.rhand_rects[cam_id].h};
-                cv::rectangle(rcam, rt, rectcolor, 1, 1, 0);
-            }
+        if (detect_result.rhand_lcam_valid) {
+            cv::Rect rt = {(int)detect_result.rhand_lcam_rect.x, (int)detect_result.rhand_lcam_rect.y,
+                           (int)detect_result.rhand_lcam_rect.w, (int)detect_result.rhand_lcam_rect.h};
+            cv::rectangle(lcam, rt, rectcolor, 1, 1, 0);
+        }
+        if (detect_result.rhand_rcam_valid) {
+            cv::Rect rt = {(int)detect_result.rhand_rcam_rect.x, (int)detect_result.rhand_rcam_rect.y,
+                           (int)detect_result.rhand_rcam_rect.w, (int)detect_result.rhand_rcam_rect.h};
+            cv::rectangle(rcam, rt, rectcolor, 1, 1, 0);
         }
     }
 
@@ -595,32 +593,38 @@ void DataDebugRecord::DetectOpRecord(Recordcache* record, const aisdk::algorithm
 
 void DataDebugRecord::DetectOpToJsonString(Recordcache* record,
                                            const aisdk::algorithm::DetOutputInternal& detect_result) {
-    for (uint32_t cam_id = 0; cam_id < 2; cam_id++) {
-        if (detect_result.lhand_valid) {
-            Json::Value root1;
-            root1[0] = detect_result.lhand_rects[cam_id].x;
-            root1[1] = detect_result.lhand_rects[cam_id].y;
-            root1[2] = detect_result.lhand_rects[cam_id].w;
-            root1[3] = detect_result.lhand_rects[cam_id].h;
-            if (0 == cam_id) {
-                record->export_root["00_detect"]["lefthand_leftcam"] = root1;
-            } else {
-                record->export_root["00_detect"]["lefthand_rightcam"] = root1;
-            }
-        }
+    if (detect_result.lhand_lcam_valid) {
+        Json::Value root1;
+        root1[0] = detect_result.lhand_lcam_rect.x;
+        root1[1] = detect_result.lhand_lcam_rect.y;
+        root1[2] = detect_result.lhand_lcam_rect.w;
+        root1[3] = detect_result.lhand_lcam_rect.h;
+        record->export_root["00_detect"]["lefthand_leftcam"] = root1;
+    }
+    if (detect_result.lhand_rcam_valid) {
+        Json::Value root1;
+        root1[0] = detect_result.lhand_rcam_rect.x;
+        root1[1] = detect_result.lhand_rcam_rect.y;
+        root1[2] = detect_result.lhand_rcam_rect.w;
+        root1[3] = detect_result.lhand_rcam_rect.h;
+        record->export_root["00_detect"]["lefthand_rightcam"] = root1;
+    }
 
-        if (detect_result.rhand_valid) {
-            Json::Value root1;
-            root1[0] = detect_result.rhand_rects[cam_id].x;
-            root1[1] = detect_result.rhand_rects[cam_id].y;
-            root1[2] = detect_result.rhand_rects[cam_id].w;
-            root1[3] = detect_result.rhand_rects[cam_id].h;
-            if (0 == cam_id) {
-                record->export_root["00_detect"]["righthand_leftcam"] = root1;
-            } else {
-                record->export_root["00_detect"]["righthand_rightcam"] = root1;
-            }
-        }
+    if (detect_result.rhand_lcam_valid) {
+        Json::Value root1;
+        root1[0] = detect_result.rhand_lcam_rect.x;
+        root1[1] = detect_result.rhand_lcam_rect.y;
+        root1[2] = detect_result.rhand_lcam_rect.w;
+        root1[3] = detect_result.rhand_lcam_rect.h;
+        record->export_root["00_detect"]["righthand_leftcam"] = root1;
+    }
+    if (detect_result.rhand_rcam_valid) {
+        Json::Value root1;
+        root1[0] = detect_result.rhand_rcam_rect.x;
+        root1[1] = detect_result.rhand_rcam_rect.y;
+        root1[2] = detect_result.rhand_rcam_rect.w;
+        root1[3] = detect_result.rhand_rcam_rect.h;
+        record->export_root["00_detect"]["righthand_rightcam"] = root1;
     }
 }
 

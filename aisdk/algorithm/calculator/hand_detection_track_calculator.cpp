@@ -111,6 +111,7 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
         auto &lastframe_kpt3d = GlobalPredictorService::getInstance().get_last_pt3d_world();
 
         std::unique_ptr<DetOutputInternal> output_buffer_ = absl::make_unique<DetOutputInternal>();
+        output_buffer_->clear();
         output_buffer_->det_flag = true;
 
         if (false == isHeadPoseValid(headpose_data.transform)) {
@@ -138,11 +139,13 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
 
                 reproj_bbox_with_new_headpose(lcam_model_, rcam_model_, headpose_data.transform, lhand_predict_frame,
                                               proj_bbox_lcam_lhand, proj_bbox_rcam_lhand);
-                if (check_if_rect_valid(proj_bbox_lcam_lhand, video_width_, video_height_, 0.6, min_bbox_area_th_) &&
-                    check_if_rect_valid(proj_bbox_rcam_lhand, video_width_, video_height_, 0.6, min_bbox_area_th_)) {
-                    output_buffer_->lhand_valid = true;
-                    output_buffer_->lhand_rects.emplace_back(proj_bbox_lcam_lhand);
-                    output_buffer_->lhand_rects.emplace_back(proj_bbox_rcam_lhand);
+                if (check_if_rect_valid(proj_bbox_lcam_lhand, video_width_, video_height_, 0.6, min_bbox_area_th_)) {
+                    output_buffer_->lhand_lcam_valid = true;
+                    output_buffer_->lhand_lcam_rect = proj_bbox_lcam_lhand;
+                }
+                if (check_if_rect_valid(proj_bbox_rcam_lhand, video_width_, video_height_, 0.6, min_bbox_area_th_)) {
+                    output_buffer_->lhand_rcam_valid = true;
+                    output_buffer_->lhand_rcam_rect = proj_bbox_rcam_lhand;
                 }
             }
 
@@ -161,15 +164,18 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
                 reproj_bbox_with_new_headpose(lcam_model_, rcam_model_, headpose_data.transform, rhand_predict_frame,
                                               proj_bbox_lcam_rhand, proj_bbox_rcam_rhand);
 
-                if (check_if_rect_valid(proj_bbox_lcam_rhand, video_width_, video_height_, 0.6, min_bbox_area_th_) &&
-                    check_if_rect_valid(proj_bbox_rcam_rhand, video_width_, video_height_, 0.6, min_bbox_area_th_)) {
-                    output_buffer_->rhand_valid = true;
-                    output_buffer_->rhand_rects.emplace_back(proj_bbox_lcam_rhand);
-                    output_buffer_->rhand_rects.emplace_back(proj_bbox_rcam_rhand);
+                if (check_if_rect_valid(proj_bbox_lcam_rhand, video_width_, video_height_, 0.6, min_bbox_area_th_)) {
+                    output_buffer_->rhand_lcam_valid = true;
+                    output_buffer_->rhand_lcam_rect = proj_bbox_lcam_rhand;
+                }
+                if (check_if_rect_valid(proj_bbox_rcam_rhand, video_width_, video_height_, 0.6, min_bbox_area_th_)) {
+                    output_buffer_->rhand_rcam_valid = true;
+                    output_buffer_->rhand_rcam_rect = proj_bbox_rcam_rhand;
                 }
             }
 
-            if (output_buffer_->lhand_valid || output_buffer_->rhand_valid) {
+            if (output_buffer_->lhand_lcam_valid || output_buffer_->lhand_rcam_valid ||
+                output_buffer_->rhand_lcam_valid || output_buffer_->rhand_rcam_valid) {
                 output_buffer_->det_flag = false;
 
                 det_tracker_step_++;
@@ -187,40 +193,46 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
             netalgo->Inference(image_data, result);
 
             // check stereo det bbox pair valid
-            if (result.images_lhand_rects.size() == 2 && result.images_lhand_rects[0].size() > 0 &&
-                result.images_lhand_rects[1].size() > 0) {
-                result.lhand_valid = true;
-                result.lhand_rects.emplace_back(result.images_lhand_rects[0][0]);
-                result.lhand_rects.emplace_back(result.images_lhand_rects[1][0]);
-            } else {
-                result.lhand_valid = false;
+            if (result.images_lhand_rects.size() == 2) {
+                if (result.images_lhand_rects[0].size() > 0) {
+                    result.lhand_lcam_rect = result.images_lhand_rects[0][0];
+                    result.lhand_lcam_valid = true;
+                }
+                if (result.images_lhand_rects[1].size() > 0) {
+                    result.lhand_rcam_rect = result.images_lhand_rects[1][0];
+                    result.lhand_rcam_valid = true;
+                }
             }
 
-            if (result.images_rhand_rects.size() == 2 && result.images_rhand_rects[0].size() > 0 &&
-                result.images_rhand_rects[1].size() > 0) {
-                result.rhand_valid = true;
-                result.rhand_rects.emplace_back(result.images_rhand_rects[0][0]);
-                result.rhand_rects.emplace_back(result.images_rhand_rects[1][0]);
-            } else {
-                result.rhand_valid = false;
+            if (result.images_rhand_rects.size() == 2) {
+                if (result.images_rhand_rects[0].size() > 0) {
+                    result.rhand_lcam_rect = result.images_rhand_rects[0][0];
+                    result.rhand_lcam_valid = true;
+                }
+                if (result.images_rhand_rects[1].size() > 0) {
+                    result.rhand_rcam_rect = result.images_rhand_rects[1][0];
+                    result.rhand_rcam_valid = true;
+                }
             }
 
             det_tracker_step_ = 1;
         }
 
-        if (output_buffer_->lhand_valid || output_buffer_->rhand_valid) {
+        if (output_buffer_->lhand_lcam_valid || output_buffer_->lhand_rcam_valid || output_buffer_->rhand_lcam_valid ||
+            output_buffer_->rhand_rcam_valid) {
             cc->Outputs().Tag("DET_BBOX_OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
             cc->Outputs().Tag("IMAGE_OUTPUT").AddPacket(cc->Inputs().Tag("IMAGE_INPUT").Value());
             cc->Outputs().Tag("HEADPOSE_OUTPUT").AddPacket(cc->Inputs().Tag("HEADPOSE").Value());
             AISDK_LOG_TRACE("[HandDetTrackCalculator] At least single hand valid, pass");
         } else {
             // update lastframe kpt3d
-            lastframe_kpt3d.lhand_valid = output_buffer_->lhand_valid;
-            lastframe_kpt3d.rhand_valid = output_buffer_->rhand_valid;
+            lastframe_kpt3d.lhand_valid = false;
+            lastframe_kpt3d.rhand_valid = false;
             auto &predictor_lhand = GlobalPredictorService::getInstance().get_predictor_lhand();
             predictor_lhand.stop_tracking();
             auto &predictor_rhand = GlobalPredictorService::getInstance().get_predictor_rhand();
             predictor_rhand.stop_tracking();
+
             AISDK_LOG_TRACE("[HandDetTrackCalculator] No valid hand, truncated here");
         }
 
