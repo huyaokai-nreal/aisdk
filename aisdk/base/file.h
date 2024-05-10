@@ -15,7 +15,6 @@ std::string StringSprintf(const char* format, Args... args) {
     return str;
 }
 
-std::string GetCurrentSystemTime();
 bool CopyFile(const std::string& origin_file_path, const std::string& target_file_path);
 bool CreateDir(const std::string& path);
 bool RemoveDir(const std::string_view& path);

@@ -59,7 +59,7 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
         std::unique_ptr<Kpt3dInternal> output_buffer_ = absl::make_unique<Kpt3dInternal>();
         auto& predictor_lhand = GlobalPredictorService::getInstance().get_predictor_lhand();
         auto& predictor_rhand = GlobalPredictorService::getInstance().get_predictor_rhand();
-        const auto& kpt3d_world_pre = GlobalPredictorService::getInstance().get_kpt3d_world();
+        const auto& kpt3d_world_pre = GlobalPredictorService::getInstance().get_last_pt3d_world();
 
         if (!kpt3d_world.lhand_valid) {
             predictor_lhand.stop_tracking();

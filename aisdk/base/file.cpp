@@ -10,18 +10,6 @@
 #include "aisdk/base/log.h"
 
 namespace aisdk::base {
-std::string GetCurrentSystemTime() {
-    // 获取当前时间，包括毫秒
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    char timestamp_with_ms[128];
-    strftime(timestamp_with_ms, sizeof(timestamp_with_ms), "%Y-%m-%d %H:%M:%S", localtime(&tv.tv_sec));
-    char ms[16];
-    snprintf(ms, sizeof(ms), ".%03ld", tv.tv_usec / 1000);
-    strcat(timestamp_with_ms, ms);
-    std::string tmp(timestamp_with_ms, strlen(timestamp_with_ms));
-    return tmp;
-}
 
 bool CopyFile(const std::string &origin_file_path, const std::string &target_file_path) {
     std::ifstream infile;

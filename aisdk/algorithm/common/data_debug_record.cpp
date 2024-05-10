@@ -1,5 +1,7 @@
 #include "aisdk/algorithm/common/data_debug_record.h"
 
+#include <absl/time/clock.h>
+#include <absl/time/time.h>
 #include <sys/time.h>
 
 #include "aisdk/base/file.h"
@@ -999,7 +1001,7 @@ void DataDebugRecord::PipelineNodeInfoToJsonString(Recordcache* record, std::str
         json_result["tracker_detect"] = record->is_tracker_detect;
         json_result["sequence_id"] = record->sequence_id;
     }
-    json_result["current_system_time"] = aisdk::base::GetCurrentSystemTime();
+    json_result["current_system_time"] = absl::FormatTime("%Y-%m-%d %H:%M:%E3S", absl::Now(), absl::LocalTimeZone());
 
     // Json::FastWriter fwriter;
     Json::StyledWriter fwriter;

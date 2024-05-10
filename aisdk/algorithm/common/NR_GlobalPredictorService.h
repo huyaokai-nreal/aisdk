@@ -15,7 +15,7 @@ class GlobalPredictorService {
 
     KFPredictor& get_predictor_rhand() { return kfpredictor_rhand; }
 
-    Kpt3dInternal& get_kpt3d_world() { return kpt3d_world; }
+    Kpt3dInternal& get_last_pt3d_world() { return last_kpt3d_world; }
     GlobalPredictorService(const GlobalPredictorService&) = delete;
     GlobalPredictorService& operator=(const GlobalPredictorService&) = delete;
 
@@ -23,7 +23,7 @@ class GlobalPredictorService {
     KFPredictor kfpredictor_lhand;
     KFPredictor kfpredictor_rhand;
 
-    Kpt3dInternal kpt3d_world;
+    Kpt3dInternal last_kpt3d_world;
 
     GlobalPredictorService() {
         kfpredictor_lhand.init();
