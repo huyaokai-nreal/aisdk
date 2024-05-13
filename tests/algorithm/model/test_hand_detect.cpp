@@ -84,7 +84,7 @@ TEST_CASE("testing create netalgo") {
                 // 结果处理
                 if (result.images_lhand_rects.size() == 2 && result.images_lhand_rects[0].size() > 0 && result.images_lhand_rects[1].size() > 0) {
                     AISDK_LOG_TRACE("[HandDetectionCalculator], OK!!!");
-                    result.lhand_valid = true;
+                    // result.lhand_valid = true;
 
                     auto lcam_lhand = result.images_lhand_rects[0][0];
                     AISDK_LOG_TRACE("[HandDetectionCalculator] left hand + left cam: x: {}, y: {}, w: {}, h: {}", lcam_lhand.x, lcam_lhand.y, lcam_lhand.w, lcam_lhand.h);
@@ -92,18 +92,18 @@ TEST_CASE("testing create netalgo") {
                     AISDK_LOG_TRACE("[HandDetectionCalculator] left hand + right cam: x: {}, y: {}, w: {}, h: {}", rcam_lhand.x, rcam_lhand.y, rcam_lhand.w, rcam_lhand.h);
                 } else {
                     AISDK_LOG_TRACE("[HandDetectionCalculator], ERROR!!!");
-                    result.lhand_valid = false;
+                    // result.lhand_valid = false;
                 }
 
                 if (result.images_rhand_rects.size() == 2 && result.images_rhand_rects[0].size() > 0 && result.images_rhand_rects[1].size() > 0) {
-                    result.rhand_valid = true;
+                    // result.rhand_valid = true;
 
                     auto lcam_rhand = result.images_rhand_rects[0][0];
                     AISDK_LOG_TRACE("[HandDetectionCalculator] right hand + left cam: x: {}, y: {}, w: {}, h: {}", lcam_rhand.x, lcam_rhand.y, lcam_rhand.w, lcam_rhand.h);
                     auto rcam_rhand = result.images_rhand_rects[1][0];
                     AISDK_LOG_TRACE("[HandDetectionCalculator] right hand + right cam: x: {}, y: {}, w: {}, h: {}", rcam_rhand.x, rcam_rhand.y, rcam_rhand.w, rcam_rhand.h);
                 } else {
-                    result.rhand_valid = false;
+                    // result.rhand_valid = false;
                 }
 
                 _ZN2NR200TK7FUNC003E(basealgo);

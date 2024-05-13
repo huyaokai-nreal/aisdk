@@ -29,6 +29,10 @@ struct Recordcache {
     std::vector<Image> detect_images; // 后续画图使用，必须copy
 
     bool is_tracker_detect = false;
+    bool lhand_lcam_valid = false;
+    bool lhand_rcam_valid = false;
+    bool rhand_lcam_valid = false;
+    bool rhand_rcam_valid = false;
     bool lhand_valid = false;
     bool rhand_valid = false;
     ObjectStatus lhand_status = ObjectStatus::NO_MISS;

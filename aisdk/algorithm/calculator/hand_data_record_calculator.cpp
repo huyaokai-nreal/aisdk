@@ -146,8 +146,10 @@ class HandDataRecordCalculator : public xgraph::CalculatorBase {
                             const auto& detect_data = package.Get<DetOutputInternal>();
                             cache->m_nodestatus = NodeStatus::DETECT_FINISH;
                             cache->is_tracker_detect = !detect_data.det_flag;
-                            cache->lhand_valid = detect_data.lhand_valid;
-                            cache->rhand_valid = detect_data.rhand_valid;
+                            cache->lhand_lcam_valid = detect_data.lhand_lcam_valid;
+                            cache->lhand_rcam_valid = detect_data.lhand_rcam_valid;
+                            cache->rhand_lcam_valid = detect_data.rhand_lcam_valid;
+                            cache->rhand_rcam_valid = detect_data.rhand_rcam_valid;
                             recorder.DebugDetect(cache, detect_data);
                         }
                     } else if (coll.Name() == "kpt2d") {

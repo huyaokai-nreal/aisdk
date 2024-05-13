@@ -113,101 +113,101 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
         const auto& bbox_data = cc->Inputs().Tag("BBOX_SMOOTHED_OUTPUT").Get<DetOutputInternal>();
 
         std::unique_ptr<Kpt2dInternal> output_buffer_ = absl::make_unique<Kpt2dInternal>();
-        if (bbox_data.lhand_valid) {
-            // refs
-            const Image& lcam_proto_image = image_data[0];
-            const Image& rcam_proto_image = image_data[1];
-            const auto& lhand_bboxes = bbox_data.lhand_rects;
-            auto left_rect = GetCropBboxShape(lhand_bboxes[0]);
-            auto right_rect = GetCropBboxShape(lhand_bboxes[1]);
-            cv::Mat lhand_lcam_roi = generate_roi_image(lcam_proto_image.m_mat, left_rect, input_width_, input_height_);
-            cv::Mat lhand_rcam_roi =
-                generate_roi_image(rcam_proto_image.m_mat, right_rect, input_width_, input_height_);
+        // if (bbox_data.lhand_valid) {
+        //     // refs
+        //     const Image& lcam_proto_image = image_data[0];
+        //     const Image& rcam_proto_image = image_data[1];
+        //     const auto& lhand_bboxes = bbox_data.lhand_rects;
+        //     auto left_rect = GetCropBboxShape(lhand_bboxes[0]);
+        //     auto right_rect = GetCropBboxShape(lhand_bboxes[1]);
+        //     cv::Mat lhand_lcam_roi = generate_roi_image(lcam_proto_image.m_mat, left_rect, input_width_,
+        //     input_height_); cv::Mat lhand_rcam_roi =
+        //         generate_roi_image(rcam_proto_image.m_mat, right_rect, input_width_, input_height_);
 
-            cv::Mat lhand_lcam_flipped_roi;
-            cv::Mat lhand_rcam_flipped_roi;
-            cv::flip(lhand_lcam_roi, lhand_lcam_flipped_roi, 1);
-            cv::flip(lhand_rcam_roi, lhand_rcam_flipped_roi, 1);
+        //     cv::Mat lhand_lcam_flipped_roi;
+        //     cv::Mat lhand_rcam_flipped_roi;
+        //     cv::flip(lhand_lcam_roi, lhand_lcam_flipped_roi, 1);
+        //     cv::flip(lhand_rcam_roi, lhand_rcam_flipped_roi, 1);
 
-            std::vector<Image> lhand_cropped_rois;
+        //     std::vector<Image> lhand_cropped_rois;
 
-            lhand_cropped_rois.emplace_back(lhand_lcam_flipped_roi);
-            lhand_cropped_rois.emplace_back(lhand_rcam_flipped_roi);
+        //     lhand_cropped_rois.emplace_back(lhand_lcam_flipped_roi);
+        //     lhand_cropped_rois.emplace_back(lhand_rcam_flipped_roi);
 
-            auto rsn_result = netalgo->Inference(lhand_cropped_rois);
-            if (!rsn_result.ok()) {
-                output_buffer_->lhand_valid = false;
-            } else {
-                output_buffer_->lhand_valid = true;
-                for (int kpt_index = 0; kpt_index < kAlgoKeypointNum; kpt_index++) {
-                    // 左手左目xy
-                    output_buffer_->lhand_lcam_kpt[kpt_index][0] =
-                        ((input_width_ - 1) - rsn_result->kpts[0][kpt_index][0]) * left_rect[2] / input_width_ +
-                        left_rect[0] - left_rect[2] * 0.5;
-                    output_buffer_->lhand_lcam_kpt[kpt_index][1] =
-                        rsn_result->kpts[0][kpt_index][1] * left_rect[3] / input_height_ + left_rect[1] -
-                        left_rect[3] * 0.5;
+        //     auto rsn_result = netalgo->Inference(lhand_cropped_rois);
+        //     if (!rsn_result.ok()) {
+        //         output_buffer_->lhand_valid = false;
+        //     } else {
+        //         output_buffer_->lhand_valid = true;
+        //         for (int kpt_index = 0; kpt_index < kAlgoKeypointNum; kpt_index++) {
+        //             // 左手左目xy
+        //             output_buffer_->lhand_lcam_kpt[kpt_index][0] =
+        //                 ((input_width_ - 1) - rsn_result->kpts[0][kpt_index][0]) * left_rect[2] / input_width_ +
+        //                 left_rect[0] - left_rect[2] * 0.5;
+        //             output_buffer_->lhand_lcam_kpt[kpt_index][1] =
+        //                 rsn_result->kpts[0][kpt_index][1] * left_rect[3] / input_height_ + left_rect[1] -
+        //                 left_rect[3] * 0.5;
 
-                    // 左手右目xy
-                    output_buffer_->lhand_rcam_kpt[kpt_index][0] =
-                        ((input_width_ - 1) - rsn_result->kpts[1][kpt_index][0]) * right_rect[2] / input_width_ +
-                        right_rect[0] - right_rect[2] * 0.5;
-                    output_buffer_->lhand_rcam_kpt[kpt_index][1] =
-                        rsn_result->kpts[1][kpt_index][1] * right_rect[3] / input_height_ + right_rect[1] -
-                        right_rect[3] * 0.5;
-                }
-                if (!rsn_result->rdepths.empty()) {
-                    std::copy(rsn_result->rdepths[0].begin(), rsn_result->rdepths[0].end(),
-                              output_buffer_->lhand_lcam_rdepth.begin());
-                    std::copy(rsn_result->rdepths[1].begin(), rsn_result->rdepths[1].end(),
-                              output_buffer_->lhand_rcam_rdepth.begin());
-                }
-            }
-        }
-        if (bbox_data.rhand_valid) {
-            // refs
-            const Image& lcam_proto_image = image_data[0];
-            const Image& rcam_proto_image = image_data[1];
-            const auto& rhand_bboxes = bbox_data.rhand_rects;
-            auto left_rect = GetCropBboxShape(rhand_bboxes[0]);
-            auto right_rect = GetCropBboxShape(rhand_bboxes[1]);
+        //             // 左手右目xy
+        //             output_buffer_->lhand_rcam_kpt[kpt_index][0] =
+        //                 ((input_width_ - 1) - rsn_result->kpts[1][kpt_index][0]) * right_rect[2] / input_width_ +
+        //                 right_rect[0] - right_rect[2] * 0.5;
+        //             output_buffer_->lhand_rcam_kpt[kpt_index][1] =
+        //                 rsn_result->kpts[1][kpt_index][1] * right_rect[3] / input_height_ + right_rect[1] -
+        //                 right_rect[3] * 0.5;
+        //         }
+        //         if (!rsn_result->rdepths.empty()) {
+        //             std::copy(rsn_result->rdepths[0].begin(), rsn_result->rdepths[0].end(),
+        //                       output_buffer_->lhand_lcam_rdepth.begin());
+        //             std::copy(rsn_result->rdepths[1].begin(), rsn_result->rdepths[1].end(),
+        //                       output_buffer_->lhand_rcam_rdepth.begin());
+        //         }
+        //     }
+        // }
+        // if (bbox_data.rhand_valid) {
+        //     // refs
+        //     const Image& lcam_proto_image = image_data[0];
+        //     const Image& rcam_proto_image = image_data[1];
+        //     const auto& rhand_bboxes = bbox_data.rhand_rects;
+        //     auto left_rect = GetCropBboxShape(rhand_bboxes[0]);
+        //     auto right_rect = GetCropBboxShape(rhand_bboxes[1]);
 
-            cv::Mat rhand_lcam_roi = generate_roi_image(lcam_proto_image.m_mat, left_rect, input_width_, input_height_);
-            cv::Mat rhand_rcam_roi =
-                generate_roi_image(rcam_proto_image.m_mat, right_rect, input_width_, input_height_);
-            std::vector<Image> rhand_cropped_rois;
-            rhand_cropped_rois.emplace_back(rhand_lcam_roi);
-            rhand_cropped_rois.emplace_back(rhand_rcam_roi);
-            auto rsn_result = netalgo->Inference(rhand_cropped_rois);
-            if (!rsn_result.ok()) {
-                output_buffer_->rhand_valid = false;
-            } else {
-                output_buffer_->rhand_valid = true;
-                for (int kpt_index = 0; kpt_index < kAlgoKeypointNum; kpt_index++) {
-                    // 右手左目xy
-                    output_buffer_->rhand_lcam_kpt[kpt_index][0] =
-                        rsn_result->kpts[0][kpt_index][0] * left_rect[2] / input_width_ + left_rect[0] -
-                        left_rect[2] * 0.5;
-                    output_buffer_->rhand_lcam_kpt[kpt_index][1] =
-                        rsn_result->kpts[0][kpt_index][1] * left_rect[3] / input_height_ + left_rect[1] -
-                        left_rect[3] * 0.5;
+        //     cv::Mat rhand_lcam_roi = generate_roi_image(lcam_proto_image.m_mat, left_rect, input_width_,
+        //     input_height_); cv::Mat rhand_rcam_roi =
+        //         generate_roi_image(rcam_proto_image.m_mat, right_rect, input_width_, input_height_);
+        //     std::vector<Image> rhand_cropped_rois;
+        //     rhand_cropped_rois.emplace_back(rhand_lcam_roi);
+        //     rhand_cropped_rois.emplace_back(rhand_rcam_roi);
+        //     auto rsn_result = netalgo->Inference(rhand_cropped_rois);
+        //     if (!rsn_result.ok()) {
+        //         output_buffer_->rhand_valid = false;
+        //     } else {
+        //         output_buffer_->rhand_valid = true;
+        //         for (int kpt_index = 0; kpt_index < kAlgoKeypointNum; kpt_index++) {
+        //             // 右手左目xy
+        //             output_buffer_->rhand_lcam_kpt[kpt_index][0] =
+        //                 rsn_result->kpts[0][kpt_index][0] * left_rect[2] / input_width_ + left_rect[0] -
+        //                 left_rect[2] * 0.5;
+        //             output_buffer_->rhand_lcam_kpt[kpt_index][1] =
+        //                 rsn_result->kpts[0][kpt_index][1] * left_rect[3] / input_height_ + left_rect[1] -
+        //                 left_rect[3] * 0.5;
 
-                    // 右手右目xy
-                    output_buffer_->rhand_rcam_kpt[kpt_index][0] =
-                        rsn_result->kpts[1][kpt_index][0] * right_rect[2] / input_width_ + right_rect[0] -
-                        right_rect[2] * 0.5;
-                    output_buffer_->rhand_rcam_kpt[kpt_index][1] =
-                        rsn_result->kpts[1][kpt_index][1] * right_rect[3] / input_height_ + right_rect[1] -
-                        right_rect[3] * 0.5;
-                }
-                if (!rsn_result->rdepths.empty()) {
-                    std::copy(rsn_result->rdepths[0].begin(), rsn_result->rdepths[0].end(),
-                              output_buffer_->rhand_lcam_rdepth.begin());
-                    std::copy(rsn_result->rdepths[1].begin(), rsn_result->rdepths[1].end(),
-                              output_buffer_->rhand_rcam_rdepth.begin());
-                }
-            }
-        }
+        //             // 右手右目xy
+        //             output_buffer_->rhand_rcam_kpt[kpt_index][0] =
+        //                 rsn_result->kpts[1][kpt_index][0] * right_rect[2] / input_width_ + right_rect[0] -
+        //                 right_rect[2] * 0.5;
+        //             output_buffer_->rhand_rcam_kpt[kpt_index][1] =
+        //                 rsn_result->kpts[1][kpt_index][1] * right_rect[3] / input_height_ + right_rect[1] -
+        //                 right_rect[3] * 0.5;
+        //         }
+        //         if (!rsn_result->rdepths.empty()) {
+        //             std::copy(rsn_result->rdepths[0].begin(), rsn_result->rdepths[0].end(),
+        //                       output_buffer_->rhand_lcam_rdepth.begin());
+        //             std::copy(rsn_result->rdepths[1].begin(), rsn_result->rdepths[1].end(),
+        //                       output_buffer_->rhand_rcam_rdepth.begin());
+        //         }
+        //     }
+        // }
         if (output_buffer_->lhand_valid || output_buffer_->rhand_valid) {
             // clang-format off
             AISDK_LOG_TRACE(
