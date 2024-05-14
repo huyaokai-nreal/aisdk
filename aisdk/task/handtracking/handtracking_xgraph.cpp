@@ -109,7 +109,6 @@ aisdk::algorithm::Status HandTrackingXGraph::PushData(uint64_t timestamp,
     // m_increase_timestep++;
     return aisdk::algorithm::Status::SUCCESS;
 }
-
 aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, uint32_t* hand_num,
                                                        HandData* out_hand_array) {
     double query_time = static_cast<double>(hmd_time_nano) / 1e9;
@@ -142,9 +141,6 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
         memset(&_handjoint_pose_tmp, 0, sizeof(_handjoint_pose_tmp));
         _handjoint_pose_tmp.rotation.qw = 1.0f;
 
-        auto& predictor_lhand = aisdk::algorithm::GlobalPredictorService::getInstance().get_predictor_lhand();
-        auto& predictor_rhand = aisdk::algorithm::GlobalPredictorService::getInstance().get_predictor_rhand();
-
         for (int i = 0; i < 2; i++) {
             for (int j = 0; j < JOINTS_COUNT; j++) {
                 out_hand_array[i].hand_joint_data[j].version = 0;
@@ -155,6 +151,8 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
         bool tracked_internal[2] = {false, false};
         std::vector<std::vector<Vec3f_t>> ontracked_points(2);
         std::vector<std::vector<Eigen::Matrix3f>> ontracked_rotations(2);
+        auto& predictor_lhand = aisdk::algorithm::GlobalPredictorService::getInstance().get_predictor_lhand();
+        auto& predictor_rhand = aisdk::algorithm::GlobalPredictorService::getInstance().get_predictor_rhand();
         for (int i = 0; i < 2; i++) {
             out_hand_array[i].version = 0;
 
@@ -167,11 +165,12 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
             out_hand_array[i].hand_joint_count = JOINTS_COUNT;
 
             if (i == 0) {
-                tracked_internal[i] = predictor_lhand.get_tracking_status();
+                tracked_internal[i] = hand_data_internal.lhand_valid && predictor_lhand.get_tracking_status();
                 ontracked_points[i] = hand_data_internal.lhand_kpt;
                 ontracked_rotations[i] = hand_data_internal.lhand_rotation;
             } else {
-                tracked_internal[i] = predictor_rhand.get_tracking_status();
+                // tracked_internal[i] = predictor_rhand.get_tracking_status();
+                tracked_internal[i] = hand_data_internal.rhand_valid && predictor_rhand.get_tracking_status();
                 ontracked_points[i] = hand_data_internal.rhand_kpt;
                 ontracked_rotations[i] = hand_data_internal.rhand_rotation;
             }
@@ -201,9 +200,6 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
                 for (int k = 0; k < EZXR_DEFINED_JOINTS; k++) {
                     predicted_points[k] = ontracked_points[i][k] + root_kf_predicted - root_meas;
                 }
-            }
-
-            if (out_hand_array[i].is_tracked) {
                 AISDK_LOG_TRACE("[PopResult Predict] {} hand begin", i);
                 for (int j = 0; j < EZXR_DEFINED_JOINTS; j++) {
                     out_hand_array[i].hand_joint_data[xreal_2_clay[j]].hand_joint_type =
@@ -223,8 +219,8 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
                     out_hand_array[i].hand_joint_data[xreal_2_clay[j]].hand_joint_pose = _handjoint_pose_tmp;
                 }
                 AISDK_LOG_TRACE("[PopResult Predict] {} hand end", i);
+                out_hand_array[i].image_timestamp_nanos = outlist->raw_timestamp;
             }
-            out_hand_array[i].image_timestamp_nanos = outlist->raw_timestamp;
         }
 
 #if defined(ENABLE_ALGORITHM_DATA_RECORD)

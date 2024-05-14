@@ -57,7 +57,7 @@ bool check_if_rect_valid(const DetectRect& rect, float max_width, float max_heig
     float valid_y1 = std::max(0.0F, rect.y);
     float valid_x2 = std::min(max_width, rect.x + rect.w);
     float valid_y2 = std::min(max_height, rect.y + rect.h);
-    float valid_area_ratio = (valid_x2 - valid_x1) * (valid_y2 - valid_y1) / (rect.w * rect.h);
+    float valid_area_ratio = (valid_x2 - valid_x1) * (valid_y2 - valid_y1) / (rect.w * rect.h + 0.1);
     return valid_area_ratio > bbox_in_image_ratio_th && rect.w * rect.h > min_bbox_area;
 }
 
