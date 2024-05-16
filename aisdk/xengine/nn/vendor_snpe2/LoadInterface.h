@@ -27,6 +27,9 @@ typedef struct SnpeCInterface {
                                      Snpe_RuntimeCheckOption_t)
     REGISTER_C_INTERFACE_DECLARATION(Snpe_IUserBuffer_Handle_t, Snpe_Util_CreateUserBuffer, void*, size_t,
                                      Snpe_TensorShape_Handle_t, Snpe_IUserBuffer_Handle_t)
+    REGISTER_C_INTERFACE_DECLARATION(int, Snpe_Util_InitializeLogging, Snpe_LogLevel_t)
+    REGISTER_C_INTERFACE_DECLARATION(int, Snpe_Util_SetLogLevel, Snpe_LogLevel_t)
+    REGISTER_C_INTERFACE_DECLARATION(int, Snpe_Util_TerminateLogging)
     /* RuntimeList */
     REGISTER_C_INTERFACE_DECLARATION(Snpe_RuntimeList_Handle_t, Snpe_RuntimeList_Create)
     REGISTER_C_INTERFACE_DECLARATION(Snpe_ErrorCode_t, Snpe_RuntimeList_Add, Snpe_RuntimeList_Handle_t, Snpe_Runtime_t)
@@ -36,6 +39,16 @@ typedef struct SnpeCInterface {
     REGISTER_C_INTERFACE_DECLARATION(Snpe_DlContainer_Handle_t, Snpe_DlContainer_OpenBuffer, const uint8_t* buffer,
                                      const size_t size)
     REGISTER_C_INTERFACE_DECLARATION(Snpe_ErrorCode_t, Snpe_DlContainer_Delete, Snpe_DlContainer_Handle_t)
+    /* PlatformConfig */
+    REGISTER_C_INTERFACE_DECLARATION(Snpe_PlatformConfig_Handle_t, Snpe_PlatformConfig_Create)
+    REGISTER_C_INTERFACE_DECLARATION(Snpe_PlatformConfig_Handle_t, Snpe_PlatformConfig_CreateCopy, Snpe_PlatformConfig_Handle_t)
+    REGISTER_C_INTERFACE_DECLARATION(Snpe_ErrorCode_t, Snpe_PlatformConfig_Delete, Snpe_PlatformConfig_Handle_t)
+    REGISTER_C_INTERFACE_DECLARATION(Snpe_PlatformConfig_PlatformType_t, Snpe_PlatformConfig_GetPlatformType, Snpe_PlatformConfig_Handle_t)
+    REGISTER_C_INTERFACE_DECLARATION(int, Snpe_PlatformConfig_IsValid, Snpe_PlatformConfig_Handle_t)
+    REGISTER_C_INTERFACE_DECLARATION(int, Snpe_PlatformConfig_SetPlatformOptions, Snpe_PlatformConfig_Handle_t, const char* options)
+    REGISTER_C_INTERFACE_DECLARATION(const char*, Snpe_PlatformConfig_GetPlatformOptions, Snpe_PlatformConfig_Handle_t)
+    REGISTER_C_INTERFACE_DECLARATION(int, Snpe_PlatformConfig_SetPlatformOptionValue, Snpe_PlatformConfig_Handle_t, const char* optionName, const char* value)
+    REGISTER_C_INTERFACE_DECLARATION(int, Snpe_PlatformConfig_RemovePlatformOptionValue, Snpe_PlatformConfig_Handle_t, const char* optionName, const char* value)
     /* SNPEBuilder */
     REGISTER_C_INTERFACE_DECLARATION(Snpe_SNPEBuilder_Handle_t, Snpe_SNPEBuilder_Create, Snpe_DlContainer_Handle_t)
     REGISTER_C_INTERFACE_DECLARATION(Snpe_ErrorCode_t, Snpe_SNPEBuilder_SetRuntimeProcessorOrder,
@@ -50,6 +63,8 @@ typedef struct SnpeCInterface {
                                      Snpe_StringList_Handle_t)
     REGISTER_C_INTERFACE_DECLARATION(Snpe_ErrorCode_t, Snpe_SNPEBuilder_SetInputDimensions, Snpe_SNPEBuilder_Handle_t,
                                      Snpe_TensorShapeMap_Handle_t)
+    REGISTER_C_INTERFACE_DECLARATION(Snpe_ErrorCode_t, Snpe_SNPEBuilder_SetPlatformConfig, Snpe_SNPEBuilder_Handle_t,
+                                     Snpe_PlatformConfig_Handle_t)
     REGISTER_C_INTERFACE_DECLARATION(Snpe_SNPE_Handle_t, Snpe_SNPEBuilder_Build, Snpe_SNPEBuilder_Handle_t)
     REGISTER_C_INTERFACE_DECLARATION(Snpe_ErrorCode_t, Snpe_SNPEBuilder_Delete, Snpe_SNPEBuilder_Handle_t)
     /* SNPE */
@@ -96,6 +111,16 @@ typedef struct SnpeCInterface {
     REGISTER_C_INTERFACE_DECLARATION(const char*, Snpe_DlVersion_ToString, Snpe_DlVersion_Handle_t)
     REGISTER_C_INTERFACE_DECLARATION(Snpe_ErrorCode_t, Snpe_DlVersion_Delete, Snpe_DlVersion_Handle_t)
 } SnpeCInterface;
+
+typedef struct SnpePlatformCInterface {
+    /* PlatformValidator */
+    REGISTER_C_INTERFACE_DECLARATION(Snpe_PlatformValidator_Handle_t, Snpe_PlatformValidator_Create)
+    REGISTER_C_INTERFACE_DECLARATION(void, Snpe_PlatformValidator_SetRuntime, Snpe_PlatformValidator_Handle_t,
+                                     Snpe_Runtime_t, bool)
+    REGISTER_C_INTERFACE_DECLARATION(int, Snpe_PlatformValidator_IsRuntimeAvailable, Snpe_PlatformValidator_Handle_t,
+                                     bool)
+    REGISTER_C_INTERFACE_DECLARATION(Snpe_ErrorCode_t, Snpe_PlatformValidator_Delete, Snpe_PlatformValidator_Handle_t)
+} SnpePlatformCInterface;
 
 // int LoadSnpe2CInterface(const char* snpe_soname, struct SnpeCInterface* api);
 // int UnloadSnpe2CInterface();

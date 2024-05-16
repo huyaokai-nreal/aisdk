@@ -97,11 +97,11 @@ bool SNPEWrapper::init(const std::string& model_path, const std::string& runtime
         return false;
     }
 
-    if (!snpe2_capi.Snpe_Util_IsRuntimeAvailable(m_runtime)) {
-        AISDK_LOG_ERROR("Selected runtime not supported. Falling back to CPU.");
-        // m_runtime = SNPE_RUNTIME_CPU;
-        m_runtime = SNPE_RUNTIME_DSP;
-    }
+    // if (!snpe2_capi.Snpe_Util_IsRuntimeAvailable(m_runtime)) {
+    //     AISDK_LOG_ERROR("Selected runtime not supported. Falling back to CPU.");
+    //     // m_runtime = SNPE_RUNTIME_CPU;
+    //     m_runtime = SNPE_RUNTIME_DSP;
+    // }
 
     m_container = snpe2_capi.Snpe_DlContainer_Open(model_path.c_str());
     Snpe_SNPEBuilder_Handle_t snpeBuilderHandle = snpe2_capi.Snpe_SNPEBuilder_Create(m_container);
@@ -135,6 +135,21 @@ bool SNPEWrapper::init(const std::string& model_path, const std::string& runtime
             snpe2_capi.Snpe_TensorShapeMap_Add(m_inputShapeMapHandle, shape.first.c_str(), inputShapeHandle);
         }
         snpe2_capi.Snpe_SNPEBuilder_SetInputDimensions(snpeBuilderHandle, m_inputShapeMapHandle);
+    }
+
+    if (0) {
+        // test
+        m_platformconfig = snpe2_capi.Snpe_PlatformConfig_Create();
+        const char* str_platform = snpe2_capi.Snpe_PlatformConfig_GetPlatformOptions(m_platformconfig);
+        AISDK_LOG_TRACE("before PlatformConfig {}", str_platform);
+        int setok = snpe2_capi.Snpe_PlatformConfig_SetPlatformOptions(m_platformconfig, "unsignedPD:OFF");
+        int setok1 = snpe2_capi.Snpe_PlatformConfig_SetPlatformOptionValue(m_platformconfig, "unsignedPD", "OFF");
+        const char* str_platform1 = snpe2_capi.Snpe_PlatformConfig_GetPlatformOptions(m_platformconfig);
+        AISDK_LOG_TRACE("after PlatformConfig {} setok={}, setok1={}", str_platform1, setok, setok1);
+        int SigndPD = snpe2_capi.Snpe_PlatformConfig_IsValid(m_platformconfig);
+        AISDK_LOG_TRACE("PlatformConfig_IsValid = {}", SigndPD);
+        snpe2_capi.Snpe_SNPEBuilder_SetPlatformConfig(snpeBuilderHandle, m_platformconfig);
+        AISDK_LOG_TRACE("Snpe_SNPEBuilder_Build Signed dsp\n");
     }
 
     m_snpe = snpe2_capi.Snpe_SNPEBuilder_Build(snpeBuilderHandle);
@@ -237,11 +252,11 @@ bool SNPEWrapper::init(const uint8_t* buffer, const size_t size, const std::stri
         return false;
     }
 
-    if (!snpe2_capi.Snpe_Util_IsRuntimeAvailable(m_runtime)) {
-        AISDK_LOG_ERROR("Selected runtime not supported. Falling back to CPU.");
-        m_runtime = SNPE_RUNTIME_CPU;
-    }
-    AISDK_LOG_TRACE("runtime avaliable!: {}", m_runtime);
+    // if (!snpe2_capi.Snpe_Util_IsRuntimeAvailable(m_runtime)) {
+    //     AISDK_LOG_ERROR("Selected runtime not supported. Falling back to CPU.");
+    //     m_runtime = SNPE_RUNTIME_CPU;
+    // }
+    // AISDK_LOG_TRACE("runtime avaliable!: {}", m_runtime);
 
     // AISDK_LOG_TRACE("buffer ptr: {}, size: {}", buffer, size);
 
@@ -286,6 +301,21 @@ bool SNPEWrapper::init(const uint8_t* buffer, const size_t size, const std::stri
             snpe2_capi.Snpe_TensorShapeMap_Add(m_inputShapeMapHandle, shape.first.c_str(), inputShapeHandle);
         }
         snpe2_capi.Snpe_SNPEBuilder_SetInputDimensions(snpeBuilderHandle, m_inputShapeMapHandle);
+    }
+
+    if (0) {
+        // test
+        m_platformconfig = snpe2_capi.Snpe_PlatformConfig_Create();
+        const char* str_platform = snpe2_capi.Snpe_PlatformConfig_GetPlatformOptions(m_platformconfig);
+        AISDK_LOG_TRACE("before PlatformConfig {}", str_platform);
+        int setok = snpe2_capi.Snpe_PlatformConfig_SetPlatformOptions(m_platformconfig, "unsignedPD:OFF");
+        int setok1 = snpe2_capi.Snpe_PlatformConfig_SetPlatformOptionValue(m_platformconfig, "unsignedPD", "OFF");
+        const char* str_platform1 = snpe2_capi.Snpe_PlatformConfig_GetPlatformOptions(m_platformconfig);
+        AISDK_LOG_TRACE("after PlatformConfig {} setok={}, setok1={}", str_platform1, setok, setok1);
+        int SigndPD = snpe2_capi.Snpe_PlatformConfig_IsValid(m_platformconfig);
+        AISDK_LOG_TRACE("PlatformConfig_IsValid = {}", SigndPD);
+        snpe2_capi.Snpe_SNPEBuilder_SetPlatformConfig(snpeBuilderHandle, m_platformconfig);
+        AISDK_LOG_TRACE("Snpe_SNPEBuilder_Build Signed dsp\n");
     }
 
     m_snpe = snpe2_capi.Snpe_SNPEBuilder_Build(snpeBuilderHandle);

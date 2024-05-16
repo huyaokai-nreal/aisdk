@@ -30,9 +30,11 @@
 #include "DlSystem/DlError.h"
 #include "DlSystem/DlVersion.h"
 #include "DlSystem/TensorShape.h"
+#include "DlSystem/PlatformConfig.h"
 #include "SNPE/SNPE.h"
 #include "SNPE/SNPEBuilder.h"
 #include "SNPE/SNPEUtil.h"
+#include "PlatformValidator/PlatformValidator.h"
 
 #endif
 

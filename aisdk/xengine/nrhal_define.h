@@ -190,6 +190,7 @@ struct SYM_EXPORT PlatformStatus {
     bool is_snapdragon_855 = false;
     bool is_snapdragon_8Gen1 = false;
     bool is_hexagon_dsp = false;
+    bool is_hexagon_signedPD_dsp = false;
     bool is_hexagon_unsignedPD_dsp = false;
     bool is_dot_support = false;
     bool is_fp16_support = false;

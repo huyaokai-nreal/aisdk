@@ -48,6 +48,7 @@ class SNPEWrapper {
     std::map<std::string, std::vector<size_t>> m_inputShapeList;
 
     Snpe_DlContainer_Handle_t m_container;
+    Snpe_PlatformConfig_Handle_t m_platformconfig;
     Snpe_SNPE_Handle_t m_snpe;
     Snpe_Runtime_t m_runtime;
     Snpe_RuntimeList_Handle_t m_runtimeList;

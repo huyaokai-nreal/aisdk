@@ -310,12 +310,39 @@ bool checkHexagonDSP() {
         AISDK_LOG_TRACE("getProviderfailed!");
         return false;
     }
+    temp.Snpe_Util_InitializeLogging(Snpe_LogLevel_t::SNPE_LOG_LEVEL_WARN);
     bool res = temp.Snpe_Util_IsRuntimeAvailable(Snpe_Runtime_t::SNPE_RUNTIME_DSP);
     AISDK_LOG_TRACE("Snpe_Util_IsRuntimeAvailable: {}", res);
     if (!res) {
         AISDK_LOG_ERROR("checkHexagonDSP failed: {}", temp.Snpe_ErrorCode_GetLastErrorString());
     }
     return res;
+}
+
+bool checkHexagonSignedPD() {
+    SnpePlatformCInterface temp;
+    AISDK_LOG_TRACE("checkHexagonDSPPlatformPlatformValidator");
+    if (0 != SNPELibWrapper::getInstance().getSnpe2PlatformCInterface(&temp)) {
+        AISDK_LOG_TRACE("getProviderfailed!");
+        return false;
+    }
+
+    Snpe_PlatformValidator_Handle_t handle = temp.Snpe_PlatformValidator_Create();
+    bool unsignedPD = false;  // 默认是unsignedPD = true;
+    int res;
+    if (handle) {
+        // Snpe_PlatformValidator_SetRuntime 将导致 checkHexagonDSP 和 checkHexagonUnsignedPDDSP 执行失败，
+        // 报错QNN_COMMON_ERROR_LOADING_BINARIES，且不能恢复。此功能慎用！！！！
+        // 可能原因：同一个进程下，只能初始化一次，初始化会构造全局的内容，不能被再次初始化。
+        temp.Snpe_PlatformValidator_SetRuntime(handle, Snpe_Runtime_t::SNPE_RUNTIME_DSP, unsignedPD);
+        AISDK_LOG_TRACE("Snpe_PlatformValidator_SetRuntime: unsignedPD={}", unsignedPD);
+        res = temp.Snpe_PlatformValidator_IsRuntimeAvailable(handle, unsignedPD);
+        AISDK_LOG_TRACE("Snpe_PlatformValidator_IsRuntimeAvailable: unsignedPD={} res={}", unsignedPD, res);
+        temp.Snpe_PlatformValidator_Delete(handle);
+    }
+
+    SNPELibWrapper::getInstance().UnloadSnpe2PlatformCInterface();
+    return res ? true : false;
 }
 
 bool checkHexagonUnsignedPDDSP() {

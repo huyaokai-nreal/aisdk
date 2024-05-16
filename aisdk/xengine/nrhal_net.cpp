@@ -25,7 +25,7 @@ absl::Status BaseNetAlgo::Init(std::string &netname, aisdk::xengine::ModelConfig
     if (m_impl) {
         ret = m_impl->Init(netname);
         if (ret != aisdk::xengine::Status::SUCCESS) {
-            AISDK_LOG_TRACE("BaseNetAlgo::Init netname=%s error=%d", netname.c_str(), (int)ret);
+            AISDK_LOG_TRACE("BaseNetAlgo::Init netname={} error={}", netname.c_str(), (int)ret);
         }
     }
     return ConvertOldStatus(ret);
