@@ -41,6 +41,7 @@ node {
   calculator: "HandLandmarkCalculator"
   input_stream: "BBOX_SMOOTHED_OUTPUT:detection_smoothed_output"
   input_stream: "IMAGE_INPUT:image_out"
+  input_side_packet: "CAM_INFO_INPUT:cam_info"
   output_stream: "LANDMARK_OUTPUT:kpt2d"
   node_options: {
     [type.googleapis.com/aisdk.HandLandmarkCalculatorOptions] {

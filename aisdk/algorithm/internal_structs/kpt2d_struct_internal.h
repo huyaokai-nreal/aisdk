@@ -1,8 +1,10 @@
 #pragma once
+#include <memory>
 #include <opencv2/opencv.hpp>
 #include <vector>
 #include "aisdk/algorithm/common/hand_define.h"
 #include "Eigen/Dense"
+#include "aisdk/base/camera_model.h"
 #include "aisdk/base/type.h"
 
 
@@ -33,6 +35,10 @@ struct Kpt2dInternal {
     std::vector<float> lhand_rcam_rdepth;
     std::vector<float> rhand_lcam_rdepth;
     std::vector<float> rhand_rcam_rdepth;
+    std::shared_ptr<base::PerspectiveCameraModel> lhand_lcam_virtual_camera;
+    std::shared_ptr<base::PerspectiveCameraModel> lhand_rcam_virtual_camera;
+    std::shared_ptr<base::PerspectiveCameraModel> rhand_lcam_virtual_camera;
+    std::shared_ptr<base::PerspectiveCameraModel> rhand_rcam_virtual_camera;
 
     bool lhand_valid = false;
     bool rhand_valid = false;
@@ -46,6 +52,10 @@ struct Kpt2dInternal {
         lhand_rcam_rdepth.clear();
         rhand_lcam_rdepth.clear();
         rhand_rcam_rdepth.clear();
+        lhand_lcam_virtual_camera = nullptr;
+        lhand_rcam_virtual_camera = nullptr;
+        rhand_lcam_virtual_camera = nullptr;
+        rhand_rcam_virtual_camera = nullptr;
         lhand_valid = false;
         rhand_valid = false;
     }
