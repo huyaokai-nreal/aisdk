@@ -1,6 +1,7 @@
 // #include "log.h"
 #include <cassert>
 
+#include "aisdk/base/log.h"
 #include "aisdk/xengine/nrhal_common.h"
 #include "snpe_model.h"
 #include "snpe_session.h"
@@ -137,7 +138,12 @@ Status SNPE_Session::Init(std::shared_ptr<AIModel> &model, SessionConfig &Sconfi
         if (Sconfig.customize_ioname.output_tensorname.size()) {
             mSnpeWrapper->setOutputTensors(Sconfig.customize_ioname.output_tensorname);
         }
-        mSnpeWrapper->init((const uint8_t *)aimodel->m_config.model_mem, aimodel->m_config.model_size, runtime_mark);
+        AISDK_LOG_TRACE("SnpeWrapper Rebuild!!!");
+        initok = mSnpeWrapper->init((const uint8_t *)aimodel->m_config.model_mem, aimodel->m_config.model_size,
+                                    runtime_mark);
+        if (!initok) {
+            return Status::FAILURE;
+        }
     }
 #ifdef BUFFERTYPE_USER
 
