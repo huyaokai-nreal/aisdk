@@ -1,7 +1,9 @@
 #include <absl/status/status.h>
 
 #include <algorithm>
+#include <cstddef>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "aisdk/algorithm/calculator/hand_landmark_calculator.pb.h"
@@ -73,6 +75,11 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
             AISDK_LOG_TRACE("[HandLandmarkCalculator] start init rtmtiny");
             netalgo = XGraphServiceUtils::CreateNetAlgoBase<RTMTiny>((void*)0x202310, model_name_);
             AISDK_LOG_TRACE("[HandLandmarkCalculator] finish init rtmtiny");
+            if (nullptr == netalgo) {
+                // 2d_rtmtiny: int16量化  2d_rsntiny: int8量化
+                // 晓龙870以下芯片，仅支持int8
+                netalgo = XGraphServiceUtils::CreateNetAlgoBase<RSNTiny>((void*)0x202310, std::string("2d_rsntiny"));
+            }
         } else if (model_name_ == "2d_rsnnano") {
             AISDK_LOG_TRACE("[HandLandmarkCalculator] start init rsnnano");
             netalgo = XGraphServiceUtils::CreateNetAlgoBase<RSNNano>((void*)0x202310, model_name_);
