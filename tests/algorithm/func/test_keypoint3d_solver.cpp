@@ -26,8 +26,8 @@ TEST_CASE("testing the keypoint3d solver solver") {
     camera_k.cy_ = 318.9205573206751;
     camera_k.fx_ = 240.47993898902308;
     camera_k.fy_ = 240.45010798807022;
-    algorithm::Keypoint3DSolver solver(0);
-    auto result = solver.SolveKeypoints(kpt2d_depth, 1.0, camera_k, false);
+    algorithm::Keypoint3DSolver solver;
+    auto result = solver.SolveKeypoints(kpt2d_depth, 1.0, Eigen::Matrix<float, 21, 3>::Zero(), 0, camera_k, false);
     if(result.ok()){
         std::cout << *result << std::endl;
     }

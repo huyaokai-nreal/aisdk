@@ -47,32 +47,32 @@ node {
     [type.googleapis.com/aisdk.HandLandmarkCalculatorOptions] {
       input_height: 128
       input_width: 128
-      model_name: "2d_rtmtiny"
-      #crop_method: "pcl"
+      model_name: "2d_rtmtiny_pcl"
+      crop_method: "pcl"
     }
   }
 }
-#node {
-#  name: "MonoHand_3D"
-#  calculator: "MonoHandKpt3DCalculator"
-#  input_side_packet: "CAM_INFO_INPUT:cam_info"
-#  input_stream: "LANDMARK_INPUT:kpt2d"
-#  output_stream: "KPT3D_OUTPUT:kpt3d"
-#}
-
 node {
-  name: "LiftNet_3D"
-  calculator: "HandLiftCalculator"
+  name: "MonoHand_3D"
+  calculator: "MonoHandKpt3DCalculator"
   input_side_packet: "CAM_INFO_INPUT:cam_info"
   input_stream: "LANDMARK_INPUT:kpt2d"
-  output_stream: "LIFT_OUTPUT:kpt3d"
-  node_options: {
-    [type.googleapis.com/aisdk.HandLiftCalculatorOptions] {
-      model_name: "3d_liftnimble"
-      enable_constrain: false
-    }
-  }
+  output_stream: "KPT3D_OUTPUT:kpt3d"
 }
+
+#node {
+#  name: "LiftNet_3D"
+#  calculator: "HandLiftCalculator"
+#  input_side_packet: "CAM_INFO_INPUT:cam_info"
+#  input_stream: "LANDMARK_INPUT:kpt2d"
+#  output_stream: "LIFT_OUTPUT:kpt3d"
+#  node_options: {
+#    [type.googleapis.com/aisdk.HandLiftCalculatorOptions] {
+#      model_name: "3d_liftnimble"
+#      enable_constrain: false
+#    }
+#  }
+#}
 
 node {
   name: "BlockHardRules"
@@ -111,7 +111,7 @@ node {
   output_stream: "OUTPUT:kpt3d_filtered"
   node_options: {
     [type.googleapis.com/aisdk.HandFilterCalculatorOptions] {
-      glasses_type: "flora"
+      glasses_type: "ella"
     }
   }
 }

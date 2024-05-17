@@ -7,6 +7,7 @@
 
 #include "aisdk/algorithm/common/math.h"
 #include "aisdk/algorithm/func/softmax.h"
+#include "aisdk/base/log.h"
 namespace aisdk::algorithm {
 
 /**
@@ -69,6 +70,7 @@ void RTMTiny::PostProcess(Kpt2dResult &result) {
         return;
     }
     result.kpts.resize(otensor.m_batch);
+    result.rdepths.resize(otensor.m_batch);
     unsigned int _h, _w, _c, element_byte;
     for (size_t multi_i = 0; multi_i < otensor.m_multishape_num; multi_i++) {
         for (size_t batch_i = 0; batch_i < otensor.m_batch; batch_i++) {
@@ -80,8 +82,10 @@ void RTMTiny::PostProcess(Kpt2dResult &result) {
             float *_data = (float *)mem;
 
             auto &rsnkpt = result.kpts[batch_i];
+            auto &rdepth = result.rdepths[batch_i];
             if (rsnkpt.size() != keypoint_num_) {
                 rsnkpt.resize(keypoint_num_);
+                rdepth.resize(keypoint_num_);
             }
             std::vector<float> kpt_softmax_data(_c * _h * _w);
             softmax_last_dim(_data, kpt_softmax_data.data(), {1, _h, _w});
@@ -95,6 +99,12 @@ void RTMTiny::PostProcess(Kpt2dResult &result) {
                     rsnkpt[i][1] = std::inner_product(mul_coeff_.begin(), mul_coeff_.end(),
                                                       kpt_softmax_data.begin() + i * _w, 0.0F) *
                                    static_cast<float>(input_shape_);
+                }
+                if (otensor.m_tensors[multi_i].m_name == "feat_z") {
+                    rdepth[i] = (std::inner_product(mul_coeff_.begin(), mul_coeff_.end(),
+                                                    kpt_softmax_data.begin() + i * _w, 0.0F) -
+                                 0.5) *
+                                0.4;
                 }
             }
         }

@@ -7,6 +7,7 @@
             "detect_cpu_ella",
             "detect_cpu_flora",
             "2d_rtmtiny",
+            "2d_rtmtiny_pcl",
             "2d_rsntiny",
             "2d_rsnnano",
             "2d_filter",
@@ -94,7 +95,25 @@
                 "runtime": "dsp",
                 "output_tensors": [
                     "feat_x",
-                    "feat_y"
+                    "feat_y",
+                    "feat_z"
+                ]
+            }
+        },
+        "2d_rtmtiny_pcl": {
+            "model_config": {
+                "file_name": "models/rtmtiny_dark_pcl_res26s_128_bs2_240516_0123fc_quantized.dlc",
+                "vendor": "snpe"
+            },
+            "session_config": {
+                "batch": 2,
+                "precision": "int16",
+                "thread_num": 1,
+                "runtime": "dsp",
+                "output_tensors": [
+                    "feat_x",
+                    "feat_y",
+                    "feat_z"
                 ]
             }
         },

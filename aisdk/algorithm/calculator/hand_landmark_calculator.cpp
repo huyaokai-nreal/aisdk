@@ -83,7 +83,7 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
             crop_method_ = options.crop_method();
         }
         if (crop_method_ == "pcl") {
-            bbox_expand_ratio_ = 1.0;
+            bbox_expand_ratio_ = 1.2;
         }
         if (model_name_ == "2d_rsntiny") {
             netalgo = XGraphServiceUtils::CreateNetAlgoBase<RSNTiny>((void*)0x202310, model_name_);
@@ -96,6 +96,14 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
                 // 晓龙870以下芯片，仅支持int8
                 netalgo = XGraphServiceUtils::CreateNetAlgoBase<RSNTiny>((void*)0x202310, std::string("2d_rsntiny"));
             }
+        } else if (model_name_ == "2d_rtmtiny_pcl") {
+            AISDK_LOG_TRACE("[HandLandmarkCalculator] start init rtmtiny_pcl");
+            netalgo = XGraphServiceUtils::CreateNetAlgoBase<RTMTiny>((void*)0x202310, model_name_);
+            AISDK_LOG_TRACE("[HandLandmarkCalculator] finish init rtmtiny_pcl");
+        } else if (model_name_ == "2d_rsnnano_pcl") {
+            AISDK_LOG_TRACE("[HandLandmarkCalculator] start init rsnnano_pcl");
+            netalgo = XGraphServiceUtils::CreateNetAlgoBase<RSNNano>((void*)0x202310, model_name_);
+            AISDK_LOG_TRACE("[HandLandmarkCalculator] finish init rsnnano_pcl");
         } else if (model_name_ == "2d_rsnnano") {
             AISDK_LOG_TRACE("[HandLandmarkCalculator] start init rsnnano");
             netalgo = XGraphServiceUtils::CreateNetAlgoBase<RSNNano>((void*)0x202310, model_name_);
@@ -170,12 +178,7 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
             cv::Mat lhand_rcam_flipped_roi;
             cv::flip(lhand_lcam_roi, lhand_lcam_flipped_roi, 1);
             cv::flip(lhand_rcam_roi, lhand_rcam_flipped_roi, 1);
-
-            std::vector<Image> lhand_cropped_rois;
-
-            lhand_cropped_rois.emplace_back(lhand_lcam_flipped_roi);
-            lhand_cropped_rois.emplace_back(lhand_rcam_flipped_roi);
-            auto rsn_result = netalgo->Inference(lhand_cropped_rois);
+            auto rsn_result = netalgo->Inference({lhand_lcam_flipped_roi, lhand_rcam_flipped_roi});
             if (!rsn_result.ok()) {
                 output_buffer_->lhand_valid = false;
             } else {
@@ -206,18 +209,20 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
                                    virtual_right_cam_kpt2d.begin(), [&](const auto& kpt) {
                                        return Vec2f_t{input_width_ - 1 - kpt[0], kpt[1]};
                                    });
-                    auto virtual_left_cam_kpt_eye =
-                        output_buffer_->lhand_lcam_virtual_camera->window_to_eye(virtual_left_cam_kpt2d);
-                    auto left_cam_kpt_world =
-                        output_buffer_->lhand_lcam_virtual_camera->eye_to_world(virtual_left_cam_kpt_eye);
-                    auto lhand_lcam_kpt = lcam_model_->eye_to_window(left_cam_kpt_world);
-                    output_buffer_->lhand_lcam_kpt = lhand_lcam_kpt;
-                    auto virtual_right_cam_kpt_eye =
-                        output_buffer_->lhand_rcam_virtual_camera->window_to_eye(virtual_right_cam_kpt2d);
-                    auto right_cam_kpt_world =
-                        output_buffer_->lhand_rcam_virtual_camera->eye_to_world(virtual_right_cam_kpt_eye);
-                    auto lhand_rcam_kpt = rcam_model_->eye_to_window(right_cam_kpt_world);
-                    output_buffer_->lhand_rcam_kpt = lhand_rcam_kpt;
+                    output_buffer_->lhand_lcam_kpt = virtual_left_cam_kpt2d;
+                    output_buffer_->lhand_rcam_kpt = virtual_right_cam_kpt2d;
+                    // auto virtual_left_cam_kpt_eye =
+                    //     output_buffer_->lhand_lcam_virtual_camera->window_to_eye(virtual_left_cam_kpt2d);
+                    // auto left_cam_kpt_world =
+                    //     output_buffer_->lhand_lcam_virtual_camera->eye_to_world(virtual_left_cam_kpt_eye);
+                    // auto lhand_lcam_kpt = lcam_model_->eye_to_window(left_cam_kpt_world);
+                    // output_buffer_->lhand_lcam_kpt = lhand_lcam_kpt;
+                    // auto virtual_right_cam_kpt_eye =
+                    //     output_buffer_->lhand_rcam_virtual_camera->window_to_eye(virtual_right_cam_kpt2d);
+                    // auto right_cam_kpt_world =
+                    //     output_buffer_->lhand_rcam_virtual_camera->eye_to_world(virtual_right_cam_kpt_eye);
+                    // auto lhand_rcam_kpt = rcam_model_->eye_to_window(right_cam_kpt_world);
+                    // output_buffer_->lhand_rcam_kpt = lhand_rcam_kpt;
                 }
                 if (!rsn_result->rdepths.empty()) {
                     std::copy(rsn_result->rdepths[0].begin(), rsn_result->rdepths[0].end(),
@@ -251,10 +256,7 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
                     std::dynamic_pointer_cast<base::Fisheye624CameraModel>(rcam_model_).get(),
                     rhand_rcam_virtual_cam.get(), input_width_, input_height_, rcam_proto_image.m_mat);
             }
-            std::vector<Image> rhand_cropped_rois;
-            rhand_cropped_rois.emplace_back(rhand_lcam_roi);
-            rhand_cropped_rois.emplace_back(rhand_rcam_roi);
-            auto rsn_result = netalgo->Inference(rhand_cropped_rois);
+            auto rsn_result = netalgo->Inference({rhand_lcam_roi, rhand_rcam_roi});
             if (!rsn_result.ok()) {
                 output_buffer_->rhand_valid = false;
             } else {
@@ -274,18 +276,20 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
                                 kpt[1] * right_rect[3] / input_height_ + right_rect[1] - right_rect[3] * 0.5};
                         });
                 } else {
-                    auto virtual_left_cam_kpt_eye =
-                        output_buffer_->rhand_lcam_virtual_camera->window_to_eye(rsn_result->kpts[0]);
-                    auto left_cam_kpt_world =
-                        output_buffer_->rhand_lcam_virtual_camera->eye_to_world(virtual_left_cam_kpt_eye);
-                    auto rhand_lcam_kpt = lcam_model_->eye_to_window(left_cam_kpt_world);
-                    output_buffer_->rhand_lcam_kpt = rhand_lcam_kpt;
-                    auto virtual_right_cam_kpt_eye =
-                        output_buffer_->rhand_rcam_virtual_camera->window_to_eye(rsn_result->kpts[1]);
-                    auto right_cam_kpt_world =
-                        output_buffer_->rhand_rcam_virtual_camera->eye_to_world(virtual_right_cam_kpt_eye);
-                    auto rhand_rcam_kpt = rcam_model_->eye_to_window(right_cam_kpt_world);
-                    output_buffer_->rhand_rcam_kpt = rhand_rcam_kpt;
+                    output_buffer_->rhand_lcam_kpt = rsn_result->kpts[0];
+                    output_buffer_->rhand_rcam_kpt = rsn_result->kpts[1];
+                    // auto virtual_left_cam_kpt_eye =
+                    //     output_buffer_->rhand_lcam_virtual_camera->window_to_eye(rsn_result->kpts[0]);
+                    // auto left_cam_kpt_world =
+                    //     output_buffer_->rhand_lcam_virtual_camera->eye_to_world(virtual_left_cam_kpt_eye);
+                    // auto rhand_lcam_kpt = lcam_model_->eye_to_window(left_cam_kpt_world);
+                    // output_buffer_->rhand_lcam_kpt = rhand_lcam_kpt;
+                    // auto virtual_right_cam_kpt_eye =
+                    //     output_buffer_->rhand_rcam_virtual_camera->window_to_eye(rsn_result->kpts[1]);
+                    // auto right_cam_kpt_world =
+                    //     output_buffer_->rhand_rcam_virtual_camera->eye_to_world(virtual_right_cam_kpt_eye);
+                    // auto rhand_rcam_kpt = rcam_model_->eye_to_window(right_cam_kpt_world);
+                    // output_buffer_->rhand_rcam_kpt = rhand_rcam_kpt;
                 }
                 if (!rsn_result->rdepths.empty()) {
                     std::copy(rsn_result->rdepths[0].begin(), rsn_result->rdepths[0].end(),

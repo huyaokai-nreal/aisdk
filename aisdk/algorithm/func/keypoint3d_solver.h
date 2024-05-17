@@ -1,26 +1,27 @@
 #pragma once
 #include <absl/status/statusor.h>
 #include "Eigen/Dense"
-#include <optional>
 #include <utility>
 #include "aisdk/base/camera_model.h"
 namespace aisdk::algorithm {
 class Keypoint3DSolver {
    public:
-    explicit Keypoint3DSolver(float last_kpt_weight) : last_kpt_weight_(last_kpt_weight) {
-        template_bones_ << 0.0331647, 0.04278148, 0.02955948, 0.02000255, 0.08566785, 0.04031642, 0.02216826,
-            0.01616783, 0.08094267, 0.04408906, 0.02601391, 0.01838449, 0.07450476, 0.0409083, 0.02482778, 0.0185005,
-            0.07156292, 0.03231286, 0.01820878, 0.01589963;
+    explicit Keypoint3DSolver() {
+        template_bones_ << 0.03324628, 0.04288861, 0.02933636, 0.0189692,
+            0.08489925 ,0.03961091 ,0.02224475 ,0.01538656,
+            0.08044697 ,0.04323351 ,0.02637224 ,0.01726901,
+            0.07485605 ,0.04020233 ,0.02505282 ,0.01739206,
+            0.07221888 ,0.03225046 ,0.01788924 ,0.01490044;
     }
     [[nodiscard]] absl::StatusOr<Eigen::Matrix<float, 21, 3>> SolveKeypoints(const Eigen::Matrix<float, 21, 3>& kpt25d,
-                                                              float hand_scale, const base::CameraIntrinsics& camera_k,
+                                                              float hand_scale, const Eigen::Matrix<float, 21, 3>& last_kpt3d, float last_kpt3d_weight, const base::CameraIntrinsics& camera_k,
                                                               bool flip_x_axis) const;
 
    private:
     struct CostFunctor {
         CostFunctor(Eigen::Matrix<float, 25, 3>  norm_kpt3d, Eigen::Matrix<float, 25, 1>  rel_depth,
-                    Eigen::Matrix<float, 20, 1>  bones)
-            : norm_kpt3d_(std::move(norm_kpt3d)), rel_depth_(std::move(rel_depth)), bones_(std::move(bones)) {}
+                    Eigen::Matrix<float, 20, 1>  bones, Eigen::Matrix<float, 21, 3> last_kpt3d, float last_kpt3d_weight)
+            : norm_kpt3d_(std::move(norm_kpt3d)), rel_depth_(std::move(rel_depth)), bones_(std::move(bones)), last_kpt3d_(std::move(last_kpt3d)), last_kpt3d_weight_(last_kpt3d_weight) {}
 
         template <typename T>
         bool operator()(const T* const _root_depth, T* residual) const {
@@ -29,6 +30,7 @@ class Keypoint3DSolver {
             Eigen::Matrix<T, 25, 3> norm_kpt3d = norm_kpt3d_.cast<T>();
             Eigen::Matrix<T, 25, 1> rel_depth = rel_depth_.cast<T>();
             Eigen::Matrix<T, 20, 1> bones = bones_.cast<T>();
+            Eigen::Matrix<T, 21, 3> last_kpt3d = last_kpt3d_.cast<T>();
             kpt3d = norm_kpt3d.array().colwise() * (root_depth + rel_depth.array().col(0));
             Eigen::Matrix<T, 20, 1> e_bones = Eigen::Matrix<T, 20, 1>::Ones();
             Eigen::Map<Eigen::Matrix<T, 20, 1>> result(residual);
@@ -43,14 +45,20 @@ class Keypoint3DSolver {
             e_bones.template block<4, 1>(16, 0) =
                 (kpt3d.template block<4, 3>(21, 0) - kpt3d.template block<4, 3>(20, 0)).rowwise().norm();
             result = e_bones - bones;
+            if(last_kpt3d_weight_ > 0)
+            {
+                residual[20] = (kpt3d(0, 2) - last_kpt3d(0, 2));
+                residual[20] *= T(last_kpt3d_weight_);
+            }
             return true;
         }
         Eigen::Matrix<float, 25, 3> norm_kpt3d_;
         Eigen::Matrix<float, 25, 1> rel_depth_;
         Eigen::Matrix<float, 20, 1> bones_;
+        Eigen::Matrix<float, 21, 3> last_kpt3d_;
+        float last_kpt3d_weight_;
     };
-    float last_kpt_weight_ = 0.1;
-    float converage_cost_th_ = 1e-3;
+    float converage_cost_th_ = 5e-3;
     Eigen::Matrix<float, 20, 1> template_bones_;
 };
 
