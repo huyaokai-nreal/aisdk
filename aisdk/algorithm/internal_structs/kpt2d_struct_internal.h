@@ -40,8 +40,10 @@ struct Kpt2dInternal {
     std::shared_ptr<base::PerspectiveCameraModel> rhand_lcam_virtual_camera;
     std::shared_ptr<base::PerspectiveCameraModel> rhand_rcam_virtual_camera;
 
-    bool lhand_valid = false;
-    bool rhand_valid = false;
+    bool lhand_lcam_valid = false;
+    bool lhand_rcam_valid = false;
+    bool rhand_lcam_valid = false;
+    bool rhand_rcam_valid = false;
 
     void clear() {
         lhand_lcam_kpt.clear();
@@ -56,8 +58,10 @@ struct Kpt2dInternal {
         lhand_rcam_virtual_camera = nullptr;
         rhand_lcam_virtual_camera = nullptr;
         rhand_rcam_virtual_camera = nullptr;
-        lhand_valid = false;
-        rhand_valid = false;
+        lhand_lcam_valid = false;
+        lhand_rcam_valid = false;
+        rhand_lcam_valid = false;
+        rhand_rcam_valid = false;
     }
 };
 

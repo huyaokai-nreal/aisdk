@@ -694,7 +694,7 @@ void DataDebugRecord::RsnOpRecord(Recordcache* record, const aisdk::algorithm::K
     cv::Mat lcam = record->detect_images[0].m_mat.clone();
     cv::Mat rcam = record->detect_images[1].m_mat.clone();
 
-    if (kpt2d_result.lhand_valid) {
+    if (kpt2d_result.lhand_lcam_valid) {
         for (int kpt_index = 0; kpt_index < kAlgoKeypointNum; kpt_index++) {
             cv::circle(lcam, {kpt2d_result.lhand_lcam_kpt[kpt_index][0], kpt2d_result.lhand_lcam_kpt[kpt_index][1]}, 2,
                        cv::Scalar(255, 255, 255));
@@ -703,7 +703,7 @@ void DataDebugRecord::RsnOpRecord(Recordcache* record, const aisdk::algorithm::K
         }
     }
 
-    if (kpt2d_result.rhand_valid) {
+    if (kpt2d_result.rhand_rcam_valid) {
         for (int kpt_index = 0; kpt_index < kAlgoKeypointNum; kpt_index++) {
             cv::circle(lcam, {kpt2d_result.rhand_lcam_kpt[kpt_index][0], kpt2d_result.rhand_lcam_kpt[kpt_index][1]}, 2,
                        cv::Scalar(255, 255, 255));
@@ -719,7 +719,7 @@ void DataDebugRecord::RsnOpRecord(Recordcache* record, const aisdk::algorithm::K
 
 void DataDebugRecord::RsnOpToJsonString(Recordcache* record, const aisdk::algorithm::Kpt2dInternal& kpt2d_result) {
     for (uint32_t cam_id = 0; cam_id < 2; cam_id++) {
-        if (kpt2d_result.lhand_valid) {
+        if (kpt2d_result.lhand_lcam_valid) {
             Json::Value root1;
             const std::vector<Vec2f_t>& kpt2d =
                 (0 == cam_id) ? kpt2d_result.lhand_lcam_kpt : kpt2d_result.lhand_rcam_kpt;
@@ -737,7 +737,7 @@ void DataDebugRecord::RsnOpToJsonString(Recordcache* record, const aisdk::algori
             }
         }
 
-        if (kpt2d_result.rhand_valid) {
+        if (kpt2d_result.rhand_rcam_valid) {
             Json::Value root1;
             const std::vector<Vec2f_t>& kpt2d =
                 (0 == cam_id) ? kpt2d_result.rhand_lcam_kpt : kpt2d_result.rhand_rcam_kpt;

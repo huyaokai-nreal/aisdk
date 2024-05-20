@@ -76,9 +76,9 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
                                                   std::shared_ptr<aisdk::base::BaseCameraModel>>>();
         lcam_model_ = cam_info.first;
         rcam_model_ = cam_info.second;
-        netalgo->SetCameraInfo(lcam_model_, rcam_model_);
+        auto result = netalgo->SetCameraInfo(lcam_model_, rcam_model_);
         AISDK_LOG_TRACE("[LiftCalculator] Open complete");
-        return absl::OkStatus();
+        return result;
     }
 
     absl::Status Process(xgraph::CalculatorContext* cc) final {
@@ -89,7 +89,7 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
         const auto& kpt2d = cc->Inputs().Tag("LANDMARK_INPUT").Get<Kpt2dInternal>();
         const auto& timestamp = cc->InputTimestamp().Seconds();
         std::unique_ptr<Kpt3dInternal> output_buffer_ = absl::make_unique<Kpt3dInternal>();
-        if (kpt2d.lhand_valid) {
+        if (kpt2d.lhand_lcam_valid && kpt2d.lhand_rcam_valid) {
             LiftNetInputs lift_inputs;
             lift_inputs.input_kpt_lcam = lcam_model_->undistort(kpt2d.lhand_lcam_kpt);
             lift_inputs.input_kpt_rcam = rcam_model_->undistort(kpt2d.lhand_rcam_kpt);
@@ -117,7 +117,7 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
             }
         }
 
-        if (kpt2d.rhand_valid) {
+        if (kpt2d.rhand_rcam_valid && kpt2d.rhand_lcam_valid) {
             LiftNetInputs lift_inputs;
             lift_inputs.input_kpt_lcam = lcam_model_->undistort(kpt2d.rhand_lcam_kpt);
             lift_inputs.input_kpt_rcam = rcam_model_->undistort(kpt2d.rhand_rcam_kpt);

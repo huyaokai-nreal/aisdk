@@ -66,9 +66,9 @@ class LandmarkFilterCalculator : public xgraph::CalculatorBase {
         std::unique_ptr<Kpt2dInternal> output_buffer_ = absl::make_unique<Kpt2dInternal>();
         output_buffer_->clear();
 
-        if (input_data.lhand_valid) {
+        if (input_data.lhand_lcam_valid) {
             AISDK_LOG_TRACE("[LandmarkFilterCalculator] seq left hand kpt2d");
-            output_buffer_->lhand_valid = true;
+            output_buffer_->lhand_lcam_valid = true;
 
             m_seq2d_lcam_lhand->updateSeq2D(input_data.lhand_lcam_kpt);
             m_seq2d_rcam_lhand->updateSeq2D(input_data.lhand_rcam_kpt);
@@ -80,9 +80,9 @@ class LandmarkFilterCalculator : public xgraph::CalculatorBase {
             m_seq2d_rcam_lhand->reset();
         }
 
-        if (input_data.rhand_valid) {
+        if (input_data.rhand_rcam_valid) {
             AISDK_LOG_TRACE("[LandmarkFilterCalculator] seq right hand kpt2d");
-            output_buffer_->rhand_valid = true;
+            output_buffer_->rhand_rcam_valid = true;
 
             m_seq2d_lcam_rhand->updateSeq2D(input_data.rhand_lcam_kpt);
             m_seq2d_rcam_rhand->updateSeq2D(input_data.rhand_rcam_kpt);
@@ -94,7 +94,7 @@ class LandmarkFilterCalculator : public xgraph::CalculatorBase {
             m_seq2d_rcam_rhand->reset();
         }
 
-        if (output_buffer_->lhand_valid || output_buffer_->rhand_valid) {
+        if (output_buffer_->lhand_lcam_valid || output_buffer_->rhand_rcam_valid) {
             cc->Outputs().Tag("LANDMARK_OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
         } else {
             cc->Outputs().Tag("LANDMARK_OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());

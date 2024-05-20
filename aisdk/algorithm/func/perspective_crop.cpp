@@ -75,18 +75,11 @@ Eigen::Matrix3f generate_virtual_K(const Eigen::Vector3f& p_position, const Eige
     return K_virt;
 }
 
-Eigen::Matrix3f gen_intrinsics_from_bounding_box(const Eigen::Vector3f& center_eye, int image_w, int image_h,
-                                                 const Eigen::Matrix3f& ori_K, float min_local) {
-    Eigen::Vector2f image_size = {image_h, image_w};
-    Eigen::Matrix3f virtual_K = generate_virtual_K(center_eye, ori_K, image_size, false, false);
-    return virtual_K;
-}
-
 Eigen::Isometry3f make_look_at_matrix(const Eigen::Isometry3f& orig_world_to_eye, const Eigen::Vector3f& center,
                                       float camera_angle) {
     Eigen::Vector3f center_local = orig_world_to_eye.inverse() * center;
 
-    Eigen::Vector3f z_dir_local = center_local;
+    const Eigen::Vector3f& z_dir_local = center_local;
     // If using Rodrigues' rotation formula, the input vector should be normalized.
     // Eigen has no such requirement.
     Eigen::Quaternionf delta_r_local = Eigen::Quaternionf::FromTwoVectors(Eigen::Vector3f(0, 0, 1), z_dir_local);
@@ -123,9 +116,7 @@ std::shared_ptr<base::PerspectiveCameraModel> gen_crop_parameters_from_points(ba
     Eigen::Vector3f homo_center;
     homo_center << crop_center, 1;
     Eigen::Vector3f cam_center = ori_K.inverse() * homo_center;
-
-    Eigen::Matrix3f virtual_K =
-        gen_intrinsics_from_bounding_box(cam_center, new_image_size(0), new_image_size(1), ori_K, 5.);
+    Eigen::Matrix3f virtual_K = generate_virtual_K(cam_center, ori_K, new_image_size, false, false);
     virtual_K = virtual_K * new_image_size(0);
 
     base::CameraIntrinsics virt_intrinsics;

@@ -59,7 +59,7 @@ class MonoHandKpt3DCalculator : public xgraph::CalculatorBase {
         const auto& headpose_data = cc->Inputs().Tag("HEADPOSE").Get<HeadPoseInternal>();
         std::unique_ptr<Kpt3dInternal> output_buffer_ = absl::make_unique<Kpt3dInternal>();
         const auto& kpt3d_world_pre = GlobalPredictorService::getInstance().get_last_pt3d_world();
-        if (kpt2d.lhand_valid) {
+        if (kpt2d.lhand_lcam_valid) {
             Eigen::Matrix<float, kAlgoKeypointNum, 3> kpt25d;
             for (int i = 0; i < kAlgoKeypointNum; i++) {
                 kpt25d.block<1, 2>(i, 0) = kpt2d.lhand_lcam_kpt[i];
@@ -91,7 +91,7 @@ class MonoHandKpt3DCalculator : public xgraph::CalculatorBase {
                 AISDK_LOG_TRACE("[MonoHandKpt3DSolver] Falied to solve left: {}", virtual_kpt3d.status().message());
             }
         }
-        if (kpt2d.rhand_valid) {
+        if (kpt2d.rhand_lcam_valid) {
             Eigen::Matrix<float, kAlgoKeypointNum, 3> kpt25d;
             for (int i = 0; i < kAlgoKeypointNum; i++) {
                 kpt25d.block<1, 2>(i, 0) = kpt2d.rhand_lcam_kpt[i];
