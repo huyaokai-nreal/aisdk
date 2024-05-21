@@ -29,7 +29,7 @@ class GestureRecognitionCalculator : public xgraph::CalculatorBase {
    public:
     static absl::Status GetContract(xgraph::CalculatorContract* cc) {
         AISDK_LOG_TRACE("[GestureRecognitionCalculator] GetContract start.");
-        cc->Inputs().Tag("GR_KPT_INPUT").Set<Kpt3dInternal>();
+        cc->Inputs().Tag("GR_KPT_INPUT").Set<HandsData>();
         cc->Inputs().Tag("GR_KPT2D_INPUT").Set<Kpt2dInternal>();
         cc->Outputs().Tag("GR_OUTPUT").Set<HandGestureInternal>();
         AISDK_LOG_TRACE("[GestureRecognitionCalculator] GetContract complete.");
@@ -49,7 +49,7 @@ class GestureRecognitionCalculator : public xgraph::CalculatorBase {
         TIMER_ONCE_WITH_TAG(GestureRecognitionCalculator::Process);
 #endif
         AISDK_LOG_TRACE("[GestureRecognitionCalculator] Process start.");
-        const auto& kpt3d_data = cc->Inputs().Tag("GR_KPT_INPUT").Get<Kpt3dInternal>();
+        const auto& kpt3d_data = cc->Inputs().Tag("GR_KPT_INPUT").Get<HandsData>();
         const auto& kpt2d_data = cc->Inputs().Tag("GR_KPT2D_INPUT").Get<Kpt2dInternal>();
 
         std::unique_ptr<HandGestureInternal> output_buffer_ = absl::make_unique<HandGestureInternal>();
@@ -60,7 +60,7 @@ class GestureRecognitionCalculator : public xgraph::CalculatorBase {
 
             std::string gesture_res;
             std::tie(gesture_res, std::ignore) = m_gesture_classifier_lhand->predict_with_keypoints3d(
-                kpt3d_data.lhand_kpt, kpt2d_data.lhand_lcam_kpt, true);
+                kpt3d_data.left_hand.kpt3d, kpt2d_data.lhand_lcam_kpt, true);
             output_buffer_->lhand_gesture = gesture_res;
             AISDK_LOG_TRACE("[GestureRecognitionCalculator] process left hand complete. {}",
                             output_buffer_->lhand_gesture);
@@ -69,7 +69,7 @@ class GestureRecognitionCalculator : public xgraph::CalculatorBase {
             AISDK_LOG_TRACE("[GestureRecognitionCalculator] process right hand.");
             std::string gesture_res;
             std::tie(gesture_res, std::ignore) = m_gesture_classifier_rhand->predict_with_keypoints3d(
-                kpt3d_data.rhand_kpt, kpt2d_data.rhand_rcam_kpt, false);
+                kpt3d_data.right_hand.kpt3d, kpt2d_data.rhand_rcam_kpt, false);
             output_buffer_->rhand_gesture = gesture_res;
             AISDK_LOG_TRACE("[GestureRecognitionCalculator] process right hand complete. {}",
                             output_buffer_->rhand_gesture);

@@ -29,8 +29,8 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
    public:
     static absl::Status GetContract(xgraph::CalculatorContract* cc) {
         AISDK_LOG_TRACE("[HandFilterCalculator] GetContract start.");
-        cc->Inputs().Tag("INPUT").Set<Kpt3dInternal>();
-        cc->Outputs().Tag("OUTPUT").Set<Kpt3dInternal>();
+        cc->Inputs().Tag("INPUT").Set<HandsData>();
+        cc->Outputs().Tag("OUTPUT").Set<HandsData>();
         AISDK_LOG_TRACE("[HandFilterCalculator] GetContract complete.");
         return absl::OkStatus();
     }
@@ -54,9 +54,9 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
         TIMER_ONCE_WITH_TAG(HandFilterCalculator::Process);
 #endif
         AISDK_LOG_TRACE("[HandFilterCalculator] Process start.");
-        const auto& kpt3d_world = cc->Inputs().Tag("INPUT").Get<Kpt3dInternal>();
+        const auto& kpt3d_world = cc->Inputs().Tag("INPUT").Get<HandsData>();
         const auto& timestamp = cc->InputTimestamp().Seconds();
-        std::unique_ptr<Kpt3dInternal> output_buffer_ = absl::make_unique<Kpt3dInternal>();
+        std::unique_ptr<HandsData> output_buffer_ = absl::make_unique<HandsData>();
         auto& predictor_lhand = GlobalPredictorService::getInstance().get_predictor_lhand();
         auto& predictor_rhand = GlobalPredictorService::getInstance().get_predictor_rhand();
         const auto& kpt3d_world_pre = GlobalPredictorService::getInstance().get_last_pt3d_world();
@@ -66,18 +66,18 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
             output_buffer_->lhand_valid = false;
             m_post_filter->reset(0);
         } else {
-            output_buffer_->lhand_kpt = kpt3d_world.lhand_kpt;
+            output_buffer_->left_hand.kpt3d = kpt3d_world.left_hand.kpt3d;
             if (!predictor_lhand.get_tracking_status()) {
-                predictor_lhand.start_tracking(timestamp, {output_buffer_->lhand_kpt[0], {0., 0., 0.}});
+                predictor_lhand.start_tracking(timestamp, {output_buffer_->left_hand.kpt3d[0], {0., 0., 0.}});
             } else {
                 if (kpt3d_world_pre.lhand_valid) {
-                    auto measure_v =
-                        (output_buffer_->lhand_kpt[0] - kpt3d_world_pre.lhand_kpt[0]) / (timestamp - last_timestamp_);
-                    output_buffer_->lhand_v = measure_v;
-                    predictor_lhand.track_with_correct(timestamp, {output_buffer_->lhand_kpt[0], measure_v});
+                    auto measure_v = (output_buffer_->left_hand.kpt3d[0] - kpt3d_world_pre.left_hand.kpt3d[0]) /
+                                     (timestamp - last_timestamp_);
+                    output_buffer_->left_hand.root_v = measure_v;
+                    predictor_lhand.track_with_correct(timestamp, {output_buffer_->left_hand.kpt3d[0], measure_v});
                 }
             }
-            m_post_filter->kpt_seq_3d_filter(0, output_buffer_->lhand_kpt);
+            m_post_filter->kpt_seq_3d_filter(0, output_buffer_->left_hand.kpt3d);
             output_buffer_->lhand_valid = true;
         }
 
@@ -86,18 +86,18 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
             output_buffer_->rhand_valid = false;
             m_post_filter->reset(1);
         } else {
-            output_buffer_->rhand_kpt = kpt3d_world.rhand_kpt;
+            output_buffer_->right_hand.kpt3d = kpt3d_world.right_hand.kpt3d;
             if (!predictor_rhand.get_tracking_status()) {
-                predictor_rhand.start_tracking(timestamp, {output_buffer_->rhand_kpt[0], {0., 0., 0.}});
+                predictor_rhand.start_tracking(timestamp, {output_buffer_->right_hand.kpt3d[0], {0., 0., 0.}});
             } else {
                 if (kpt3d_world_pre.rhand_valid) {
-                    auto measure_v =
-                        (output_buffer_->rhand_kpt[0] - kpt3d_world_pre.rhand_kpt[0]) / (timestamp - last_timestamp_);
-                    output_buffer_->rhand_v = measure_v;
-                    predictor_rhand.track_with_correct(timestamp, {output_buffer_->rhand_kpt[0], measure_v});
+                    auto measure_v = (output_buffer_->right_hand.kpt3d[0] - kpt3d_world_pre.right_hand.kpt3d[0]) /
+                                     (timestamp - last_timestamp_);
+                    output_buffer_->right_hand.root_v = measure_v;
+                    predictor_rhand.track_with_correct(timestamp, {output_buffer_->right_hand.kpt3d[0], measure_v});
                 }
             }
-            m_post_filter->kpt_seq_3d_filter(1, output_buffer_->rhand_kpt);
+            m_post_filter->kpt_seq_3d_filter(1, output_buffer_->right_hand.kpt3d);
             output_buffer_->rhand_valid = true;
         }
         cc->Outputs().Tag("OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());

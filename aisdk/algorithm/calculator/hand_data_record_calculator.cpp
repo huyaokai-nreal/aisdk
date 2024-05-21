@@ -182,7 +182,7 @@ class HandDataRecordCalculator : public xgraph::CalculatorBase {
                     } else if (coll.Name() == "kpt3d") {
                         Recordcache* cache = m_mgr.FindCache(time_id, false);
                         if (cache) {
-                            const auto& kpt3d_data = package.Get<Kpt3dInternal>();
+                            const auto& kpt3d_data = package.Get<HandsData>();
                             cache->m_nodestatus = NodeStatus::LIFT_FINISH;
                             cache->lhand_status = (cache->lhand_valid && !kpt3d_data.lhand_valid)
                                                       ? ObjectStatus::LIFT_MISS
@@ -194,12 +194,16 @@ class HandDataRecordCalculator : public xgraph::CalculatorBase {
                             cache->rhand_valid = kpt3d_data.rhand_valid;
 
                             if (kpt3d_data.lhand_valid) {
-                                cache->lhand_lcam_reproj_kpt2d = lcam_model_->world_to_window(kpt3d_data.lhand_kpt);
-                                cache->lhand_rcam_reproj_kpt2d = rcam_model_->world_to_window(kpt3d_data.lhand_kpt);
+                                cache->lhand_lcam_reproj_kpt2d =
+                                    lcam_model_->world_to_window(kpt3d_data.left_hand.kpt3d);
+                                cache->lhand_rcam_reproj_kpt2d =
+                                    rcam_model_->world_to_window(kpt3d_data.left_hand.kpt3d);
                             }
                             if (kpt3d_data.rhand_valid) {
-                                cache->rhand_lcam_reproj_kpt2d = lcam_model_->world_to_window(kpt3d_data.rhand_kpt);
-                                cache->rhand_rcam_reproj_kpt2d = rcam_model_->world_to_window(kpt3d_data.rhand_kpt);
+                                cache->rhand_lcam_reproj_kpt2d =
+                                    lcam_model_->world_to_window(kpt3d_data.right_hand.kpt3d);
+                                cache->rhand_rcam_reproj_kpt2d =
+                                    rcam_model_->world_to_window(kpt3d_data.right_hand.kpt3d);
                             }
                             recorder.DebugLift(cache, kpt3d_data);
                         }

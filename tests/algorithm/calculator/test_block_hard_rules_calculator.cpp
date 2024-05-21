@@ -50,12 +50,12 @@ TEST_CASE("test block hard rule calculator") {
 
     xgraph::CalculatorGraphConfig::Node node_config = xgraph::ParseTextProtoOrDie<xgraph::CalculatorGraphConfig::Node>(kTestGraphConfig);
     xgraph::CalculatorRunner runner(node_config);
-    using Kpt3dData = algorithm::Kpt3dInternal;
+    using Kpt3dData = algorithm::HandsData;
     auto input = absl::make_unique<Kpt3dData>();
 
     for (int i = 0; i < 21; i++) {
-        input->lhand_kpt.push_back({0, 0, 0.9});
-        input->rhand_kpt.push_back({0, 0, 1.9});
+        input->left_hand.kpt3d.emplace_back(0, 0, 0.9);
+        input->left_hand.kpt3d.emplace_back(0, 0, 1.9);
     }
     input->lhand_valid = true;
     input->rhand_valid = true;

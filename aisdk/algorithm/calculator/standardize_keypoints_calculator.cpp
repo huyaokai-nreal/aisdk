@@ -3,7 +3,6 @@
 #include "aisdk/algorithm/func/hand_rotation.h"
 #include "aisdk/algorithm/func/netalgo_utils.h"
 #include "aisdk/algorithm/internal_structs/hand_gesture_struct_internal.h"
-#include "aisdk/algorithm/internal_structs/hand_output_struct_internal.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/time.h"
 #include "aisdk/xgraph/xgraph.h"
@@ -24,9 +23,9 @@ class StandardizeKeypointsCalculator : public xgraph::CalculatorBase {
    public:
     static absl::Status GetContract(xgraph::CalculatorContract* cc) {
         AISDK_LOG_TRACE("[StandardizeKeypointsCalculator] GetContract start.");
-        cc->Inputs().Tag("INPUT_KPT").Set<Kpt3dInternal>();
+        cc->Inputs().Tag("INPUT_KPT").Set<HandsData>();
         cc->Inputs().Tag("INPUT_GR").Set<HandGestureInternal>();
-        cc->Outputs().Tag("OUTPUT").Set<HandOutputInternal>();
+        cc->Outputs().Tag("OUTPUT").Set<HandsData>();
         AISDK_LOG_TRACE("[StandardizeKeypointsCalculator] GetContract complete.");
         return absl::OkStatus();
     }
@@ -42,31 +41,25 @@ class StandardizeKeypointsCalculator : public xgraph::CalculatorBase {
         TIMER_ONCE_WITH_TAG(StandardizeKeypointsCalculator::Process);
 #endif
         AISDK_LOG_TRACE("[StandardizeKeypointsCalculator] Process start.");
-        const auto& kpt_data = cc->Inputs().Tag("INPUT_KPT").Get<Kpt3dInternal>();
+        const auto& kpt_data = cc->Inputs().Tag("INPUT_KPT").Get<HandsData>();
         const auto& gesture_data = cc->Inputs().Tag("INPUT_GR").Get<HandGestureInternal>();
-        const auto& timestamp = cc->InputTimestamp().Seconds();
-
-        auto output_buffer_ = absl::make_unique<HandOutputInternal>();
-        output_buffer_->timestamp = timestamp;
+        auto output_buffer_ = absl::make_unique<HandsData>();
         if (kpt_data.lhand_valid) {
-            output_buffer_->lhand_kpt = convert_to_23points(kpt_data.lhand_kpt);
+            output_buffer_->left_hand = kpt_data.left_hand;
+            output_buffer_->left_hand.kpt3d = convert_to_23points(kpt_data.left_hand.kpt3d);
             output_buffer_->lhand_valid = true;
-            output_buffer_->lhand_score = kpt_data.lhand_score;
-            output_buffer_->lhand_v = kpt_data.lhand_v;
-            output_buffer_->lhand_gesture = gesture_data.lhand_gesture;
-            compute_joint_rotation(output_buffer_->lhand_kpt, true, output_buffer_->lhand_rotation);
+            output_buffer_->left_hand.gesture = gesture_data.lhand_gesture;
+            compute_joint_rotation(output_buffer_->left_hand.kpt3d, true, output_buffer_->left_hand.rotation);
         }
         if (kpt_data.rhand_valid) {
-            output_buffer_->rhand_kpt = convert_to_23points(kpt_data.rhand_kpt);
+            output_buffer_->right_hand = kpt_data.right_hand;
+            output_buffer_->right_hand.kpt3d = convert_to_23points(kpt_data.right_hand.kpt3d);
             output_buffer_->rhand_valid = true;
-            output_buffer_->rhand_score = kpt_data.rhand_score;
-            output_buffer_->rhand_v = kpt_data.rhand_v;
-            output_buffer_->rhand_gesture = gesture_data.rhand_gesture;
-            compute_joint_rotation(output_buffer_->rhand_kpt, false, output_buffer_->rhand_rotation);
+            output_buffer_->right_hand.gesture = gesture_data.rhand_gesture;
+            compute_joint_rotation(output_buffer_->right_hand.kpt3d, false, output_buffer_->right_hand.rotation);
         }
         auto& global_kpt3d = GlobalPredictorService::getInstance().get_last_pt3d_world();
         global_kpt3d = kpt_data;
-
         cc->Outputs().Tag("OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
         AISDK_LOG_TRACE("[StandardizeKeypointsCalculator] Process complete.");
         return absl::OkStatus();

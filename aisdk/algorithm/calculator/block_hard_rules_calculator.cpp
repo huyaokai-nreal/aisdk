@@ -29,8 +29,8 @@ class BlockHardRulesCalculator : public xgraph::CalculatorBase {
    public:
     static absl::Status GetContract(xgraph::CalculatorContract* cc) {
         AISDK_LOG_TRACE("[BlockHardRulesCalculator] GetContract start");
-        cc->Inputs().Tag("BLOCK_IN").Set<Kpt3dInternal>();
-        cc->Outputs().Tag("BLOCK_OUT").Set<Kpt3dInternal>();
+        cc->Inputs().Tag("BLOCK_IN").Set<HandsData>();
+        cc->Outputs().Tag("BLOCK_OUT").Set<HandsData>();
         AISDK_LOG_TRACE("[BlockHardRulesCalculator] GetContract complete");
         return absl::OkStatus();
     }
@@ -54,9 +54,9 @@ class BlockHardRulesCalculator : public xgraph::CalculatorBase {
         TIMER_ONCE_WITH_TAG(BlockHardRulesCalculator::Process);
 #endif
         AISDK_LOG_TRACE("[BlockHardRulesCalculator] Process start");
-        const auto& input_data = cc->Inputs().Tag("BLOCK_IN").Get<Kpt3dInternal>();
+        const auto& input_data = cc->Inputs().Tag("BLOCK_IN").Get<HandsData>();
 
-        std::unique_ptr<Kpt3dInternal> output_buffer_ = absl::make_unique<Kpt3dInternal>();
+        std::unique_ptr<HandsData> output_buffer_ = absl::make_unique<HandsData>();
         *output_buffer_ = input_data;
         if (input_data.lhand_valid) {
             AISDK_LOG_TRACE("[BlockHardRulesCalculator] Checking left hand");
@@ -82,18 +82,12 @@ class BlockHardRulesCalculator : public xgraph::CalculatorBase {
             } else if (input_data.rhand_score < score_th_ - 0.05) {
                 output_buffer_->rhand_valid = false;
             } else {
-                output_buffer_->rhand_valid = previous_right_state;
             }
             AISDK_LOG_TRACE("[BlockHardRulesCalculator] block right hand {}", input_data.rhand_score);
             previous_right_state = output_buffer_->rhand_valid;
 
             if (block_rule_root_distance(input_data.rhand_kpt, max_root_depth_)) {
                 output_buffer_->rhand_valid = false;
-            }
-        }
-
-        if (output_buffer_->lhand_valid || output_buffer_->rhand_valid) {
-            cc->Outputs().Tag("BLOCK_OUT").Add(output_buffer_.release(), cc->InputTimestamp());
         } else {
             cc->Outputs().Tag("BLOCK_OUT").Add(output_buffer_.release(), cc->InputTimestamp());
             AISDK_LOG_TRACE("[BlockHardRulesCalculator] No valid hand, truncated here");

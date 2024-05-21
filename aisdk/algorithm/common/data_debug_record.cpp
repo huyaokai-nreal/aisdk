@@ -858,7 +858,7 @@ void DataDebugRecord::RsnOpToJsonString(Recordcache* record, const aisdk::algori
 //     }
 // }
 
-void DataDebugRecord::liftOpRecord(Recordcache* record, const aisdk::algorithm::Kpt3dInternal& kpt3d_result) {
+void DataDebugRecord::liftOpRecord(Recordcache* record, const aisdk::algorithm::HandsData& kpt3d_result) {
     std::string lcam_pic_name = lcam_local_record_rootpath + "/seq_" +
                                 aisdk::base::StringSprintf("%010d", record->sequence_id) + "_lift_reproj.jpg";
     std::string rcam_pic_name = rcam_local_record_rootpath + "/seq_" +
@@ -893,7 +893,7 @@ void DataDebugRecord::liftOpRecord(Recordcache* record, const aisdk::algorithm::
     cv::imwrite(rcam_pic_name, rcam);
 }
 
-void DataDebugRecord::liftToJsonString(Recordcache* record, const aisdk::algorithm::Kpt3dInternal& kpt3d_result) {
+void DataDebugRecord::liftToJsonString(Recordcache* record, const aisdk::algorithm::HandsData& kpt3d_result) {
     for (uint32_t cam_id = 0; cam_id < 2; cam_id++) {
         if (kpt3d_result.lhand_valid) {
             Json::Value root1;
@@ -936,28 +936,28 @@ void DataDebugRecord::liftToJsonString(Recordcache* record, const aisdk::algorit
         Json::Value root1;
         for (int kpt_index = 0; kpt_index < kAlgoKeypointNum; kpt_index++) {
             Json::Value root2;
-            root2[0] = kpt3d_result.lhand_kpt[kpt_index][0];
-            root2[1] = kpt3d_result.lhand_kpt[kpt_index][1];
-            root2[2] = kpt3d_result.lhand_kpt[kpt_index][2];
+            root2[0] = kpt3d_result.left_hand.kpt3d[kpt_index][0];
+            root2[1] = kpt3d_result.left_hand.kpt3d[kpt_index][1];
+            root2[2] = kpt3d_result.left_hand.kpt3d[kpt_index][2];
             root1[kpt_index] = root2;
         }
 
         record->export_root["04_lift"]["lefthand"] = root1;
-        record->export_root["06_3dconstraint"]["lefthand_3dscore"] = kpt3d_result.lhand_score;
+        record->export_root["06_3dconstraint"]["lefthand_3dscore"] = kpt3d_result.left_hand.score;
     }
 
     if (kpt3d_result.rhand_valid) {
         Json::Value root1;
         for (int kpt_index = 0; kpt_index < kAlgoKeypointNum; kpt_index++) {
             Json::Value root2;
-            root2[0] = kpt3d_result.rhand_kpt[kpt_index][0];
-            root2[1] = kpt3d_result.rhand_kpt[kpt_index][1];
-            root2[2] = kpt3d_result.rhand_kpt[kpt_index][2];
+            root2[0] = kpt3d_result.right_hand.kpt3d[kpt_index][0];
+            root2[1] = kpt3d_result.right_hand.kpt3d[kpt_index][1];
+            root2[2] = kpt3d_result.right_hand.kpt3d[kpt_index][2];
             root1[kpt_index] = root2;
         }
 
         record->export_root["04_lift"]["righthand"] = root1;
-        record->export_root["06_3dconstraint"]["righthand_3dscore"] = kpt3d_result.rhand_score;
+        record->export_root["06_3dconstraint"]["righthand_3dscore"] = kpt3d_result.right_hand.score;
     }
 }
 
@@ -1100,7 +1100,7 @@ void DataDebugRecord::DebugRsn(Recordcache* record, const aisdk::algorithm::Kpt2
 //     }
 // }
 
-void DataDebugRecord::DebugLift(Recordcache* record, const aisdk::algorithm::Kpt3dInternal& kpt3d_result) {
+void DataDebugRecord::DebugLift(Recordcache* record, const aisdk::algorithm::HandsData& kpt3d_result) {
     if (enable_liftmano_record_drawimage) {
         liftOpRecord(record, kpt3d_result);
     }

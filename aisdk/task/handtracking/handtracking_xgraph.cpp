@@ -3,7 +3,6 @@
 #include <Eigen/src/Core/Matrix.h>
 #include <fmt/core.h>
 
-#include <algorithm>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -12,9 +11,8 @@
 #include "aisdk/algorithm/common/NR_GlobalPredictorService.h"
 #include "aisdk/algorithm/common/nrcore_define.h"
 #include "aisdk/algorithm/common/nrnet_define.h"
-#include "aisdk/algorithm/func/hand_rotation.h"
-#include "aisdk/algorithm/internal_structs/hand_output_struct_internal.h"
 #include "aisdk/algorithm/internal_structs/headpose_struct_internal.h"
+#include "aisdk/algorithm/internal_structs/kpt3d_struct_internal.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/type.h"
 #include "aisdk/xgraph/xgraph.h"
@@ -117,7 +115,7 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
     std::shared_ptr<StreamCache> outlist = GetOutputStreamCache();
     if (outlist) {
         auto& hand_data_packet = outlist->m_output_packs[0];
-        auto& hand_data_internal = hand_data_packet.Get<algorithm::HandOutputInternal>();
+        auto& hand_data_internal = hand_data_packet.Get<algorithm::HandsData>();
 
         AISDK_LOG_TRACE("[PopResult] lhand begin");
         if (hand_data_internal.lhand_valid) {
@@ -159,7 +157,7 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
             out_hand_array[i].version = 0;
 
             std::string gesture_type_string =
-                (i == 0) ? hand_data_internal.lhand_gesture : hand_data_internal.rhand_gesture;
+                (i == 0) ? hand_data_internal.left_hand.gesture : hand_data_internal.right_hand.gesture;
 
             out_hand_array[i].gesture_type = GestureType(gesture_map[gesture_type_string]);
 
@@ -168,13 +166,13 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
 
             if (i == 0) {
                 tracked_internal[i] = hand_data_internal.lhand_valid && predictor_lhand.get_tracking_status();
-                ontracked_points[i] = hand_data_internal.lhand_kpt;
-                ontracked_rotations[i] = hand_data_internal.lhand_rotation;
+                ontracked_points[i] = hand_data_internal.left_hand.kpt3d;
+                ontracked_rotations[i] = hand_data_internal.left_hand.rotation;
             } else {
                 // tracked_internal[i] = predictor_rhand.get_tracking_status();
                 tracked_internal[i] = hand_data_internal.rhand_valid && predictor_rhand.get_tracking_status();
-                ontracked_points[i] = hand_data_internal.rhand_kpt;
-                ontracked_rotations[i] = hand_data_internal.rhand_rotation;
+                ontracked_points[i] = hand_data_internal.right_hand.kpt3d;
+                ontracked_rotations[i] = hand_data_internal.right_hand.rotation;
             }
 
             out_hand_array[i].is_tracked = tracked_internal[i];

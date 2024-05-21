@@ -34,9 +34,9 @@ class ConvertToWorldCalculator : public xgraph::CalculatorBase {
    public:
     static absl::Status GetContract(xgraph::CalculatorContract* cc) {
         AISDK_LOG_TRACE("[ConvertToWorldCalculator] GetContract start.");
-        cc->Inputs().Tag("INPUT").Set<Kpt3dInternal>();
+        cc->Inputs().Tag("INPUT").Set<HandsData>();
         cc->Inputs().Tag("HEADPOSE").Set<HeadPoseInternal>();
-        cc->Outputs().Tag("OUTPUT").Set<Kpt3dInternal>();
+        cc->Outputs().Tag("OUTPUT").Set<HandsData>();
         AISDK_LOG_TRACE("[ConvertToWorldCalculator] GetContract complete.");
         return absl::OkStatus();
     }
@@ -54,21 +54,21 @@ class ConvertToWorldCalculator : public xgraph::CalculatorBase {
         AISDK_LOG_TRACE("[ConvertToWorldCalculator] Process start.");
 
         if (!cc->Inputs().Tag("HEADPOSE").IsEmpty() && !cc->Inputs().Tag("INPUT").IsEmpty()) {
-            const auto& input_data = cc->Inputs().Tag("INPUT").Get<Kpt3dInternal>();
+            const auto& input_data = cc->Inputs().Tag("INPUT").Get<HandsData>();
             const auto& headpose_data = cc->Inputs().Tag("HEADPOSE").Get<HeadPoseInternal>();
 
-            std::unique_ptr<Kpt3dInternal> output_buffer_ = absl::make_unique<Kpt3dInternal>();
-            output_buffer_->clear();
-
+            std::unique_ptr<HandsData> output_buffer_ = absl::make_unique<HandsData>();
             if (input_data.lhand_valid) {
                 AISDK_LOG_TRACE("[ConvertToWorldCalculator] Transform left hand 3d kpt form cv left to world!");
-                output_buffer_->lhand_kpt = transfer_from_cvL_to_world(headpose_data.transform, input_data.lhand_kpt);
+                output_buffer_->left_hand.kpt3d =
+                    transfer_from_cvL_to_world(headpose_data.transform, input_data.left_hand.kpt3d);
                 output_buffer_->lhand_valid = true;
                 AISDK_LOG_TRACE("[ConvertToWorldCalculator] Transform left hand 3d kpt complete!");
             }
             if (input_data.rhand_valid) {
                 AISDK_LOG_TRACE("[ConvertToWorldCalculator] Transform right hand 3d kpt form cv left to world!");
-                output_buffer_->rhand_kpt = transfer_from_cvL_to_world(headpose_data.transform, input_data.rhand_kpt);
+                output_buffer_->right_hand.kpt3d =
+                    transfer_from_cvL_to_world(headpose_data.transform, input_data.right_hand.kpt3d);
                 output_buffer_->rhand_valid = true;
                 AISDK_LOG_TRACE("[ConvertToWorldCalculator] Transform right hand 3d kpt complete!");
             }

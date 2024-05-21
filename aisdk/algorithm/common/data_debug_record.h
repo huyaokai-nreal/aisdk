@@ -35,7 +35,7 @@ class DataDebugRecord {
     void DebugDetect(Recordcache* record, const aisdk::algorithm::DetOutputInternal& detect_result);
     void DebugRsn(Recordcache* record, const aisdk::algorithm::Kpt2dInternal& kpt2d_result);
     // void DebugFilter(NrNet::NetOpIoData& iodata, NrCore::PipelineNodeInfo& nodeinfo);
-    void DebugLift(Recordcache* record, const aisdk::algorithm::Kpt3dInternal& kpt3d_result);
+    void DebugLift(Recordcache* record, const aisdk::algorithm::HandsData& kpt3d_result);
     // void DebugGlobalFilter(NrCore::PipelineNodeInfo& nodeinfo);
     void DebugGestureReg(Recordcache* record, const aisdk::algorithm::HandGestureInternal& gesture);
     void DebugWholeInference(Recordcache* record);
@@ -48,7 +48,7 @@ class DataDebugRecord {
     void DetectOpRecord(Recordcache* record, const aisdk::algorithm::DetOutputInternal& detect_result);
     void RsnOpRecord(Recordcache* record, const aisdk::algorithm::Kpt2dInternal& kpt2d_result);
     // void FilterOpRecord(NrNet::NetOpIoData& iodata, NrCore::PipelineNodeInfo& nodeinfo);
-    void liftOpRecord(Recordcache* record, const aisdk::algorithm::Kpt3dInternal& kpt3d_result);
+    void liftOpRecord(Recordcache* record, const aisdk::algorithm::HandsData& kpt3d_result);
     // debug模式下，op结果信息转成json存储
     void DetectOpToJsonString(Recordcache* record, const aisdk::algorithm::DetOutputInternal& detect_result);
     void RsnOpToJsonString(Recordcache* record, const aisdk::algorithm::Kpt2dInternal& kpt2d_result);
@@ -57,7 +57,7 @@ class DataDebugRecord {
     // void PredictToJsonString(HandPredictData& cur_hand, uint64_t predicted_time_nanos, uint64_t target_timestamp,
     //                          std::vector<cv::Vec3f>& predicted_hand_points, uint32_t step, Json::Value& export_root,
     //                          uint64_t cur_equence_id, uint64_t predicted_equence_id);
-    void liftToJsonString(Recordcache* record, const aisdk::algorithm::Kpt3dInternal& kpt3d_result);
+    void liftToJsonString(Recordcache* record, const aisdk::algorithm::HandsData& kpt3d_result);
     // void GlobalFilterToJsonString(NrCore::PipelineNodeInfo& nodeinfo, std::vector<cv::Vec3f>& world, uint32_t step);
     // void RotationToJsonString(NrCore::PipelineNodeInfo& nodeinfo, std::vector<Eigen::Matrix3d>& rotation,
     //                           uint32_t step);

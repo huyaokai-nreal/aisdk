@@ -44,7 +44,7 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
             .Set<std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>,
                            std::shared_ptr<aisdk::base::BaseCameraModel>>>();
         cc->Inputs().Tag("LANDMARK_INPUT").Set<Kpt2dInternal>();
-        cc->Outputs().Tag("LIFT_OUTPUT").Set<Kpt3dInternal>();
+        cc->Outputs().Tag("LIFT_OUTPUT").Set<HandsData>();
         AISDK_LOG_TRACE("[LiftCalculator] GetContract complete");
         return absl::OkStatus();
     }
@@ -88,7 +88,7 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
         AISDK_LOG_TRACE("[LiftCalculator] Process start");
         const auto& kpt2d = cc->Inputs().Tag("LANDMARK_INPUT").Get<Kpt2dInternal>();
         const auto& timestamp = cc->InputTimestamp().Seconds();
-        std::unique_ptr<Kpt3dInternal> output_buffer_ = absl::make_unique<Kpt3dInternal>();
+        std::unique_ptr<HandsData> output_buffer_ = absl::make_unique<HandsData>();
         if (kpt2d.lhand_lcam_valid && kpt2d.lhand_rcam_valid) {
             LiftNetInputs lift_inputs;
             lift_inputs.input_kpt_lcam = lcam_model_->undistort(kpt2d.lhand_lcam_kpt);
@@ -99,16 +99,16 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
             if (lift_outputs.ok()) {
                 output_buffer_->lhand_valid = true;
                 AISDK_LOG_TRACE("[LiftCalculator] left constrain start with {} kpts", lift_outputs->res3d.size());
-                output_buffer_->lhand_kpt = lift_outputs->res3d;
+                output_buffer_->left_hand.kpt3d = lift_outputs->res3d;
                 if (enable_constrain_) {
-                    output_buffer_->lhand_kpt = constrain_hand(output_buffer_->lhand_kpt, true);
+                    output_buffer_->left_hand.kpt3d = constrain_hand(output_buffer_->left_hand.kpt3d, true);
                     AISDK_LOG_TRACE("[LiftCalculator] left constrain finish");
                 }
                 if (model_name_ == "3d_liftnimble") {
-                    output_buffer_->lhand_score = lift_outputs->kpt3d_score;
+                    output_buffer_->left_hand.score = lift_outputs->kpt3d_score;
                 } else {
-                    output_buffer_->lhand_score =
-                        compute_score_with_reprojection(output_buffer_->lhand_kpt, kpt2d.lhand_lcam_kpt,
+                    output_buffer_->left_hand.score =
+                        compute_score_with_reprojection(output_buffer_->left_hand.kpt3d, kpt2d.lhand_lcam_kpt,
                                                         kpt2d.lhand_rcam_kpt, lcam_model_, rcam_model_);
                 }
                 AISDK_LOG_TRACE("[LiftCalculator] left hand score is {}", output_buffer_->lhand_score);
@@ -126,15 +126,15 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
             const auto lift_outputs = netalgo->Inference(lift_inputs);
             if (lift_outputs.ok()) {
                 output_buffer_->rhand_valid = true;
-                output_buffer_->rhand_kpt = lift_outputs->res3d;
+                output_buffer_->right_hand.kpt3d = lift_outputs->res3d;
                 if (enable_constrain_) {
-                    output_buffer_->rhand_kpt = constrain_hand(output_buffer_->rhand_kpt, false);
+                    output_buffer_->right_hand.kpt3d = constrain_hand(output_buffer_->right_hand.kpt3d, false);
                 }
                 if (model_name_ == "3d_liftnimble") {
-                    output_buffer_->rhand_score = lift_outputs->kpt3d_score;
+                    output_buffer_->right_hand.score = lift_outputs->kpt3d_score;
                 } else {
-                    output_buffer_->rhand_score =
-                        compute_score_with_reprojection(output_buffer_->rhand_kpt, kpt2d.rhand_lcam_kpt,
+                    output_buffer_->right_hand.score =
+                        compute_score_with_reprojection(output_buffer_->right_hand.kpt3d, kpt2d.rhand_lcam_kpt,
                                                         kpt2d.rhand_rcam_kpt, lcam_model_, rcam_model_);
                 }
                 AISDK_LOG_TRACE("[LiftCalculator] right hand score is {}", output_buffer_->rhand_score);
