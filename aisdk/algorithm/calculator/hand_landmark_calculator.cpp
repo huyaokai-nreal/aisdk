@@ -49,9 +49,9 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
     int32_t input_height_;
     std::string model_name_;
     float bbox_expand_ratio_ = 1.3;
-    std::string crop_method_ = "warpaffine";
     std::shared_ptr<base::BaseCameraModel> lcam_model_ = nullptr;
     std::shared_ptr<base::BaseCameraModel> rcam_model_ = nullptr;
+    enum class CropMethod { Warpaffine, PCL };
 
    public:
     static absl::Status GetContract(xgraph::CalculatorContract* cc) {
@@ -77,9 +77,6 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
         model_name_ = options.model_name();
         if (options.bbox_expand_ratio() > 0) {
             bbox_expand_ratio_ = options.bbox_expand_ratio();
-        }
-        if (!options.crop_method().empty()) {
-            crop_method_ = options.crop_method();
         }
         if (model_name_ == "2d_rsntiny") {
             netalgo = XGraphServiceUtils::CreateNetAlgoBase<RSNTiny>((void*)0x202310, model_name_);
@@ -131,12 +128,12 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
         return bbox_cs;
     }
     absl::Status ProcessSingleHand(const Image& image_data, const DetectRect& bbox, bool left_hand,
-                                   std::string_view crop_method, base::BaseCameraModel* origin_camera,
+                                   CropMethod crop_method, base::BaseCameraModel* origin_camera,
                                    std::vector<Vec2f_t>& kpt, std::vector<float>& rdepth,
                                    std::shared_ptr<base::PerspectiveCameraModel>& virutal_camera) {
         cv::Mat crop_image;
         Vec4f_t rect = GetCropBboxShape(bbox);
-        if (crop_method == "warpaffine") {
+        if (crop_method == CropMethod::Warpaffine) {
             crop_image = generate_roi_image(image_data.m_mat, rect, input_width_, input_height_);
         } else {
             virutal_camera = GetVirtualCameraFromBox(origin_camera, rect, {input_width_, input_height_});
@@ -155,7 +152,7 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
         if (!rsn_result.ok()) {
             return rsn_result.status();
         }
-        if (crop_method == "warpaffine") {
+        if (crop_method == CropMethod::Warpaffine) {
             if (left_hand) {
                 std::transform(
                     rsn_result->kpts[0].begin(), rsn_result->kpts[0].end(), kpt.begin(), [&](const auto& kpt) {
@@ -202,10 +199,14 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
         const auto& image_data = cc->Inputs().Tag("IMAGE_INPUT").Get<std::vector<Image>>();
         const auto& bbox_data = cc->Inputs().Tag("BBOX_SMOOTHED_OUTPUT").Get<DetOutputInternal>();
         std::unique_ptr<Kpt2dInternal> output_buffer_ = absl::make_unique<Kpt2dInternal>();
-        // left hand
+        CropMethod crop_method = CropMethod::PCL;
+        // if (bbox_data.lhand_lcam_valid && bbox_data.lhand_rcam_valid) {
+        //     crop_method = CropMethod::Warpaffine;
+        // }
+        //  left hand
         if (bbox_data.lhand_lcam_valid) {
             auto result =
-                ProcessSingleHand(image_data[0], bbox_data.lhand_lcam_rect, true, crop_method_, lcam_model_.get(),
+                ProcessSingleHand(image_data[0], bbox_data.lhand_lcam_rect, true, crop_method, lcam_model_.get(),
                                   output_buffer_->lhand_lcam_kpt, output_buffer_->lhand_lcam_rdepth,
                                   output_buffer_->lhand_lcam_virtual_camera);
             if (result.ok()) {
@@ -214,7 +215,7 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
         }
         if (bbox_data.lhand_rcam_valid) {
             auto result =
-                ProcessSingleHand(image_data[1], bbox_data.lhand_rcam_rect, true, crop_method_, rcam_model_.get(),
+                ProcessSingleHand(image_data[1], bbox_data.lhand_rcam_rect, true, crop_method, rcam_model_.get(),
                                   output_buffer_->lhand_rcam_kpt, output_buffer_->lhand_rcam_rdepth,
                                   output_buffer_->lhand_rcam_virtual_camera);
             if (result.ok()) {
@@ -222,9 +223,13 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
             }
         }
         // right hand
+        crop_method = CropMethod::PCL;
+        // if (bbox_data.lhand_lcam_valid && bbox_data.lhand_rcam_valid) {
+        //     crop_method = CropMethod::Warpaffine;
+        // }
         if (bbox_data.rhand_lcam_valid) {
             auto result =
-                ProcessSingleHand(image_data[0], bbox_data.rhand_lcam_rect, false, crop_method_, lcam_model_.get(),
+                ProcessSingleHand(image_data[0], bbox_data.rhand_lcam_rect, false, crop_method, lcam_model_.get(),
                                   output_buffer_->rhand_lcam_kpt, output_buffer_->rhand_lcam_rdepth,
                                   output_buffer_->rhand_lcam_virtual_camera);
             if (result.ok()) {
@@ -233,13 +238,15 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
         }
         if (bbox_data.rhand_rcam_valid) {
             auto result =
-                ProcessSingleHand(image_data[1], bbox_data.rhand_rcam_rect, false, crop_method_, rcam_model_.get(),
+                ProcessSingleHand(image_data[1], bbox_data.rhand_rcam_rect, false, crop_method, rcam_model_.get(),
                                   output_buffer_->rhand_rcam_kpt, output_buffer_->rhand_rcam_rdepth,
                                   output_buffer_->rhand_rcam_virtual_camera);
             if (result.ok()) {
                 output_buffer_->rhand_rcam_valid = true;
             }
         }
+        output_buffer_->lhand_rcam_valid = false;
+        output_buffer_->rhand_rcam_valid = false;
 
         if (output_buffer_->lhand_lcam_valid || output_buffer_->lhand_rcam_valid || output_buffer_->rhand_lcam_valid ||
             output_buffer_->rhand_rcam_valid) {

@@ -35,10 +35,10 @@ struct Kpt2dInternal {
     std::vector<float> lhand_rcam_rdepth;
     std::vector<float> rhand_lcam_rdepth;
     std::vector<float> rhand_rcam_rdepth;
-    std::shared_ptr<base::PerspectiveCameraModel> lhand_lcam_virtual_camera;
-    std::shared_ptr<base::PerspectiveCameraModel> lhand_rcam_virtual_camera;
-    std::shared_ptr<base::PerspectiveCameraModel> rhand_lcam_virtual_camera;
-    std::shared_ptr<base::PerspectiveCameraModel> rhand_rcam_virtual_camera;
+    std::shared_ptr<base::PerspectiveCameraModel> lhand_lcam_virtual_camera = nullptr;
+    std::shared_ptr<base::PerspectiveCameraModel> lhand_rcam_virtual_camera = nullptr;
+    std::shared_ptr<base::PerspectiveCameraModel> rhand_lcam_virtual_camera = nullptr;
+    std::shared_ptr<base::PerspectiveCameraModel> rhand_rcam_virtual_camera = nullptr;
 
     bool lhand_lcam_valid = false;
     bool lhand_rcam_valid = false;
