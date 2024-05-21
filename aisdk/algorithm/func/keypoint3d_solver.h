@@ -6,7 +6,7 @@
 namespace aisdk::algorithm {
 class Keypoint3DSolver {
    public:
-    explicit Keypoint3DSolver() {
+    Keypoint3DSolver() {
         template_bones_ << 0.03324628, 0.04288861, 0.02933636, 0.0189692,
             0.08489925 ,0.03961091 ,0.02224475 ,0.01538656,
             0.08044697 ,0.04323351 ,0.02637224 ,0.01726901,
@@ -45,11 +45,8 @@ class Keypoint3DSolver {
             e_bones.template block<4, 1>(16, 0) =
                 (kpt3d.template block<4, 3>(21, 0) - kpt3d.template block<4, 3>(20, 0)).rowwise().norm();
             result = e_bones - bones;
-            if(last_kpt3d_weight_ > 0)
-            {
-                residual[20] = (kpt3d(0, 2) - last_kpt3d(0, 2));
-                residual[20] *= T(last_kpt3d_weight_);
-            }
+            residual[20] = (kpt3d(0, 2) - last_kpt3d(0, 2));
+            residual[20] *= T(last_kpt3d_weight_);
             return true;
         }
         Eigen::Matrix<float, 25, 3> norm_kpt3d_;

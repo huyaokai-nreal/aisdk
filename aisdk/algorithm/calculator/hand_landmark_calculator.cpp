@@ -8,7 +8,6 @@
 
 #include "aisdk/algorithm/calculator/hand_landmark_calculator.pb.h"
 #include "aisdk/algorithm/common/bbox.h"
-#include "aisdk/algorithm/common/hand_define.h"
 #include "aisdk/algorithm/common/nrnet_define.h"
 #include "aisdk/algorithm/func/perspective_crop.h"
 #include "aisdk/algorithm/func/warpaffine.h"
@@ -82,9 +81,6 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
         if (!options.crop_method().empty()) {
             crop_method_ = options.crop_method();
         }
-        if (crop_method_ == "pcl") {
-            bbox_expand_ratio_ = 1.2;
-        }
         if (model_name_ == "2d_rsntiny") {
             netalgo = XGraphServiceUtils::CreateNetAlgoBase<RSNTiny>((void*)0x202310, model_name_);
         } else if (model_name_ == "2d_rtmtiny") {
@@ -134,6 +130,63 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
         bbox_cs[3] = max_shape;
         return bbox_cs;
     }
+    absl::Status ProcessSingleHand(const Image& image_data, const DetectRect& bbox, bool left_hand,
+                                   std::string_view crop_method, base::BaseCameraModel* origin_camera,
+                                   std::vector<Vec2f_t>& kpt, std::vector<float>& rdepth,
+                                   std::shared_ptr<base::PerspectiveCameraModel>& virutal_camera) {
+        cv::Mat crop_image;
+        Vec4f_t rect = GetCropBboxShape(bbox);
+        if (crop_method == "warpaffine") {
+            crop_image = generate_roi_image(image_data.m_mat, rect, input_width_, input_height_);
+        } else {
+            virutal_camera = GetVirtualCameraFromBox(origin_camera, rect, {input_width_, input_height_});
+#if __aarch64__
+            crop_image = xengine::perspective_crop_image(
+                std::dynamic_pointer_cast<base::Fisheye624CameraModel>(lcam_model_).get(), virutal_camera.get(),
+                input_width_, input_height_, image_data.m_mat);
+#endif
+        }
+        if (left_hand) {
+            cv::flip(crop_image, crop_image, 1);
+        }
+        AISDK_LOG_TRACE("start run 2d kpt model")
+        auto rsn_result = netalgo->Inference({crop_image});
+        AISDK_LOG_TRACE("start run 2d kpt model")
+        if (!rsn_result.ok()) {
+            return rsn_result.status();
+        }
+        if (crop_method == "warpaffine") {
+            if (left_hand) {
+                std::transform(
+                    rsn_result->kpts[0].begin(), rsn_result->kpts[0].end(), kpt.begin(), [&](const auto& kpt) {
+                        return Vec2f_t{(input_width_ - 1 - kpt[0]) * rect[2] / input_width_ + rect[0] - rect[2] * 0.5,
+                                       (kpt[1]) * rect[3] / input_height_ + rect[1] - rect[3] * 0.5};
+                    });
+            } else {
+                std::transform(rsn_result->kpts[0].begin(), rsn_result->kpts[0].end(), kpt.begin(),
+                               [&](const auto& kpt) {
+                                   return Vec2f_t{kpt[0] * rect[2] / input_width_ + rect[0] - rect[2] * 0.5,
+                                                  (kpt[1]) * rect[3] / input_height_ + rect[1] - rect[3] * 0.5};
+                               });
+            }
+        } else {
+            if (left_hand) {
+                AISDK_LOG_TRACE("start run 2d kpt model")
+                std::transform(rsn_result->kpts[0].begin(), rsn_result->kpts[0].end(), kpt.begin(),
+                               [&](const auto& kpt) {
+                                   return Vec2f_t{input_width_ - 1 - kpt[0], kpt[1]};
+                               });
+            } else {
+                kpt = rsn_result->kpts[0];
+            }
+        }
+        if (!rsn_result->rdepths.empty()) {
+            AISDK_LOG_TRACE("start run 2d kpt model")
+            std::copy(rsn_result->rdepths[0].begin(), rsn_result->rdepths[0].end(), rdepth.begin());
+        }
+
+        return absl::OkStatus();
+    }
 
     absl::Status Process(xgraph::CalculatorContext* cc) final {
 #if defined(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
@@ -148,163 +201,53 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
         }
         const auto& image_data = cc->Inputs().Tag("IMAGE_INPUT").Get<std::vector<Image>>();
         const auto& bbox_data = cc->Inputs().Tag("BBOX_SMOOTHED_OUTPUT").Get<DetOutputInternal>();
-
         std::unique_ptr<Kpt2dInternal> output_buffer_ = absl::make_unique<Kpt2dInternal>();
-        if (bbox_data.lhand_lcam_valid && bbox_data.lhand_rcam_valid) {
-            // refs
-            const Image& lcam_proto_image = image_data[0];
-            const Image& rcam_proto_image = image_data[1];
-            auto left_rect = GetCropBboxShape(bbox_data.lhand_lcam_rect);
-            auto right_rect = GetCropBboxShape(bbox_data.lhand_rcam_rect);
-            cv::Mat lhand_lcam_roi, lhand_rcam_roi;
-            if (crop_method_ == "warpaffine") {
-                lhand_lcam_roi = generate_roi_image(lcam_proto_image.m_mat, left_rect, input_width_, input_height_);
-                lhand_rcam_roi = generate_roi_image(rcam_proto_image.m_mat, right_rect, input_width_, input_height_);
-            } else {
-                auto lhand_lcam_virtual_cam =
-                    GetVirtualCameraFromBox(lcam_model_.get(), left_rect, {input_width_, input_height_});
-                auto lhand_rcam_virtual_cam =
-                    GetVirtualCameraFromBox(rcam_model_.get(), right_rect, {input_width_, input_height_});
-                output_buffer_->lhand_lcam_virtual_camera = lhand_lcam_virtual_cam;
-                output_buffer_->lhand_rcam_virtual_camera = lhand_rcam_virtual_cam;
-                lhand_lcam_roi = xengine::perspective_crop_image(
-                    std::dynamic_pointer_cast<base::Fisheye624CameraModel>(lcam_model_).get(),
-                    lhand_lcam_virtual_cam.get(), input_width_, input_height_, lcam_proto_image.m_mat);
-                lhand_rcam_roi = xengine::perspective_crop_image(
-                    std::dynamic_pointer_cast<base::Fisheye624CameraModel>(rcam_model_).get(),
-                    lhand_rcam_virtual_cam.get(), input_width_, input_height_, rcam_proto_image.m_mat);
-            }
-            cv::Mat lhand_lcam_flipped_roi;
-            cv::Mat lhand_rcam_flipped_roi;
-            cv::flip(lhand_lcam_roi, lhand_lcam_flipped_roi, 1);
-            cv::flip(lhand_rcam_roi, lhand_rcam_flipped_roi, 1);
-            auto rsn_result = netalgo->Inference({lhand_lcam_flipped_roi, lhand_rcam_flipped_roi});
-            if (!rsn_result.ok()) {
-                output_buffer_->lhand_valid = false;
-            } else {
-                output_buffer_->lhand_valid = true;
-                if (crop_method_ == "warpaffine") {
-                    std::transform(rsn_result->kpts[0].begin(), rsn_result->kpts[0].end(),
-                                   output_buffer_->lhand_lcam_kpt.begin(), [&](const auto& kpt) {
-                                       return Vec2f_t{
-                                           (input_width_ - 1 - kpt[0]) * left_rect[2] / input_width_ + left_rect[0] -
-                                               left_rect[2] * 0.5,
-                                           (kpt[1]) * left_rect[3] / input_height_ + left_rect[1] - left_rect[3] * 0.5};
-                                   });
-                    std::transform(rsn_result->kpts[1].begin(), rsn_result->kpts[1].end(),
-                                   output_buffer_->lhand_rcam_kpt.begin(), [&](const auto& kpt) {
-                                       return Vec2f_t{(input_width_ - 1 - kpt[0]) * left_rect[2] / input_width_ +
-                                                          right_rect[0] - right_rect[2] * 0.5,
-                                                      kpt[1] * right_rect[3] / input_height_ + right_rect[1] -
-                                                          right_rect[3] * 0.5};
-                                   });
-                } else {
-                    std::vector<Vec2f_t> virtual_left_cam_kpt2d(rsn_result->kpts[0].size()),
-                        virtual_right_cam_kpt2d(rsn_result->kpts[1].size());
-                    std::transform(rsn_result->kpts[0].begin(), rsn_result->kpts[0].end(),
-                                   virtual_left_cam_kpt2d.begin(), [&](const auto& kpt) {
-                                       return Vec2f_t{input_width_ - 1 - kpt[0], kpt[1]};
-                                   });
-                    std::transform(rsn_result->kpts[1].begin(), rsn_result->kpts[1].end(),
-                                   virtual_right_cam_kpt2d.begin(), [&](const auto& kpt) {
-                                       return Vec2f_t{input_width_ - 1 - kpt[0], kpt[1]};
-                                   });
-                    output_buffer_->lhand_lcam_kpt = virtual_left_cam_kpt2d;
-                    output_buffer_->lhand_rcam_kpt = virtual_right_cam_kpt2d;
-                    // auto virtual_left_cam_kpt_eye =
-                    //     output_buffer_->lhand_lcam_virtual_camera->window_to_eye(virtual_left_cam_kpt2d);
-                    // auto left_cam_kpt_world =
-                    //     output_buffer_->lhand_lcam_virtual_camera->eye_to_world(virtual_left_cam_kpt_eye);
-                    // auto lhand_lcam_kpt = lcam_model_->eye_to_window(left_cam_kpt_world);
-                    // output_buffer_->lhand_lcam_kpt = lhand_lcam_kpt;
-                    // auto virtual_right_cam_kpt_eye =
-                    //     output_buffer_->lhand_rcam_virtual_camera->window_to_eye(virtual_right_cam_kpt2d);
-                    // auto right_cam_kpt_world =
-                    //     output_buffer_->lhand_rcam_virtual_camera->eye_to_world(virtual_right_cam_kpt_eye);
-                    // auto lhand_rcam_kpt = rcam_model_->eye_to_window(right_cam_kpt_world);
-                    // output_buffer_->lhand_rcam_kpt = lhand_rcam_kpt;
-                }
-                if (!rsn_result->rdepths.empty()) {
-                    std::copy(rsn_result->rdepths[0].begin(), rsn_result->rdepths[0].end(),
-                              output_buffer_->lhand_lcam_rdepth.begin());
-                    std::copy(rsn_result->rdepths[1].begin(), rsn_result->rdepths[1].end(),
-                              output_buffer_->lhand_rcam_rdepth.begin());
-                }
+        // left hand
+        if (bbox_data.lhand_lcam_valid) {
+            auto result =
+                ProcessSingleHand(image_data[0], bbox_data.lhand_lcam_rect, true, crop_method_, lcam_model_.get(),
+                                  output_buffer_->lhand_lcam_kpt, output_buffer_->lhand_lcam_rdepth,
+                                  output_buffer_->lhand_lcam_virtual_camera);
+            if (result.ok()) {
+                output_buffer_->lhand_lcam_valid = true;
             }
         }
-        if (bbox_data.rhand_lcam_valid && bbox_data.rhand_rcam_valid) {
-            // refs
-            const Image& lcam_proto_image = image_data[0];
-            const Image& rcam_proto_image = image_data[1];
-            auto left_rect = GetCropBboxShape(bbox_data.rhand_lcam_rect);
-            auto right_rect = GetCropBboxShape(bbox_data.rhand_rcam_rect);
-            cv::Mat rhand_lcam_roi, rhand_rcam_roi;
-            if (crop_method_ == "warpaffine") {
-                rhand_lcam_roi = generate_roi_image(lcam_proto_image.m_mat, left_rect, input_width_, input_height_);
-                rhand_rcam_roi = generate_roi_image(rcam_proto_image.m_mat, right_rect, input_width_, input_height_);
-            } else {
-                auto rhand_lcam_virtual_cam =
-                    GetVirtualCameraFromBox(lcam_model_.get(), left_rect, {input_width_, input_height_});
-                auto rhand_rcam_virtual_cam =
-                    GetVirtualCameraFromBox(rcam_model_.get(), right_rect, {input_width_, input_height_});
-                output_buffer_->rhand_lcam_virtual_camera = rhand_lcam_virtual_cam;
-                output_buffer_->rhand_rcam_virtual_camera = rhand_rcam_virtual_cam;
-                rhand_lcam_roi = xengine::perspective_crop_image(
-                    std::dynamic_pointer_cast<base::Fisheye624CameraModel>(lcam_model_).get(),
-                    rhand_lcam_virtual_cam.get(), input_width_, input_height_, lcam_proto_image.m_mat);
-                rhand_rcam_roi = xengine::perspective_crop_image(
-                    std::dynamic_pointer_cast<base::Fisheye624CameraModel>(rcam_model_).get(),
-                    rhand_rcam_virtual_cam.get(), input_width_, input_height_, rcam_proto_image.m_mat);
-            }
-            auto rsn_result = netalgo->Inference({rhand_lcam_roi, rhand_rcam_roi});
-            if (!rsn_result.ok()) {
-                output_buffer_->rhand_valid = false;
-            } else {
-                output_buffer_->rhand_valid = true;
-                if (crop_method_ == "warpaffine") {
-                    std::transform(rsn_result->kpts[0].begin(), rsn_result->kpts[0].end(),
-                                   output_buffer_->rhand_lcam_kpt.begin(), [&](const auto& kpt) {
-                                       return Vec2f_t{
-                                           (kpt[0]) * left_rect[2] / input_width_ + left_rect[0] - left_rect[2] * 0.5,
-                                           (kpt[1]) * left_rect[3] / input_height_ + left_rect[1] - left_rect[3] * 0.5};
-                                   });
-                    std::transform(
-                        rsn_result->kpts[1].begin(), rsn_result->kpts[1].end(), output_buffer_->rhand_rcam_kpt.begin(),
-                        [&](const auto& kpt) {
-                            return Vec2f_t{
-                                (kpt[0]) * left_rect[2] / input_width_ + right_rect[0] - right_rect[2] * 0.5,
-                                kpt[1] * right_rect[3] / input_height_ + right_rect[1] - right_rect[3] * 0.5};
-                        });
-                } else {
-                    output_buffer_->rhand_lcam_kpt = rsn_result->kpts[0];
-                    output_buffer_->rhand_rcam_kpt = rsn_result->kpts[1];
-                    // auto virtual_left_cam_kpt_eye =
-                    //     output_buffer_->rhand_lcam_virtual_camera->window_to_eye(rsn_result->kpts[0]);
-                    // auto left_cam_kpt_world =
-                    //     output_buffer_->rhand_lcam_virtual_camera->eye_to_world(virtual_left_cam_kpt_eye);
-                    // auto rhand_lcam_kpt = lcam_model_->eye_to_window(left_cam_kpt_world);
-                    // output_buffer_->rhand_lcam_kpt = rhand_lcam_kpt;
-                    // auto virtual_right_cam_kpt_eye =
-                    //     output_buffer_->rhand_rcam_virtual_camera->window_to_eye(rsn_result->kpts[1]);
-                    // auto right_cam_kpt_world =
-                    //     output_buffer_->rhand_rcam_virtual_camera->eye_to_world(virtual_right_cam_kpt_eye);
-                    // auto rhand_rcam_kpt = rcam_model_->eye_to_window(right_cam_kpt_world);
-                    // output_buffer_->rhand_rcam_kpt = rhand_rcam_kpt;
-                }
-                if (!rsn_result->rdepths.empty()) {
-                    std::copy(rsn_result->rdepths[0].begin(), rsn_result->rdepths[0].end(),
-                              output_buffer_->rhand_lcam_rdepth.begin());
-                    std::copy(rsn_result->rdepths[1].begin(), rsn_result->rdepths[1].end(),
-                              output_buffer_->rhand_rcam_rdepth.begin());
-                }
+        if (bbox_data.lhand_rcam_valid) {
+            auto result =
+                ProcessSingleHand(image_data[1], bbox_data.lhand_rcam_rect, true, crop_method_, rcam_model_.get(),
+                                  output_buffer_->lhand_rcam_kpt, output_buffer_->lhand_rcam_rdepth,
+                                  output_buffer_->lhand_rcam_virtual_camera);
+            if (result.ok()) {
+                output_buffer_->lhand_rcam_valid = true;
             }
         }
-        if (output_buffer_->lhand_valid || output_buffer_->rhand_valid) {
+        // right hand
+        if (bbox_data.rhand_lcam_valid) {
+            auto result =
+                ProcessSingleHand(image_data[0], bbox_data.rhand_lcam_rect, false, crop_method_, lcam_model_.get(),
+                                  output_buffer_->rhand_lcam_kpt, output_buffer_->rhand_lcam_rdepth,
+                                  output_buffer_->rhand_lcam_virtual_camera);
+            if (result.ok()) {
+                output_buffer_->rhand_lcam_valid = true;
+            }
+        }
+        if (bbox_data.rhand_rcam_valid) {
+            auto result =
+                ProcessSingleHand(image_data[1], bbox_data.rhand_rcam_rect, false, crop_method_, rcam_model_.get(),
+                                  output_buffer_->rhand_rcam_kpt, output_buffer_->rhand_rcam_rdepth,
+                                  output_buffer_->rhand_rcam_virtual_camera);
+            if (result.ok()) {
+                output_buffer_->rhand_rcam_valid = true;
+            }
+        }
+
+        if (output_buffer_->lhand_lcam_valid || output_buffer_->lhand_rcam_valid || output_buffer_->rhand_lcam_valid ||
+            output_buffer_->rhand_rcam_valid) {
             // clang-format off
             AISDK_LOG_TRACE(
                 "[HandLandmarkCalculator] lhand_valid: {}, lhand_lcam: {}, lhand_rcam: {} / rhand_valid: {}, rhand_lcam: {}, rhand_rcam: {}",
-                output_buffer_->lhand_valid, output_buffer_->lhand_lcam_kpt.size(), output_buffer_->lhand_rcam_kpt.size(),
-                output_buffer_->rhand_valid, output_buffer_->rhand_lcam_kpt.size(), output_buffer_->rhand_rcam_kpt.size());
+                output_buffer_->lhand_lcam_valid, output_buffer_->lhand_lcam_kpt.size(), output_buffer_->lhand_rcam_kpt.size(),
+                output_buffer_->rhand_lcam_valid, output_buffer_->rhand_lcam_kpt.size(), output_buffer_->rhand_rcam_kpt.size());
             cc->Outputs().Tag("LANDMARK_OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
             // clang-format on
         } else {

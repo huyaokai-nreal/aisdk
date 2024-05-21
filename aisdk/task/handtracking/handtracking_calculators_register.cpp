@@ -9,7 +9,7 @@
 #include "aisdk/algorithm/calculator/hand_data_record_calculator.cpp"
 #include "aisdk/algorithm/calculator/hand_detection_track_calculator.cpp"
 #include "aisdk/algorithm/calculator/hand_filter_calculator.cpp"
-#include "aisdk/algorithm/calculator/hand_landmark_calculatorv2.cpp"
+#include "aisdk/algorithm/calculator/hand_landmark_calculator.cpp"
 #include "aisdk/algorithm/calculator/hand_lift_calculator.cpp"
 #include "aisdk/algorithm/calculator/landmark_filter_calculator.cpp"
 #include "aisdk/algorithm/calculator/mono_hand_kpt3d_calculator.cpp"

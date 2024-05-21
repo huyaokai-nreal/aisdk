@@ -64,6 +64,8 @@ class MonoHandKpt3DCalculator : public xgraph::CalculatorBase {
             for (int i = 0; i < kAlgoKeypointNum; i++) {
                 kpt25d.block<1, 2>(i, 0) = kpt2d.lhand_lcam_kpt[i];
                 kpt25d(i, 2) = kpt2d.lhand_lcam_rdepth[i];
+                AISDK_LOG_TRACE("input left kpt25d x {}  y {} d {}", kpt2d.lhand_lcam_kpt[i](0),
+                                kpt2d.lhand_lcam_kpt[i](1), kpt2d.lhand_lcam_rdepth[i]);
             }
             Eigen::Matrix<float, 21, 3> last_kpt3d = Eigen::Matrix<float, 21, 3>::Zero();
             float last_kpt3d_weight = 0;
