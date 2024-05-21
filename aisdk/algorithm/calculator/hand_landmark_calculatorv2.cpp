@@ -7,7 +7,6 @@
 
 #include "aisdk/algorithm/calculator/hand_landmark_calculator.pb.h"
 #include "aisdk/algorithm/common/bbox.h"
-#include "aisdk/algorithm/common/hand_define.h"
 #include "aisdk/algorithm/common/nrnet_define.h"
 #include "aisdk/algorithm/func/perspective_crop.h"
 #include "aisdk/algorithm/func/warpaffine.h"
@@ -135,9 +134,12 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
             crop_image = generate_roi_image(image_data.m_mat, rect, input_width_, input_height_);
         } else {
             virutal_camera = GetVirtualCameraFromBox(origin_camera, rect, {input_width_, input_height_});
+
+#if __aarch64__
             crop_image = xengine::perspective_crop_image(
                 std::dynamic_pointer_cast<base::Fisheye624CameraModel>(lcam_model_).get(), virutal_camera.get(),
                 input_width_, input_height_, image_data.m_mat);
+#endif
         }
         if (left_hand) {
             cv::flip(crop_image, crop_image, 1);
@@ -161,20 +163,17 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
                                });
             }
         } else {
-            if (crop_method == "warpaffine") {
-                if (left_hand) {
-                    std::transform(rsn_result->kpts[0].begin(), rsn_result->kpts[0].end(), kpt.begin(),
-                                   [&](const auto& kpt) {
-                                       return Vec2f_t{input_width_ - 1 - kpt[0], kpt[1]};
-                                   });
-                } else {
-                    kpt = rsn_result->kpts[0];
-                }
+            if (left_hand) {
+                std::transform(rsn_result->kpts[0].begin(), rsn_result->kpts[0].end(), kpt.begin(),
+                               [&](const auto& kpt) {
+                                   return Vec2f_t{input_width_ - 1 - kpt[0], kpt[1]};
+                               });
+            } else {
+                kpt = rsn_result->kpts[0];
             }
-            if (!rsn_result->rdepths.empty()) {
-                std::copy(rsn_result->rdepths[0].begin(), rsn_result->rdepths[0].end(), rdepth.begin());
-                std::copy(rsn_result->rdepths[1].begin(), rsn_result->rdepths[1].end(), rdepth.begin());
-            }
+        }
+        if (!rsn_result->rdepths.empty()) {
+            std::copy(rsn_result->rdepths[0].begin(), rsn_result->rdepths[0].end(), rdepth.begin());
         }
 
         return absl::OkStatus();
@@ -238,8 +237,8 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
             // clang-format off
             AISDK_LOG_TRACE(
                 "[HandLandmarkCalculator] lhand_valid: {}, lhand_lcam: {}, lhand_rcam: {} / rhand_valid: {}, rhand_lcam: {}, rhand_rcam: {}",
-                output_buffer_->lhand_valid, output_buffer_->lhand_lcam_kpt.size(), output_buffer_->lhand_rcam_kpt.size(),
-                output_buffer_->rhand_valid, output_buffer_->rhand_lcam_kpt.size(), output_buffer_->rhand_rcam_kpt.size());
+                output_buffer_->lhand_lcam_valid, output_buffer_->lhand_lcam_kpt.size(), output_buffer_->lhand_rcam_kpt.size(),
+                output_buffer_->rhand_lcam_valid, output_buffer_->rhand_lcam_kpt.size(), output_buffer_->rhand_rcam_kpt.size());
             cc->Outputs().Tag("LANDMARK_OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
             // clang-format on
         } else {

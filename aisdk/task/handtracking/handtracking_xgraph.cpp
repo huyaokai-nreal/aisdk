@@ -120,8 +120,8 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
         AISDK_LOG_TRACE("[PopResult] lhand begin");
         if (hand_data_internal.lhand_valid) {
             for (int i = 0; i < 21; i++) {
-                AISDK_LOG_TRACE("{}, {}, {}", hand_data_internal.lhand_kpt[i][0], hand_data_internal.lhand_kpt[i][1],
-                                hand_data_internal.lhand_kpt[i][2]);
+                AISDK_LOG_TRACE("{}, {}, {}", hand_data_internal.left_hand.kpt3d[i][0],
+                                hand_data_internal.left_hand.kpt3d[i][1], hand_data_internal.left_hand.kpt3d[i][2]);
             }
         }
         AISDK_LOG_TRACE("[PopResult] lhand end");
@@ -129,8 +129,8 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
         AISDK_LOG_TRACE("[PopResult] rhand begin");
         if (hand_data_internal.rhand_valid) {
             for (int i = 0; i < 21; i++) {
-                AISDK_LOG_TRACE("{}, {}, {}", hand_data_internal.rhand_kpt[i][0], hand_data_internal.rhand_kpt[i][1],
-                                hand_data_internal.rhand_kpt[i][2]);
+                AISDK_LOG_TRACE("{}, {}, {}", hand_data_internal.right_hand.kpt3d[i][0],
+                                hand_data_internal.right_hand.kpt3d[i][1], hand_data_internal.right_hand.kpt3d[i][2]);
             }
         }
         AISDK_LOG_TRACE("[PopResult] rhand end");
@@ -169,7 +169,6 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
                 ontracked_points[i] = hand_data_internal.left_hand.kpt3d;
                 ontracked_rotations[i] = hand_data_internal.left_hand.rotation;
             } else {
-                // tracked_internal[i] = predictor_rhand.get_tracking_status();
                 tracked_internal[i] = hand_data_internal.rhand_valid && predictor_rhand.get_tracking_status();
                 ontracked_points[i] = hand_data_internal.right_hand.kpt3d;
                 ontracked_rotations[i] = hand_data_internal.right_hand.rotation;

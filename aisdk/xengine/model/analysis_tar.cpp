@@ -430,8 +430,7 @@ bool AnalysisTar::Analysis(unsigned char *tar_mem, uint32_t tar_len) {
     }
 
     // 目前我们支持1个tar包最多4条pipeline
-    std::vector<std::string> hand_graphs = {"graph_ella_snpedsp.txt", "graph_ella_cpu.txt", "graph_flora_snpedsp.txt",
-                                            "graph_flora_cpu.txt"};
+    std::vector<std::string> hand_graphs = {"graph_ella_snpedsp.txt", "graph_ella_cpu.txt", "graph_flora_snpedsp.txt"};
     for (uint32_t i = 0; i < hand_graphs.size(); i++) {
         // 查找固定的名称
         std::string tar_hand_graph = hand_graphs[i];

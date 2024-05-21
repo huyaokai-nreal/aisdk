@@ -111,7 +111,7 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
                         compute_score_with_reprojection(output_buffer_->left_hand.kpt3d, kpt2d.lhand_lcam_kpt,
                                                         kpt2d.lhand_rcam_kpt, lcam_model_, rcam_model_);
                 }
-                AISDK_LOG_TRACE("[LiftCalculator] left hand score is {}", output_buffer_->lhand_score);
+                AISDK_LOG_TRACE("[LiftCalculator] left hand score is {}", output_buffer_->left_hand.score);
             } else {
                 output_buffer_->lhand_valid = false;
             }
@@ -137,7 +137,7 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
                         compute_score_with_reprojection(output_buffer_->right_hand.kpt3d, kpt2d.rhand_lcam_kpt,
                                                         kpt2d.rhand_rcam_kpt, lcam_model_, rcam_model_);
                 }
-                AISDK_LOG_TRACE("[LiftCalculator] right hand score is {}", output_buffer_->rhand_score);
+                AISDK_LOG_TRACE("[LiftCalculator] right hand score is {}", output_buffer_->right_hand.score);
             } else {
                 output_buffer_->rhand_valid = false;
             }
