@@ -57,6 +57,7 @@ node {
 #  calculator: "MonoHandKpt3DCalculator"
 #  input_side_packet: "CAM_INFO_INPUT:cam_info"
 #  input_stream: "LANDMARK_INPUT:kpt2d"
+#  input_stream: "HEADPOSE:head_pose_out"
 #  output_stream: "KPT3D_OUTPUT:kpt3d"
 #}
 
@@ -77,7 +78,7 @@ node {
 node {
   name: "BlockHardRules"
   calculator: "BlockHardRulesCalculator"
-  input_stream: "BLOCK_IN:kpt3d"
+  input_stream: "kpt3d"
   output_stream: "BLOCK_OUT:kpt3d_blocked"
   node_options: {
     [type.googleapis.com/aisdk.BlockHardRulesCalculatorOptions] {

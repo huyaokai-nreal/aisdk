@@ -29,12 +29,16 @@ class BlockHardRulesCalculator : public xgraph::CalculatorBase {
    public:
     static absl::Status GetContract(xgraph::CalculatorContract* cc) {
         AISDK_LOG_TRACE("[BlockHardRulesCalculator] GetContract start");
-        cc->Inputs().Tag("BLOCK_IN").Set<HandsData>();
+        AISDK_LOG_TRACE("num inputs {}", cc->Inputs().NumEntries());
+        for (int i = 0; i < cc->Inputs().NumEntries(); i++) {
+            cc->Inputs().Index(i).Set<HandsData>();
+        }
         cc->Outputs().Tag("BLOCK_OUT").Set<HandsData>();
         AISDK_LOG_TRACE("[BlockHardRulesCalculator] GetContract complete");
         return absl::OkStatus();
     }
     inline bool block_rule_root_distance(const std::vector<Vec3f_t>& points_3d, float max_depth) {
+        AISDK_LOG_TRACE("[BlockHardRulesCalculator] check depth {}", points_3d.size());
         return points_3d[root_index][2] > max_depth;
     }
 

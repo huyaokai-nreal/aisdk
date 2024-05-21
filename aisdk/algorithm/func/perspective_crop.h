@@ -1,6 +1,7 @@
 #pragma  once 
 #include <Eigen/Dense>
 #include "aisdk/base/camera_model.h"
+#include <memory>
 #include "aisdk/base/type.h"
 #include <memory>
 namespace aisdk::algorithm {

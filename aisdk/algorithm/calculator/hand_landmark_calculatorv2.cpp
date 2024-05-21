@@ -126,7 +126,7 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
     }
     absl::Status ProcessSingleHand(const Image& image_data, const DetectRect& bbox, bool left_hand,
                                    std::string_view crop_method, base::BaseCameraModel* origin_camera,
-                                   std::vector<Vec2f_t>& kpt, std::vector<float> rdepth,
+                                   std::vector<Vec2f_t>& kpt, std::vector<float>& rdepth,
                                    std::shared_ptr<base::PerspectiveCameraModel>& virutal_camera) {
         cv::Mat crop_image;
         Vec4f_t rect = GetCropBboxShape(bbox);
@@ -134,7 +134,6 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
             crop_image = generate_roi_image(image_data.m_mat, rect, input_width_, input_height_);
         } else {
             virutal_camera = GetVirtualCameraFromBox(origin_camera, rect, {input_width_, input_height_});
-
 #if __aarch64__
             crop_image = xengine::perspective_crop_image(
                 std::dynamic_pointer_cast<base::Fisheye624CameraModel>(lcam_model_).get(), virutal_camera.get(),
@@ -144,7 +143,9 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
         if (left_hand) {
             cv::flip(crop_image, crop_image, 1);
         }
+        AISDK_LOG_TRACE("start run 2d kpt model")
         auto rsn_result = netalgo->Inference({crop_image});
+        AISDK_LOG_TRACE("start run 2d kpt model")
         if (!rsn_result.ok()) {
             return rsn_result.status();
         }
@@ -164,6 +165,7 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
             }
         } else {
             if (left_hand) {
+                AISDK_LOG_TRACE("start run 2d kpt model")
                 std::transform(rsn_result->kpts[0].begin(), rsn_result->kpts[0].end(), kpt.begin(),
                                [&](const auto& kpt) {
                                    return Vec2f_t{input_width_ - 1 - kpt[0], kpt[1]};
@@ -173,6 +175,7 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
             }
         }
         if (!rsn_result->rdepths.empty()) {
+            AISDK_LOG_TRACE("start run 2d kpt model")
             std::copy(rsn_result->rdepths[0].begin(), rsn_result->rdepths[0].end(), rdepth.begin());
         }
 

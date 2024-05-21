@@ -136,7 +136,6 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
         AISDK_LOG_TRACE("[PopResult] rhand end");
 
         *hand_num = 2;  // fixed.
-
         NRTransform _handjoint_pose_tmp;
         memset(&_handjoint_pose_tmp, 0, sizeof(_handjoint_pose_tmp));
         _handjoint_pose_tmp.rotation.qw = 1.0f;
