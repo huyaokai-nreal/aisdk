@@ -40,7 +40,7 @@ struct ProfilingInfo {
     char* noderesult_jsonstring = nullptr;
 };
 
-#define DATA_RECORD_FLAG (112) 
+#define DATA_RECORD_FLAG (112)
 extern "C" struct DataRecordOption {
     uint32_t struct_bytes = 0;
     uint32_t start_stop = 0;
@@ -75,6 +75,8 @@ class HandTracking {
     bool never_dlopen_so = true;
     void* m_dlhandle = nullptr;
     xengine::DlSymFuncs m_funcs;
+
+    bool is_mono = false;
 };
 
 class Hmd {

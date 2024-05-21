@@ -6,6 +6,7 @@
             "detect_dsp_ella",
             "detect_cpu_ella",
             "detect_cpu_flora",
+            "detect_dsp_flora_mono",
             "2d_rtmtiny",
             "2d_rtmtiny_pcl",
             "2d_rsntiny",
@@ -66,6 +67,22 @@
                 "precision": "float16",
                 "thread_num": 1,
                 "runtime": "cpu"
+            }
+        },
+        "detect_dsp_flora_mono": {
+            "model_config": {
+                "file_name": "models/det_tiny_240415.h2.s.B.ppq.snpe.quantized.dlc",
+                "vendor": "snpe"
+            },
+            "session_config": {
+                "batch": 1,
+                "precision": "int8",
+                "thread_num": 1,
+                "runtime": "dsp",
+                "output_tensors": [
+                    "output_box",
+                    "output_cls"
+                ]
             }
         },
         "2d_rsntiny": {

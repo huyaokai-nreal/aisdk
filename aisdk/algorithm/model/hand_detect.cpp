@@ -663,10 +663,10 @@ void HandDetectNetv2::PostProcess(DetOutputInternal &result) {
             iter.h = std::round(iter.h / min_ratio);
 
             if (true == iter.is_left && lhand_rect.size() == 0) {
-                AISDK_LOG_TRACE("push lhand rect: {}", iter.x);
+                AISDK_LOG_TRACE("push lhand rect: x: {}, y: {}, w: {}, h: {}", iter.x, iter.y, iter.w, iter.h);
                 lhand_rect.push_back(iter);
             } else if (false == iter.is_left && rhand_rect.size() == 0) {
-                AISDK_LOG_TRACE("push rhand rect: {}", iter.x);
+                AISDK_LOG_TRACE("push rhand rect: x: {}, y: {}, w: {}, h: {}", iter.x, iter.y, iter.w, iter.h);
                 rhand_rect.push_back(iter);
             }
         }

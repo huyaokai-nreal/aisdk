@@ -593,8 +593,12 @@ NRPluginResult HandTracking::ParseAllCameraData(const NRGrayscaleCameraFrameData
     std::shared_ptr<task::HandTrackingXGraph> impl =
         std::dynamic_pointer_cast<task::HandTrackingXGraph>(pipeline.Impl());
     std::vector<aisdk::algorithm::Image> images;
+
     images.emplace_back(std::move(d1));
-    images.emplace_back(std::move(d2));
+    if (!ins->m_handtracking.is_mono) {
+        images.emplace_back(std::move(d2));
+    }
+
     impl->PushData(nano_time_[0], images, head_pose);
     AISDK_LOG_TRACE("interface HandTrackingXGraph::PushData");
 

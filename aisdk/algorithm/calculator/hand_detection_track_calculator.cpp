@@ -69,11 +69,13 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
         const auto &options = cc->Options<aisdk::HandDetTrackCalculatorOptions>();
         model_name_ = options.model_name();
         if (model_name_ == "detect_cpu_ella" || model_name_ == "detect_cpu_flora" || model_name_ == "detect_dsp_ella") {
-            AISDK_LOG_TRACE("[HandDetTrackCalculator] start init {}", model_name_);
+            // 老模型
+            AISDK_LOG_TRACE("[HandDetTrackCalculator] HandDetectNet init {}", model_name_);
             netalgo = XGraphServiceUtils::CreateNetAlgoBase<HandDetectNet>((void *)0x202310, model_name_);
         } else {
-            AISDK_LOG_TRACE("[HandDetTrackCalculator] start init detect");
-            netalgo = XGraphServiceUtils::CreateNetAlgoBase<HandDetectNetv2>((void *)0x202310, "detect");
+            // 新模型
+            AISDK_LOG_TRACE("[HandDetTrackCalculator] HandDetectNetv2 init {}", model_name_);
+            netalgo = XGraphServiceUtils::CreateNetAlgoBase<HandDetectNetv2>((void *)0x202310, model_name_);
         }
         if (!netalgo) {
             return {absl::StatusCode::kInvalidArgument, "[HandDetTrackCalculator] CreateNetAlgoBase nodename error"};
@@ -109,6 +111,8 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
 
         const auto &timestamp = cc->InputTimestamp().Seconds();
         auto &lastframe_kpt3d = GlobalPredictorService::getInstance().get_last_pt3d_world();
+
+        bool is_mono = image_data.size() == 1;
 
         std::unique_ptr<DetOutputInternal> output_buffer_ = absl::make_unique<DetOutputInternal>();
         output_buffer_->clear();
@@ -193,26 +197,22 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
             netalgo->Inference(image_data, result);
 
             // check stereo det bbox pair valid
-            if (result.images_lhand_rects.size() == 2) {
-                if (result.images_lhand_rects[0].size() > 0) {
-                    result.lhand_lcam_rect = result.images_lhand_rects[0][0];
-                    result.lhand_lcam_valid = true;
-                }
-                if (result.images_lhand_rects[1].size() > 0) {
-                    result.lhand_rcam_rect = result.images_lhand_rects[1][0];
-                    result.lhand_rcam_valid = true;
-                }
+            if (result.images_lhand_rects[0].size() > 0) {
+                result.lhand_lcam_rect = result.images_lhand_rects[0][0];
+                result.lhand_lcam_valid = true;
+            }
+            if (!is_mono && result.images_lhand_rects[1].size() > 0) {
+                result.lhand_rcam_rect = result.images_lhand_rects[1][0];
+                result.lhand_rcam_valid = true;
             }
 
-            if (result.images_rhand_rects.size() == 2) {
-                if (result.images_rhand_rects[0].size() > 0) {
-                    result.rhand_lcam_rect = result.images_rhand_rects[0][0];
-                    result.rhand_lcam_valid = true;
-                }
-                if (result.images_rhand_rects[1].size() > 0) {
-                    result.rhand_rcam_rect = result.images_rhand_rects[1][0];
-                    result.rhand_rcam_valid = true;
-                }
+            if (result.images_rhand_rects[0].size() > 0) {
+                result.rhand_lcam_rect = result.images_rhand_rects[0][0];
+                result.rhand_lcam_valid = true;
+            }
+            if (!is_mono && result.images_rhand_rects[1].size() > 0) {
+                result.rhand_rcam_rect = result.images_rhand_rects[1][0];
+                result.rhand_rcam_valid = true;
             }
 
             det_tracker_step_ = 1;
