@@ -18,6 +18,7 @@ void TransferHeadToWorld(NRTransform& extrinsic_trans_head_world_, const std::ve
 
 std::vector<Vec3f_t> recal_lcam_kpt3d_cv_with_new_headpose(NRTransform extrinsic_world,
                                                              const std::vector<Vec3f_t>& points3d_src);
+std::vector<Vec3f_t> lcam_cv_to_rcam_cv(const std::vector<Vec3f_t>& points3d_src);
 std::vector<Vec3f_t> cal_lcam_kpt3d_cv_to_world(NRTransform extrinsic_world,
                                                   const std::vector<Vec3f_t>& points3d_src);
 

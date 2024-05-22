@@ -22,7 +22,7 @@ class MonoHandKpt3DCalculator : public xgraph::CalculatorBase {
     std::unique_ptr<Keypoint3DSolver> solver_;
     std::shared_ptr<base::BaseCameraModel> lcam_model_ = nullptr;
     std::shared_ptr<base::BaseCameraModel> rcam_model_ = nullptr;
-    float last_kpt3d_weight_ = 0.2;
+    float last_kpt3d_weight_ = 0.4;
 
    public:
     static absl::Status GetContract(xgraph::CalculatorContract* cc) {
@@ -59,18 +59,23 @@ class MonoHandKpt3DCalculator : public xgraph::CalculatorBase {
         for (int i = 0; i < kAlgoKeypointNum; i++) {
             kpt25d.block<1, 2>(i, 0) = kpt2d[i];
             kpt25d(i, 2) = rdepth[i];
-            AISDK_LOG_TRACE("input left kpt25d x {}  y {} d {}", kpt2d[i](0), kpt2d[i](1), rdepth[i]);
         }
         Eigen::Matrix<float, 21, 3> last_kpt3d = Eigen::Matrix<float, 21, 3>::Zero();
         float last_kpt3d_weight = 0;
         if (last_kpt3d_valid) {
-            const auto kpt3d_cam_pre = recal_lcam_kpt3d_cv_with_new_headpose(head_pose.transform, last_kpt3d_);
+            auto kpt3d_cam_pre = recal_lcam_kpt3d_cv_with_new_headpose(head_pose.transform, last_kpt3d_);
+            if (right_image) {
+                kpt3d_cam_pre = lcam_cv_to_rcam_cv(kpt3d_cam_pre);
+            }
+            kpt3d_cam_pre = virtual_camera->world_to_eye(kpt3d_cam_pre);
             for (int i = 0; i < kAlgoKeypointNum; i++) {
                 last_kpt3d.block<1, 3>(i, 0) = kpt3d_cam_pre[i];
             }
             last_kpt3d_weight = last_kpt3d_weight_;
         }
-        auto virtual_kpt3d = solver_->SolveKeypoints(kpt25d, 1.0, last_kpt3d, last_kpt3d_weight,
+        float hand_scale = GlobalPredictorService::getInstance().get_hand_scale();
+        AISDK_LOG_TRACE("[MonoHandKpt3DCalculator] get hand scale {}", hand_scale);
+        auto virtual_kpt3d = solver_->SolveKeypoints(kpt25d, hand_scale, last_kpt3d, last_kpt3d_weight,
                                                      virtual_camera->get_camera_intrinsics(), false);
         if (virtual_kpt3d.ok()) {
             std::vector<Vec3f_t> virtual_kpt3d_vec;
@@ -83,10 +88,9 @@ class MonoHandKpt3DCalculator : public xgraph::CalculatorBase {
                 kpt3d = rcam_model_->eye_to_world(kpt3d);
             }
             return absl::OkStatus();
-        } else {
-            AISDK_LOG_TRACE("[MonoHandKpt3DSolver] Falied to solve left: {}", virtual_kpt3d.status().message());
-            return virtual_kpt3d.status();
         }
+        AISDK_LOG_TRACE("[MonoHandKpt3DSolver] Falied to solve left: {}", virtual_kpt3d.status().message());
+        return virtual_kpt3d.status();
     }
     absl::Status Process(xgraph::CalculatorContext* cc) final {
 #if defined(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
@@ -97,6 +101,7 @@ class MonoHandKpt3DCalculator : public xgraph::CalculatorBase {
         const auto& headpose_data = cc->Inputs().Tag("HEADPOSE").Get<HeadPoseInternal>();
         std::unique_ptr<HandsData> output_buffer_ = absl::make_unique<HandsData>();
         const auto& kpt3d_world_pre = GlobalPredictorService::getInstance().get_last_pt3d_world();
+        // left image
         if (kpt2d.lhand_lcam_valid && !kpt2d.lhand_rcam_valid && kpt2d.lhand_lcam_virtual_camera) {
             auto status = ProcessSingleHand(kpt2d.lhand_lcam_kpt, kpt2d.lhand_lcam_rdepth,
                                             kpt3d_world_pre.left_hand.kpt3d, kpt3d_world_pre.lhand_valid, headpose_data,
@@ -105,19 +110,21 @@ class MonoHandKpt3DCalculator : public xgraph::CalculatorBase {
                 output_buffer_->lhand_valid = true;
                 output_buffer_->left_hand.score = 1.0;
             } else {
-                AISDK_LOG_TRACE("[MonoHandKpt3DSolver] Falied to solve left: {}", status.message());
+                AISDK_LOG_TRACE("[MonoHandKpt3DSolver] Falied to solve left hand on left image: {}", status.message());
             }
         }
-        if (kpt2d.rhand_lcam_valid && !kpt2d.rhand_rcam_valid && kpt2d.rhand_lcam_virtual_camera) {
+        // right image
+        if (!kpt2d.rhand_lcam_valid && kpt2d.rhand_rcam_valid && kpt2d.rhand_rcam_virtual_camera) {
             auto status =
-                ProcessSingleHand(kpt2d.rhand_lcam_kpt, kpt2d.rhand_lcam_rdepth, kpt3d_world_pre.right_hand.kpt3d,
-                                  kpt3d_world_pre.rhand_valid, headpose_data, kpt2d.rhand_lcam_virtual_camera, false,
+                ProcessSingleHand(kpt2d.rhand_rcam_kpt, kpt2d.rhand_rcam_rdepth, kpt3d_world_pre.right_hand.kpt3d,
+                                  kpt3d_world_pre.rhand_valid, headpose_data, kpt2d.rhand_rcam_virtual_camera, true,
                                   output_buffer_->right_hand.kpt3d);
             if (status.ok()) {
                 output_buffer_->rhand_valid = true;
                 output_buffer_->right_hand.score = 1.0;
             } else {
-                AISDK_LOG_TRACE("[MonoHandKpt3DSolver] Falied to solve right: {}", status.message());
+                AISDK_LOG_TRACE("[MonoHandKpt3DSolver] Falied to solve right  hand on right image: {}",
+                                status.message());
             }
         }
         if (output_buffer_->lhand_valid || output_buffer_->rhand_valid) {

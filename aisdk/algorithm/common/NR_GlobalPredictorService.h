@@ -1,6 +1,7 @@
 #pragma once
-#include "NR_Predictor.h"
+#include <mutex>
 #include "../internal_structs/kpt3d_struct_internal.h"
+#include "NR_Predictor.h"
 
 namespace aisdk::algorithm {
 
@@ -18,11 +19,16 @@ class GlobalPredictorService {
     HandsData& get_last_pt3d_world() { return last_kpt3d_world; }
     GlobalPredictorService(const GlobalPredictorService&) = delete;
     GlobalPredictorService& operator=(const GlobalPredictorService&) = delete;
+    void update_hand_scale(float hand_scale) {
+        hand_scale_ = (1 - hand_scale_alpha_) * hand_scale_ + hand_scale_alpha_ * hand_scale;
+    }
+    float get_hand_scale() const { return hand_scale_; }
 
    private:
     KFPredictor kfpredictor_lhand;
     KFPredictor kfpredictor_rhand;
-
+    float hand_scale_{1.0};
+    float hand_scale_alpha_ = 0.1;
     HandsData last_kpt3d_world;
 
     GlobalPredictorService() {
@@ -31,7 +37,6 @@ class GlobalPredictorService {
     }
 
     ~GlobalPredictorService() {}
-
 };
 
 }  // namespace aisdk::algorithm

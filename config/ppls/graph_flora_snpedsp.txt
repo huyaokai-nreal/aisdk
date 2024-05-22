@@ -112,7 +112,7 @@ node {
   output_stream: "OUTPUT:kpt3d_filtered"
   node_options: {
     [type.googleapis.com/aisdk.HandFilterCalculatorOptions] {
-      glasses_type: "flora"
+      glasses_type: "ella"
     }
   }
 }

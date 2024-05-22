@@ -51,7 +51,7 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
     float bbox_expand_ratio_ = 1.3;
     std::shared_ptr<base::BaseCameraModel> lcam_model_ = nullptr;
     std::shared_ptr<base::BaseCameraModel> rcam_model_ = nullptr;
-    enum class CropMethod { Warpaffine, PCL };
+    enum class CropMethod { WarpAffine, PCL };
 
    public:
     static absl::Status GetContract(xgraph::CalculatorContract* cc) {
@@ -93,10 +93,6 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
             AISDK_LOG_TRACE("[HandLandmarkCalculator] start init rtmtiny_pcl");
             netalgo = XGraphServiceUtils::CreateNetAlgoBase<RTMTiny>((void*)0x202310, model_name_);
             AISDK_LOG_TRACE("[HandLandmarkCalculator] finish init rtmtiny_pcl");
-        } else if (model_name_ == "2d_rsnnano_pcl") {
-            AISDK_LOG_TRACE("[HandLandmarkCalculator] start init rsnnano_pcl");
-            netalgo = XGraphServiceUtils::CreateNetAlgoBase<RSNNano>((void*)0x202310, model_name_);
-            AISDK_LOG_TRACE("[HandLandmarkCalculator] finish init rsnnano_pcl");
         } else if (model_name_ == "2d_rsnnano") {
             AISDK_LOG_TRACE("[HandLandmarkCalculator] start init rsnnano");
             netalgo = XGraphServiceUtils::CreateNetAlgoBase<RSNNano>((void*)0x202310, model_name_);
@@ -133,7 +129,7 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
                                    std::shared_ptr<base::PerspectiveCameraModel>& virutal_camera) {
         cv::Mat crop_image;
         Vec4f_t rect = GetCropBboxShape(bbox);
-        if (crop_method == CropMethod::Warpaffine) {
+        if (crop_method == CropMethod::WarpAffine) {
             crop_image = generate_roi_image(image_data.m_mat, rect, input_width_, input_height_);
         } else {
             virutal_camera = GetVirtualCameraFromBox(origin_camera, rect, {input_width_, input_height_});
@@ -146,13 +142,11 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
         if (left_hand) {
             cv::flip(crop_image, crop_image, 1);
         }
-        AISDK_LOG_TRACE("start run 2d kpt model")
         auto rsn_result = netalgo->Inference({crop_image});
-        AISDK_LOG_TRACE("start run 2d kpt model")
         if (!rsn_result.ok()) {
             return rsn_result.status();
         }
-        if (crop_method == CropMethod::Warpaffine) {
+        if (crop_method == CropMethod::WarpAffine) {
             if (left_hand) {
                 std::transform(
                     rsn_result->kpts[0].begin(), rsn_result->kpts[0].end(), kpt.begin(), [&](const auto& kpt) {
@@ -168,7 +162,6 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
             }
         } else {
             if (left_hand) {
-                AISDK_LOG_TRACE("start run 2d kpt model")
                 std::transform(rsn_result->kpts[0].begin(), rsn_result->kpts[0].end(), kpt.begin(),
                                [&](const auto& kpt) {
                                    return Vec2f_t{input_width_ - 1 - kpt[0], kpt[1]};
@@ -178,7 +171,6 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
             }
         }
         if (!rsn_result->rdepths.empty()) {
-            AISDK_LOG_TRACE("start run 2d kpt model")
             std::copy(rsn_result->rdepths[0].begin(), rsn_result->rdepths[0].end(), rdepth.begin());
         }
 
@@ -199,16 +191,18 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
         const auto& image_data = cc->Inputs().Tag("IMAGE_INPUT").Get<std::vector<Image>>();
         const auto& raw_bbox_data = cc->Inputs().Tag("BBOX_SMOOTHED_OUTPUT").Get<DetOutputInternal>();
         auto bbox_data = raw_bbox_data;
-        if (bbox_data.lhand_lcam_valid && bbox_data.lhand_lcam_rect.x < 240) {
-            bbox_data.lhand_rcam_valid = false;
-        }
-        if (bbox_data.rhand_rcam_valid && bbox_data.rhand_rcam_rect.x > 240) {
-            bbox_data.rhand_lcam_valid = false;
-        }
+        // if (bbox_data.lhand_lcam_valid &&
+        //     bbox_data.lhand_lcam_rect.x + bbox_data.lhand_lcam_rect.w * 0.5 < image_data[0].m_mat.cols) {
+        //     bbox_data.lhand_rcam_valid = false;
+        // }
+        // if (bbox_data.rhand_rcam_valid &&
+        //     bbox_data.rhand_rcam_rect.x + bbox_data.rhand_rcam_rect.w * .5 > image_data[1].m_mat.cols) {
+        //     bbox_data.rhand_lcam_valid = false;
+        // }
         std::unique_ptr<Kpt2dInternal> output_buffer_ = absl::make_unique<Kpt2dInternal>();
         CropMethod crop_method = CropMethod::PCL;
         if (bbox_data.lhand_lcam_valid && bbox_data.lhand_rcam_valid) {
-            crop_method = CropMethod::Warpaffine;
+            crop_method = CropMethod::WarpAffine;
         }
         //  left hand
         if (bbox_data.lhand_lcam_valid) {
@@ -232,7 +226,7 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
         // right hand
         crop_method = CropMethod::PCL;
         if (bbox_data.rhand_lcam_valid && bbox_data.rhand_rcam_valid) {
-            crop_method = CropMethod::Warpaffine;
+            crop_method = CropMethod::WarpAffine;
         }
         if (bbox_data.rhand_lcam_valid) {
             auto result =
@@ -256,9 +250,9 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
             output_buffer_->rhand_rcam_valid) {
             // clang-format off
             AISDK_LOG_TRACE(
-                "[HandLandmarkCalculator] lhand_valid: {}, lhand_lcam: {}, lhand_rcam: {} / rhand_valid: {}, rhand_lcam: {}, rhand_rcam: {}",
-                output_buffer_->lhand_lcam_valid, output_buffer_->lhand_lcam_kpt.size(), output_buffer_->lhand_rcam_kpt.size(),
-                output_buffer_->rhand_lcam_valid, output_buffer_->rhand_lcam_kpt.size(), output_buffer_->rhand_rcam_kpt.size());
+                "[HandLandmarkCalculator] lhand_lcam_valid: {}, lhand_rcam_valid: {},  lhand_lcam: {}, lhand_rcam: {} / rhand_lcam_valid: {}, rhand_rcam_valid: {},  rhand_lcam: {}, rhand_rcam: {}",
+                output_buffer_->lhand_lcam_valid, output_buffer_->lhand_rcam_valid, output_buffer_->lhand_lcam_kpt.size(), output_buffer_->lhand_rcam_kpt.size(),
+                output_buffer_->rhand_lcam_valid, output_buffer_->rhand_rcam_valid, output_buffer_->rhand_lcam_kpt.size(), output_buffer_->rhand_rcam_kpt.size());
             cc->Outputs().Tag("LANDMARK_OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
             // clang-format on
         } else {

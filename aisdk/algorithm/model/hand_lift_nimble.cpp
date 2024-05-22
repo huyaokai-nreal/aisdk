@@ -9,6 +9,7 @@
 
 #include "../func/netalgo_utils.h"
 #include "../func/pose_solver.h"
+#include "aisdk/algorithm/common/NR_GlobalPredictorService.h"
 #include "aisdk/algorithm/common/hand_define.h"
 #include "aisdk/algorithm/func/hand_nimble.h"
 #include "aisdk/base/log.h"
@@ -159,8 +160,9 @@ void GMLPLiftNimble::PostProcess(const LiftNetInputs &inputs, LiftNetOutputs &ou
     // shape
     int index_shape = this->m_net->GetOutputTensorIndex("shape");
     float shape_param = *((float *)otensor.m_tensors[index_shape].m_viraddr);
-    // angle
-    // kpt
+    AISDK_LOG_TRACE("NimbleScale is {}", shape_param);
+    GlobalPredictorService::getInstance().update_hand_scale(shape_param + 1);
+    shape_param = GlobalPredictorService::getInstance().get_hand_scale() - 1;
     int index_angle = this->m_net->GetOutputTensorIndex("angle");
     float *angle_ptr = (float *)otensor.m_tensors[index_angle].m_viraddr;
     std::vector<float> local_angles(angle_ptr, angle_ptr + 171);
