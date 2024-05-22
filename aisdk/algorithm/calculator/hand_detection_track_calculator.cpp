@@ -112,7 +112,7 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
         const auto &timestamp = cc->InputTimestamp().Seconds();
         auto &lastframe_kpt3d = GlobalPredictorService::getInstance().get_last_pt3d_world();
 
-        bool is_mono = image_data.size() == 1;
+        bool is_mono = image_data.size() == 1;  // TIPS: 等后面真正是单目流的时候, 在Open里面直接根据CAM_INFO_INPUT判断当前是双目流还是单目流
 
         std::unique_ptr<DetOutputInternal> output_buffer_ = absl::make_unique<DetOutputInternal>();
         output_buffer_->clear();
@@ -147,7 +147,8 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
                     output_buffer_->lhand_lcam_valid = true;
                     output_buffer_->lhand_lcam_rect = proj_bbox_lcam_lhand;
                 }
-                if (check_if_rect_valid(proj_bbox_rcam_lhand, video_width_, video_height_, 0.6, min_bbox_area_th_)) {
+                // 单目流, track不会出右目的框
+                if (!is_mono && check_if_rect_valid(proj_bbox_rcam_lhand, video_width_, video_height_, 0.6, min_bbox_area_th_)) {
                     output_buffer_->lhand_rcam_valid = true;
                     output_buffer_->lhand_rcam_rect = proj_bbox_rcam_lhand;
                 }
@@ -172,7 +173,8 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
                     output_buffer_->rhand_lcam_valid = true;
                     output_buffer_->rhand_lcam_rect = proj_bbox_lcam_rhand;
                 }
-                if (check_if_rect_valid(proj_bbox_rcam_rhand, video_width_, video_height_, 0.6, min_bbox_area_th_)) {
+                // 单目流, track不会出右目的框
+                if (!is_mono && check_if_rect_valid(proj_bbox_rcam_rhand, video_width_, video_height_, 0.6, min_bbox_area_th_)) {
                     output_buffer_->rhand_rcam_valid = true;
                     output_buffer_->rhand_rcam_rect = proj_bbox_rcam_rhand;
                 }
