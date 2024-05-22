@@ -197,7 +197,14 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
             return absl::OkStatus();
         }
         const auto& image_data = cc->Inputs().Tag("IMAGE_INPUT").Get<std::vector<Image>>();
-        const auto& bbox_data = cc->Inputs().Tag("BBOX_SMOOTHED_OUTPUT").Get<DetOutputInternal>();
+        const auto& raw_bbox_data = cc->Inputs().Tag("BBOX_SMOOTHED_OUTPUT").Get<DetOutputInternal>();
+        auto bbox_data = raw_bbox_data;
+        if (bbox_data.lhand_lcam_valid && bbox_data.lhand_lcam_rect.x < 240) {
+            bbox_data.lhand_rcam_valid = false;
+        }
+        if (bbox_data.rhand_rcam_valid && bbox_data.rhand_rcam_rect.x > 240) {
+            bbox_data.rhand_lcam_valid = false;
+        }
         std::unique_ptr<Kpt2dInternal> output_buffer_ = absl::make_unique<Kpt2dInternal>();
         CropMethod crop_method = CropMethod::PCL;
         if (bbox_data.lhand_lcam_valid && bbox_data.lhand_rcam_valid) {
@@ -224,7 +231,7 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
         }
         // right hand
         crop_method = CropMethod::PCL;
-        if (bbox_data.lhand_lcam_valid && bbox_data.lhand_rcam_valid) {
+        if (bbox_data.rhand_lcam_valid && bbox_data.rhand_rcam_valid) {
             crop_method = CropMethod::Warpaffine;
         }
         if (bbox_data.rhand_lcam_valid) {
