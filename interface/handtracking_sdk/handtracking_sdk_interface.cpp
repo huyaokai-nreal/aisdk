@@ -724,7 +724,7 @@ std::vector<int> SelectPipeline(std::vector<aisdk::xengine::PipelineConfig>& pip
                 continue;
             }
 
-            if (config.related_feature.bind_runtime == "cpu") {
+            if (false == plat.is_mobile_evapro && config.related_feature.bind_runtime == "cpu") {
                 pipeline_policy.push_back(i);
                 continue;
             }
@@ -734,7 +734,7 @@ std::vector<int> SelectPipeline(std::vector<aisdk::xengine::PipelineConfig>& pip
                 continue;
             }
 
-            if (config.related_feature.bind_runtime == "cpu") {
+            if (false == plat.is_mobile_evapro && config.related_feature.bind_runtime == "cpu") {
                 pipeline_policy.push_back(i);
                 continue;
             }
@@ -861,10 +861,13 @@ NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
         if (tmp.size() > 0) {
             aisdk::xengine::PlatformStatus* plat = ins->m_handtracking.m_funcs.m_getplatform();
             AISDK_LOG_WARN("HandTracking: dsp_support={}", plat->is_snpe_support);
-            AISDK_LOG_TRACE("Plugin::Initialize is_snpe_support={},is_hexagon_dsp={},is_hexagon_unsignedPD_dsp={}",
-                            (int)plat->is_snpe_support, (int)plat->is_hexagon_dsp,
-                            (int)plat->is_hexagon_unsignedPD_dsp);
+            // clang-format off
+            AISDK_LOG_TRACE("Plugin::Initialize is_snpe_support={},is_hexagon_dsp={},is_hexagon_unsignedPD_dsp={},is_mobile_evapro={}",
+                (int)plat->is_snpe_support, (int)plat->is_hexagon_dsp, (int)plat->is_hexagon_unsignedPD_dsp,
+                (int)plat->is_mobile_evapro);
+            // clang-format on
             std::vector<int> pipeline_policy = SelectPipeline(tmp, *plat, ins->m_hmd.cam_is_horizontal);
+            AISDK_LOG_WARN("HandTracking: pipeline_policy size={}", pipeline_policy.size());
 
             for (uint32_t i = 0; i < pipeline_policy.size(); i++) {
                 uint32_t pipeline_index = pipeline_policy[i];

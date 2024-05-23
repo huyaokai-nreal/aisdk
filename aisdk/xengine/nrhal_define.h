@@ -197,6 +197,8 @@ struct SYM_EXPORT PlatformStatus {
     uint32_t gpu_device_count = 0;
     std::vector<std::string> gpu_device_name;
     bool is_artosyn_support = false;
+    bool is_mobile_eva = false;
+    bool is_mobile_evapro = false;
 };
 
 }  // namespace aisdk::xengine

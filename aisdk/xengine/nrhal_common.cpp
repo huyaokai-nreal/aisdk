@@ -13,6 +13,10 @@
 #include "aisdk/base/profiling.h"
 #include "aisdk/base/set_cpu_affinity.h"
 
+#if (defined(ANDROID) || defined(__ANDROID__))
+#include <sys/system_properties.h>
+#endif
+
 #if defined(HAVE_HAL_SNPE)
 #include "nr_snpe_header.h"
 #endif
@@ -169,6 +173,36 @@ void PrintfHalIoTensors(aisdk::xengine::IoTensors& info) {
     for (auto& iter : info.m_tensors) {
         PrintfHalTensor(iter);
     }
+}
+
+bool checkMobileEvapro() {
+#if (defined(ANDROID) || defined(__ANDROID__))
+    if (1) {
+        // EvaPro (wifi) = X4000
+        // EvaPro (5G 全球) = X4100
+        // EvaPro (5G 北美) = X4200
+
+        // adb getprop 输出含义：
+        // ro.product.brand：手机品牌
+        // ro.product.device：设备名称
+        // ro.product.model：设备内部代号
+        // ro.product.name：设备名称
+        // ro.product.manufacturer：设备制造商
+        // ro.serialno：设备序列号
+
+        char property_value[128] = {0};
+        __system_property_get("ro.product.manufacturer", property_value);
+        AISDK_LOG_WARN("ro.product.manufacturer {}", property_value);
+        std::string manufacturer(property_value);
+        __system_property_get("ro.product.device", property_value);
+        AISDK_LOG_WARN("ro.product.device {}", property_value);
+        std::string device(property_value);
+        if (manufacturer == "XREAL" && (device == "X4000" || device == "X4100" || device == "X4200")) {
+            return true;
+        }
+    }
+#endif
+    return false;
 }
 
 #if defined(__APPLE__) && defined(__aarch64__)
@@ -519,6 +553,7 @@ SYM_EXPORT aisdk::xengine::PlatformStatus* _ZN2NR200TK7FUNC001E() {
     static std::once_flag oc;
     std::call_once(oc, [&]() {
         supportUpdata(ret);
+        ret.is_mobile_evapro = checkMobileEvapro();
 #if defined(HAVE_HAL_SNPE)
         // 这里是将SNPE内部的线程名单独指定出来
         std::string ori_name = aisdk::base::SetThisThreadName(std::string("snpe_clients"));
