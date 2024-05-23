@@ -58,14 +58,15 @@ class KFPredictor {
     bool get_tracking_status() const;
     void set_glasses_type(std::string glass_type){
         glasses_type_ = std::move(glass_type);
-        init_predict_smoother();
+        reset_predict_smoother();
     }
 
    private:
     PredictorState predict();
     PredictorState correct( PredictorState meas);
     void update_transition_matrix(double target_ts);
-    void init_predict_smoother();
+    void reset_predict_smoother();
+    void reset_kalman_fileter();
     double get_valid_predict_time_length(double target_ts);
     int m_state_size = 9;
     int m_meas_size = 6;

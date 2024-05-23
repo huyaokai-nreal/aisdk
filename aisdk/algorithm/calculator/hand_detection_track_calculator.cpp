@@ -41,6 +41,7 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
     float min_bbox_area_th_ = 24 * 24;
     int det_tracker_step_ = 0;
     int det_interval_ = 4;
+    float valid_bbox_in_image_ratio_ = 0.8;
 
    public:
     static absl::Status GetContract(xgraph::CalculatorContract *cc) {
@@ -112,13 +113,14 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
         const auto &timestamp = cc->InputTimestamp().Seconds();
         auto &lastframe_kpt3d = GlobalPredictorService::getInstance().get_last_pt3d_world();
 
-        bool is_mono = image_data.size() == 1;  // TIPS: 等后面真正是单目流的时候, 在Open里面直接根据CAM_INFO_INPUT判断当前是双目流还是单目流
+        bool is_mono = image_data.size() ==
+                       1;  // TIPS: 等后面真正是单目流的时候, 在Open里面直接根据CAM_INFO_INPUT判断当前是双目流还是单目流
 
         std::unique_ptr<DetOutputInternal> output_buffer_ = absl::make_unique<DetOutputInternal>();
         output_buffer_->clear();
         output_buffer_->det_flag = true;
 
-        if (false == isHeadPoseValid(headpose_data.transform)) {
+        if (!isHeadPoseValid(headpose_data.transform)) {
             AISDK_LOG_ERROR("[HandDetTrackCalculator] HeadPose isn't valid !!!");
             // headpose异常，停止tracker，并且此帧不分析。
             det_tracker_step_ = 0;
@@ -143,12 +145,14 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
 
                 reproj_bbox_with_new_headpose(lcam_model_, rcam_model_, headpose_data.transform, lhand_predict_frame,
                                               proj_bbox_lcam_lhand, proj_bbox_rcam_lhand);
-                if (check_if_rect_valid(proj_bbox_lcam_lhand, video_width_, video_height_, 0.6, min_bbox_area_th_)) {
+                if (check_if_rect_valid(proj_bbox_lcam_lhand, video_width_, video_height_, valid_bbox_in_image_ratio_,
+                                        min_bbox_area_th_)) {
                     output_buffer_->lhand_lcam_valid = true;
                     output_buffer_->lhand_lcam_rect = proj_bbox_lcam_lhand;
                 }
                 // 单目流, track不会出右目的框
-                if (!is_mono && check_if_rect_valid(proj_bbox_rcam_lhand, video_width_, video_height_, 0.6, min_bbox_area_th_)) {
+                if (!is_mono && check_if_rect_valid(proj_bbox_rcam_lhand, video_width_, video_height_,
+                                                    valid_bbox_in_image_ratio_, min_bbox_area_th_)) {
                     output_buffer_->lhand_rcam_valid = true;
                     output_buffer_->lhand_rcam_rect = proj_bbox_rcam_lhand;
                 }
@@ -169,12 +173,14 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
                 reproj_bbox_with_new_headpose(lcam_model_, rcam_model_, headpose_data.transform, rhand_predict_frame,
                                               proj_bbox_lcam_rhand, proj_bbox_rcam_rhand);
 
-                if (check_if_rect_valid(proj_bbox_lcam_rhand, video_width_, video_height_, 0.6, min_bbox_area_th_)) {
+                if (check_if_rect_valid(proj_bbox_lcam_rhand, video_width_, video_height_, valid_bbox_in_image_ratio_,
+                                        min_bbox_area_th_)) {
                     output_buffer_->rhand_lcam_valid = true;
                     output_buffer_->rhand_lcam_rect = proj_bbox_lcam_rhand;
                 }
                 // 单目流, track不会出右目的框
-                if (!is_mono && check_if_rect_valid(proj_bbox_rcam_rhand, video_width_, video_height_, 0.6, min_bbox_area_th_)) {
+                if (!is_mono && check_if_rect_valid(proj_bbox_rcam_rhand, video_width_, video_height_,
+                                                    valid_bbox_in_image_ratio_, min_bbox_area_th_)) {
                     output_buffer_->rhand_rcam_valid = true;
                     output_buffer_->rhand_rcam_rect = proj_bbox_rcam_rhand;
                 }
@@ -196,7 +202,10 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
             auto &result = *output_buffer_;
 
             // detnet inference
-            netalgo->Inference(image_data, result);
+            auto status = netalgo->Inference(image_data, result);
+            if (!status.ok()) {
+                return status;
+            }
 
             // check stereo det bbox pair valid
             if (result.images_lhand_rects[0].size() > 0) {

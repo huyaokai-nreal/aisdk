@@ -47,6 +47,10 @@ class Keypoint3DSolver {
             result = e_bones - bones;
             residual[20] = (kpt3d(0, 2) - last_kpt3d(0, 2));
             residual[20] *= T(last_kpt3d_weight_);
+            residual[21] = (kpt3d(0, 0) - last_kpt3d(0, 0));
+            residual[21] *= T(last_kpt3d_weight_);
+            residual[22] = (kpt3d(0, 1) - last_kpt3d(0, 1));
+            residual[22] *= T(last_kpt3d_weight_);
             return true;
         }
         Eigen::Matrix<float, 25, 3> norm_kpt3d_;
@@ -55,7 +59,7 @@ class Keypoint3DSolver {
         Eigen::Matrix<float, 21, 3> last_kpt3d_;
         float last_kpt3d_weight_;
     };
-    float converage_cost_th_ = 5e-3;
+    float converage_cost_th_ = 1e-3;
     Eigen::Matrix<float, 20, 1> template_bones_;
 };
 

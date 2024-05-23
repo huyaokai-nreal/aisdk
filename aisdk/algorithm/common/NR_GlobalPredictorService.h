@@ -28,7 +28,7 @@ class GlobalPredictorService {
     KFPredictor kfpredictor_lhand;
     KFPredictor kfpredictor_rhand;
     float hand_scale_{1.0};
-    float hand_scale_alpha_ = 0.1;
+    float hand_scale_alpha_ = 0.01;
     HandsData last_kpt3d_world;
 
     GlobalPredictorService() {

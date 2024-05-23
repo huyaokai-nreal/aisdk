@@ -1,7 +1,6 @@
 #include <absl/status/status.h>
 
 #include <algorithm>
-#include <cstddef>
 #include <memory>
 #include <string>
 #include <vector>
@@ -191,14 +190,20 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
         const auto& image_data = cc->Inputs().Tag("IMAGE_INPUT").Get<std::vector<Image>>();
         const auto& raw_bbox_data = cc->Inputs().Tag("BBOX_SMOOTHED_OUTPUT").Get<DetOutputInternal>();
         auto bbox_data = raw_bbox_data;
-        // if (bbox_data.lhand_lcam_valid &&
-        //     bbox_data.lhand_lcam_rect.x + bbox_data.lhand_lcam_rect.w * 0.5 < image_data[0].m_mat.cols) {
-        //     bbox_data.lhand_rcam_valid = false;
-        // }
-        // if (bbox_data.rhand_rcam_valid &&
-        //     bbox_data.rhand_rcam_rect.x + bbox_data.rhand_rcam_rect.w * .5 > image_data[1].m_mat.cols) {
-        //     bbox_data.rhand_lcam_valid = false;
-        // }
+        if (bbox_data.lhand_lcam_valid &&
+            bbox_data.lhand_lcam_rect.x + bbox_data.lhand_lcam_rect.w * 0.5 < image_data[0].m_mat.cols / 4) {
+            bbox_data.lhand_rcam_valid = false;
+        }
+        if (bbox_data.rhand_rcam_valid &&
+            bbox_data.rhand_rcam_rect.x + bbox_data.rhand_rcam_rect.w * .5 > image_data[1].m_mat.cols / 4 * 3) {
+            bbox_data.rhand_lcam_valid = false;
+        }
+        if (!bbox_data.lhand_lcam_valid) {
+            bbox_data.lhand_rcam_valid = false;
+        }
+        if (!bbox_data.rhand_rcam_valid) {
+            bbox_data.rhand_lcam_valid = false;
+        }
         std::unique_ptr<Kpt2dInternal> output_buffer_ = absl::make_unique<Kpt2dInternal>();
         CropMethod crop_method = CropMethod::PCL;
         if (bbox_data.lhand_lcam_valid && bbox_data.lhand_rcam_valid) {

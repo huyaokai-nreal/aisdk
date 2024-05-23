@@ -24,7 +24,7 @@ absl::StatusOr<Eigen::Matrix<float, 21, 3>> Keypoint3DSolver::SolveKeypoints(
          camera_f.array().row(0))
             .matrix();
     auto rel_depth = format_kpt3d.block<25, 1>(0, 2);
-    using AutoDiffFunction = ceres::TinySolverAutoDiffFunction<CostFunctor, 21, 1>;
+    using AutoDiffFunction = ceres::TinySolverAutoDiffFunction<CostFunctor, 23, 1>;
     CostFunctor cost_functor(norm_kpt3d, rel_depth, user_bones, last_kpt3d, last_kpt3d_weight);
     AutoDiffFunction kpt_function(cost_functor);
     ceres::TinySolver<AutoDiffFunction> solver;

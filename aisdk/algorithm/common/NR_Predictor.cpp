@@ -18,7 +18,15 @@ int KFPredictor::init() {
     // Init KalmanFilter with status params
     std::lock_guard<std::mutex> lock(m_mutex);
     m_kf_impl = std::make_unique<cv::KalmanFilter>(m_state_size, m_meas_size, m_ctrl_size, m_type);
+    // reset kalman filter
+    reset_kalman_fileter();
 
+    // init smoother
+    reset_predict_smoother();
+
+    return 0;
+}
+void KFPredictor::reset_kalman_fileter() {
     // A: Transition State Matrix
     //     x  y  z  vx vy vz ax      ay      az
     // x [ 1  0  0  dT 0  0  0.5dT^2 0       0       ]
@@ -36,6 +44,11 @@ int KFPredictor::init() {
     // m_kf_impl->measurementMatrix.at<float>(M_Y, S_VY) = 1.0f;
     // m_kf_impl->measurementMatrix.at<float>(M_Z, S_VZ) = 1.0f;
 
+    cv::setIdentity(m_kf_impl->measurementNoiseCov, cv::Scalar(1e-4));
+
+    // m_kf_impl->measurementNoiseCov.at<float>(S_X, S_X) = 5e-2;
+    // m_kf_impl->measurementNoiseCov.at<float>(S_Y, S_Y) = 5e-2;
+    // m_kf_impl->measurementNoiseCov.at<float>(S_Z, S_Z) = 1e-3;
     // H: Measurement Matrix
     // 	 x  y  z  vx vy vz ax ay az
     // [ 1  0  0  0  0  0  0  0  0 ] x
@@ -52,7 +65,7 @@ int KFPredictor::init() {
     m_kf_impl->measurementMatrix.at<float>(M_VX, S_VX) = 1.0f;
     m_kf_impl->measurementMatrix.at<float>(M_VY, S_VY) = 1.0f;
     m_kf_impl->measurementMatrix.at<float>(M_VZ, S_VZ) = 1.0f;
-
+    cv::setIdentity(m_kf_impl->errorCovPost, cv::Scalar::all(1));
     //   Q: Process Noise Covariance Matrix
     //   x    y    z    vx   vy   vz   ax   ay   az
     // [ E_x  0    0    0    0    0    0    0    0    ]
@@ -65,6 +78,13 @@ int KFPredictor::init() {
     // [ 0    0    0    0    0    0    0    E_ay 0    ]
     // [ 0    0    0    0    0    0    0    0    E_az ]
 
+    m_kf_impl->measurementMatrix = cv::Mat::zeros(m_meas_size, m_state_size, m_type);
+    m_kf_impl->measurementMatrix.at<float>(M_X, S_X) = 1.0f;
+    m_kf_impl->measurementMatrix.at<float>(M_Y, S_Y) = 1.0f;
+    m_kf_impl->measurementMatrix.at<float>(M_Z, S_Z) = 1.0f;
+    m_kf_impl->measurementMatrix.at<float>(M_VX, S_VX) = 1.0f;
+    m_kf_impl->measurementMatrix.at<float>(M_VY, S_VY) = 1.0f;
+    m_kf_impl->measurementMatrix.at<float>(M_VZ, S_VZ) = 1.0f;
     cv::setIdentity(m_kf_impl->processNoiseCov, cv::Scalar(1e-1));
     // Override velocity errors
     m_kf_impl->processNoiseCov.at<float>(S_X, S_X) = 1.0;
@@ -80,8 +100,6 @@ int KFPredictor::init() {
     // cv::setIdentity(m_kf_impl->errorCovPost, cv::Scalar(.1));
     // init smoother
     init_predict_smoother();
-
-    return 0;
 }
 void KFPredictor::init_predict_smoother() {
     OneEuroParams center_params;
@@ -104,6 +122,7 @@ void KFPredictor::init_predict_smoother() {
 }
 int KFPredictor::start_tracking(double target_ts, PredictorState meas) {
     std::lock_guard<std::mutex> lock(m_mutex);
+    reset_kalman_fileter();
     cv::Mat state = cv::Mat::zeros(m_state_size, 1, m_type);
     state.at<float>(S_X) = meas.pos[0];
     state.at<float>(S_Y) = meas.pos[1];
