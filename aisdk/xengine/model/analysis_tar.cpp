@@ -1,3 +1,4 @@
+#include <absl/status/status.h>
 #include <stdlib.h>
 
 #include <memory>
@@ -127,6 +128,7 @@ bool GenerateModelConfig(Json::Value &root, mtar_t &tar, aisdk::xengine::ModelCo
             config.vendor_type = ConvertVendorType(model_config["vendor"].asString());
         } else {
             // 必须参数
+            AISDK_LOG_ERROR("[GenerateModelConfig] vendor key is not find");
             return false;
         }
 
@@ -150,6 +152,7 @@ bool GenerateModelConfig(Json::Value &root, mtar_t &tar, aisdk::xengine::ModelCo
             }
         } else {
             // 必须参数
+            AISDK_LOG_ERROR("[GenerateModelConfig] file_name key is not find");
             return false;
         }
 
@@ -168,6 +171,7 @@ bool GenerateModelConfig(Json::Value &root, mtar_t &tar, aisdk::xengine::ModelCo
         return true;
     }
     // 必须参数
+    AISDK_LOG_ERROR("[GenerateModelConfig] model_config key is not find");
     return false;
 }
 
@@ -209,6 +213,7 @@ bool GenerateSessionConfig(Json::Value &root, mtar_t &tar, aisdk::xengine::Sessi
             config.runtime_order.push_back(ConvertRuntimeType(session_config["runtime"].asString()));
         } else {
             // 必须参数
+            AISDK_LOG_ERROR("[GenerateSessionConfig] runtime key is not find");
             return false;
         }
         // 以下为可选参数
@@ -266,9 +271,11 @@ bool GenerateSessionConfig(Json::Value &root, mtar_t &tar, aisdk::xengine::Sessi
                     mtar_mem_read_data(&tar, &p, h.size);
                     config.fusion_process_json = std::string((const char *)p, h.size);
                 } else {
+                    AISDK_LOG_ERROR("[GenerateSessionConfig] tar_mem of json_config_file is bad");
                     return false;
                 }
             } else {
+                AISDK_LOG_ERROR("[GenerateSessionConfig] json_config_file key is not find");
                 return false;
             }
         }
@@ -276,6 +283,7 @@ bool GenerateSessionConfig(Json::Value &root, mtar_t &tar, aisdk::xengine::Sessi
         return true;
     }
     // 必须参数
+    AISDK_LOG_ERROR("[GenerateSessionConfig] session_config key is not find");
     return false;
 }
 
@@ -331,7 +339,11 @@ bool GenerateGlobalSharedConfig(Json::Value &root, mtar_t &tar, aisdk::xengine::
                 }
             }
             return true;
+        } else {
+            AISDK_LOG_ERROR("[GenerateGlobalSharedConfig] models_name key is not find");
         }
+    } else {
+        AISDK_LOG_ERROR("[GenerateGlobalSharedConfig] models_mgr key is not find");
     }
 
     return false;
@@ -364,7 +376,7 @@ bool AnalysisTar::Analysis(unsigned char *tar_mem, uint32_t tar_len) {
     if ((mtar_read_header(&tar, &h)) != MTAR_ESUCCESS) {
         // 不是一个正常的tar文件
         mtar_close(&tar);
-        AISDK_LOG_TRACE("AnalysisTar::Analysis failure\n");
+        AISDK_LOG_ERROR("[Analysis] tar_mem is bad");
         return false;
     }
 
@@ -378,14 +390,15 @@ bool AnalysisTar::Analysis(unsigned char *tar_mem, uint32_t tar_len) {
             mtar_mem_read_data(&tar, &p, h.size);
             if (p) {
                 if (aisdk::base::DebugProfiling::Get().GetOpt().aisdk_init_report) {
-                    AISDK_LOG_TRACE("AnalysisTar::Analysis tar_pipelinename={}", tar_global_shared_config.c_str());
+                    AISDK_LOG_TRACE("[Analysis] tar_pipelinename={}", tar_global_shared_config.c_str());
                     std::string tmp((char *)p, h.size);
                     AISDK_LOG_TRACE("\n\n{}\n\n", tmp.c_str());
                 }
                 Json::Value global_shared_config_json;
                 Json::Reader reader;
                 if (!reader.parse((char *)p, (char *)p + h.size, global_shared_config_json)) {
-                    AISDK_LOG_TRACE("load pipeline_config.json error");
+                    AISDK_LOG_ERROR("[Analysis] global_shared_config.json is not normal json file");
+                    mtar_close(&tar);
                     return false;
                 } else {
                     auto &global_shared_config = *m_global_shared_config;
@@ -393,14 +406,19 @@ bool AnalysisTar::Analysis(unsigned char *tar_mem, uint32_t tar_len) {
                     } else {
                         // 中间生成报错，清除中间资源
                         CleanGlobalSharedConfig(global_shared_config);
-                        AISDK_LOG_TRACE("AnalysisTar::Analysis GenerateGlobalSharedConfig failure\n");
+                        AISDK_LOG_ERROR("[Analysis] GenerateGlobalSharedConfig failure");
+                        mtar_close(&tar);
                         return false;
                     }
                 }
             } else {
+                AISDK_LOG_ERROR("[AnalysisTar] tar_mem of global_shared_config.json is bad");
+                mtar_close(&tar);
                 return false;
             }
         } else {
+            AISDK_LOG_ERROR("[AnalysisTar] global_shared_config.json is not find");
+            mtar_close(&tar);
             return false;
         }
     }
@@ -430,11 +448,17 @@ bool AnalysisTar::Analysis(unsigned char *tar_mem, uint32_t tar_len) {
                     (tar_hand_graph.find("snpedsp") != std::string::npos) ? "snpedsp" : "cpu";
 
                 if (aisdk::base::DebugProfiling::Get().GetOpt().aisdk_init_report) {
-                    AISDK_LOG_TRACE("AnalysisTar::Analysis tar_hand_graph={}", tar_hand_graph.c_str());
+                    AISDK_LOG_TRACE("[Analysis] tar_hand_graph={}", tar_hand_graph.c_str());
                     AISDK_LOG_TRACE("\n\n{}\n\n", pipelineconifg.graph_config.c_str());
                 }
                 configs.emplace_back(std::move(pipelineconifg));
+            } else {
+                AISDK_LOG_ERROR("[Analysis] tar_mem of {} is bad", tar_hand_graph.c_str());
+                mtar_close(&tar);
+                return false;
             }
+        } else {
+            AISDK_LOG_WARN("[Analysis] tar_hand_graph={} is not find", tar_hand_graph.c_str());
         }
     }
 
@@ -452,8 +476,8 @@ bool AnalysisTar::TarMem(const char *incbin_name) {
     if (_ZN2NR200TK7FUNC004E(tar_name, info)) {
         std::string key = info.aeskey;
         if (aisdk::base::DebugProfiling::Get().GetOpt().aisdk_init_report) {
-            AISDK_LOG_TRACE("AnalysisTar::TarMem tar_name={}", tar_name.c_str());
-            AISDK_LOG_TRACE("AnalysisTar::TarMem key={}", key.c_str());
+            AISDK_LOG_TRACE("[AnalysisTar] tar_name={}", tar_name.c_str());
+            AISDK_LOG_TRACE("[AnalysisTar] key={}", key.c_str());
         }
         // 这里方便调试，支持空key，意思是无需解密
         if (key.size() > 0) {
@@ -464,6 +488,8 @@ bool AnalysisTar::TarMem(const char *incbin_name) {
             bool ret = Analysis((unsigned char *)info.start, info.size);
             return ret;
         }
+    } else {
+        AISDK_LOG_ERROR("[AnalysisTar] tar_package={} is not find", tar_name.c_str());
     }
     return false;
 }
