@@ -131,7 +131,7 @@ int HandTracking::GetHandTrackingMidExecInfo(ProfilingInfo* info) {
 }
 
 bool HandTracking::LoadDlsym(const std::string& full_path) {
-    AISDK_LOG_TRACE("LoadDlsym getplatform={:s}", full_path.c_str());
+    AISDK_LOG_WARN("LoadDlsym getplatform={:s}", full_path.c_str());
     bool ret = false;
     if (nullptr == m_dlhandle) {
         m_dlhandle = dlopen(full_path.c_str(), RTLD_NOW);
@@ -151,7 +151,7 @@ bool HandTracking::LoadDlsym(const std::string& full_path) {
                 ret = true;
             } else {
                 const char* dlsym_error = dlerror();
-                AISDK_LOG_ERROR("HandTracking: Load algo module error!");
+                AISDK_LOG_ERROR("HandTracking: Load algo funcs error!");
                 AISDK_LOG_ERROR("HandTracking: dlsym_error={:s}", dlsym_error);
                 dlclose(m_dlhandle);
                 m_dlhandle = nullptr;
@@ -182,22 +182,27 @@ void HandTracking::UnLoadDlsym(bool need) {
     }
 }
 
-void SetAdspLibraryPath(const std::string& native_lib_path) {
+void SetAdspLibraryPath(const std::string& native_lib_path, const std::string& system_app_lib_path) {
     (void)native_lib_path;
+    (void)system_app_lib_path;
 #if defined(HAVE_HAL_SNPE)
     AISDK_LOG_INFO("SNPE_VERSION={:d}", SNPE_VERSION);
 #if (defined(ANDROID) || defined(__ANDROID__))
     std::stringstream path;
     path << native_lib_path << ";/system/lib/rfsa/adsp;/system/vendor/lib/rfsa/adsp;/dsp";
+    if (system_app_lib_path.size()) {
+        // 优先级低于自身app的lib路径native_lib_path
+        path << ";" << system_app_lib_path;
+    }
     int set_res = setenv("ADSP_LIBRARY_PATH", path.str().c_str(), 0 /*override*/);
     if (set_res != 0) {
         AISDK_LOG_TRACE("SetAdspLibraryPath failed!");
     }
     const char* p;
     if ((p = getenv("ADSP_LIBRARY_PATH"))) {
-        AISDK_LOG_TRACE("GetAdspLibraryPath success! ADSP_LIBRARY_PATH={}", p);
+        AISDK_LOG_WARN("GetAdspLibraryPath success! ADSP_LIBRARY_PATH={}", p);
     } else {
-        AISDK_LOG_TRACE("GetAdspLibraryPath failed!");
+        AISDK_LOG_ERROR("GetAdspLibraryPath failed!");
     }
 
     AISDK_LOG_TRACE("HandTracking: SetAdspLibraryPath ok");
@@ -360,10 +365,10 @@ bool HandTracking::GetApkStorePath() {
     mNativeLibDir = default_libdir;
 #endif
 
-    AISDK_LOG_TRACE("HandTracking: GetApkStorePath NativeLibDir={:s}", mNativeLibDir.c_str());
-    AISDK_LOG_TRACE("HandTracking: GetApkStorePath SharedLibCopyDir={:s}", mSharedLibCopyDir.c_str());
-    AISDK_LOG_TRACE("HandTracking: GetApkStorePath apk_copydir={:s}", apk_copydir.c_str());
-    SetAdspLibraryPath(mNativeLibDir);
+    AISDK_LOG_WARN("HandTracking: GetApkStorePath NativeLibDir={:s}", mNativeLibDir.c_str());
+    AISDK_LOG_WARN("HandTracking: GetApkStorePath SharedLibCopyDir={:s}", mSharedLibCopyDir.c_str());
+    AISDK_LOG_WARN("HandTracking: GetApkStorePath apk_copydir={:s}", apk_copydir.c_str());
+    SetAdspLibraryPath(mNativeLibDir, dlopen_with_classloader_dir);
 
 #if defined(XENGINE_SHARED_LIB)
     // 动态加载so，并获取核心接口
@@ -820,7 +825,7 @@ NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
 
     Plugin::GetInstance()->setDeviceType(device_type);
 
-    AISDK_LOG_INFO("HandTracking: setDeviceType to {}!", device_type);
+    AISDK_LOG_WARN("HandTracking: setDeviceType to {}!", device_type);
 
 #if defined(FORCE_USE_PUSH)
     AISDK_LOG_TRACE("HandTracking: init with external libs!");
@@ -852,7 +857,7 @@ NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
     if (is_ok) {
         // 多条pipeline的项目，这里需要指定pipeline的运行策略
         std::vector<aisdk::xengine::PipelineConfig> tmp = ins->m_tar_handle->GetPipelineConfig();
-        AISDK_LOG_TRACE("HandTracking: pipeline size={}", tmp.size());
+        AISDK_LOG_WARN("HandTracking: pipeline size={}", tmp.size());
         if (tmp.size() > 0) {
             aisdk::xengine::PlatformStatus* plat = ins->m_handtracking.m_funcs.m_getplatform();
             AISDK_LOG_WARN("HandTracking: dsp_support={}", plat->is_snpe_support);
@@ -885,10 +890,8 @@ NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
                 }
             }
         }
-    } else {
-        AISDK_LOG_TRACE("HandTracking: AnalysisTar failed, but why?");
     }
-
+    AISDK_LOG_ERROR("HandTracking: Initialized failure");
     return NR_PLUGIN_RESULT_FAILURE;
 }
 
