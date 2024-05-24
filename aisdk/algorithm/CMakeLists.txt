@@ -40,6 +40,11 @@ target_link_libraries(${ALGORITHM_LIBRARY_NAME}
     protobuf::protobuf
     Ceres::ceres
 )
+if(NOT Xrlinux AND NOT APPLE AND NOT IOS)
+ find_package(openblas)
+ target_link_libraries(${ALGORITHM_LIBRARY_NAME} PUBLIC
+ openblas::openblas)
+endif()
 
 target_compile_options(${ALGORITHM_LIBRARY_NAME}
     PRIVATE -Wno-error
