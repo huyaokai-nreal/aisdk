@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "aisdk/algorithm/common/NR_GlobalPredictorService.h"
+#include "aisdk/algorithm/common/hand_define.h"
 #include "aisdk/algorithm/common/nrcore_define.h"
 #include "aisdk/algorithm/common/nrnet_define.h"
 #include "aisdk/algorithm/internal_structs/headpose_struct_internal.h"
@@ -17,6 +18,7 @@
 #include "aisdk/base/type.h"
 #include "aisdk/xgraph/xgraph.h"
 
+namespace aisdk::task {
 #define JOINTS_COUNT 25
 #define EZXR_DEFINED_JOINTS 23
 
@@ -25,13 +27,14 @@ std::map<int, int> xreal_2_clay = {
     {8, 7},   {9, 8},   {10, 9},  {11, 10}, {12, 11}, {13, 12}, {14, 13}, {15, 14},
     {16, 15}, {17, 17}, {18, 18}, {19, 19}, {20, 20}, {21, 21}, {22, 16},
 };
+using algorithm::HandGesture;
 
-std::map<std::string, int> gesture_map = {
-    {"OpenHand", GESTURE_TYPE_OPEN_HAND}, {"Grab", GESTURE_TYPE_GRAB},         {"Pinch", GESTURE_TYPE_PINCH},
-    {"Click", GESTURE_TYPE_POINT},        {"Victory", GESTURE_TYPE_VICTORY},   {"Call", GESTURE_TYPE_CALL},
-    {"Home", GESTURE_TYPE_SYSTEM},        {"ThumbUp", GESTURE_TYPE_THUMBS_UP}, {"Invalid", GESTURE_TYPE_UNKNOWN}};
-
-namespace aisdk::task {
+std::map<HandGesture, int> GestureMap = {
+    {HandGesture::OpenHand, GESTURE_TYPE_OPEN_HAND}, {HandGesture::Grab, GESTURE_TYPE_GRAB},
+    {HandGesture::Pinch, GESTURE_TYPE_PINCH},        {HandGesture::Click, GESTURE_TYPE_POINT},
+    {HandGesture::Victory, GESTURE_TYPE_VICTORY},    {HandGesture::Call, GESTURE_TYPE_CALL},
+    {HandGesture::Home, GESTURE_TYPE_SYSTEM},        {HandGesture::ThumbUp, GESTURE_TYPE_THUMBS_UP},
+    {HandGesture::Invalid, GESTURE_TYPE_UNKNOWN}};
 
 HandTrackingXGraph::HandTrackingXGraph() {}
 HandTrackingXGraph::~HandTrackingXGraph() {}
@@ -155,10 +158,10 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
         for (int i = 0; i < 2; i++) {
             out_hand_array[i].version = 0;
 
-            std::string gesture_type_string =
+            auto gesture_type_string =
                 (i == 0) ? hand_data_internal.left_hand.gesture : hand_data_internal.right_hand.gesture;
 
-            out_hand_array[i].gesture_type = GestureType(gesture_map[gesture_type_string]);
+            out_hand_array[i].gesture_type = GestureType(GestureMap[gesture_type_string]);
 
             out_hand_array[i].hand_type = HandType(i);
             out_hand_array[i].hand_joint_count = JOINTS_COUNT;

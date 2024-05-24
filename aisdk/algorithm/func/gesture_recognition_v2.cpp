@@ -3,15 +3,16 @@
 #include <functional>
 #include <map>
 
+#include "aisdk/algorithm/common/hand_define.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/type.h"
 
 namespace aisdk::algorithm {
-std::map<std::string, std::function<bool(const HandFeature &, const HandRawFeature &)>> gestureFunctionMap = {
-    {"Click", GestureMatchRule::Click},       {"Grab", GestureMatchRule::Grab},
-    {"OpenHand", GestureMatchRule::OpenHand}, {"Pinch", GestureMatchRule::Pinch},
-    {"Victory", GestureMatchRule::Victory},   {"Call", GestureMatchRule::Call},
-    {"Home", GestureMatchRule::Home},         {"ThumbUp", GestureMatchRule::ThumbUp}};
+std::map<HandGesture, std::function<bool(const HandFeature &, const HandRawFeature &)>> GestureFunctionMap = {
+    {HandGesture::Click, GestureMatchRule::Click},       {HandGesture::Grab, GestureMatchRule::Grab},
+    {HandGesture::OpenHand, GestureMatchRule::OpenHand}, {HandGesture::Pinch, GestureMatchRule::Pinch},
+    {HandGesture::Victory, GestureMatchRule::Victory},   {HandGesture::Call, GestureMatchRule::Call},
+    {HandGesture::Home, GestureMatchRule::Home},         {HandGesture::ThumbUp, GestureMatchRule::ThumbUp}};
 
 float vector3d_angle(const Eigen::Vector3f &x, const Eigen::Vector3f &y) {
     float module_x = x.norm();
@@ -215,7 +216,8 @@ bool GestureRecognitionV2::is_pinch_masked(const std::vector<Vec2f_t> &keypoints
     Eigen::Vector2f index_point_2d{keypoints2d[8][0], keypoints2d[8][1]};
     bool is_thumb_point_masked = isInsideTriangle(thumb_point_2d, thumb_mid_2d, index_mid_pt_2d, pinky_mid_2d, 1.1);
     bool is_index_point_masked = isInsideTriangle(index_point_2d, thumb_mid_2d, index_mid_pt_2d, pinky_mid_2d, 1.1);
-    bool is_pinch_masked = is_thumb_point_masked && is_index_point_masked && !is_to_face && last_gesture_ == "Pinch";
+    bool is_pinch_masked =
+        is_thumb_point_masked && is_index_point_masked && !is_to_face && last_gesture_ == HandGesture::Pinch;
     AISDK_LOG_TRACE("HandTracking: pinch mask flag is {}", is_pinch_masked);
     return is_pinch_masked;
 }
@@ -239,7 +241,7 @@ std::pair<HandRawFeature, HandFeature> GestureRecognitionV2::extract_hand_featur
     return {raw_features, feature_updator->update(fingure_angles, abduction_angles, opposition_distances, hand_angle,
                                                   is_to_face || ok_pinch, pinch_masked)};
 }
-std::pair<std::string, HandRawFeature> GestureRecognitionV2::predict_with_keypoints3d(
+std::pair<HandGesture, HandRawFeature> GestureRecognitionV2::predict_with_keypoints3d(
     const std::vector<Eigen::Vector3f> &keypoints3d, const std::vector<Vec2f_t> &keypoints2d, bool is_left_hand) {
     std::vector<std::vector<Eigen::Vector3f>> points(5, std::vector<Eigen::Vector3f>(5));
     float hand_length = (keypoints3d[9] - keypoints3d[0]).norm();
@@ -254,14 +256,17 @@ std::pair<std::string, HandRawFeature> GestureRecognitionV2::predict_with_keypoi
     auto [raw_features, feature] = extract_hand_feature(points, keypoints2d, is_left_hand);
     raw_features.feature = feature;
 
-    for (const auto &gesture : gesture_list) {
-        if (gestureFunctionMap[gesture](feature, raw_features)) {
-            last_gesture_ = gesture;
-            return {gesture, raw_features};
+    for (int i = static_cast<int>(HandGesture::Invalid); i < static_cast<int>(HandGesture::MaxNum); i++) {
+        auto cur_gesture = static_cast<HandGesture>(i);
+        if (GestureFunctionMap.count(cur_gesture) > 0) {
+            if (GestureFunctionMap[cur_gesture](feature, raw_features)) {
+                last_gesture_ = cur_gesture;
+                return {cur_gesture, raw_features};
+            }
         }
     }
-    last_gesture_ = "Invalid";
+    last_gesture_ = HandGesture::Invalid;
 
-    return {"Invalid", raw_features};
+    return {HandGesture::Invalid, raw_features};
 }
 }  // namespace aisdk::algorithm

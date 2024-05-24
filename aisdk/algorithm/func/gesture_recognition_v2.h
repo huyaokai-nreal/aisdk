@@ -5,6 +5,7 @@
 #include <memory>
 #include <vector>
 #include <opencv2/core.hpp>
+#include "aisdk/algorithm/common/hand_define.h"
 #include "aisdk/base/type.h"
 
 namespace aisdk::algorithm {
@@ -226,18 +227,16 @@ class GestureMatchRule {
 class GestureRecognitionV2 {
    public:
     GestureRecognitionV2()
-        : feature_updator(std::make_unique<HandFeatureUpdator>()),
-          gesture_list({"Click", "Pinch", "Grab", "ThumbUp", "OpenHand", "Victory", "Call", "Home"}) {}
-
+        : feature_updator(std::make_unique<HandFeatureUpdator>()){}
     void reset_feature() {
         feature_updator->reset_feature();
-        last_gesture_ = "Invalid";
+        last_gesture_ = HandGesture::Invalid;
     }
 
     std::pair<HandRawFeature, HandFeature> extract_hand_feature(
         const std::vector<std::vector<Eigen::Vector3f>> &keypoints3d, const std::vector<Vec2f_t> &keypoints2d,
         bool is_left_hand);
-    std::pair<std::string, HandRawFeature> predict_with_keypoints3d(const std::vector<Eigen::Vector3f> &keypoints3d,
+    std::pair<HandGesture, HandRawFeature> predict_with_keypoints3d(const std::vector<Eigen::Vector3f> &keypoints3d,
                                                                     const std::vector<Vec2f_t> &keypoints2d,
                                                                     bool is_left_hand);
 
@@ -246,8 +245,7 @@ class GestureRecognitionV2 {
     bool is_ok_pinch(const std::vector<std::vector<Eigen::Vector3f>> &keypoints3d);
     bool is_pinch_masked(const std::vector<Vec2f_t> &keypoints2d, bool is_face_to_head);
     std::unique_ptr<HandFeatureUpdator> feature_updator;
-    std::vector<std::string> gesture_list;
     float std_hand_length_ = 0.08;  // 8cm
-    std::string last_gesture_ = "Invalid";
+    HandGesture last_gesture_ = HandGesture::Invalid;
 };
 }  // namespace aisdk::algorithm
