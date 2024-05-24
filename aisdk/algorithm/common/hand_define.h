@@ -3,16 +3,19 @@
 #include <vector>
 
 #include "Eigen/Dense"
+#include "aisdk/algorithm/common/nrcore_define.h"
 #include "aisdk/base/type.h"
 namespace aisdk::algorithm {
 constexpr int kAlgoKeypointNum = 21;
 enum class HandGesture { Invalid = 0, Click, Pinch, Grab, ThumbUp, OpenHand, Victory, Call, Home, MaxNum };
+const std::vector<std::string> HandGestureNames{"Invalid", "Click", "Pinch", "Grab", "ThumbUp", "OpenHand", "Victory", "Call", "Home"};
 struct SingleHandData {
     std::vector<Vec3f_t> kpt3d;
     std::vector<Eigen::Matrix3f> rotation;
     Vec3f_t root_v{0, 0, 0};
     float score = 0;
     HandGesture gesture = HandGesture::Invalid;
+    CamType source = CamType::UNKNOWN;
 };
 
 }  // namespace aisdk::algorithm

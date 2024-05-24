@@ -58,7 +58,7 @@ class StandardizeKeypointsCalculator : public xgraph::CalculatorBase {
             output_buffer_->right_hand.gesture = gesture_data.rhand_gesture;
             compute_joint_rotation(output_buffer_->right_hand.kpt3d, false, output_buffer_->right_hand.rotation);
         }
-        auto& global_kpt3d = GlobalPredictorService::getInstance().get_last_pt3d_world();
+        auto& global_kpt3d = GlobalPredictorService::getInstance().get_last_kpt3d_world();
         global_kpt3d = kpt_data;
         cc->Outputs().Tag("OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
         AISDK_LOG_TRACE("[StandardizeKeypointsCalculator] Process complete.");

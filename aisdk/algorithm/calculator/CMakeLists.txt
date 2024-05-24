@@ -32,6 +32,8 @@ ${CMAKE_CURRENT_SOURCE_DIR}/hand_filter_calculator.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/hand_filter_calculator.pb.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/landmark_filter_calculator.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/standardize_keypoints_calculator.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/mono_bino_switch_calculator.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/mono_bino_switch_calculator.pb.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/hand_lift_calculator.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/hand_lift_calculator.pb.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/gesture_recognition_calculator.cpp

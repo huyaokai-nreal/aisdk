@@ -37,9 +37,21 @@ node {
   output_stream: "BBOX_SMOOTHED_OUTPUT:detection_smoothed_output"
 }
 node {
+  name: "MonoBinoSwitch"
+  calculator: "MonoBinoSwitchCalculator"
+  input_stream: "IMAGE_IN:image_out"
+  input_stream: "BBOX_IN:detection_smoothed_output"
+  output_stream: "BBOX_OUT:detection_valid"
+  node_options: {
+    [type.googleapis.com/aisdk.MonoBinoSwitchCalculatorOptions] {
+      mode: "SWITCH"
+    }
+  }
+}
+node {
   name: "HandLandmark_2D"
   calculator: "HandLandmarkCalculator"
-  input_stream: "BBOX_SMOOTHED_OUTPUT:detection_smoothed_output"
+  input_stream: "BBOX_SMOOTHED_OUTPUT:detection_valid"
   input_stream: "IMAGE_INPUT:image_out"
   input_side_packet: "CAM_INFO_INPUT:cam_info"
   output_stream: "LANDMARK_OUTPUT:kpt2d"

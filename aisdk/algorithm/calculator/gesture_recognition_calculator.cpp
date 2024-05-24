@@ -2,6 +2,7 @@
 #include <string>
 
 #include "../func/gesture_recognition_v2.h"
+#include "aisdk/algorithm/common/hand_define.h"
 #include "aisdk/algorithm/internal_structs/hand_gesture_struct_internal.h"
 #include "aisdk/algorithm/internal_structs/kpt2d_struct_internal.h"
 #include "aisdk/algorithm/internal_structs/kpt3d_struct_internal.h"
@@ -62,7 +63,7 @@ class GestureRecognitionCalculator : public xgraph::CalculatorBase {
                 kpt3d_data.left_hand.kpt3d, kpt2d_data.lhand_lcam_kpt, true);
             output_buffer_->lhand_gesture = gesture_res;
             AISDK_LOG_TRACE("[GestureRecognitionCalculator] process left hand complete. {}",
-                            output_buffer_->lhand_gesture);
+                            HandGestureNames[static_cast<int>(output_buffer_->lhand_gesture)]);
         }
         if (kpt3d_data.rhand_valid) {
             AISDK_LOG_TRACE("[GestureRecognitionCalculator] process right hand.");
@@ -70,7 +71,7 @@ class GestureRecognitionCalculator : public xgraph::CalculatorBase {
                 kpt3d_data.right_hand.kpt3d, kpt2d_data.rhand_rcam_kpt, false);
             output_buffer_->rhand_gesture = gesture_res;
             AISDK_LOG_TRACE("[GestureRecognitionCalculator] process right hand complete. {}",
-                            output_buffer_->rhand_gesture);
+                            HandGestureNames[static_cast<int>(output_buffer_->rhand_gesture)]);
         }
 
         cc->Outputs().Tag("GR_OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());

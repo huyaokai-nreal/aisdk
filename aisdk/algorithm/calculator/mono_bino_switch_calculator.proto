@@ -1,0 +1,6 @@
+syntax = "proto3";
+
+package aisdk;
+message MonoBinoSwitchCalculatorOptions  {
+  string mode = 1; # MONO, BINO or SWITCH
+}

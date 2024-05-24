@@ -111,7 +111,7 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
         const auto &headpose_data = cc->Inputs().Tag("HEADPOSE").Get<HeadPoseInternal>();
 
         const auto &timestamp = cc->InputTimestamp().Seconds();
-        auto &lastframe_kpt3d = GlobalPredictorService::getInstance().get_last_pt3d_world();
+        auto &lastframe_kpt3d = GlobalPredictorService::getInstance().get_last_kpt3d_world();
 
         bool is_mono = image_data.size() ==
                        1;  // TIPS: 等后面真正是单目流的时候, 在Open里面直接根据CAM_INFO_INPUT判断当前是双目流还是单目流

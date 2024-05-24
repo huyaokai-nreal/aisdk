@@ -5,6 +5,7 @@
 #include "../internal_structs/kpt3d_struct_internal.h"
 #include "../model/hand_lift.h"
 #include "aisdk/algorithm/common/metrics.h"
+#include "aisdk/algorithm/common/nrcore_define.h"
 #include "aisdk/algorithm/func/netalgo_utils.h"
 #include "aisdk/algorithm/model/calculator_basenet.h"
 #include "aisdk/algorithm/model/hand_lift_nimble.h"
@@ -98,6 +99,7 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
             const auto lift_outputs = netalgo->Inference(lift_inputs);
             if (lift_outputs.ok()) {
                 output_buffer_->lhand_valid = true;
+                output_buffer_->left_hand.source = CamType::BINO;
                 AISDK_LOG_TRACE("[LiftCalculator] left constrain start with {} kpts", lift_outputs->res3d.size());
                 output_buffer_->left_hand.kpt3d = lift_outputs->res3d;
                 if (enable_constrain_) {
@@ -126,6 +128,7 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
             const auto lift_outputs = netalgo->Inference(lift_inputs);
             if (lift_outputs.ok()) {
                 output_buffer_->rhand_valid = true;
+                output_buffer_->right_hand.source = CamType::BINO;
                 output_buffer_->right_hand.kpt3d = lift_outputs->res3d;
                 if (enable_constrain_) {
                     output_buffer_->right_hand.kpt3d = constrain_hand(output_buffer_->right_hand.kpt3d, false);
