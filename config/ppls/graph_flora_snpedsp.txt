@@ -44,7 +44,8 @@ node {
   output_stream: "BBOX_OUT:detection_valid"
   node_options: {
     [type.googleapis.com/aisdk.MonoBinoSwitchCalculatorOptions] {
-      mode: "SWITCH"
+# BINO, MONO, SWITCH
+      mode: "SWITCH" 
     }
   }
 }

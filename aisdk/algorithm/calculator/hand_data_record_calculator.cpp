@@ -91,8 +91,8 @@ class HandDataRecordCalculator : public xgraph::CalculatorBase {
         cc->Inputs().Tag("HEADPOSE_INPUT").Set<HeadPoseInternal>();
         cc->Inputs().Tag("DET_BBOX_OUTPUT").Set<DetOutputInternal>();
         cc->Inputs().Tag("LANDMARK_OUTPUT").Set<Kpt2dInternal>();
-        cc->Inputs().Tag("LIFT_OUTPUT").Set<Kpt3dInternal>();
-        cc->Inputs().Tag("BLOCK_OUT").Set<Kpt3dInternal>();
+        cc->Inputs().Tag("LIFT_OUTPUT").Set<HandsData>();
+        cc->Inputs().Tag("BLOCK_OUT").Set<HandsData>();
         cc->Inputs().Tag("GR_OUTPUT").Set<HandGestureInternal>();
 
         AISDK_LOG_TRACE("[HandDataRecordCalculator] GetContract complete");
@@ -169,14 +169,14 @@ class HandDataRecordCalculator : public xgraph::CalculatorBase {
                         if (cache) {
                             const auto& kpt2d_data = package.Get<Kpt2dInternal>();
                             cache->m_nodestatus = NodeStatus::RSN_FINISH;
-                            cache->lhand_status = (cache->lhand_valid && !kpt2d_data.lhand_valid)
+                            cache->lhand_status = (cache->lhand_valid && !kpt2d_data.lhand_lcam_valid)
                                                       ? ObjectStatus::LANDMARK_MISS
                                                       : cache->lhand_status;
-                            cache->rhand_status = (cache->rhand_valid && !kpt2d_data.rhand_valid)
+                            cache->rhand_status = (cache->rhand_valid && !kpt2d_data.rhand_rcam_valid)
                                                       ? ObjectStatus::LANDMARK_MISS
                                                       : cache->rhand_status;
-                            cache->lhand_valid = kpt2d_data.lhand_valid;
-                            cache->rhand_valid = kpt2d_data.rhand_valid;
+                            cache->lhand_valid = kpt2d_data.lhand_lcam_valid;
+                            cache->rhand_valid = kpt2d_data.rhand_rcam_valid;
                             recorder.DebugRsn(cache, kpt2d_data);
                         }
                     } else if (coll.Name() == "kpt3d") {
@@ -210,7 +210,7 @@ class HandDataRecordCalculator : public xgraph::CalculatorBase {
                     } else if (coll.Name() == "kpt3d_blocked") {
                         Recordcache* cache = m_mgr.FindCache(time_id, false);
                         if (cache) {
-                            const auto& kpt3d_data = package.Get<Kpt3dInternal>();
+                            const auto& kpt3d_data = package.Get<HandsData>();
                             cache->m_nodestatus = NodeStatus::MANO_FINISH;
                             cache->lhand_status = (cache->lhand_valid && !kpt3d_data.lhand_valid)
                                                       ? ObjectStatus::HARDRULE_MISS

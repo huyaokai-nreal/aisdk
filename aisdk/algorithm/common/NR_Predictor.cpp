@@ -98,10 +98,8 @@ void KFPredictor::reset_kalman_fileter() {
     // m_kf_impl->measurementNoiseCov.at<float>(S_Z, S_Z) = 1e-3;
 
     // cv::setIdentity(m_kf_impl->errorCovPost, cv::Scalar(.1));
-    // init smoother
-    init_predict_smoother();
 }
-void KFPredictor::init_predict_smoother() {
+void KFPredictor::reset_predict_smoother() {
     OneEuroParams center_params;
     if (glasses_type_ == "flora") {
         center_params.mincutoff = {0.1, 0.1, 0.1};  // 调静止状态下的稳定性,越小稳定性越好

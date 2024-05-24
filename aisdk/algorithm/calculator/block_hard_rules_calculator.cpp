@@ -58,46 +58,49 @@ class BlockHardRulesCalculator : public xgraph::CalculatorBase {
         TIMER_ONCE_WITH_TAG(BlockHardRulesCalculator::Process);
 #endif
         AISDK_LOG_TRACE("[BlockHardRulesCalculator] Process start");
-        const auto& input_data = cc->Inputs().Tag("BLOCK_IN").Get<HandsData>();
+        for (int i = 0; i < cc->Inputs().NumEntries(); i++) {
+            const auto& input_data = cc->Inputs().Index(i).Get<HandsData>();
+            std::unique_ptr<HandsData> output_buffer_ = absl::make_unique<HandsData>();
+            if (input_data.lhand_valid) {
+                output_buffer_->left_hand = input_data.left_hand;
+                AISDK_LOG_TRACE("[BlockHardRulesCalculator] Checking left hand");
 
-        std::unique_ptr<HandsData> output_buffer_ = absl::make_unique<HandsData>();
-        *output_buffer_ = input_data;
-        if (input_data.lhand_valid) {
-            AISDK_LOG_TRACE("[BlockHardRulesCalculator] Checking left hand");
+                if (input_data.left_hand.score > score_th_) {
+                    output_buffer_->lhand_valid = true;
+                } else if (input_data.left_hand.score < score_th_ - 0.05) {
+                    output_buffer_->lhand_valid = false;
+                } else {
+                    output_buffer_->lhand_valid = previous_left_state;
+                }
+                AISDK_LOG_TRACE("[BlockHardRulesCalculator] block left hand {}", input_data.left_hand.score);
+                previous_left_state = output_buffer_->lhand_valid;
 
-            if (input_data.lhand_score > score_th_) {
-                output_buffer_->lhand_valid = true;
-            } else if (input_data.lhand_score < score_th_ - 0.05) {
-                output_buffer_->lhand_valid = false;
-            } else {
-                output_buffer_->lhand_valid = previous_left_state;
+                if (block_rule_root_distance(input_data.left_hand.kpt3d, max_root_depth_)) {
+                    output_buffer_->lhand_valid = false;
+                }
             }
-            AISDK_LOG_TRACE("[BlockHardRulesCalculator] block left hand {}", input_data.lhand_score);
-            previous_left_state = output_buffer_->lhand_valid;
+            if (input_data.rhand_valid) {
+                output_buffer_->right_hand = input_data.right_hand;
+                AISDK_LOG_TRACE("[BlockHardRulesCalculator] Checking right hand");
+                if (input_data.right_hand.score > score_th_) {
+                    output_buffer_->rhand_valid = true;
+                } else if (input_data.right_hand.score < score_th_ - 0.05) {
+                    output_buffer_->rhand_valid = false;
+                } else {
+                }
+                AISDK_LOG_TRACE("[BlockHardRulesCalculator] block right hand {}", input_data.right_hand.score);
+                previous_right_state = output_buffer_->rhand_valid;
 
-            if (block_rule_root_distance(input_data.lhand_kpt, max_root_depth_)) {
-                output_buffer_->lhand_valid = false;
+                if (block_rule_root_distance(input_data.right_hand.kpt3d, max_root_depth_)) {
+                    output_buffer_->rhand_valid = false;
+                } else {
+                    cc->Outputs().Tag("BLOCK_OUT").Add(output_buffer_.release(), cc->InputTimestamp());
+                    AISDK_LOG_TRACE("[BlockHardRulesCalculator] No valid hand, truncated here");
+                }
+
+                AISDK_LOG_TRACE("[BlockHardRulesCalculator] Process complete");
             }
         }
-        if (input_data.rhand_valid) {
-            AISDK_LOG_TRACE("[BlockHardRulesCalculator] Checking right hand");
-            if (input_data.rhand_score > score_th_) {
-                output_buffer_->rhand_valid = true;
-            } else if (input_data.rhand_score < score_th_ - 0.05) {
-                output_buffer_->rhand_valid = false;
-            } else {
-            }
-            AISDK_LOG_TRACE("[BlockHardRulesCalculator] block right hand {}", input_data.rhand_score);
-            previous_right_state = output_buffer_->rhand_valid;
-
-            if (block_rule_root_distance(input_data.rhand_kpt, max_root_depth_)) {
-                output_buffer_->rhand_valid = false;
-        } else {
-            cc->Outputs().Tag("BLOCK_OUT").Add(output_buffer_.release(), cc->InputTimestamp());
-            AISDK_LOG_TRACE("[BlockHardRulesCalculator] No valid hand, truncated here");
-        }
-
-        AISDK_LOG_TRACE("[BlockHardRulesCalculator] Process complete");
         return absl::OkStatus();
     }
 };

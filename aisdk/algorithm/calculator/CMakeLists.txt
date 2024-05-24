@@ -1,10 +1,12 @@
 
 set(BUILD_PROTO_FILES ON)
+message(STATUS "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
 if(BUILD_PROTO_FILES)
     file(GLOB protobuf_files ./*.proto)
     SET(PROTO_META_BASE_DIR ${CMAKE_CURRENT_BINARY_DIR})
     LIST(APPEND PROTO_FLAGS -I${CMAKE_CURRENT_SOURCE_DIR})
     FOREACH(FIL ${protobuf_files})
+    message(STATUS ${FIL})
 
     GET_FILENAME_COMPONENT(FIL_WE ${FIL} NAME_WE)
 

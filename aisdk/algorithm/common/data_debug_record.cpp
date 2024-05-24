@@ -4,6 +4,7 @@
 #include <absl/time/time.h>
 #include <sys/time.h>
 
+#include "aisdk/algorithm/common/hand_define.h"
 #include "aisdk/base/file.h"
 
 namespace aisdk::algorithm {
@@ -1037,11 +1038,11 @@ void DataDebugRecord::liftToJsonString(Recordcache* record, const aisdk::algorit
 void DataDebugRecord::GestureRegToJsonString(Recordcache* record,
                                              const aisdk::algorithm::HandGestureInternal& gesture) {
     if (record->lhand_valid) {
-        record->export_root["11_gesture"]["lefthand"] = gesture.lhand_gesture;
+        record->export_root["11_gesture"]["lefthand"] = HandGestureNames[int(gesture.lhand_gesture)];
     }
 
     if (record->rhand_valid) {
-        record->export_root["11_gesture"]["righthand"] = gesture.rhand_gesture;
+        record->export_root["11_gesture"]["righthand"] = HandGestureNames[int(gesture.rhand_gesture)];
     }
 }
 

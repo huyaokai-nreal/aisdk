@@ -55,7 +55,7 @@ class MonoHandKpt3DCalculator : public xgraph::CalculatorBase {
                                    const std::vector<Vec3f_t>& last_kpt3d_, bool last_kpt3d_valid,
                                    const HeadPoseInternal& head_pose,
                                    const std::shared_ptr<base::PerspectiveCameraModel>& virtual_camera,
-                                   bool right_image, std::vector<Vec3f_t>& kpt3d) {
+                                   bool right_image, bool source_change, std::vector<Vec3f_t>& kpt3d) {
         Eigen::Matrix<float, kAlgoKeypointNum, 3> kpt25d;
         for (int i = 0; i < kAlgoKeypointNum; i++) {
             kpt25d.block<1, 2>(i, 0) = kpt2d[i];
@@ -77,7 +77,7 @@ class MonoHandKpt3DCalculator : public xgraph::CalculatorBase {
         float hand_scale = GlobalPredictorService::getInstance().get_hand_scale();
         AISDK_LOG_TRACE("[MonoHandKpt3DCalculator] get hand scale {}", hand_scale);
         auto virtual_kpt3d = solver_->SolveKeypoints(kpt25d, hand_scale, last_kpt3d, last_kpt3d_weight,
-                                                     virtual_camera->get_camera_intrinsics(), false);
+                                                     virtual_camera->get_camera_intrinsics(), false, source_change);
         if (virtual_kpt3d.ok()) {
             std::vector<Vec3f_t> virtual_kpt3d_vec;
             virtual_kpt3d_vec.resize(kAlgoKeypointNum);
@@ -103,22 +103,31 @@ class MonoHandKpt3DCalculator : public xgraph::CalculatorBase {
         std::unique_ptr<HandsData> output_buffer_ = absl::make_unique<HandsData>();
         const auto& kpt3d_world_pre = GlobalPredictorService::getInstance().get_last_kpt3d_world();
         // left hand
+        bool source_change = (kpt3d_world_pre.left_hand.source == CamType::BINO);
         if (kpt2d.lhand_lcam_valid && !kpt2d.lhand_rcam_valid && kpt2d.lhand_lcam_virtual_camera) {
-            auto status = ProcessSingleHand(kpt2d.lhand_lcam_kpt, kpt2d.lhand_lcam_rdepth,
-                                            kpt3d_world_pre.left_hand.kpt3d, kpt3d_world_pre.lhand_valid, headpose_data,
-                                            kpt2d.lhand_lcam_virtual_camera, false, output_buffer_->left_hand.kpt3d);
+            auto status =
+                ProcessSingleHand(kpt2d.lhand_lcam_kpt, kpt2d.lhand_lcam_rdepth, kpt3d_world_pre.left_hand.kpt3d,
+                                  kpt3d_world_pre.lhand_valid, headpose_data, kpt2d.lhand_lcam_virtual_camera, false,
+                                  source_change, output_buffer_->left_hand.kpt3d);
             if (status.ok()) {
                 output_buffer_->lhand_valid = true;
                 output_buffer_->left_hand.source = CamType::MONO;
                 output_buffer_->left_hand.score = 1.0;
+                if (kpt3d_world_pre.left_hand.source == CamType::BINO) {
+                    auto kpt3d_cam_pre =
+                        recal_lcam_kpt3d_cv_with_new_headpose(headpose_data.transform, kpt3d_world_pre.left_hand.kpt3d);
+                    AISDK_LOG_TRACE("[MonoHandKpt3DSolver]: left hand change from bino root depth {} to mono depth {}",
+                                    kpt3d_cam_pre[0][2], output_buffer_->left_hand.kpt3d[0][2]);
+                }
             } else {
                 AISDK_LOG_TRACE("[MonoHandKpt3DSolver] Falied to solve left hand on left image: {}", status.message());
             }
         }
         if (kpt2d.lhand_rcam_valid && !kpt2d.lhand_lcam_valid && kpt2d.lhand_rcam_virtual_camera) {
-            auto status = ProcessSingleHand(kpt2d.lhand_rcam_kpt, kpt2d.lhand_rcam_rdepth,
-                                            kpt3d_world_pre.left_hand.kpt3d, kpt3d_world_pre.lhand_valid, headpose_data,
-                                            kpt2d.lhand_rcam_virtual_camera, true, output_buffer_->left_hand.kpt3d);
+            auto status =
+                ProcessSingleHand(kpt2d.lhand_rcam_kpt, kpt2d.lhand_rcam_rdepth, kpt3d_world_pre.left_hand.kpt3d,
+                                  kpt3d_world_pre.lhand_valid, headpose_data, kpt2d.lhand_rcam_virtual_camera, true,
+                                  source_change, output_buffer_->left_hand.kpt3d);
             if (status.ok()) {
                 output_buffer_->lhand_valid = true;
                 output_buffer_->left_hand.source = CamType::MONO;
@@ -128,15 +137,22 @@ class MonoHandKpt3DCalculator : public xgraph::CalculatorBase {
             }
         }
         // right hand
+        source_change = (kpt3d_world_pre.right_hand.source == CamType::BINO);
         if (!kpt2d.rhand_lcam_valid && kpt2d.rhand_rcam_valid && kpt2d.rhand_rcam_virtual_camera) {
             auto status =
                 ProcessSingleHand(kpt2d.rhand_rcam_kpt, kpt2d.rhand_rcam_rdepth, kpt3d_world_pre.right_hand.kpt3d,
                                   kpt3d_world_pre.rhand_valid, headpose_data, kpt2d.rhand_rcam_virtual_camera, true,
-                                  output_buffer_->right_hand.kpt3d);
+                                  source_change, output_buffer_->right_hand.kpt3d);
             if (status.ok()) {
                 output_buffer_->rhand_valid = true;
                 output_buffer_->right_hand.source = CamType::MONO;
                 output_buffer_->right_hand.score = 1.0;
+                if (kpt3d_world_pre.right_hand.source == CamType::BINO) {
+                    auto kpt3d_cam_pre = recal_lcam_kpt3d_cv_with_new_headpose(headpose_data.transform,
+                                                                               kpt3d_world_pre.right_hand.kpt3d);
+                    AISDK_LOG_TRACE("[MonoHandKpt3DSolver]: right hand change from bino root depth {} to mono depth {}",
+                                    kpt3d_cam_pre[0][2], output_buffer_->right_hand.kpt3d[0][2]);
+                }
             } else {
                 AISDK_LOG_TRACE("[MonoHandKpt3DSolver] Falied to solve right  hand on right image: {}",
                                 status.message());
@@ -146,7 +162,7 @@ class MonoHandKpt3DCalculator : public xgraph::CalculatorBase {
             auto status =
                 ProcessSingleHand(kpt2d.rhand_lcam_kpt, kpt2d.rhand_lcam_rdepth, kpt3d_world_pre.right_hand.kpt3d,
                                   kpt3d_world_pre.rhand_valid, headpose_data, kpt2d.rhand_lcam_virtual_camera, false,
-                                  output_buffer_->right_hand.kpt3d);
+                                  source_change, output_buffer_->right_hand.kpt3d);
             if (status.ok()) {
                 output_buffer_->rhand_valid = true;
                 output_buffer_->right_hand.source = CamType::MONO;
