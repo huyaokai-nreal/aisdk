@@ -164,7 +164,7 @@ class GestureMatchRule {
 
     static bool Grab(const HandFeature &hand_feature, const HandRawFeature &raw_feature) {
         auto [thumb_curl, index_curl, middle_curl, ring_curl, pinky_curl] = hand_feature.curl_features();
-                return index_curl == FingureState::CLOSED && middle_curl == FingureState::CLOSED &&
+        return index_curl == FingureState::CLOSED && middle_curl == FingureState::CLOSED &&
                ring_curl == FingureState::CLOSED && pinky_curl == FingureState::CLOSED &&
                thumb_curl != FingureState::OPEN;
     }
@@ -173,7 +173,6 @@ class GestureMatchRule {
         auto [thumb_curl, index_curl, middle_curl, ring_curl, pinky_curl] = hand_feature.curl_features();
         auto [thumb_flexion, index_flexion, middle_flexion, ring_flexion, pinky_flexion] =
             hand_feature.flexion_features();
-        
         return thumb_curl == FingureState::OPEN && index_curl != FingureState::CLOSED &&
                middle_curl == FingureState::OPEN && ring_curl == FingureState::OPEN &&
                pinky_curl == FingureState::OPEN && index_flexion != FingureState::CLOSED &&
@@ -189,7 +188,6 @@ class GestureMatchRule {
     static bool Victory(const HandFeature &hand_feature, const HandRawFeature &raw_feature) {
         auto [thum_curl, index_curl, middle_curl, ring_curl, pinky_curl] = hand_feature.curl_features();
         auto [__, index_abduction, ___, ____, _____] = hand_feature.abduction_features();
-
         return index_curl == FingureState::OPEN && middle_curl == FingureState::OPEN &&
                ring_curl == FingureState::CLOSED && pinky_curl != FingureState::OPEN &&
                index_abduction == FingureState::OPEN && thum_curl != FingureState::OPEN;
@@ -199,7 +197,6 @@ class GestureMatchRule {
         auto [thumb_curl, index_curl, middle_curl, ring_curl, pinky_curl] = hand_feature.curl_features();
         auto [thumb_flexion, index_flexion, middle_flexion, ring_flexion, pinky_flexion] =
             hand_feature.flexion_features();
-        
         return thumb_curl == FingureState::OPEN &&
                (index_curl == FingureState::CLOSED || index_flexion == FingureState::CLOSED) &&
                (middle_curl == FingureState::CLOSED || middle_flexion == FingureState::CLOSED) &&
@@ -210,7 +207,6 @@ class GestureMatchRule {
     static bool Home(const HandFeature &hand_feature, const HandRawFeature &raw_feature) {
         auto [thumb_curl, index_curl, middle_curl, ring_curl, pinky_curl] = hand_feature.curl_features();
         auto [thumb_flexion, _, __, ___, ____] = hand_feature.flexion_features();
-
         return (thumb_curl == FingureState::CLOSED || thumb_flexion == FingureState::CLOSED) &&
                index_curl == FingureState::OPEN && middle_curl == FingureState::OPEN &&
                ring_curl == FingureState::OPEN && pinky_curl == FingureState::OPEN &&
@@ -221,7 +217,6 @@ class GestureMatchRule {
         auto [thumb_curl, index_curl, middle_curl, ring_curl, pinky_curl] = hand_feature.curl_features();
         auto [thumb_flexion, _, __, ___, ____] = hand_feature.flexion_features();
         auto [thumb_abduction, _p, __p, ___p, ____p] = hand_feature.abduction_features();
-
         return index_curl == FingureState::CLOSED && middle_curl == FingureState::CLOSED &&
                ring_curl == FingureState::CLOSED && pinky_curl == FingureState::CLOSED &&
                thumb_abduction == FingureState::OPEN && thumb_curl != FingureState::CLOSED && (raw_feature.is_thumb_up);
