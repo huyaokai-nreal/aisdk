@@ -58,18 +58,17 @@ class ConvertToWorldCalculator : public xgraph::CalculatorBase {
             const auto& headpose_data = cc->Inputs().Tag("HEADPOSE").Get<HeadPoseInternal>();
 
             std::unique_ptr<HandsData> output_buffer_ = absl::make_unique<HandsData>();
+            *output_buffer_ = input_data;
             if (input_data.lhand_valid) {
                 AISDK_LOG_TRACE("[ConvertToWorldCalculator] Transform left hand 3d kpt form cv left to world!");
                 output_buffer_->left_hand.kpt3d =
                     transfer_from_cvL_to_world(headpose_data.transform, input_data.left_hand.kpt3d);
-                output_buffer_->lhand_valid = true;
                 AISDK_LOG_TRACE("[ConvertToWorldCalculator] Transform left hand 3d kpt complete!");
             }
             if (input_data.rhand_valid) {
                 AISDK_LOG_TRACE("[ConvertToWorldCalculator] Transform right hand 3d kpt form cv left to world!");
                 output_buffer_->right_hand.kpt3d =
                     transfer_from_cvL_to_world(headpose_data.transform, input_data.right_hand.kpt3d);
-                output_buffer_->rhand_valid = true;
                 AISDK_LOG_TRACE("[ConvertToWorldCalculator] Transform right hand 3d kpt complete!");
             }
             if (output_buffer_->lhand_valid || output_buffer_->rhand_valid) {

@@ -57,6 +57,7 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
         const auto& kpt3d_world = cc->Inputs().Tag("INPUT").Get<HandsData>();
         const auto& timestamp = cc->InputTimestamp().Seconds();
         std::unique_ptr<HandsData> output_buffer_ = absl::make_unique<HandsData>();
+        *output_buffer_ = kpt3d_world;
         auto& predictor_lhand = GlobalPredictorService::getInstance().get_predictor_lhand();
         auto& predictor_rhand = GlobalPredictorService::getInstance().get_predictor_rhand();
         const auto& kpt3d_world_pre = GlobalPredictorService::getInstance().get_last_kpt3d_world();
@@ -78,7 +79,6 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
                 }
             }
             m_post_filter->kpt_seq_3d_filter(0, output_buffer_->left_hand.kpt3d);
-            output_buffer_->lhand_valid = true;
         }
 
         if (!kpt3d_world.rhand_valid) {
@@ -98,7 +98,6 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
                 }
             }
             m_post_filter->kpt_seq_3d_filter(1, output_buffer_->right_hand.kpt3d);
-            output_buffer_->rhand_valid = true;
         }
         cc->Outputs().Tag("OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
         last_timestamp_ = timestamp;
