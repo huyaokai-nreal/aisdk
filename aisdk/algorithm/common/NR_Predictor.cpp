@@ -86,9 +86,9 @@ int KFPredictor::init() {
 void KFPredictor::reset_predict_smoother() {
     OneEuroParams center_params;
     if (glasses_type_ == "flora") {
-        center_params.mincutoff = {0.08, 0.08, 0.07};  // 调静止状态下的稳定性,越小稳定性越好
-        center_params.beta = {22.0, 22.0, 22.0};  // 运动状态下alpha的变化速率，alpha越大，跟踪越及时
-        center_params.dcutoff = {0.75, 0.75, 0.45};  // 速度滤波的固定效果
+        center_params.mincutoff = {0.1, 0.1, 0.1};  // 调静止状态下的稳定性,越小稳定性越好
+        center_params.beta = {20.0, 20.0, 20.0};  // 运动状态下alpha的变化速率，alpha越大，跟踪越及时
+        center_params.dcutoff = {0.8, 0.8, 0.5};  // 速度滤波的固定效果
         predict_length_ratio_ = 1.0;
     } else if (glasses_type_ == "ella") {
         center_params.mincutoff = {0.1, 0.1, 0.1};  // 调静止状态下的稳定性,越小稳定性越好
@@ -194,12 +194,12 @@ double KFPredictor::get_valid_predict_time_length(double target_ts) {
     double target_timestamp = 0;
     auto predict_interval = (target_ts - last_measure_time_) * predict_length_ratio_;
     predict_interval = std::min(predict_interval, predict_time_interval_vec[hand_static_state]);
-    if ((m_kf_impl->statePost.at<float>(S_AX) < -0.1) || (m_kf_impl->statePost.at<float>(S_AY) < -0.1)) {
-        predict_interval = std::min(predict_interval, 0.02);
-    }
-    if ((m_kf_impl->statePost.at<float>(S_AX) < -0.2) || (m_kf_impl->statePost.at<float>(S_AY) < -0.2)) {
-        predict_interval = std::min(predict_interval, 0.01);
-    }
+    // if ((m_kf_impl->statePost.at<float>(S_AX) < -0.1) || (m_kf_impl->statePost.at<float>(S_AY) < -0.1)) {
+    //     predict_interval = std::min(predict_interval, 0.02);
+    // }
+    // if ((m_kf_impl->statePost.at<float>(S_AX) < -0.2) || (m_kf_impl->statePost.at<float>(S_AY) < -0.2)) {
+    //     predict_interval = std::min(predict_interval, 0.01);
+    // }
     target_timestamp = predict_interval + last_measure_time_;
     return target_timestamp;
 }
