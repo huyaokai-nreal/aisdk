@@ -75,4 +75,14 @@ void HandFilters::kpt_seq_3d_filter(int hand_side, std::vector<Vec3f_t>& point3d
     }
 };
 
+bool HandFilters::reset(int hand_side) {
+    if (hand_side == 0) {
+        m_seq3d_lhand->reset();
+        m_seq3d_palm_lhand->reset();
+    } else {
+        m_seq3d_rhand->reset();
+        m_seq3d_palm_rhand->reset();
+    }
+}
+
 }  // namespace aisdk::algorithm

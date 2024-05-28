@@ -16,7 +16,7 @@ using BaseNetAlgoPtr = std::unique_ptr<aisdk::xengine::BaseNetAlgo,std::function
 class CalculatorBaseNet {
    public:
     CalculatorBaseNet() {}
-    ~CalculatorBaseNet() {}
+    virtual ~CalculatorBaseNet() {}
 
     void SetBaseNetAlgo(BaseNetAlgoPtr& net) { m_net = std::move(net); }
 

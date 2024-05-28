@@ -66,7 +66,10 @@ class DetectBoxSmoothingCalculator : public xgraph::CalculatorBase {
             m_seq_lcam_lhand->getFilterBoxData(output_buffer_->lhand_lcam_rect, p_score);
 
             AISDK_LOG_TRACE("[DetectBoxSmoothingCalculator] Done smoothing on lhand lcam bboxes");
+        } else {
+            m_seq_lcam_lhand->reset();
         }
+
         if (input_data.lhand_rcam_valid) {
             AISDK_LOG_TRACE("[DetectBoxSmoothingCalculator] Do smoothing on lhand rcam bboxes");
             output_buffer_->lhand_rcam_valid = true;
@@ -77,7 +80,10 @@ class DetectBoxSmoothingCalculator : public xgraph::CalculatorBase {
             m_seq_rcam_lhand->getFilterBoxData(output_buffer_->lhand_rcam_rect, p_score);
 
             AISDK_LOG_TRACE("[DetectBoxSmoothingCalculator] Done smoothing on lhand rcam bboxes");
+        } else {
+            m_seq_rcam_lhand->reset();
         }
+
         if (input_data.rhand_lcam_valid) {
             AISDK_LOG_TRACE("[DetectBoxSmoothingCalculator] Do smoothing on rhand lcam bboxes");
             output_buffer_->rhand_lcam_valid = true;
@@ -88,7 +94,10 @@ class DetectBoxSmoothingCalculator : public xgraph::CalculatorBase {
             m_seq_lcam_rhand->getFilterBoxData(output_buffer_->rhand_lcam_rect, p_score);
 
             AISDK_LOG_TRACE("[DetectBoxSmoothingCalculator] Done smoothing on rhand lcam bboxes");
+        } else {
+            m_seq_lcam_rhand->reset();
         }
+
         if (input_data.rhand_rcam_valid) {
             AISDK_LOG_TRACE("[DetectBoxSmoothingCalculator] Do smoothing on rhand rcam bboxes");
             output_buffer_->rhand_rcam_valid = true;
@@ -99,6 +108,8 @@ class DetectBoxSmoothingCalculator : public xgraph::CalculatorBase {
             m_seq_rcam_rhand->getFilterBoxData(output_buffer_->rhand_rcam_rect, p_score);
 
             AISDK_LOG_TRACE("[DetectBoxSmoothingCalculator] Done smoothing on rhand rcam bboxes");
+        } else {
+            m_seq_rcam_rhand->reset();
         }
 
         if (output_buffer_->lhand_lcam_valid || output_buffer_->lhand_rcam_valid || output_buffer_->rhand_lcam_valid ||

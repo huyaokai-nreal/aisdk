@@ -64,6 +64,7 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
         if (!kpt3d_world.lhand_valid) {
             predictor_lhand.stop_tracking();
             output_buffer_->lhand_valid = false;
+            m_post_filter->reset(0);
         } else {
             output_buffer_->lhand_kpt = kpt3d_world.lhand_kpt;
             if (!predictor_lhand.get_tracking_status()) {
@@ -83,6 +84,7 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
         if (!kpt3d_world.rhand_valid) {
             predictor_rhand.stop_tracking();
             output_buffer_->rhand_valid = false;
+            m_post_filter->reset(1);
         } else {
             output_buffer_->rhand_kpt = kpt3d_world.rhand_kpt;
             if (!predictor_rhand.get_tracking_status()) {
