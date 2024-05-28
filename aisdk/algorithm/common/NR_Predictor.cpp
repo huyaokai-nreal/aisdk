@@ -171,7 +171,7 @@ Vec3f_t KFPredictor::track_only_pred(double target_ts, bool with_smooth) {
     auto pred = this->predict();
     std::vector<Vec3f_t> pred_pose{pred.pos};
     // this->correct(pred);
-    // last_correct_time_ = target_ts;
+    last_correct_time_ = target_ts;
     if (with_smooth) {
         predict_smoother_->getFilterHandData(pred_pose);
     }
