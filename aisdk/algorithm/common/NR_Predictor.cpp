@@ -79,11 +79,11 @@ int KFPredictor::init() {
 
     // cv::setIdentity(m_kf_impl->errorCovPost, cv::Scalar(.1));
     // init smoother
-    reset_predict_smoother();
+    init_predict_smoother();
 
     return 0;
 }
-void KFPredictor::reset_predict_smoother() {
+void KFPredictor::init_predict_smoother() {
     OneEuroParams center_params;
     if (glasses_type_ == "flora") {
         center_params.mincutoff = {0.1, 0.1, 0.1};  // 调静止状态下的稳定性,越小稳定性越好
@@ -116,7 +116,7 @@ int KFPredictor::start_tracking(double target_ts, PredictorState meas) {
     m_kf_impl->statePre = state;
     last_correct_time_ = target_ts;
     m_momentum.pos = meas.pos;
-    reset_predict_smoother();
+    predict_smoother_->reset();
     is_tracked = true;
     return 0;
 }

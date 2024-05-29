@@ -1,5 +1,6 @@
 #include "NR_Seq_Manager.h"
 
+#include <memory>
 #include <numeric>
 
 #include "aisdk/base/log.h"
@@ -342,16 +343,21 @@ bool DynamicFilter2D::getDynamicFilterHandData(std::vector<Vec2f_t>& kpt_2d) {
 SeqManager3D::SeqManager3D(int sample_num, const OneEuroParams& params) : mSampleNum(sample_num) {
     mOneEuroFilterList.resize(sample_num * 3);
     for (int i = 0; i < sample_num; i++) {  // 30, 0.0005, 20.0, 3.0
-        mOneEuroFilterList[i * 3] = std::unique_ptr<OneEuroFilter>(
-            new OneEuroFilter(params.freq, params.mincutoff[0], params.beta[0], params.dcutoff[0]));
-        mOneEuroFilterList[i * 3 + 1] = std::unique_ptr<OneEuroFilter>(
-            new OneEuroFilter(params.freq, params.mincutoff[1], params.beta[1], params.dcutoff[1]));
-        mOneEuroFilterList[i * 3 + 2] = std::unique_ptr<OneEuroFilter>(
-            new OneEuroFilter(params.freq, params.mincutoff[2], params.beta[2], params.dcutoff[2]));
+        mOneEuroFilterList[i * 3] =
+            std::make_unique<OneEuroFilter>(params.freq, params.mincutoff[0], params.beta[0], params.dcutoff[0]);
+        mOneEuroFilterList[i * 3 + 1] =
+            std::make_unique<OneEuroFilter>(params.freq, params.mincutoff[1], params.beta[1], params.dcutoff[1]);
+        mOneEuroFilterList[i * 3 + 2] =
+            std::make_unique<OneEuroFilter>(params.freq, params.mincutoff[2], params.beta[2], params.dcutoff[2]);
     }
 }
 
-bool SeqManager3D::reset() { return true; }
+bool SeqManager3D::reset() {
+    for (auto& filter : mOneEuroFilterList) {
+        filter->reset();
+    }
+    return true;
+}
 
 bool SeqManager3D::getFilterHandData(std::vector<Vec3f_t>& kpt_3d) {
     for (int i = 0; i < mSampleNum; i++) {

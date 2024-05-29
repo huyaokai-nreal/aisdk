@@ -1,5 +1,7 @@
 #include "ofxOneEuroFilter.h"
 
+#include <memory>
+
 namespace aisdk::algorithm {
 
 void LowPassFilter::setAlpha(double alpha) {
@@ -36,26 +38,24 @@ OneEuroFilter::OneEuroFilter(double freq, double mincutoff, double beta_, double
     setMinCutoff(mincutoff);
     setBeta(beta_);
     setDerivateCutoff(dcutoff);
-    x = new LowPassFilter(alpha(mincutoff));
-    dx = new LowPassFilter(alpha(dcutoff));
-    lasttime = UndefinedTime;
+    x_ = std::make_unique<LowPassFilter>(alpha(mincutoff));
+    dx_ = std::make_unique<LowPassFilter>(alpha(dcutoff));
 }
-
+void OneEuroFilter::reset() {
+    x_->reset();
+    dx_->reset();
+    lasttime_ = UndefinedTime;
+}
 double OneEuroFilter::filter(double value, TimeStamp timestamp) {
     // update the sampling frequency based on timestamps
-    if (lasttime != UndefinedTime && timestamp != UndefinedTime) freq = 1.0 / (timestamp - lasttime);
-    lasttime = timestamp;
+    if (lasttime_ != UndefinedTime && timestamp != UndefinedTime) freq_ = 1.0 / (timestamp - lasttime_);
+    lasttime_ = timestamp;
     // estimate the current variation per second
-    double dvalue = x->hasLastRawValue() ? (value - x->lastRawValue()) * freq : 0.0;  // FIXME: 0.0 or value?
-    double edvalue = dx->filterWithAlpha(dvalue, alpha(dcutoff));
+    double dvalue = x_->hasLastRawValue() ? (value - x_->lastRawValue()) * freq_ : 0.0;  // FIXME: 0.0 or value?
+    double edvalue = dx_->filterWithAlpha(dvalue, alpha(dcutoff_));
     // use it to update the cutoff frequency
-    double cutoff = mincutoff + beta_ * fabs(edvalue);
+    double cutoff = mincutoff_ + beta_ * fabs(edvalue);
     // filter the given value
-    return x->filterWithAlpha(value, alpha(cutoff));
-}
-
-OneEuroFilter::~OneEuroFilter(void) {
-    delete x;
-    delete dx;
+    return x_->filterWithAlpha(value, alpha(cutoff));
 }
 }  // namespace aisdk::algorithm

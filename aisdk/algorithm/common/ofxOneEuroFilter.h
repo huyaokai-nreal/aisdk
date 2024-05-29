@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #if defined(__linux__)
 #include <cmath>
 #include <ctime>
@@ -28,54 +29,56 @@ class LowPassFilter final {
     bool hasLastRawValue(void) { return initialized; }
 
     double lastRawValue(void) { return y; }
+    void reset(){
+        initialized = false;
+    }
 
    private:
     void setAlpha(double alpha);
 
     double y, a, s;
-    bool initialized;
+    bool initialized = false;
 };
 
 // -----------------------------------------------------------------
 
 class OneEuroFilter final {
    public:
-    OneEuroFilter(double freq, double mincutoff = 1.0, double beta_ = 0.0, double dcutoff = 1.0);
+    explicit OneEuroFilter(double freq, double mincutoff = 1.0, double beta_ = 0.0, double dcutoff = 1.0);
 
     double filter(double value, TimeStamp timestamp = UndefinedTime);
-
-    ~OneEuroFilter(void);
-
+    
+    void reset();
    private:
-    double freq;
-    double mincutoff;
+    double freq_;
+    double mincutoff_;
     double beta_;
-    double dcutoff;
-    LowPassFilter *x;
-    LowPassFilter *dx;
-    TimeStamp lasttime;
+    double dcutoff_;
+    std::unique_ptr<LowPassFilter> x_;
+    std::unique_ptr<LowPassFilter> dx_;
+    TimeStamp lasttime_;
 
     double alpha(double cutoff) {
-        double te = 1.0 / freq;
+        double te = 1.0 / freq_;
         double tau = 1.0 / (2 * M_PI * cutoff);
         return 1.0 / (1.0 + tau / te);
     }
 
     void setFrequency(double f) {
         if (f <= 0) throw std::range_error("freq should be >0");
-        freq = f;
+        freq_ = f;
     }
 
     void setMinCutoff(double mc) {
         if (mc <= 0) throw std::range_error("mincutoff should be >0");
-        mincutoff = mc;
+        mincutoff_ = mc;
     }
 
     void setBeta(double b) { beta_ = b; }
 
     void setDerivateCutoff(double dc) {
         if (dc <= 0) throw std::range_error("dcutoff should be >0");
-        dcutoff = dc;
+        dcutoff_ = dc;
     }
 };
 
