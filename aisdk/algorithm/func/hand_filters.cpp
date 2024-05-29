@@ -83,6 +83,7 @@ bool HandFilters::reset(int hand_side) {
         m_seq3d_rhand->reset();
         m_seq3d_palm_rhand->reset();
     }
+    return true;
 }
 
 }  // namespace aisdk::algorithm
