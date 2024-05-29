@@ -344,7 +344,7 @@ bool checkHexagonDSP() {
         AISDK_LOG_TRACE("getProviderfailed!");
         return false;
     }
-    temp.Snpe_Util_InitializeLogging(Snpe_LogLevel_t::SNPE_LOG_LEVEL_WARN);
+    temp.Snpe_Util_InitializeLogging(Snpe_LogLevel_t::SNPE_LOG_LEVEL_ERROR);
     bool res = temp.Snpe_Util_IsRuntimeAvailable(Snpe_Runtime_t::SNPE_RUNTIME_DSP);
     AISDK_LOG_TRACE("Snpe_Util_IsRuntimeAvailable: {}", res);
     if (!res) {

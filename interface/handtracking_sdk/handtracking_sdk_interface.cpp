@@ -1013,6 +1013,13 @@ extern "C" void NR_INTERFACE_EXPORT NR_INTERFACE_API NRPluginCreate(NRPluginHand
 extern "C" void NRPluginCreate_HANDTRACKING(NRPluginHandle handle, NRInterfaces* interfaces) {
 #endif
     AISDK_LOG_WARN("NRPluginCreate");
+#if !defined(_WIN32)
+    Dl_info dl_info;
+    if (dladdr((void*)NRPluginCreate, &dl_info)) {
+        AISDK_LOG_WARN("SO PATH: {}", dl_info.dli_fname);
+    }
+#endif
+
     auto ins = aisdk::interface::Plugin::GetInstance();
     ins->Init(handle, interfaces);
     AISDK_LOG_WARN("NRPluginCreated");
