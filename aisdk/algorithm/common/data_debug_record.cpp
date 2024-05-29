@@ -212,7 +212,7 @@ int DataDebugRecord::CheckRealTimeDebugUnityButton(uint64_t timestamp) {
             pipeline_debug = false;
         }
     }
-
+    AISDK_LOG_ERROR("CheckRealTimeDebugUnityButton: debug_state={}", debug_state);
     return debug_state;
 }
 
@@ -600,7 +600,17 @@ void DataDebugRecord::DetectOpToJsonString(Recordcache* record,
         root1[2] = detect_result.lhand_lcam_rect.w;
         root1[3] = detect_result.lhand_lcam_rect.h;
         record->export_root["00_detect"]["lefthand_leftcam"] = root1;
+        if (detect_result.det_flag) {
+            record->export_root["00_detect_model"]["lefthand_leftcam"]["rect"] = root1;
+            record->export_root["00_detect_model"]["lefthand_leftcam"]["hand_confidence"] =
+                detect_result.images_lhand_rects[0][0].confidence;
+            record->export_root["00_detect_model"]["lefthand_leftcam"]["left_confidence"] =
+                detect_result.images_lhand_rects[0][0].left_confidence;
+            record->export_root["00_detect_model"]["lefthand_leftcam"]["right_confidence"] =
+                detect_result.images_lhand_rects[0][0].right_confidence;
+        }
     }
+
     if (detect_result.lhand_rcam_valid) {
         Json::Value root1;
         root1[0] = detect_result.lhand_rcam_rect.x;
@@ -608,6 +618,15 @@ void DataDebugRecord::DetectOpToJsonString(Recordcache* record,
         root1[2] = detect_result.lhand_rcam_rect.w;
         root1[3] = detect_result.lhand_rcam_rect.h;
         record->export_root["00_detect"]["lefthand_rightcam"] = root1;
+        if (detect_result.det_flag) {
+            record->export_root["00_detect_model"]["lefthand_rightcam"]["rect"] = root1;
+            record->export_root["00_detect_model"]["lefthand_rightcam"]["hand_confidence"] =
+                detect_result.images_lhand_rects[1][0].confidence;
+            record->export_root["00_detect_model"]["lefthand_rightcam"]["left_confidence"] =
+                detect_result.images_lhand_rects[1][0].left_confidence;
+            record->export_root["00_detect_model"]["lefthand_rightcam"]["right_confidence"] =
+                detect_result.images_lhand_rects[1][0].right_confidence;
+        }
     }
 
     if (detect_result.rhand_lcam_valid) {
@@ -617,7 +636,17 @@ void DataDebugRecord::DetectOpToJsonString(Recordcache* record,
         root1[2] = detect_result.rhand_lcam_rect.w;
         root1[3] = detect_result.rhand_lcam_rect.h;
         record->export_root["00_detect"]["righthand_leftcam"] = root1;
+        if (detect_result.det_flag) {
+            record->export_root["00_detect_model"]["righthand_leftcam"]["rect"] = root1;
+            record->export_root["00_detect_model"]["righthand_leftcam"]["hand_confidence"] =
+                detect_result.images_rhand_rects[0][0].confidence;
+            record->export_root["00_detect_model"]["righthand_leftcam"]["left_confidence"] =
+                detect_result.images_rhand_rects[0][0].left_confidence;
+            record->export_root["00_detect_model"]["righthand_leftcam"]["right_confidence"] =
+                detect_result.images_rhand_rects[0][0].right_confidence;
+        }
     }
+
     if (detect_result.rhand_rcam_valid) {
         Json::Value root1;
         root1[0] = detect_result.rhand_rcam_rect.x;
@@ -625,6 +654,15 @@ void DataDebugRecord::DetectOpToJsonString(Recordcache* record,
         root1[2] = detect_result.rhand_rcam_rect.w;
         root1[3] = detect_result.rhand_rcam_rect.h;
         record->export_root["00_detect"]["righthand_rightcam"] = root1;
+        if (detect_result.det_flag) {
+            record->export_root["00_detect_model"]["righthand_rightcam"]["rect"] = root1;
+            record->export_root["00_detect_model"]["righthand_rightcam"]["hand_confidence"] =
+                detect_result.images_rhand_rects[1][0].confidence;
+            record->export_root["00_detect_model"]["righthand_rightcam"]["left_confidence"] =
+                detect_result.images_rhand_rects[1][0].left_confidence;
+            record->export_root["00_detect_model"]["righthand_rightcam"]["right_confidence"] =
+                detect_result.images_rhand_rects[1][0].right_confidence;
+        }
     }
 }
 

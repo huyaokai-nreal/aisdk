@@ -20,33 +20,46 @@ def process_single_data(filename, leftcam_raw_path, rightcam_raw_path,
     if record_data.get("current_system_time"):
         cv2.putText(leftcam_raw_img, record_data["current_system_time"], (15, 25), 
              cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 1, cv2.LINE_AA)
-        
-    if record_data.get("leftright_hand_miss"):
-        cv2.putText(leftcam_raw_img, "L: "+ record_data["leftright_hand_miss"][0], (15, 50), 
+
+    if record_data.get("tracker_detect") is not None:
+        cv2.putText(leftcam_raw_img, "tracker: "+ str(record_data["tracker_detect"]), (15, 50), 
              cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 1, cv2.LINE_AA)
-        cv2.putText(leftcam_raw_img, "R: "+ record_data["leftright_hand_miss"][1], (15, 75), 
+                     
+    if record_data.get("leftright_hand_miss"):
+        cv2.putText(leftcam_raw_img, "L: "+ record_data["leftright_hand_miss"][0], (15, 75), 
+             cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 1, cv2.LINE_AA)
+        cv2.putText(leftcam_raw_img, "R: "+ record_data["leftright_hand_miss"][1], (15, 100), 
              cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 1, cv2.LINE_AA)
     
     if record_data.get("mid_inference"):
         mid_inference = record_data["mid_inference"]
+        
+        detect_model = None
+        if mid_inference.get("00_detect_model"):
+            detect_model = mid_inference["00_detect_model"]
+            
         if mid_inference.get("00_detect"):
             detect = mid_inference["00_detect"]
             if detect.get("lefthand_leftcam"):
                 bbox = detect["lefthand_leftcam"]
+                hand_confidence = detect_model["lefthand_leftcam"]["hand_confidence"] if detect_model is not None else 0.0 
                 cv2.rectangle(leftcam_raw_img, (int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3])),(0, 255, 0), 2) 
-                cv2.putText(leftcam_raw_img, "left", (int(bbox[0]), int(bbox[1]) - 5), 0, 0.8, (0, 255, 0), 2)
+                cv2.putText(leftcam_raw_img, "left: {:.2f}".format(hand_confidence), (int(bbox[0]), int(bbox[1]) - 5), 0, 0.8, (0, 255, 0), 2)
             if detect.get("righthand_leftcam"):
                 bbox = detect["righthand_leftcam"]
+                hand_confidence = detect_model["righthand_leftcam"]["hand_confidence"] if detect_model is not None else 0.0 
                 cv2.rectangle(leftcam_raw_img, (int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3])),(0, 255, 0), 2) 
-                cv2.putText(leftcam_raw_img, "right", (int(bbox[0]), int(bbox[1]) - 5), 0, 0.8, (0, 255, 0), 2)
+                cv2.putText(leftcam_raw_img, "right: {:.2f}".format(hand_confidence), (int(bbox[0]), int(bbox[1]) - 5), 0, 0.8, (0, 255, 0), 2)
             if detect.get("lefthand_rightcam"):
                 bbox = detect["lefthand_rightcam"]
+                hand_confidence = detect_model["lefthand_rightcam"]["hand_confidence"] if detect_model is not None else 0.0 
                 cv2.rectangle(rightcam_raw_img, (int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3])),(0, 255, 0), 2) 
-                cv2.putText(rightcam_raw_img, "left", (int(bbox[0]), int(bbox[1]) - 5), 0, 0.8, (0, 255, 0), 2)
+                cv2.putText(rightcam_raw_img, "left: {:.2f}".format(hand_confidence), (int(bbox[0]), int(bbox[1]) - 5), 0, 0.8, (0, 255, 0), 2)
             if detect.get("righthand_rightcam"):
                 bbox = detect["righthand_rightcam"]
+                hand_confidence = detect_model["righthand_rightcam"]["hand_confidence"] if detect_model is not None else 0.0 
                 cv2.rectangle(rightcam_raw_img, (int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3])),(0, 255, 0), 2) 
-                cv2.putText(rightcam_raw_img, "right", (int(bbox[0]), int(bbox[1]) - 5), 0, 0.8, (0, 255, 0), 2)
+                cv2.putText(rightcam_raw_img, "right: {:.2f}".format(hand_confidence), (int(bbox[0]), int(bbox[1]) - 5), 0, 0.8, (0, 255, 0), 2)
 
         if mid_inference.get("02_rsn"):
             rsn = mid_inference["02_rsn"]
@@ -91,19 +104,19 @@ def process_single_data(filename, leftcam_raw_path, rightcam_raw_path,
         if mid_inference.get("06_3dconstraint"):
             constraint = mid_inference["06_3dconstraint"]
             if constraint.get("lefthand_3dscore"):
-                cv2.putText(leftcam_raw_img, "L_3dscore: {:.4f}".format(constraint["lefthand_3dscore"]), (15, 100), 
+                cv2.putText(leftcam_raw_img, "L_3dscore: {:.4f}".format(constraint["lefthand_3dscore"]), (15, 125), 
                     cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 1, cv2.LINE_AA)
             if constraint.get("righthand_3dscore"):
-                cv2.putText(leftcam_raw_img, "R_3dscore: {:.4f}".format(constraint["righthand_3dscore"]), (15, 125), 
+                cv2.putText(leftcam_raw_img, "R_3dscore: {:.4f}".format(constraint["righthand_3dscore"]), (15, 150), 
                     cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 1, cv2.LINE_AA)
             
         if mid_inference.get("11_gesture"):
             gesture = mid_inference["11_gesture"]
             if gesture.get("lefthand"):
-                cv2.putText(leftcam_raw_img, "lefthand: {}".format(gesture["lefthand"]), (15, 150), 
+                cv2.putText(leftcam_raw_img, "lefthand: {}".format(gesture["lefthand"]), (15, 175), 
                     cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 1, cv2.LINE_AA)
             if gesture.get("righthand"):
-                cv2.putText(leftcam_raw_img, "righthand: {}".format(gesture["righthand"]), (15, 175), 
+                cv2.putText(leftcam_raw_img, "righthand: {}".format(gesture["righthand"]), (15, 200), 
                     cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 1, cv2.LINE_AA)
 
 
