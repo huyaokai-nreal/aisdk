@@ -2,6 +2,7 @@
 
 #include <vector>
 #include "aisdk/algorithm/common/nrnet_define.h"
+#include "aisdk/algorithm/internal_structs/kpt3d_struct_internal.h"
 #include <json/json.h>
 
 namespace aisdk::algorithm {
@@ -20,7 +21,7 @@ enum class NodeStatus {
     GESTURE_FINISH = 9
 };
 
-enum class ObjectStatus { NO_MISS = 0, DETECT_MISS = 1, PF_MISS = 2, DEPTH_MISS = 3, MANO_MISS = 4 };
+enum class ObjectStatus { NO_MISS = 0, DETECT_MISS = 1, PF_MISS = 2, LANDMARK_MISS=3, LIFT_MISS=4, HARDRULE_MISS = 5};
 
 struct Recordcache {
     uint64_t sequence_id = 0;

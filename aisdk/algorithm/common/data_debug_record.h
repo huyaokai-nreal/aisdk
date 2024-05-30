@@ -9,6 +9,7 @@
 #include "aisdk/algorithm/internal_structs/data_record_struct_internal.h"
 #include "aisdk/algorithm/internal_structs/kpt2d_struct_internal.h"
 #include "aisdk/algorithm/internal_structs/kpt3d_struct_internal.h"
+#include "aisdk/algorithm/internal_structs/hand_gesture_struct_internal.h"
 #include "json/json.h"
 #include "aisdk/base/profiling.h"
 #include "aisdk/base/file.h"
@@ -36,7 +37,7 @@ class DataDebugRecord {
     // void DebugFilter(NrNet::NetOpIoData& iodata, NrCore::PipelineNodeInfo& nodeinfo);
     void DebugLift(Recordcache* record, const aisdk::algorithm::Kpt3dInternal& kpt3d_result);
     // void DebugGlobalFilter(NrCore::PipelineNodeInfo& nodeinfo);
-    // void DebugGestureReg(NrCore::PipelineNodeInfo& nodeinfo);
+    void DebugGestureReg(Recordcache* record, const aisdk::algorithm::HandGestureInternal& gesture);
     void DebugWholeInference(Recordcache* record);
     // void DebugPredicted(HandPredictData& cur_hand, uint64_t predicted_time_nanos, uint64_t target_timestamp,
     //                     std::vector<cv::Vec3f>& predicted_hand_points, uint32_t step, Json::Value& export_root,
@@ -52,7 +53,7 @@ class DataDebugRecord {
     void DetectOpToJsonString(Recordcache* record, const aisdk::algorithm::DetOutputInternal& detect_result);
     void RsnOpToJsonString(Recordcache* record, const aisdk::algorithm::Kpt2dInternal& kpt2d_result);
     // void FilterToJsonString(NrNet::NetOpIoData& iodata, NrCore::PipelineNodeInfo& nodeinfo);
-    // void GestureRegToJsonString(NrCore::PipelineNodeInfo& nodeinfo);
+    void GestureRegToJsonString(Recordcache* record, const aisdk::algorithm::HandGestureInternal& gesture);
     // void PredictToJsonString(HandPredictData& cur_hand, uint64_t predicted_time_nanos, uint64_t target_timestamp,
     //                          std::vector<cv::Vec3f>& predicted_hand_points, uint32_t step, Json::Value& export_root,
     //                          uint64_t cur_equence_id, uint64_t predicted_equence_id);

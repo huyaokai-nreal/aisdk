@@ -81,7 +81,27 @@ void DataDebugRecord::InitDebugConfig() {
 int DataDebugRecord::CheckRealTimeDebugUnityButton(uint64_t timestamp) {
     static int debug_state = 0;  // 0: 不启动 1：进入ing 2：录制中 3：停止ing
     static uint32_t mkdir_off = 0;
+    static uint64_t last_timestamp = 0;
     auto& prof = aisdk::base::DebugProfiling::Get().GetOpt();
+    // 1s
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    uint64_t cur_time_ms = tv.tv_sec * 1000 + tv.tv_usec / 1000;
+    if (cur_time_ms - last_timestamp >= 1 * 1000) {
+        std::string data_record_statusf = prof.local_data_record_rootpath + "/record.status";
+        if (aisdk::base::IsFileExist(data_record_statusf)) {
+            std::string record_status;
+            aisdk::base::ReadFromFile(data_record_statusf, record_status);
+            if (record_status == "record_start\n") {
+                prof.pipeline_debug = true;
+            } else if (record_status == "record_stop\n") {
+                prof.pipeline_debug = false;
+            }
+        } else {
+            prof.pipeline_debug = false;
+        }
+        last_timestamp = cur_time_ms;
+    }
     if (local_pipeline_node_data_record || developer_test_all) {
         if (0 == debug_state && true == prof.pipeline_debug) {
             debug_state = 2;
@@ -1014,22 +1034,22 @@ void DataDebugRecord::liftToJsonString(Recordcache* record, const aisdk::algorit
 //     }
 // }
 
-// void DataDebugRecord::GestureRegToJsonString(NrCore::PipelineNodeInfo& nodeinfo) {
-//     if (nodeinfo.lhand_valid) {
-//         auto& predict_cur_hand = nodeinfo.cur_predict[0];
-//         nodeinfo.export_root["11_gesture"]["lefthand"] = predict_cur_hand.gesture_type;
-//     }
+void DataDebugRecord::GestureRegToJsonString(Recordcache* record,
+                                             const aisdk::algorithm::HandGestureInternal& gesture) {
+    if (record->lhand_valid) {
+        record->export_root["11_gesture"]["lefthand"] = gesture.lhand_gesture;
+    }
 
-//     if (nodeinfo.rhand_valid) {
-//         auto& predict_cur_hand = nodeinfo.cur_predict[1];
-//         nodeinfo.export_root["11_gesture"]["righthand"] = predict_cur_hand.gesture_type;
-//     }
-// }
+    if (record->rhand_valid) {
+        record->export_root["11_gesture"]["righthand"] = gesture.rhand_gesture;
+    }
+}
 
 void DataDebugRecord::PipelineNodeInfoToJsonString(Recordcache* record, std::string& json_string) {
     Json::Value json_result;
 
-    std::vector<std::string> miss_str{"no_miss", "detect_miss", "pf_miss", "depth_miss", "mano_miss"};
+    std::vector<std::string> miss_str{"no_miss",       "detect_miss", "pf_miss",
+                                      "landmark_miss", "lift_miss",   "hardrule_miss"};
     if (record->m_nodestatus == NodeStatus::BUSY_DISCARD) {
         json_result["node_status"] = "busy_discard";
     } else {
@@ -1092,11 +1112,11 @@ void DataDebugRecord::DebugLift(Recordcache* record, const aisdk::algorithm::Kpt
 
 // void DataDebugRecord::DebugGlobalFilter(NrCore::PipelineNodeInfo& nodeinfo) {}
 
-// void DataDebugRecord::DebugGestureReg(NrCore::PipelineNodeInfo& nodeinfo) {
-//     if (enable_gesturereg_tojson) {
-//         GestureRegToJsonString(nodeinfo);
-//     }
-// }
+void DataDebugRecord::DebugGestureReg(Recordcache* record, const aisdk::algorithm::HandGestureInternal& gesture) {
+    if (enable_gesturereg_tojson) {
+        GestureRegToJsonString(record, gesture);
+    }
+}
 
 void DataDebugRecord::DebugWholeInference(Recordcache* record) {
     if (inference_json_save_file) {

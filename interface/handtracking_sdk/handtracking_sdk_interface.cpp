@@ -1,6 +1,7 @@
 #include "handtracking_sdk_interface.h"
 
 #include <cstdint>
+#include <string>
 
 #include "aisdk/base/file.h"
 #include "aisdk/base/log.h"
@@ -1081,10 +1082,24 @@ extern "C" int NR_INTERFACE_EXPORT NR_INTERFACE_API NRPluginDataRecord(uint32_t 
     int ret = 0;
 #ifdef ENABLE_ALGORITHM_DATA_RECORD
     if (DATA_RECORD_FLAG == flag && c_bytestruct) {
-        auto& prof = aisdk::base::DebugProfiling::Get().GetOpt();
+        // 遇到问题：unity打开的so不是推库的so，因此不能直接设置DebugProfiling
+        // auto& prof = aisdk::base::DebugProfiling::Get().GetOpt();
+        // aisdk::interface::DataRecordOption* tmp = (aisdk::interface::DataRecordOption*)c_bytestruct;
+        // prof.pipeline_debug = (tmp->start_stop > 0);
+        // 实现成直接写文件
         aisdk::interface::DataRecordOption* tmp = (aisdk::interface::DataRecordOption*)c_bytestruct;
-        prof.pipeline_debug = (tmp->start_stop > 0);
-        ret = 0;
+        AISDK_LOG_WARN("NRPluginDataRecord start_stop={} external_file={}", tmp->start_stop, tmp->external_file);
+        std::string data_record_statusf = std::string(tmp->external_file) + "/record.status";
+        if (aisdk::base::IsFileExist(data_record_statusf)) {
+            if (tmp->start_stop > 0) {
+                aisdk::base::WriteToFile(data_record_statusf, std::string("record_start\n"));
+            } else {
+                aisdk::base::WriteToFile(data_record_statusf, std::string("record_stop\n"));
+            }
+            ret = 0;
+        } else {
+            ret = -3;
+        }
     } else {
         ret = -2;
     }

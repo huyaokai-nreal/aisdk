@@ -62,6 +62,8 @@ std::string AddDataRecordCalculater(std::string& graph_config) {
         "  input_stream: \"DET_BBOX_OUTPUT:detection_output\"\n"
         "  input_stream: \"LANDMARK_OUTPUT:kpt2d\"\n"
         "  input_stream: \"LIFT_OUTPUT:kpt3d\"\n"
+        "  input_stream: \"BLOCK_OUT:kpt3d_blocked\"\n"
+        "  input_stream: \"GR_OUTPUT:gesture\"\n"
         "  input_side_packet: \"CAM_INFO_INPUT:cam_info\"\n"
         "  input_stream_handler {\n"
         "    input_stream_handler: \"ImmediateInputStreamHandler\"\n"

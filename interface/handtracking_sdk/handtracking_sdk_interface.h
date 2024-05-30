@@ -44,6 +44,8 @@ struct ProfilingInfo {
 extern "C" struct DataRecordOption {
     uint32_t struct_bytes = 0;
     uint32_t start_stop = 0;
+    // 例如: /sdcard/Android/data/com.xreal.HandInteractionExamples_NRSDK/files/
+    char external_file[128] = {0};
 };
 
 class HandTracking {
