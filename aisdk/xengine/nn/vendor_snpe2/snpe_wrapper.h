@@ -23,7 +23,7 @@ class SNPEWrapper {
     ~SNPEWrapper();
 
     bool init(const std::string& model_path, const std::string& runtime);
-    bool init(const uint8_t* buffer, const size_t size, const std::string& runtime);
+    bool init(const uint8_t* buffer, const size_t size, const std::string& runtime, bool support_SigndPD = false);
     bool release();
     bool setInputShape(const std::string& name, const std::vector<size_t>& shape);
     bool setOutputLayers(std::vector<std::string>& outputLayers);

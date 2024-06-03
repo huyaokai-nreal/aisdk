@@ -232,7 +232,7 @@ bool SNPEWrapper::init(const std::string& model_path, const std::string& runtime
     return true;
 }
 
-bool SNPEWrapper::init(const uint8_t* buffer, const size_t size, const std::string& runtime) {
+bool SNPEWrapper::init(const uint8_t* buffer, const size_t size, const std::string& runtime, bool support_SigndPD) {
     if (runtime == "CPU") {
         m_runtime = SNPE_RUNTIME_CPU;
     } else if (runtime == "GPU_FP16") {
@@ -303,7 +303,7 @@ bool SNPEWrapper::init(const uint8_t* buffer, const size_t size, const std::stri
         snpe2_capi.Snpe_SNPEBuilder_SetInputDimensions(snpeBuilderHandle, m_inputShapeMapHandle);
     }
 
-    if (0) {
+    if (support_SigndPD) {
         // test
         m_platformconfig = snpe2_capi.Snpe_PlatformConfig_Create();
         const char* str_platform = snpe2_capi.Snpe_PlatformConfig_GetPlatformOptions(m_platformconfig);

@@ -353,30 +353,47 @@ bool checkHexagonDSP() {
     return res;
 }
 
+// bool checkHexagonSignedPD() {
+//     SnpePlatformCInterface temp;
+//     AISDK_LOG_TRACE("checkHexagonDSPPlatformPlatformValidator");
+//     if (0 != SNPELibWrapper::getInstance().getSnpe2PlatformCInterface(&temp)) {
+//         AISDK_LOG_TRACE("getProviderfailed!");
+//         return false;
+//     }
+
+//     Snpe_PlatformValidator_Handle_t handle = temp.Snpe_PlatformValidator_Create();
+//     bool unsignedPD = false;  // 默认是unsignedPD = true;
+//     int res;
+//     if (handle) {
+//         // Snpe_PlatformValidator_SetRuntime 将导致 checkHexagonDSP 和 checkHexagonUnsignedPDDSP 执行失败，
+//         // 报错QNN_COMMON_ERROR_LOADING_BINARIES，且不能恢复。此功能慎用！！！！
+//         // 可能原因：同一个进程下，只能初始化一次，初始化会构造全局的内容，不能被再次初始化。
+//         temp.Snpe_PlatformValidator_SetRuntime(handle, Snpe_Runtime_t::SNPE_RUNTIME_DSP, unsignedPD);
+//         AISDK_LOG_TRACE("Snpe_PlatformValidator_SetRuntime: unsignedPD={}", unsignedPD);
+//         res = temp.Snpe_PlatformValidator_IsRuntimeAvailable(handle, unsignedPD);
+//         AISDK_LOG_TRACE("Snpe_PlatformValidator_IsRuntimeAvailable: unsignedPD={} res={}", unsignedPD, res);
+//         temp.Snpe_PlatformValidator_Delete(handle);
+//     }
+
+//     SNPELibWrapper::getInstance().UnloadSnpe2PlatformCInterface();
+//     return res ? true : false;
+// }
+
 bool checkHexagonSignedPD() {
-    SnpePlatformCInterface temp;
-    AISDK_LOG_TRACE("checkHexagonDSPPlatformPlatformValidator");
-    if (0 != SNPELibWrapper::getInstance().getSnpe2PlatformCInterface(&temp)) {
+    SnpeCInterface temp;
+    AISDK_LOG_TRACE("checkHexagonSignedPD");
+    if (0 != SNPELibWrapper::getInstance().getSnpe2CInterface(&temp)) {
         AISDK_LOG_TRACE("getProviderfailed!");
         return false;
     }
-
-    Snpe_PlatformValidator_Handle_t handle = temp.Snpe_PlatformValidator_Create();
-    bool unsignedPD = false;  // 默认是unsignedPD = true;
-    int res;
-    if (handle) {
-        // Snpe_PlatformValidator_SetRuntime 将导致 checkHexagonDSP 和 checkHexagonUnsignedPDDSP 执行失败，
-        // 报错QNN_COMMON_ERROR_LOADING_BINARIES，且不能恢复。此功能慎用！！！！
-        // 可能原因：同一个进程下，只能初始化一次，初始化会构造全局的内容，不能被再次初始化。
-        temp.Snpe_PlatformValidator_SetRuntime(handle, Snpe_Runtime_t::SNPE_RUNTIME_DSP, unsignedPD);
-        AISDK_LOG_TRACE("Snpe_PlatformValidator_SetRuntime: unsignedPD={}", unsignedPD);
-        res = temp.Snpe_PlatformValidator_IsRuntimeAvailable(handle, unsignedPD);
-        AISDK_LOG_TRACE("Snpe_PlatformValidator_IsRuntimeAvailable: unsignedPD={} res={}", unsignedPD, res);
-        temp.Snpe_PlatformValidator_Delete(handle);
+    temp.Snpe_Util_InitializeLogging(Snpe_LogLevel_t::SNPE_LOG_LEVEL_ERROR);
+    bool res = temp.Snpe_Util_IsRuntimeAvailableCheckOption(
+        Snpe_Runtime_t::SNPE_RUNTIME_DSP, Snpe_RuntimeCheckOption_t::SNPE_RUNTIME_CHECK_OPTION_NORMAL_CHECK);
+    AISDK_LOG_TRACE("Snpe_Util_IsRuntimeAvailableCheckOption: {}", res);
+    if (!res) {
+        AISDK_LOG_ERROR("checkHexagonSignedPD failed: {}", temp.Snpe_ErrorCode_GetLastErrorString());
     }
-
-    SNPELibWrapper::getInstance().UnloadSnpe2PlatformCInterface();
-    return res ? true : false;
+    return res;
 }
 
 bool checkHexagonUnsignedPDDSP() {
@@ -397,6 +414,8 @@ bool checkHexagonUnsignedPDDSP() {
 
 #else
 bool checkHexagonDSP() { return zdl::SNPE::SNPEFactory::isRuntimeAvailable(zdl::DlSystem::Runtime_t::DSP); }
+
+bool checkHexagonSignedPD() { return false; }
 
 bool checkHexagonUnsignedPDDSP() {
     return zdl::SNPE::SNPEFactory::isRuntimeAvailable(zdl::DlSystem::Runtime_t::DSP,
@@ -565,25 +584,37 @@ SYM_EXPORT aisdk::xengine::PlatformStatus* _ZN2NR200TK7FUNC001E() {
 
             // 以下执行可能会崩溃在libsnpe.so中，代码规避下：
             if (setjmp(kansnpe) == 0) {
-                ret.is_hexagon_dsp = checkHexagonDSP();
-#if SNPE_VERSION > 2000
-                ret.is_hexagon_unsignedPD_dsp = checkHexagonUnsignedPDDSP();
-#else
-                if (false == ret.is_hexagon_dsp) {
-                    ret.is_hexagon_unsignedPD_dsp = checkHexagonUnsignedPDDSP();
+                // 在自己手机手机上，优先进行SignedPD检查
+                if (ret.is_mobile_evapro) {
+                    // ret.is_hexagon_signedPD_dsp = checkHexagonSignedPD();
+                    // ret.is_hexagon_dsp = ret.is_hexagon_signedPD_dsp;
                 }
+                // 其次进行UnsignedPD检查
+                if (false == ret.is_hexagon_signedPD_dsp) {
+                    ret.is_hexagon_dsp = checkHexagonDSP();
+#if SNPE_VERSION > 2000
+                    ret.is_hexagon_unsignedPD_dsp = checkHexagonUnsignedPDDSP();
+#else
+                    if (false == ret.is_hexagon_dsp) {
+                        ret.is_hexagon_unsignedPD_dsp = checkHexagonUnsignedPDDSP();
+                    }
 #endif
+                }
             } else {
                 ret.is_hexagon_dsp = false;
+                ret.is_hexagon_signedPD_dsp = false;
                 ret.is_hexagon_unsignedPD_dsp = false;
             }
 
-            if (ret.is_hexagon_dsp || ret.is_hexagon_unsignedPD_dsp) {
+            if (ret.is_hexagon_dsp || ret.is_hexagon_signedPD_dsp || ret.is_hexagon_unsignedPD_dsp) {
                 ret.is_snpe_support = true;
             }
         }
 #elif defined(__linux__)
         ret.is_snpe_support = true;
+        ret.is_hexagon_dsp = false;
+        ret.is_hexagon_signedPD_dsp = false;
+        ret.is_hexagon_unsignedPD_dsp = false;
 #endif
         aisdk::base::SetThisThreadName(ori_name);
 #endif

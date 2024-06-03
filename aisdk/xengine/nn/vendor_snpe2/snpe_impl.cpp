@@ -44,7 +44,8 @@ Status SNPE_Session::Init(std::shared_ptr<AIModel> &model, SessionConfig &Sconfi
 
 #if (defined(ANDROID) || defined(__ANDROID__))
     aisdk::xengine::PlatformStatus *platform = _ZN2NR200TK7FUNC001E();
-    if (false == platform->is_hexagon_dsp && false == platform->is_hexagon_unsignedPD_dsp) {
+    if (false == platform->is_hexagon_dsp && false == platform->is_hexagon_signedPD_dsp &&
+        false == platform->is_hexagon_unsignedPD_dsp) {
         return Status::PLATFORM_NO_SUPPORT;
     }
 #endif
@@ -91,8 +92,8 @@ Status SNPE_Session::Init(std::shared_ptr<AIModel> &model, SessionConfig &Sconfi
         mSnpeWrapper->setOutputTensors(Sconfig.customize_ioname.output_tensorname);
     }
 
-    bool initok =
-        mSnpeWrapper->init((const uint8_t *)aimodel->m_config.model_mem, aimodel->m_config.model_size, runtime_mark);
+    bool initok = mSnpeWrapper->init((const uint8_t *)aimodel->m_config.model_mem, aimodel->m_config.model_size,
+                                     runtime_mark, platform->is_hexagon_signedPD_dsp);
     if (!initok) {
         return Status::FAILURE;
     }
@@ -140,7 +141,7 @@ Status SNPE_Session::Init(std::shared_ptr<AIModel> &model, SessionConfig &Sconfi
         }
         AISDK_LOG_TRACE("SnpeWrapper Rebuild!!!");
         initok = mSnpeWrapper->init((const uint8_t *)aimodel->m_config.model_mem, aimodel->m_config.model_size,
-                                    runtime_mark);
+                                    runtime_mark, platform->is_hexagon_signedPD_dsp);
         if (!initok) {
             return Status::FAILURE;
         }
