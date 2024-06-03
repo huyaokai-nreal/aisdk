@@ -97,6 +97,10 @@ NRPluginResult HandTracking::GetHandData(NRPluginHandle handle, uint64_t hmd_tim
         return NR_PLUGIN_RESULT_FAILURE;
     }
     auto* ins = Plugin::GetInstance();
+    if (false == ins->isInit()) {
+        AISDK_LOG_WARN("HandTracking: init Failure");
+        return NR_PLUGIN_RESULT_FAILURE;
+    }
     auto& pipeline = ins->GetPipeline();
     std::shared_ptr<task::HandTrackingXGraph> impl =
         std::dynamic_pointer_cast<task::HandTrackingXGraph>(pipeline.Impl());
@@ -863,8 +867,8 @@ NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
             aisdk::xengine::PlatformStatus* plat = ins->m_handtracking.m_funcs.m_getplatform();
             AISDK_LOG_WARN("HandTracking: dsp_support={}", plat->is_snpe_support);
             // clang-format off
-            AISDK_LOG_TRACE("Plugin::Initialize is_snpe_support={},is_hexagon_dsp={},is_hexagon_unsignedPD_dsp={},is_mobile_evapro={}",
-                (int)plat->is_snpe_support, (int)plat->is_hexagon_dsp, (int)plat->is_hexagon_unsignedPD_dsp,
+            AISDK_LOG_TRACE("Plugin::Initialize is_snpe_support={},is_hexagon_dsp={},is_hexagon_signedPD_dsp={},is_hexagon_unsignedPD_dsp={},is_mobile_evapro={}",
+                (int)plat->is_snpe_support, (int)plat->is_hexagon_dsp, (int)plat->is_hexagon_signedPD_dsp, (int)plat->is_hexagon_unsignedPD_dsp,
                 (int)plat->is_mobile_evapro);
             // clang-format on
             std::vector<int> pipeline_policy = SelectPipeline(tmp, *plat, ins->m_hmd.cam_is_horizontal);
@@ -881,6 +885,7 @@ NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
                     status = pipline.Init<task::HandTrackingXGraph>(ins->m_handtracking.m_funcs, tmp[pipeline_index],
                                                                     ins->m_hmd.m_cam_param);
                     if (status == aisdk::algorithm::Status::SUCCESS) {
+                        ins->m_is_init = true;
                         ins->pipeline_name = tmp[pipeline_index].pipeline_name;
                         AISDK_LOG_WARN("HandTracking: Initialized!");
                         return NR_PLUGIN_RESULT_SUCCESS;
@@ -906,6 +911,10 @@ NRPluginResult Plugin::Start(NRPluginHandle handle) {
     }
     AISDK_LOG_WARN("HandTracking: Start");
     auto ins = Plugin::GetInstance();
+    if (false == ins->isInit()) {
+        AISDK_LOG_WARN("HandTracking: init Failure");
+        return NR_PLUGIN_RESULT_FAILURE;
+    }
     auto pipeline = ins->GetPipeline().Impl();
     auto ret = pipeline->Start();
     if (ret != aisdk::algorithm::Status::SUCCESS) {
@@ -932,6 +941,10 @@ NRPluginResult Plugin::Pause(NRPluginHandle handle) {
     }
     AISDK_LOG_WARN("HandTracking: Pause");
     auto ins = Plugin::GetInstance();
+    if (false == ins->isInit()) {
+        AISDK_LOG_WARN("HandTracking: init Failure");
+        return NR_PLUGIN_RESULT_FAILURE;
+    }
     auto pipline = ins->GetPipeline().Impl();
     pipline->Stop();
     ins->Stop();
@@ -946,6 +959,10 @@ NRPluginResult Plugin::Resume(NRPluginHandle handle) {
     }
     AISDK_LOG_WARN("HandTracking: Resume");
     auto ins = Plugin::GetInstance();
+    if (false == ins->isInit()) {
+        AISDK_LOG_WARN("HandTracking: init Failure");
+        return NR_PLUGIN_RESULT_FAILURE;
+    }
     auto pipline = ins->GetPipeline().Impl();
     auto ret = pipline->Start();
     if (ret != aisdk::algorithm::Status::SUCCESS) {
@@ -964,6 +981,10 @@ NRPluginResult Plugin::Stop(NRPluginHandle handle) {
     }
     AISDK_LOG_WARN("HandTracking: Stop");
     auto ins = Plugin::GetInstance();
+    if (false == ins->isInit()) {
+        AISDK_LOG_WARN("HandTracking: init Failure");
+        return NR_PLUGIN_RESULT_FAILURE;
+    }
     auto pipline = ins->GetPipeline().Impl();
     pipline->Stop();
     ins->Stop();

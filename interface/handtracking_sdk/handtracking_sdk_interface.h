@@ -113,6 +113,7 @@ class Plugin {
     NRPluginHandle GetHandle() { return m_handle; }
     void SetHandle(NRPluginHandle handle) { m_handle = handle; }
 
+    bool isInit() { return m_is_init; }
     bool isStart() { return m_is_start; }
     void Start() { m_is_start = true; }
     void Stop() { m_is_start = false; }
@@ -136,6 +137,7 @@ class Plugin {
     ~Plugin();
     static Plugin* m_ins;
 
+    bool m_is_init = false;
     std::unique_ptr<task::Pipeline> m_pipeline;
     NRPluginHandle m_handle;
 
