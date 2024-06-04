@@ -44,22 +44,26 @@ def process_single_data(filename, leftcam_raw_path, rightcam_raw_path,
                 bbox = detect["lefthand_leftcam"]
                 hand_confidence = detect_model["lefthand_leftcam"]["hand_confidence"] if detect_model is not None else 0.0 
                 cv2.rectangle(leftcam_raw_img, (int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3])),(0, 255, 0), 2) 
-                cv2.putText(leftcam_raw_img, "left: {:.2f}".format(hand_confidence), (int(bbox[0]), int(bbox[1]) - 5), 0, 0.8, (0, 255, 0), 2)
+                cv2.putText(leftcam_raw_img, "L: {:.2f}".format(hand_confidence), (int(bbox[0]), int(bbox[1]) - 5), 0, 0.6, (0, 255, 0), 2)
+                cv2.putText(rightcam_raw_img, "L_L_detscore: {:.2f}".format(hand_confidence), (15, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 1, cv2.LINE_AA)
             if detect.get("righthand_leftcam"):
                 bbox = detect["righthand_leftcam"]
                 hand_confidence = detect_model["righthand_leftcam"]["hand_confidence"] if detect_model is not None else 0.0 
                 cv2.rectangle(leftcam_raw_img, (int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3])),(0, 255, 0), 2) 
-                cv2.putText(leftcam_raw_img, "right: {:.2f}".format(hand_confidence), (int(bbox[0]), int(bbox[1]) - 5), 0, 0.8, (0, 255, 0), 2)
+                cv2.putText(leftcam_raw_img, "R: {:.2f}".format(hand_confidence), (int(bbox[0]), int(bbox[1]) - 5), 0, 0.6, (0, 255, 0), 2)
+                cv2.putText(rightcam_raw_img, "L_R_detscore: {:.2f}".format(hand_confidence), (15, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 1, cv2.LINE_AA)
             if detect.get("lefthand_rightcam"):
                 bbox = detect["lefthand_rightcam"]
                 hand_confidence = detect_model["lefthand_rightcam"]["hand_confidence"] if detect_model is not None else 0.0 
                 cv2.rectangle(rightcam_raw_img, (int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3])),(0, 255, 0), 2) 
-                cv2.putText(rightcam_raw_img, "left: {:.2f}".format(hand_confidence), (int(bbox[0]), int(bbox[1]) - 5), 0, 0.8, (0, 255, 0), 2)
+                cv2.putText(rightcam_raw_img, "L: {:.2f}".format(hand_confidence), (int(bbox[0]), int(bbox[1]) - 5), 0, 0.6, (0, 255, 0), 2)
+                cv2.putText(rightcam_raw_img, "R_L_detscore: {:.2f}".format(hand_confidence), (15, 75), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 1, cv2.LINE_AA)
             if detect.get("righthand_rightcam"):
                 bbox = detect["righthand_rightcam"]
                 hand_confidence = detect_model["righthand_rightcam"]["hand_confidence"] if detect_model is not None else 0.0 
                 cv2.rectangle(rightcam_raw_img, (int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3])),(0, 255, 0), 2) 
-                cv2.putText(rightcam_raw_img, "right: {:.2f}".format(hand_confidence), (int(bbox[0]), int(bbox[1]) - 5), 0, 0.8, (0, 255, 0), 2)
+                cv2.putText(rightcam_raw_img, "R: {:.2f}".format(hand_confidence), (int(bbox[0]), int(bbox[1]) - 5), 0, 0.6, (0, 255, 0), 2)
+                cv2.putText(rightcam_raw_img, "R_R_detscore: {:.2f}".format(hand_confidence), (15, 100), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 1, cv2.LINE_AA)
 
         if mid_inference.get("02_rsn"):
             rsn = mid_inference["02_rsn"]
