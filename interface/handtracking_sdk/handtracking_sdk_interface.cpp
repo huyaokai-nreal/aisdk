@@ -194,10 +194,18 @@ void SetAdspLibraryPath(const std::string& native_lib_path, const std::string& s
     AISDK_LOG_INFO("SNPE_VERSION={:d}", SNPE_VERSION);
 #if (defined(ANDROID) || defined(__ANDROID__))
     std::stringstream path;
-    path << native_lib_path << ";/system/lib/rfsa/adsp;/system/vendor/lib/rfsa/adsp;/dsp";
+    // app自己的库提取路径，在system_app下，此路径可能无效
+    path << native_lib_path;
+    // vendor通用路径，以及adsp库相关
+    path << ";/vendor/lib/rfsa/adsp;/vendor/lib/rfsa/dsp;/vendor/dsp;/vendor/dsp/adsp";
+    // cdsp库相关
+    path << ";/vendor/dsp/cdsp";
     if (system_app_lib_path.size()) {
         // 优先级低于自身app的lib路径native_lib_path
+        // class_loader给到外部共享server路径
         path << ";" << system_app_lib_path;
+        // 手机的系统库路径
+        path << ";/system/lib64;/system/lib";
     }
     int set_res = setenv("ADSP_LIBRARY_PATH", path.str().c_str(), 0 /*override*/);
     if (set_res != 0) {

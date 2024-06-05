@@ -21,6 +21,8 @@
 #include "nr_snpe_header.h"
 #endif
 
+#include "aisdk/xengine/cv/hexagon_dsp/hexagon_dsp_fastcv.h"
+
 #if defined(HAVE_HAL_TENSORRT)
 #include "dlutil.h"
 #include "nr_tensorrt_header.h"
@@ -565,12 +567,23 @@ bool CheckEngineSingleBatch(aisdk::xengine::VendorType& vendor) {
 //     }
 // }
 
+#if defined(ENABLE_HEXAGON_DSP_OP)
+void HexagonDspTest() {
+    static aisdk::xengine::HexagonDspInterface dsp_interface;
+    dsp_interface.Init();
+    dsp_interface.DspSupport(0, false);
+}
+#endif
+
 extern "C" {
 
 SYM_EXPORT aisdk::xengine::PlatformStatus* _ZN2NR200TK7FUNC001E() {
     static aisdk::xengine::PlatformStatus ret;
     static std::once_flag oc;
     std::call_once(oc, [&]() {
+#if defined(ENABLE_HEXAGON_DSP_OP)
+        HexagonDspTest();
+#endif
         supportUpdata(ret);
         ret.is_mobile_evapro = checkMobileEvapro();
 #if defined(HAVE_HAL_SNPE)

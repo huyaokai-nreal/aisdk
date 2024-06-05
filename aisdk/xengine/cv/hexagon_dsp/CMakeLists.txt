@@ -1,0 +1,3 @@
+
+target_sources(${XENGINE_LIBRARY_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/hexagon_dsp_fastcv.cpp)
+target_compile_options(${XENGINE_LIBRARY_NAME} PRIVATE -DENABLE_HEXAGON_DSP_OP)
