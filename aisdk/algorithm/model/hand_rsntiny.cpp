@@ -8,6 +8,7 @@
 #include "aisdk/algorithm/func/permute.h"
 #include "aisdk/algorithm/func/reducesum.h"
 #include "aisdk/algorithm/func/softmax.h"
+#include "aisdk/base/log.h"
 namespace aisdk::algorithm {
 
 /**
@@ -20,7 +21,6 @@ namespace aisdk::algorithm {
 
 void RSNTiny::ipr(float *__restrict input_hm, float *__restrict kpt_x_out, float *__restrict kpt_y_out) {
     softmax_last_dim(input_hm, hm_softmax_.data(), {1, keypoint_num_, output_shape_ * output_shape_});
-
     reduce_sum_h(hm_softmax_.data(), hm_reduce_col_.data(), keypoint_num_, output_shape_, output_shape_);
     reduce_sum_w(hm_softmax_.data(), hm_reduce_row_.data(), keypoint_num_, output_shape_, output_shape_);
 
@@ -92,6 +92,7 @@ void RSNTiny::PostProcess(Kpt2dResult &result) {
     if (!otensor.m_packed_bybatch) {
         return;
     }
+    AISDK_LOG_TRACE("rsntiny, output size {}, batch {}", otensor.m_multishape_num, otensor.m_batch);
     result.kpts.resize(otensor.m_batch);
     unsigned int _h, _w, _c, element_byte;
     for (size_t multi_i = 0; multi_i < otensor.m_multishape_num; multi_i++) {
@@ -121,6 +122,11 @@ void RSNTiny::PostProcess(Kpt2dResult &result) {
                 ipr(_data, kpt_x_data.data(), kpt_y_data.data());
             } else if (otensor_format_ == aisdk::xengine::TensorFormat::HWC) {
                 NHWC2NCHW(_data, m_outputsNCHW.data(), 1, _c, _h * _w);
+                for (const auto &a : m_outputsNCHW) {
+                    if (std::isnan(a)) {
+                        AISDK_LOG_TRACE("rsntiny output nan {}", a);
+                    }
+                }
                 ipr(m_outputsNCHW.data(), kpt_x_data.data(), kpt_y_data.data());
             }
 

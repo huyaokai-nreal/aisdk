@@ -130,7 +130,7 @@ void GMLPLiftNimble::PreProcess(const LiftNetInputs &inputs) {
             mem_hand[i] = mem_right_hand[i];
         }
     } else {
-        AISDK_LOG_TRACE("[GMLPLiftNimble] reset liftnetv3 mem");
+        AISDK_LOG_TRACE("[GMLPLiftNimble] reset liftnimble mem");
         for (int i = 0; i < mem_size; i++) {
             mem_hand[i] = 0;
         }
