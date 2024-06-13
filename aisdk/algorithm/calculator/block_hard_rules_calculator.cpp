@@ -2,6 +2,7 @@
 
 #include "../internal_structs/kpt3d_struct_internal.h"
 #include "aisdk/algorithm/calculator/block_hard_rules_calculator.pb.h"
+#include "aisdk/algorithm/common/NR_GlobalPredictorService.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/time.h"
 #include "aisdk/base/type.h"
@@ -23,6 +24,27 @@ class BlockHardRulesCalculator : public xgraph::CalculatorBase {
    private:
     float max_root_depth_;
     float score_th_;
+    float score_th_width_;
+    enum class HandState { Lost = 0, Tracking };
+    class HandStateUpdator {
+       public:
+        HandStateUpdator(float score_th, float score_th_width) : score_th_(score_th), score_th_width_(score_th_width) {}
+        HandState last_state;
+        HandState update(float score) {
+            if (score < score_th_ - score_th_width_ / 2.F) {
+                last_state = HandState::Lost;
+            } else if (score > score_th_ + score_th_width_ / 2.F) {
+                last_state = HandState::Tracking;
+            }
+            return last_state;
+        }
+
+       private:
+        float score_th_;
+        float score_th_width_;
+    };
+    std::unique_ptr<HandStateUpdator> left_hand_state_updator_;
+    std::unique_ptr<HandStateUpdator> right_hand_state_updator_;
 
    public:
     static absl::Status GetContract(xgraph::CalculatorContract* cc) {
@@ -45,6 +67,9 @@ class BlockHardRulesCalculator : public xgraph::CalculatorBase {
         const auto& options = cc->Options<aisdk::BlockHardRulesCalculatorOptions>();
         max_root_depth_ = options.max_root_depth();
         score_th_ = options.score_th();
+        score_th_width_ = options.score_th_width();
+        left_hand_state_updator_ = std::make_unique<HandStateUpdator>(score_th_, score_th_width_);
+        right_hand_state_updator_ = std::make_unique<HandStateUpdator>(score_th_, score_th_width_);
         AISDK_LOG_TRACE("[BlockHardRulesCalculator] Open complete");
         return absl::OkStatus();
     }
@@ -55,14 +80,16 @@ class BlockHardRulesCalculator : public xgraph::CalculatorBase {
 #endif
         AISDK_LOG_TRACE("[BlockHardRulesCalculator] Process start");
         auto output_buffer_ = absl::make_unique<HandsData>();
+        const auto& kpt3d_world_pre = GlobalPredictorService::getInstance().get_last_kpt3d_world();
         for (int i = 0; i < cc->Inputs().NumEntries(); i++) {
             const auto& input_data = cc->Inputs().Index(i).Get<HandsData>();
             if (input_data.lhand_valid) {
                 output_buffer_->lhand_valid = true;
                 output_buffer_->left_hand = input_data.left_hand;
                 AISDK_LOG_TRACE("[BlockHardRulesCalculator] Checking left hand");
+                left_hand_state_updator_->last_state = HandState(static_cast<int>(kpt3d_world_pre.lhand_valid));
                 if (block_rule_root_distance(input_data.left_hand.kpt3d, max_root_depth_) ||
-                    input_data.left_hand.score < score_th_) {
+                    left_hand_state_updator_->update(input_data.left_hand.score) == HandState::Lost) {
                     AISDK_LOG_TRACE("[BlockHardRulesCalculator] block left hand {}", input_data.left_hand.score);
                     output_buffer_->lhand_valid = false;
                 }
@@ -71,8 +98,9 @@ class BlockHardRulesCalculator : public xgraph::CalculatorBase {
                 output_buffer_->rhand_valid = true;
                 output_buffer_->right_hand = input_data.right_hand;
                 AISDK_LOG_TRACE("[BlockHardRulesCalculator] Checking right hand");
+                right_hand_state_updator_->last_state = HandState(static_cast<int>(kpt3d_world_pre.rhand_valid));
                 if (block_rule_root_distance(input_data.right_hand.kpt3d, max_root_depth_) ||
-                    input_data.right_hand.score < score_th_) {
+                    right_hand_state_updator_->update(input_data.right_hand.score) == HandState::Lost) {
                     AISDK_LOG_TRACE("[BlockHardRulesCalculator] block right hand {}", input_data.right_hand.score);
                     output_buffer_->rhand_valid = false;
                 }

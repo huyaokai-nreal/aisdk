@@ -4,4 +4,5 @@ package aisdk;
 message BlockHardRulesCalculatorOptions  {
   float max_root_depth = 1;
   float score_th = 2;
+  float score_th_width = 3;
 }
