@@ -1,7 +1,6 @@
 #include <absl/status/status.h>
 
 #include <algorithm>
-#include <cmath>
 #include <memory>
 #include <string>
 #include <vector>
@@ -143,16 +142,11 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
         if (left_hand) {
             cv::flip(crop_image, crop_image, 1);
         }
-        auto rsn_result = netalgo->Inference({crop_image, crop_image.clone()});
+        auto rsn_result = netalgo->Inference({crop_image});
         if (!rsn_result.ok()) {
             return rsn_result.status();
         }
         if (crop_method == CropMethod::WarpAffine) {
-            for (const auto& pt : rsn_result->kpts[0]) {
-                if (std::isnan(pt[0]) || std::isnan(pt[1])) {
-                    AISDK_LOG_TRACE("HandLandmark: kpt 2d {}, {}", pt[0], pt[1]);
-                }
-            }
             if (left_hand) {
                 std::transform(
                     rsn_result->kpts[0].begin(), rsn_result->kpts[0].end(), kpt.begin(), [&](const auto& kpt) {

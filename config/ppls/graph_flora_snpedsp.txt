@@ -60,7 +60,7 @@ node {
     [type.googleapis.com/aisdk.HandLandmarkCalculatorOptions] {
       input_height: 128
       input_width: 128
-      model_name: "2d_rsntiny"
+      model_name: "2d_rtmtiny"
     }
   }
 }
@@ -125,7 +125,7 @@ node {
   output_stream: "OUTPUT:kpt3d_filtered"
   node_options: {
     [type.googleapis.com/aisdk.HandFilterCalculatorOptions] {
-      glasses_type: "ella"
+      glasses_type: "flora"
     }
   }
 }

@@ -25,12 +25,6 @@ void softmax_single_lane_inplace(float* input, float* output, int size) {
         output[i] = static_cast<float>(exp(input[i] - max));
         sum += output[i];
     }
-    AISDK_LOG_TRACE("softmax sum is {}", sum);
-    if (std::isnan(sum)) {
-        for (int i = 0; i < size; i++) {
-            AISDK_LOG_TRACE("nan raw output {}", input[i]);
-        }
-    }
     for (int i = 0; i < size; i++) {
         output[i] /= sum;
     }
@@ -47,9 +41,9 @@ void softmax_last_dim_naive(float* input, float* output, const std::array<int, 3
 }
 
 void softmax_last_dim(float* input, float* output, const std::array<int, 3>& dims) {
-    //#if __aarch64__
-    //    aisdk::xengine::softmax_last_dim_asm(input, output, dims);
-    //#else
+#if __aarch64__
+    aisdk::xengine::softmax_last_dim_asm(input, output, dims);
+#else
     softmax_last_dim_naive(input, output, dims);
-    //#endif
+#endif
 }

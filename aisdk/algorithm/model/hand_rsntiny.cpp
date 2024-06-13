@@ -45,7 +45,7 @@ absl::Status RSNTiny::Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::
     // resize post process memory
     input_shape_ = itensor.m_tensors[0].m_dims[1];
     output_shape_ = otensor.m_tensors[0].m_dims[1];
-    keypoint_num_ = otensor.m_tensors[0].m_dims[0];
+    keypoint_num_ = otensor.m_tensors[0].m_dims[2];
     hm_softmax_.resize(keypoint_num_ * output_shape_ * output_shape_);
     hm_reduce_col_.resize(keypoint_num_ * output_shape_);
     hm_reduce_row_.resize(keypoint_num_ * output_shape_);
@@ -122,11 +122,6 @@ void RSNTiny::PostProcess(Kpt2dResult &result) {
                 ipr(_data, kpt_x_data.data(), kpt_y_data.data());
             } else if (otensor_format_ == aisdk::xengine::TensorFormat::HWC) {
                 NHWC2NCHW(_data, m_outputsNCHW.data(), 1, _c, _h * _w);
-                for (const auto &a : m_outputsNCHW) {
-                    if (std::isnan(a)) {
-                        AISDK_LOG_TRACE("rsntiny output nan {}", a);
-                    }
-                }
                 ipr(m_outputsNCHW.data(), kpt_x_data.data(), kpt_y_data.data());
             }
 
