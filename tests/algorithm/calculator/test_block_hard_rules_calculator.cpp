@@ -5,6 +5,7 @@
 #include <aisdk/xgraph/xgraph.h>
 #include <mediapipe/framework/packet.h>
 #include <mediapipe/framework/timestamp.h>
+#include <map>
 #include "aisdk/task/handtracking/handtracking_calculators_register.h"
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include <doctest/doctest.h>
@@ -27,7 +28,8 @@ TEST_CASE("testing block hard rule calculator in graph") {
 )";
     xgraph::CalculatorGraphConfig config = xgraph::ParseTextProtoOrDie<xgraph::CalculatorGraphConfig>(kTestGraphConfig);
     xgraph::CalculatorGraph graph;
-    absl::Status status = graph.Initialize({config}, {});
+    std::map<std::string, mediapipe::Packet> side_packet;
+    absl::Status status = graph.Initialize(config, side_packet);
     CHECK(status.ok());
     status = graph.StartRun({});
     CHECK(status.ok());
@@ -37,6 +39,8 @@ TEST_CASE("testing block hard rule calculator in graph") {
     for (int i = 0; i < 21; i++) {
         input->left_hand.kpt3d.emplace_back(0, 0, 0.9);
         input->right_hand.kpt3d.emplace_back(0, 0, 1.9);
+        input->left_hand.score = 1.0;
+        input->right_hand.score = 1.0;
     }
     input->lhand_valid = true;
     input->rhand_valid = true;
@@ -69,6 +73,8 @@ TEST_CASE("test block hard rule calculator") {
     for (int i = 0; i < 21; i++) {
         input->left_hand.kpt3d.emplace_back(0, 0, 0.9);
         input->right_hand.kpt3d.emplace_back(0, 0, 1.9);
+        input->left_hand.score = 1.0;
+        input->right_hand.score = 1.0;
     }
     input->lhand_valid = true;
     input->rhand_valid = true;

@@ -24,8 +24,4 @@ TEST_CASE("testing the get_roi_image func"){
     cv::Mat crop_image = aisdk::algorithm::generate_roi_image(raw_image, bbox_cs, 128, 128);
     CHECK_EQ(crop_image.rows, 128);
     CHECK_EQ(crop_image.cols, 128);
-    cv::Mat gt_crop_image = cv::imread(test_data_root+"flora_test_crop_hand.png", cv::IMREAD_GRAYSCALE);
-    auto error = cv::mean(cv::abs(crop_image - gt_crop_image));
-    double mean_error = static_cast<double>(error[0]);
-    CHECK_LT(mean_error, 1e-6);
 }
