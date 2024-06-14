@@ -24,7 +24,8 @@ class BaseCameraModel {
           camera_to_world_xf_(camera_to_world_xf),
           camera_type_(camera_type),
           video_width_(video_width),
-          video_height_(video_height){};
+          video_height_(video_height){}
+    virtual ~BaseCameraModel(){}
     virtual std::vector<Eigen::Vector2f> undistort(const std::vector<Eigen::Vector2f>& point_2d) = 0;
     virtual std::vector<Eigen::Vector3f> world_to_eye(const std::vector<Eigen::Vector3f>& point_3d) = 0;
     virtual std::vector<Eigen::Vector2f> world_to_window(const std::vector<Eigen::Vector3f>& point_3d) = 0;
