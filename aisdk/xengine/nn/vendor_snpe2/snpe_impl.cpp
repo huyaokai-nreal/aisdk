@@ -41,9 +41,8 @@ SNPE_Session::~SNPE_Session() { mSnpeWrapper->release(); }
 
 Status SNPE_Session::Init(std::shared_ptr<AIModel> &model, SessionConfig &Sconfig) {
     auto aimodel = std::dynamic_pointer_cast<SNPE_AIModel>(model);
-
-#if (defined(ANDROID) || defined(__ANDROID__))
     aisdk::xengine::PlatformStatus *platform = _ZN2NR200TK7FUNC001E();
+#if (defined(ANDROID) || defined(__ANDROID__))
     if (false == platform->is_hexagon_dsp && false == platform->is_hexagon_signedPD_dsp &&
         false == platform->is_hexagon_unsignedPD_dsp) {
         return Status::PLATFORM_NO_SUPPORT;

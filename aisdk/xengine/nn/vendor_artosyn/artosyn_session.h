@@ -1,8 +1,8 @@
 #ifndef _ARTOSYN_SESSION_H_
 #define _ARTOSYN_SESSION_H_
 
-#include "nr_artosyn_header.h"
-#include "nrnn_session.h"
+#include "aisdk/xengine/nr_artosyn_header.h"
+#include "aisdk/xengine/nrnn_session.h"
 namespace aisdk::xengine {
 
 class ARTOSYN_Session : public Session {

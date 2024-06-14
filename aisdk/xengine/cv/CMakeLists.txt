@@ -1,10 +1,12 @@
 
-target_sources(${XENGINE_LIBRARY_NAME} PRIVATE
-${CMAKE_CURRENT_SOURCE_DIR}/xr_cv.cpp
-${CMAKE_CURRENT_SOURCE_DIR}/warpaffine.cpp
-${CMAKE_CURRENT_SOURCE_DIR}/perspective_crop_image.cpp
-)
+if(CMAKE_SYSTEM_NAME STREQUAL "Android")
+    target_sources(${XENGINE_LIBRARY_NAME} PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/xr_cv.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/warpaffine.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/perspective_crop_image.cpp
+    )
 
-if(ENABLE_HEXAGON_DSP_OP)
-    add_subdirectory(hexagon_dsp)
+    if(ENABLE_HEXAGON_DSP_OP)
+        add_subdirectory(hexagon_dsp)
+    endif()
 endif()

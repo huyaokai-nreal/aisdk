@@ -11,6 +11,10 @@
 #include "aisdk/xengine/nn/vendor_rknn/rknn_session.h"
 #endif
 
+#if defined(HAVE_HAL_ARTOSYN)
+#include "aisdk/xengine/nn/vendor_artosyn/artosyn_session.h"
+#endif
+
 #if defined(HAVE_HAL_SNPE)
 #if SNPE_VERSION < 2000
 #include "aisdk/xengine/nn/vendor_snpe/snpe_session.h"
@@ -58,6 +62,11 @@ Status Inference::Init(std::string &netname) {
 #if defined(HAVE_HAL_SNPE)
             nn_thread_name = std::string("snpe_forwards");
             m_sessionimpl = std::make_shared<aisdk::xengine::SNPE_Session>();
+#endif
+        } else if (m_mconfig.vendor_type == VendorType::ARTOSYN) {
+#if defined(HAVE_HAL_ARTOSYN)
+            nn_thread_name = std::string("artosyn_forwards");
+            m_sessionimpl = std::make_shared<aisdk::xengine::ARTOSYN_Session>();
 #endif
         } else if (m_mconfig.vendor_type == VendorType::XREAL) {
             nn_thread_name = std::string("xreal_forwards");

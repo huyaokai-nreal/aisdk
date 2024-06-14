@@ -1,8 +1,8 @@
 #ifndef _ARTOSYN_MODEL_H_
 #define _ARTOSYN_MODEL_H_
 
-#include "nr_artosyn_header.h"
-#include "nrnn_model.h"
+#include "aisdk/xengine/nr_artosyn_header.h"
+#include "aisdk/xengine/nrnn_model.h"
 
 namespace aisdk::xengine {
 

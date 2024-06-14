@@ -89,7 +89,7 @@ void HandDetectNet::PreProcess(const std::vector<Image> &net_input) {
 
         float wratio = float(width) / float(origin_img_width);
         float hratio = float(height) / float(origin_img_height);
-#if __aarch64__
+#if ((defined(ANDROID) || defined(__ANDROID__)) && defined(__aarch64__))
         if ((wratio - 0.4f) < 1e-5 && (hratio - 0.4f) < 1e-5) {
             cv::Mat image_resized(cv::Size(width, height), CV_32FC1, mem);
             // 仅支持等比例缩小2.5倍
@@ -261,7 +261,7 @@ void HandDetectNet::PreProcessSingle(const std::vector<Image> &net_input, uint32
 
         float wratio = float(width) / float(origin_img_width);
         float hratio = float(height) / float(origin_img_height);
-#if __aarch64__
+#if ((defined(ANDROID) || defined(__ANDROID__)) && defined(__aarch64__))
         if ((wratio - 0.4f) < 1e-5 && (hratio - 0.4f) < 1e-5) {
             cv::Mat image_resized(cv::Size(width, height), CV_32FC1, mem);
             // 仅支持等比例缩小2.5倍

@@ -41,7 +41,7 @@ void softmax_last_dim_naive(float* input, float* output, const std::array<int, 3
 }
 
 void softmax_last_dim(float* input, float* output, const std::array<int, 3>& dims) {
-#if __aarch64__
+#if ((defined(ANDROID) || defined(__ANDROID__)) && defined(__aarch64__))
     aisdk::xengine::softmax_last_dim_asm(input, output, dims);
 #else
     softmax_last_dim_naive(input, output, dims);

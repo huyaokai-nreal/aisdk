@@ -5,7 +5,7 @@
 #include "aisdk/base/log.h"
 #include "aisdk/xengine/nrhal_common.h"
 
-#if __aarch64__
+#if ((defined(ANDROID) || defined(__ANDROID__)) && defined(__aarch64__))
 #define nr_exp()                                                                                                       \
     __asm__ volatile(                                                                                                  \
         "mov x0, %0\n\t"                                                                                               \
@@ -1554,7 +1554,7 @@ static const double logTab[(LOGTAB_MASK + 1) * 2] = {
     .69314718055994530941723212145818,          5.0e-01,
 };
 
-#if __aarch64__
+#if ((defined(ANDROID) || defined(__ANDROID__)) && defined(__aarch64__))
 #define c_exp_lo -88.3762626647949f
 #define c_exp_hi 88.3762626647949f
 #define c_cephes_LOG2EF 1.44269504088896341

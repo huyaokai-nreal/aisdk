@@ -32,4 +32,10 @@ if(ENABLE_XENGINE_MNN_NN)
     add_subdirectory(vendor_mnn)
 endif()
 
+message ("ENABLE_XENGINE_ARTOSYN_NN: ${ENABLE_XENGINE_ARTOSYN_NN}")
+if(ENABLE_XENGINE_ARTOSYN_NN)
+    target_compile_options(${XENGINE_LIBRARY_NAME} PRIVATE -DHAVE_HAL_ARTOSYN)
+    add_subdirectory(vendor_artosyn)
+endif()
+
 add_subdirectory(vendor_xrnn)

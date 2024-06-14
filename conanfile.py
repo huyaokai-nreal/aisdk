@@ -25,10 +25,11 @@ class AISDK(ConanFile):
         self.requires("jsoncpp/1.9.5", transitive_headers=True, transitive_libs=True)
         self.requires("openssl/1.1.1m", transitive_headers=True, transitive_libs=True)
         self.requires("nreal_mnn/2.0.0", transitive_headers=True, transitive_libs=True)
-        self.requires("snpe/2.17.0", transitive_headers=False, transitive_libs=False)
+        if self.settings.os in ["Linux", "Android"] and self.conf.get("user.os:distro") != "Xrlinux":
+            self.requires("snpe/2.17.0", transitive_headers=False, transitive_libs=False)
         self.requires("camera_model/develop", transitive_libs=True)
-        if self.settings.os == "Linux":
-            self.requires("framework/jenkins#c6267a1decb4846582cf18e15d5e22ad6a7f6150")
+        if self.settings.os == "Linux" and self.conf.get("user.os:distro") != "Xrlinux":
+            self.requires("framework/jenkins#835223d03ea5fdca60b7c57a1a759936897707f0")
         else:
             self.requires(super().override_require("framework/jenkins"), run=True)
         self.requires("xgraph/main", transitive_libs=True)
@@ -39,6 +40,8 @@ class AISDK(ConanFile):
         self.requires("ceres-solver/2.0.0.1")
         if self.settings.os in ["Linux", "Android", "Windows"] and self.conf.get("user.os:distro") != "Xrlinux":
             self.requires("openblas/0.3.27")
-        
+        if self.conf.get("user.os:distro") == "Xrlinux":
+            self.requires("artosyn/ar9311_0.16.01-00")
+                    
     def package_info(self):
         self.cpp_info.libs = ["nr_hand_tracking","handtracking","xengine","xr_base_graph"]

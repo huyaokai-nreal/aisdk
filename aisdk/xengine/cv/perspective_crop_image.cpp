@@ -3,7 +3,7 @@
 #include "aisdk/base/camera_model.h"
 #include "xr_cv.h"
 namespace aisdk::xengine {
-#if __aarch64__
+#if ((defined(ANDROID) || defined(__ANDROID__)) && defined(__aarch64__))
 double mysecond() {
     struct timeval tv;
     struct timezone tz;

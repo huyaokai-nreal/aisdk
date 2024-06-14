@@ -133,7 +133,7 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
             crop_image = generate_roi_image(image_data.m_mat, rect, input_width_, input_height_);
         } else {
             virutal_camera = GetVirtualCameraFromBox(origin_camera, rect, {input_width_, input_height_});
-#if __aarch64__
+#if ((defined(ANDROID) || defined(__ANDROID__)) && defined(__aarch64__))
             crop_image = xengine::perspective_crop_image(
                 std::dynamic_pointer_cast<base::Fisheye624CameraModel>(lcam_model_).get(), virutal_camera.get(),
                 input_width_, input_height_, image_data.m_mat);

@@ -24,8 +24,13 @@
 #include "aisdk/xengine/cv/hexagon_dsp/hexagon_dsp_fastcv.h"
 
 #if defined(HAVE_HAL_TENSORRT)
-#include "dlutil.h"
+#include "aisdk/base/dlutil.h"
 #include "nr_tensorrt_header.h"
+#endif
+
+#if defined(HAVE_HAL_ARTOSYN)
+#include "aisdk/base/dlutil.h"
+#include "nr_artosyn_header.h"
 #endif
 
 #if __APPLE__

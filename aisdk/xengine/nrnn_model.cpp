@@ -10,6 +10,10 @@
 #include "aisdk/xengine/nn/vendor_rknn/rknn_model.h"
 #endif
 
+#if defined(HAVE_HAL_ARTOSYN)
+#include "aisdk/xengine/nn/vendor_artosyn/artosyn_model.h"
+#endif
+
 #if defined(HAVE_HAL_SNPE)
 #if SNPE_VERSION < 2000
 #include "aisdk/xengine/nn/vendor_snpe/snpe_model.h"
@@ -49,6 +53,10 @@ std::shared_ptr<aisdk::xengine::AIModel> CreateModelPtr(std::string &key, aisdk:
     } else if (config.vendor_type == aisdk::xengine::VendorType::SNPE) {
 #if defined(HAVE_HAL_SNPE)
         ret = std::make_shared<aisdk::xengine::SNPE_AIModel>(config);
+#endif
+    } else if (config.vendor_type == aisdk::xengine::VendorType::ARTOSYN) {
+#if defined(HAVE_HAL_ARTOSYN)
+        ret = std::make_shared<aisdk::xengine::ARTOSYN_AIModel>(config);
 #endif
     }
 

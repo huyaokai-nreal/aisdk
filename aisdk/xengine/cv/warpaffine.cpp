@@ -1,7 +1,7 @@
 #include "xr_cv.h"
 namespace aisdk::xengine {
 
-#if __aarch64__
+#if ((defined(ANDROID) || defined(__ANDROID__)) && defined(__aarch64__))
 
 static float BilinearTab_f[1024][2][2];
 static short BilinearTab_i[1024][2][2];
