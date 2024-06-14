@@ -1,7 +1,7 @@
 #include <memory>
-#include <string>
 
 #include "../func/gesture_recognition_v2.h"
+#include "aisdk/algorithm/common/NR_GlobalPredictorService.h"
 #include "aisdk/algorithm/common/hand_define.h"
 #include "aisdk/algorithm/internal_structs/hand_gesture_struct_internal.h"
 #include "aisdk/algorithm/internal_structs/kpt2d_struct_internal.h"
@@ -54,13 +54,15 @@ class GestureRecognitionCalculator : public xgraph::CalculatorBase {
         const auto& kpt2d_data = cc->Inputs().Tag("GR_KPT2D_INPUT").Get<Kpt2dInternal>();
 
         std::unique_ptr<HandGestureInternal> output_buffer_ = absl::make_unique<HandGestureInternal>();
+        const auto& kpt3d_world_pre = GlobalPredictorService::getInstance().get_last_kpt3d_world();
         AISDK_LOG_TRACE("[GestureRecognitionCalculator] Process start 2.");
 
         if (kpt3d_data.lhand_valid) {
             AISDK_LOG_TRACE("[GestureRecognitionCalculator] process left hand.");
 
             auto [gesture_res, raw_feat] = m_gesture_classifier_lhand->predict_with_keypoints3d(
-                kpt3d_data.left_hand.kpt3d, kpt2d_data.lhand_lcam_kpt, true);
+                kpt3d_data.left_hand.kpt3d, kpt2d_data.lhand_lcam_kpt, true, kpt3d_world_pre.lhand_valid,
+                kpt3d_world_pre.left_hand.root_v.norm());
             output_buffer_->lhand_gesture = gesture_res;
             AISDK_LOG_TRACE("[GestureRecognitionCalculator] process left hand complete. {}",
                             HandGestureNames[static_cast<int>(output_buffer_->lhand_gesture)]);
@@ -68,7 +70,8 @@ class GestureRecognitionCalculator : public xgraph::CalculatorBase {
         if (kpt3d_data.rhand_valid) {
             AISDK_LOG_TRACE("[GestureRecognitionCalculator] process right hand.");
             auto [gesture_res, raw_feat] = m_gesture_classifier_rhand->predict_with_keypoints3d(
-                kpt3d_data.right_hand.kpt3d, kpt2d_data.rhand_rcam_kpt, false);
+                kpt3d_data.right_hand.kpt3d, kpt2d_data.rhand_rcam_kpt, false, kpt3d_world_pre.rhand_valid,
+                kpt3d_world_pre.right_hand.root_v.norm());
             output_buffer_->rhand_gesture = gesture_res;
             AISDK_LOG_TRACE("[GestureRecognitionCalculator] process right hand complete. {}",
                             HandGestureNames[static_cast<int>(output_buffer_->rhand_gesture)]);

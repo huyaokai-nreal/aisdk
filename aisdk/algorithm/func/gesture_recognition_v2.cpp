@@ -20,7 +20,7 @@ float vector3d_angle(const Eigen::Vector3f &x, const Eigen::Vector3f &y) {
     float dot_value = x.dot(y);
     float cos_theta = dot_value / (module_x * module_y);
     float angle_radian = std::acos(cos_theta);
-    float angle_value = angle_radian * 180.0f / M_PI;  // M_PI is defined in <cmath>
+    float angle_value = angle_radian * 180.0F / M_PI;  // M_PI is defined in <cmath>
     return angle_value;
 }
 
@@ -127,13 +127,18 @@ void HandFeatureUpdator::update_abduction_feature(const std::vector<float> &angl
     cur_hand_feature->set_abduction_features(feature_list);
 }
 
-void HandFeatureUpdator::update_opposition_feature(const std::vector<float> &distances, bool relax_th_flag) {
+void HandFeatureUpdator::update_opposition_feature(const std::vector<float> &distances, bool relax_th_flag,
+                                                   bool move_flag) {
     auto feature_list = cur_hand_feature->opposition_features();
     float opposition_closed_th = this->opposition_closed_th;
     float opposition_th_width = this->opposition_th_width;
     if (relax_th_flag) {
         opposition_closed_th = this->opposition_relax_closed_th;
         opposition_th_width = this->opposition_relax_th_width;
+    }
+    if (move_flag) {
+        opposition_closed_th = this->opposition_move_closed_th;
+        opposition_th_width = this->opposition_move_th_width;
     }
     AISDK_LOG_TRACE("HandTracking: pinch distance is {}", distances[0]);
     for (int id = 0; id < feature_list.size() - 1; id++) {
@@ -221,28 +226,43 @@ bool GestureRecognitionV2::is_pinch_masked(const std::vector<Vec2f_t> &keypoints
     AISDK_LOG_TRACE("HandTracking: pinch mask flag is {}", is_pinch_masked);
     return is_pinch_masked;
 }
+float GestureRecognitionV2::get_pinch_velocity(const std::vector<std::vector<Eigen::Vector3f>> &kpt3d) {
+    if (!last_kpt3d_.empty()) {
+        float last_distance = (last_kpt3d_[1][4] - last_kpt3d_[0][4]).norm();
+        float cur_distance = (kpt3d[1][4] - kpt3d[0][4]).norm();
+        float v_value = (cur_distance - last_distance) / (1 / 30.F);
+        return v_value;
+    }
+    return -1;
+}
 std::pair<HandRawFeature, HandFeature> GestureRecognitionV2::extract_hand_feature(
     const std::vector<std::vector<Eigen::Vector3f>> &keypoints3d, const std::vector<Vec2f_t> &keypoints2d,
-    bool is_left_hand) {
+    bool is_left_hand, bool is_tracked, float hand_v) {
     auto fingure_angles = calculate_fingure_angles(keypoints3d);
     auto abduction_angles = calculate_abduction_angles(keypoints3d);
     auto opposition_distances = calculate_opposition_distances(keypoints3d);
     auto hand_angle = vector3d_angle(keypoints3d[2][4] - keypoints3d[2][1], Eigen::Vector3f(1, 0, 0));
     HandRawFeature raw_features;
+    raw_features.last_gesture = last_gesture_;
     raw_features.fingure_angles = fingure_angles;
     raw_features.abduction_angles = abduction_angles;
     raw_features.opposition_distances = opposition_distances;
     raw_features.hand_angle = hand_angle;
-    raw_features.is_thumb_up = (keypoints3d[0][4](1) - keypoints3d[0][2](1)) > 0.f;
+    raw_features.is_thumb_up = (keypoints3d[0][4](1) - keypoints3d[0][2](1)) > 0.F;
+    raw_features.pinch_distance = opposition_distances[0];
+    if (is_tracked) {
+        raw_features.pinch_velocity = get_pinch_velocity(keypoints3d);
+    }
     bool is_to_face = is_face_to_head(keypoints3d, is_left_hand);
-    bool ok_pinch = is_ok_pinch(keypoints3d);
+    // bool ok_pinch = is_ok_pinch(keypoints3d);
     bool pinch_masked = is_pinch_masked(keypoints2d, is_to_face);
     // whether pinch point is masked
     return {raw_features, feature_updator->update(fingure_angles, abduction_angles, opposition_distances, hand_angle,
-                                                  is_to_face || ok_pinch, pinch_masked)};
+                                                  is_to_face, pinch_masked, hand_v > move_flag_th_)};
 }
 std::pair<HandGesture, HandRawFeature> GestureRecognitionV2::predict_with_keypoints3d(
-    const std::vector<Eigen::Vector3f> &keypoints3d, const std::vector<Vec2f_t> &keypoints2d, bool is_left_hand) {
+    const std::vector<Eigen::Vector3f> &keypoints3d, const std::vector<Vec2f_t> &keypoints2d, bool is_left_hand,
+    bool is_tracked, float hand_v) {
     std::vector<std::vector<Eigen::Vector3f>> points(5, std::vector<Eigen::Vector3f>(5));
     float hand_length = (keypoints3d[9] - keypoints3d[0]).norm();
     const auto &root_kpt = keypoints3d[0];
@@ -253,7 +273,7 @@ std::pair<HandGesture, HandRawFeature> GestureRecognitionV2::predict_with_keypoi
         }
     }
 
-    auto [raw_features, feature] = extract_hand_feature(points, keypoints2d, is_left_hand);
+    auto [raw_features, feature] = extract_hand_feature(points, keypoints2d, is_left_hand, is_tracked, hand_v);
     raw_features.feature = feature;
 
     for (int i = static_cast<int>(HandGesture::Invalid); i < static_cast<int>(HandGesture::MaxNum); i++) {

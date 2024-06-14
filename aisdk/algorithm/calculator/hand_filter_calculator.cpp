@@ -1,7 +1,6 @@
 #include "../common/NR_GlobalPredictorService.h"
 #include "aisdk/algorithm/calculator/hand_filter_calculator.pb.h"
 #include "aisdk/algorithm/func/hand_filters.h"
-#include "aisdk/algorithm/func/netalgo_utils.h"
 #include "aisdk/algorithm/internal_structs/kpt3d_struct_internal.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/time.h"
