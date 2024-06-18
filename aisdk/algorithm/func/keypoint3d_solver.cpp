@@ -1,6 +1,6 @@
 #include "keypoint3d_solver.h"
 
-#include <Eigen/src/Core/Matrix.h>
+// #include <Eigen/src/Core/Matrix.h>
 #include <absl/status/status.h>
 #include <ceres/tiny_solver.h>
 #include <ceres/tiny_solver_autodiff_function.h>
