@@ -41,7 +41,7 @@ class AISDK(ConanFile):
         if self.settings.os in ["Linux", "Android", "Windows"] and self.conf.get("user.os:distro") != "Xrlinux":
             self.requires("openblas/0.3.27")
         if self.conf.get("user.os:distro") == "Xrlinux":
-            self.requires("artosyn/ar9311_0.16.01-00")
+            self.requires("artosyn/ar9481_0.17.02-00")
                     
     def package_info(self):
         self.cpp_info.libs = ["nr_hand_tracking","handtracking","xengine","xr_base_graph"]

@@ -15,6 +15,8 @@
 #include <opencv2/opencv.hpp>
 
 #include "aisdk/base/dlutil.h"
+#include "aisdk/task/handtracking/handtracking_next_host_xgraph.h"
+#include "aisdk/task/handtracking/handtracking_prior_glass_xgraph.h"
 #include "aisdk/task/handtracking/handtracking_xgraph.h"
 #include "framework/util/android_globals.h"
 #include "framework/util/fileutil.h"
@@ -102,9 +104,21 @@ NRPluginResult HandTracking::GetHandData(NRPluginHandle handle, uint64_t hmd_tim
         return NR_PLUGIN_RESULT_FAILURE;
     }
     auto& pipeline = ins->GetPipeline();
-    std::shared_ptr<task::HandTrackingXGraph> impl =
-        std::dynamic_pointer_cast<task::HandTrackingXGraph>(pipeline.Impl());
-    aisdk::algorithm::Status status = impl->PopResult(hmd_time_nanos, out_hand_num, out_hand_array);
+    aisdk::algorithm::Status status;
+    if (ins->pipeline_work_scene == "handtracking_std_all_host") {
+        std::shared_ptr<task::HandTrackingXGraph> impl =
+            std::dynamic_pointer_cast<task::HandTrackingXGraph>(pipeline.Impl());
+        status = impl->PopResult(hmd_time_nanos, out_hand_num, out_hand_array);
+    } else if (ins->pipeline_work_scene == "handtracking_segment_prior_glass") {
+        std::shared_ptr<task::HandTrackingPriorGlassXGraph> impl =
+            std::dynamic_pointer_cast<task::HandTrackingPriorGlassXGraph>(pipeline.Impl());
+        status = impl->PopResult(hmd_time_nanos, out_hand_num, out_hand_array);
+    } else if (ins->pipeline_work_scene == "handtracking_segment_next_host") {
+        std::shared_ptr<task::HandTrackingNextHostXGraph> impl =
+            std::dynamic_pointer_cast<task::HandTrackingNextHostXGraph>(pipeline.Impl());
+        status = impl->PopResult(hmd_time_nanos, out_hand_num, out_hand_array);
+    }
+
     if (status == aisdk::algorithm::Status::SUCCESS) {
         return NR_PLUGIN_RESULT_SUCCESS;
         AISDK_LOG_TRACE("HandTracking: pop result success!");
@@ -120,8 +134,8 @@ int HandTracking::GetHandTrackingMidExecInfo(ProfilingInfo* info) {
     (void)info;
     auto* ins = Plugin::GetInstance();
     auto& pipline = ins->GetPipeline();
-    std::shared_ptr<task::HandTrackingXGraph> impl =
-        std::dynamic_pointer_cast<task::HandTrackingXGraph>(pipline.Impl());
+    // std::shared_ptr<task::HandTrackingXGraph> impl =
+    //     std::dynamic_pointer_cast<task::HandTrackingXGraph>(pipline.Impl());
     // NrCore::Status status = impl->PopExecInfo(tmp);
     // if (status == NrCore::Status::SUCCESS) {
     //     info->timestamp = result->timestamp;
@@ -590,16 +604,22 @@ NRPluginResult HandTracking::ParseAllCameraData(const NRGrayscaleCameraFrameData
     head_pose = headpose_proto.transform;
 
     auto& pipeline = ins->GetPipeline();
-    std::shared_ptr<task::HandTrackingXGraph> impl =
-        std::dynamic_pointer_cast<task::HandTrackingXGraph>(pipeline.Impl());
     std::vector<aisdk::algorithm::Image> images;
-
     images.emplace_back(std::move(d1));
     if (!ins->m_handtracking.is_mono) {
         images.emplace_back(std::move(d2));
     }
 
-    impl->PushData(nano_time_[0], images, head_pose);
+    if (ins->pipeline_work_scene == "handtracking_std_all_host") {
+        std::shared_ptr<task::HandTrackingXGraph> impl =
+            std::dynamic_pointer_cast<task::HandTrackingXGraph>(pipeline.Impl());
+        impl->PushData(nano_time_[0], images, head_pose);
+    } else if (ins->pipeline_work_scene == "handtracking_segment_prior_glass") {
+        std::shared_ptr<task::HandTrackingPriorGlassXGraph> impl =
+            std::dynamic_pointer_cast<task::HandTrackingPriorGlassXGraph>(pipeline.Impl());
+        impl->PushData(nano_time_[0], images);
+    }
+
     AISDK_LOG_TRACE("interface HandTrackingXGraph::PushData");
 
     return errorcode;
@@ -695,6 +715,13 @@ bool Plugin::Init(NRPluginHandle handle, NRInterfaces* interfaces) {
 task::Pipeline& Plugin::GetPipeline() {
     if (nullptr == m_pipeline) {
         m_pipeline = std::make_unique<task::Pipeline>();
+        pipeline_work_scene = "handtracking_std_all_host";
+#ifdef PRIOR_GLASS_INFERENCE
+        pipeline_work_scene = "handtracking_segment_prior_glass";
+#endif
+#ifdef NEXT_HOST_INFERENCE
+        pipeline_work_scene = "handtracking_segment_next_host";
+#endif
     }
     return *m_pipeline;
 }
@@ -894,8 +921,17 @@ NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
                     auto& pipline = ins->GetPipeline();
                     // 需要指定具体的实现
                     aisdk::algorithm::Status status;
-                    status = pipline.Init<task::HandTrackingXGraph>(ins->m_handtracking.m_funcs, tmp[pipeline_index],
-                                                                    ins->m_hmd.m_cam_param);
+                    if (ins->pipeline_work_scene == "handtracking_std_all_host") {
+                        status = pipline.Init<task::HandTrackingXGraph>(ins->m_handtracking.m_funcs,
+                                                                        tmp[pipeline_index], ins->m_hmd.m_cam_param);
+                    } else if (ins->pipeline_work_scene == "handtracking_segment_prior_glass") {
+                        status = pipline.Init<task::HandTrackingPriorGlassXGraph>(
+                            ins->m_handtracking.m_funcs, tmp[pipeline_index], ins->m_hmd.m_cam_param);
+                    } else if (ins->pipeline_work_scene == "handtracking_segment_next_host") {
+                        status = pipline.Init<task::HandTrackingNextHostXGraph>(
+                            ins->m_handtracking.m_funcs, tmp[pipeline_index], ins->m_hmd.m_cam_param);
+                    }
+
                     if (status == aisdk::algorithm::Status::SUCCESS) {
                         ins->m_is_init = true;
                         ins->pipeline_name = tmp[pipeline_index].pipeline_name;

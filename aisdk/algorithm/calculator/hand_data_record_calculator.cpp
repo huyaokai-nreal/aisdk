@@ -22,7 +22,7 @@ namespace aisdk::algorithm {
 //   input_stream: "HEADPOSE_INPUT:head_pose"
 //   input_stream: "DET_BBOX_OUTPUT:detection_output"
 //   input_stream: "LANDMARK_OUTPUT:kpt2d"
-//   input_stream: "LIFT_OUTPUT:kpt3d"
+//   input_stream: "LIFT_OUTPUT:kpt3d"  或者 //   input_stream: "LIFT_OUTPUT:kpt3d_bino"
 //   input_stream: "BLOCK_OUT:kpt3d_blocked"
 //   input_stream: "GR_OUTPUT:gesture"
 //   input_side_packet: "CAM_INFO_INPUT:cam_info"
@@ -179,7 +179,7 @@ class HandDataRecordCalculator : public xgraph::CalculatorBase {
                             cache->rhand_valid = kpt2d_data.rhand_rcam_valid;
                             recorder.DebugRsn(cache, kpt2d_data);
                         }
-                    } else if (coll.Name() == "kpt3d") {
+                    } else if (coll.Name() == "kpt3d" || coll.Name() == "kpt3d_bino") {
                         Recordcache* cache = m_mgr.FindCache(time_id, false);
                         if (cache) {
                             const auto& kpt3d_data = package.Get<HandsData>();

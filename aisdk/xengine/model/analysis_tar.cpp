@@ -430,7 +430,8 @@ bool AnalysisTar::Analysis(unsigned char *tar_mem, uint32_t tar_len) {
     }
 
     // 目前我们支持1个tar包最多4条pipeline
-    std::vector<std::string> hand_graphs = {"graph_ella_snpedsp.txt", "graph_ella_cpu.txt", "graph_flora_snpedsp.txt"};
+    std::vector<std::string> hand_graphs = {"graph_ella_snpedsp.txt", "graph_ella_cpu.txt", "graph_flora_snpedsp.txt",
+                                            "graph_flora_cpu.txt"};
     for (uint32_t i = 0; i < hand_graphs.size(); i++) {
         // 查找固定的名称
         std::string tar_hand_graph = hand_graphs[i];
@@ -445,6 +446,8 @@ bool AnalysisTar::Analysis(unsigned char *tar_mem, uint32_t tar_len) {
                 pipelineconifg.framework_type = aisdk::xengine::FrameworkType::XGRAPH;
                 pipelineconifg.graph_config = std::string((const char *)p, h.size);
                 pipelineconifg.global_shared_config = m_global_shared_config;
+                pipelineconifg.related_feature.bind_mono_bino =
+                    (tar_hand_graph.find("mono") != std::string::npos) ? "mono_bino" : "bino";
                 pipelineconifg.related_feature.bind_glass =
                     (tar_hand_graph.find("ella") != std::string::npos) ? "ella" : "flora";
                 pipelineconifg.related_feature.bind_sensor_orientation =

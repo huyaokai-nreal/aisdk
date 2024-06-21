@@ -1,4 +1,4 @@
-#include "handtracking_xgraph.h"
+#include "handtracking_next_host_xgraph.h"
 
 #include <Eigen/src/Core/Matrix.h>
 #include <fmt/core.h>
@@ -36,97 +36,18 @@ static std::map<HandGesture, int> GestureMap = {
     {HandGesture::Home, GESTURE_TYPE_SYSTEM},        {HandGesture::ThumbUp, GESTURE_TYPE_THUMBS_UP},
     {HandGesture::Invalid, GESTURE_TYPE_UNKNOWN}};
 
-HandTrackingXGraph::HandTrackingXGraph() {}
-HandTrackingXGraph::~HandTrackingXGraph() {}
+HandTrackingNextHostXGraph::HandTrackingNextHostXGraph() {}
+HandTrackingNextHostXGraph::~HandTrackingNextHostXGraph() {}
 
-std::string AddDataRecordCalculater(aisdk::xengine::PipelineConfig& config) {
-    // clang-format off
-    // 参考："aisdk/algorithm/calculator/hand_data_record_calculator.cpp"
-    // 一定需要整体graph和calcutor的实现同时匹配
-    std::string new_exector_config = 
-        "\n"
-        "executor {\n"
-        "  name: \"handtracking_data_exector\"\n"
-        "  type: \"ThreadPoolExecutor\"\n"
-        "  options {\n"
-        "    [mediapipe.ThreadPoolExecutorOptions.ext] {\n"
-        "      num_threads: 1\n"
-        "    }\n"
-        "  }\n"
-        "}\n";
-    std::string new_bino_node_config1 =     
-        "node {\n"
-        "  name: \"HandDataRecord\"\n"
-        "  executor: \"handtracking_data_exector\"\n"
-        "  calculator: \"HandDataRecordCalculator\"\n"
-        "  input_stream: \"IMAGE_INPUT:image\"\n"
-        "  input_stream: \"HEADPOSE_INPUT:head_pose\"\n"
-        "  input_stream: \"DET_BBOX_OUTPUT:detection_output\"\n"
-        "  input_stream: \"LANDMARK_OUTPUT:kpt2d\"\n"
-        "  input_stream: \"LIFT_OUTPUT:kpt3d\"\n"
-        "  input_stream: \"BLOCK_OUT:kpt3d_blocked\"\n"
-        "  input_stream: \"GR_OUTPUT:gesture\"\n"
-        "  input_side_packet: \"CAM_INFO_INPUT:cam_info\"\n"
-        "  input_stream_handler {\n"
-        "    input_stream_handler: \"ImmediateInputStreamHandler\"\n"
-        "  }\n"
-        "}\n";
-    std::string new_bino_node_config2 =     
-        "node {\n"
-        "  name: \"HandDataRecord\"\n"
-        "  executor: \"handtracking_data_exector\"\n"
-        "  calculator: \"HandDataRecordCalculator\"\n"
-        "  input_stream: \"IMAGE_INPUT:image\"\n"
-        "  input_stream: \"HEADPOSE_INPUT:head_pose\"\n"
-        "  input_stream: \"DET_BBOX_OUTPUT:detection_output\"\n"
-        "  input_stream: \"LANDMARK_OUTPUT:kpt2d\"\n"
-        "  input_stream: \"LIFT_OUTPUT:kpt3d_bino\"\n"
-        "  input_stream: \"BLOCK_OUT:kpt3d_blocked\"\n"
-        "  input_stream: \"GR_OUTPUT:gesture\"\n"
-        "  input_side_packet: \"CAM_INFO_INPUT:cam_info\"\n"
-        "  input_stream_handler {\n"
-        "    input_stream_handler: \"ImmediateInputStreamHandler\"\n"
-        "  }\n"
-        "}\n";
-    std::string new_mono_node_config2 =     
-        "node {\n"
-        "  name: \"MonoHandDataRecord\"\n"
-        "  executor: \"handtracking_data_exector\"\n"
-        "  calculator: \"HandDataRecordCalculator\"\n"
-        "  input_stream: \"IMAGE_INPUT:image\"\n"
-        "  input_stream: \"HEADPOSE_INPUT:head_pose\"\n"
-        "  input_stream: \"DET_BBOX_OUTPUT:detection_output\"\n"
-        "  input_stream: \"LANDMARK_OUTPUT:kpt2d\"\n"
-        "  input_stream: \"LIFT_OUTPUT:kpt3d_mono\"\n"
-        "  input_stream: \"LIFT_OUTPUT:kpt3d_bino\"\n"
-        "  input_stream: \"BLOCK_OUT:kpt3d_blocked\"\n"
-        "  input_stream: \"GR_OUTPUT:gesture\"\n"
-        "  input_side_packet: \"CAM_INFO_INPUT:cam_info\"\n"
-        "  input_stream_handler {\n"
-        "    input_stream_handler: \"ImmediateInputStreamHandler\"\n"
-        "  }\n"
-        "}\n";
-    // clang-format on
-
-    // 目前仅支持双目
-    if (config.related_feature.bind_mono_bino == "bino") {
-        return config.graph_config + new_exector_config + new_bino_node_config1;
-    }
-
-    return config.graph_config;
-}
-
-aisdk::algorithm::Status HandTrackingXGraph::Init(aisdk::xengine::DlSymFuncs& funcs,
-                                                  aisdk::xengine::PipelineConfig& config, CameraParams& camera) {
-#if defined(ENABLE_ALGORITHM_DATA_RECORD) && !defined(ENABLE_SEGMENT_JOINT_INFERENCE_MODE)
-    config.graph_config = AddDataRecordCalculater(config);
-#endif
+aisdk::algorithm::Status HandTrackingNextHostXGraph::Init(aisdk::xengine::DlSymFuncs& funcs,
+                                                          aisdk::xengine::PipelineConfig& config,
+                                                          CameraParams& camera) {
     return BaseXGraph::Init(funcs, config, camera);
 }
 
-aisdk::algorithm::Status HandTrackingXGraph::PushData(uint64_t timestamp,
-                                                      std::vector<aisdk::algorithm::Image>& in_image,
-                                                      NRTransform headpose) {
+aisdk::algorithm::Status HandTrackingNextHostXGraph::PushData(uint64_t timestamp,
+                                                              std::vector<aisdk::algorithm::Image>& in_image,
+                                                              NRTransform headpose) {
     // we use microseconds in xgraph pipeline
     int64_t timestamp_micro = static_cast<int64_t>(timestamp / 1000);
     auto image_packet = xgraph::MakePacket<std::vector<aisdk::algorithm::Image>>(std::move(in_image));
@@ -142,8 +63,8 @@ aisdk::algorithm::Status HandTrackingXGraph::PushData(uint64_t timestamp,
         auto _status1 = m_calculator_graph->AddPacketToInputStream(
             "head_pose", headpose_packet.At(xgraph::Timestamp(timestamp_micro)));
         if (!_status.ok() || !_status1.ok()) {
-            AISDK_LOG_ERROR("HandTrackingXGraph::PushData image {}", _status.message().data());
-            AISDK_LOG_ERROR("HandTrackingXGraph::PushData head_pose {}", _status1.message().data());
+            AISDK_LOG_ERROR("HandTrackingNextHostXGraph::PushData image {}", _status.message().data());
+            AISDK_LOG_ERROR("HandTrackingNextHostXGraph::PushData head_pose {}", _status1.message().data());
             push_failure = true;
         }
         // 若push失败，清除cahce
@@ -154,8 +75,8 @@ aisdk::algorithm::Status HandTrackingXGraph::PushData(uint64_t timestamp,
     // m_increase_timestep++;
     return aisdk::algorithm::Status::SUCCESS;
 }
-aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, uint32_t* hand_num,
-                                                       HandData* out_hand_array) {
+aisdk::algorithm::Status HandTrackingNextHostXGraph::PopResult(uint64_t hmd_time_nano, uint32_t* hand_num,
+                                                               HandData* out_hand_array) {
     double query_time = static_cast<double>(hmd_time_nano) / 1e9;
     std::shared_ptr<StreamCache> outlist = GetOutputStreamCache();
     if (outlist) {
@@ -265,9 +186,6 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
                 out_hand_array[i].image_timestamp_nanos = outlist->raw_timestamp;
             }
         }
-
-#if defined(ENABLE_ALGORITHM_DATA_RECORD)
-#endif
         return aisdk::algorithm::Status::SUCCESS;
     }
 

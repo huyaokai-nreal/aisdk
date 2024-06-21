@@ -2,6 +2,7 @@
 #define _NRHAL_MODEL_MGR_H_
 
 #include <memory>
+#include <string>
 #include "nrhal_common.h"
 
 #define N2S(x) #x
@@ -47,6 +48,7 @@ using NetAlgoNodeTupleConfig = std::tuple<aisdk::xengine::ModelConfig, aisdk::xe
 using LogicAlgoNodeTupleConfig = std::tuple<aisdk::xengine::LogicAlgoConfig>;
 
 struct PipelineRelatedFeature {
+    std::string bind_mono_bino;           // "mono" / "bino" / "mono_bino"
     std::string bind_glass;               // "ella / flora"
     std::string bind_sensor_orientation;  // "horizontal / vertical"
     std::string bind_runtime;             // "snpe_dsp / cpu"

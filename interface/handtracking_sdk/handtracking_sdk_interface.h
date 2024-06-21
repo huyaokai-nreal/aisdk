@@ -1,6 +1,7 @@
 #ifndef _HANDTRACKING_SDK_INTERFACE_H_
 #define _HANDTRACKING_SDK_INTERFACE_H_
 
+#include <string>
 #include "channel/nr_plugin_grayscale_camera_types.h"
 #include "common/nr_plugin_generic.h"
 #include "common/nr_plugin_hmd.h"
@@ -153,6 +154,7 @@ class Plugin {
     Generic m_generic;
     std::unique_ptr<base::FixedMembuffer> m_picbuf;
     bool m_load_external_modeltar = false;
+    std::string pipeline_work_scene;
     std::string pipeline_name;
     // model_tar
     bool AnalysisTar();

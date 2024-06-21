@@ -35,9 +35,19 @@ set(PROJECT_SRC_DIR "aisdk")
 set(EXTERNAL_PROJECT_DIR ${PROJECT_SOURCE_DIR}/external/project)
 list( APPEND CMAKE_MODULE_PATH "${EXTERNAL_PROJECT_DIR}/cmake" )
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
-
+# build aisdk
 option(BUILD_HANDTRACKING_STD_SDK "build lib for std sdk" ON)
+option(ENABLE_SEGMENT_JOINT_INFERENCE_MODE "enable prior inference 'detect and key2d model' in glass" OFF)
 option(BUILD_HANDTRACKING_FPTOOL_SDK "build lib for detect fp_tool sdk" OFF)
+set(tar_ppls "ppls")
+set(tar_model "hand_tracking")
+if(Xrlinux AND ENABLE_SEGMENT_JOINT_INFERENCE_MODE)
+    set(tar_ppls "jina_ppls")
+    set(tar_model "hand_tracking_jina")
+elseif(ENABLE_SEGMENT_JOINT_INFERENCE_MODE)
+    set(tar_ppls "ppls")
+    set(tar_model "hand_tracking")
+endif()
 option(BUILD_EXAMPLE "Build examples." ON)
 option(BUILD_TOOL "Build tools."  OFF)
 option(ENABLE_CLANG_TIDY_CHECK       "Analyze code with clang-tidy."                OFF)
@@ -47,7 +57,7 @@ option(ENABLE_LOG_LEVEL_ALL "enable trace log level" OFF)
 # build algorithm
 option(ENABLE_ALGORITHM_GRAPH_STREAM_EVAL_TIME "enable algorithm mediapipe graph stream eval time."  ON)
 option(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME "enable algorithm mediapipe calculator process eval time."  OFF)
-option(ENABLE_ALGORITHM_DATA_RECORD "enable algorithm data record/debug"  OFF)
+option(ENABLE_ALGORITHM_DATA_RECORD "enable algorithm data record/debug"  ON)
 # build xengine nn
 option(ENABLE_XENGINE_SHARED_LIB "enable xengine shared lib."  OFF)
 if(NOT Xrlinux AND (CMAKE_SYSTEM_NAME STREQUAL "Android" OR CMAKE_SYSTEM_NAME STREQUAL "Linux"))
@@ -133,7 +143,7 @@ endif()
 
 # build model package
 execute_process(
-    COMMAND bash tool/tar_pipeline.sh ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND bash tool/tar_pipeline.sh ${CMAKE_CURRENT_BINARY_DIR} ${tar_ppls} ${tar_model} 
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}   # 可选：指定工作目录
     RESULT_VARIABLE result_code                     # 可选：捕获退出状态码
     OUTPUT_VARIABLE output                          # 可选：捕获标准输出

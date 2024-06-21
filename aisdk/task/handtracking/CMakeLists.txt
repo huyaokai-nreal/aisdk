@@ -1,6 +1,8 @@
 add_library(handtracking STATIC
 ${CMAKE_CURRENT_SOURCE_DIR}/handtracking_calculators_register.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/handtracking_xgraph.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/handtracking_prior_glass_xgraph.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/handtracking_next_host_xgraph.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/base_xgraph.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/nrcore_pipeline.cpp
 
@@ -11,7 +13,9 @@ endif()
 if(ENABLE_ALGORITHM_DATA_RECORD)
     target_compile_options(handtracking PRIVATE -DENABLE_ALGORITHM_DATA_RECORD)
 endif()
-
+if(ENABLE_SEGMENT_JOINT_INFERENCE_MODE)
+    target_compile_options(handtracking PRIVATE -DENABLE_SEGMENT_JOINT_INFERENCE_MODE)
+endif()    
 target_link_libraries(handtracking PRIVATE base algorithm opencv::opencv)
 target_include_directories(handtracking PRIVATE ${PROJECT_SOURCE_DIR}/interface/handtracking_sdk)
 install(TARGETS handtracking
