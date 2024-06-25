@@ -326,14 +326,6 @@ aisdk::algorithm::Status BaseXGraph::Init(aisdk::xengine::DlSymFuncs &funcs, ais
         std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>, std::shared_ptr<aisdk::base::BaseCameraModel>>>(
         camera_model);
 
-    // 读取原始线程的名称
-    std::string graph_thread_name = std::string("xr_aisdk_graph");
-    size_t ori_affinity = aisdk::base::get_sched_affinity();
-    // 设置本线程名称和亲和性，是为了让mediagraph内部的threadpool的线程继承该属性
-    std::string ori_name = aisdk::base::SetThisThreadName(graph_thread_name);
-    AISDK_LOG_TRACE("XGraph::Init ori_affinity={} name={}", ori_affinity, ori_name.c_str());
-    aisdk::base::set_sched_affinity(0xF0);  // 绑4个大核
-
     TriggerGloalGraphCalculatorsConstruct();
     AISDK_LOG_TRACE("XGraph::Trigger calculator construct");
 
@@ -345,8 +337,6 @@ aisdk::algorithm::Status BaseXGraph::Init(aisdk::xengine::DlSymFuncs &funcs, ais
         xgraph::ParseTextProtoOrDie<xgraph::CalculatorGraphConfig>(calculator_graph_config);
 
     m_calculator_graph = std::make_unique<xgraph::CalculatorGraph>();
-
-    MP_RETURN_IF_ERROR_WITH_LOG(m_calculator_graph->SetExecutor("", std::make_shared<xgraph::ThreadPoolExecutor>(1)));
 
     MP_RETURN_IF_ERROR_WITH_LOG(m_calculator_graph->Initialize(graph_config, side_packets));
     for (int i = 0; i < graph_config.input_stream_size(); i++) {
@@ -368,9 +358,6 @@ aisdk::algorithm::Status BaseXGraph::Init(aisdk::xengine::DlSymFuncs &funcs, ais
         MP_RETURN_IF_ERROR_WITH_LOG(m_calculator_graph->ObserveOutputStream(m_output_stream_name[order], callback));
     }
 
-    // 还原原始线程的相关属性
-    aisdk::base::SetThisThreadName(ori_name);
-    aisdk::base::set_sched_affinity((ori_affinity != 0) ? ori_affinity : 0xFF);  // 失败就全绑，等于默认没绑
     return aisdk::algorithm::Status::SUCCESS;
 }
 
