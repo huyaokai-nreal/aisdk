@@ -75,6 +75,12 @@ node {
     }
   }
 }
+node {
+  name: "LandmarkFilter"
+  calculator: "LandmarkFilterCalculator"
+  input_stream: "LANDMARK_INPUT:kpt2d"
+  output_stream: "LANDMARK_OUTPUT:kpt2d_filter"
+}
 #node {
 #  name: "MonoHand_3D"
 #  calculator: "MonoHandKpt3DCalculator"
@@ -88,11 +94,11 @@ node {
   name: "LiftNet_3D"
   calculator: "HandLiftCalculator"
   input_side_packet: "CAM_INFO_INPUT:cam_info"
-  input_stream: "LANDMARK_INPUT:kpt2d"
+  input_stream: "LANDMARK_INPUT:kpt2d_filter"
   output_stream: "LIFT_OUTPUT:kpt3d_bino"
   node_options: {
     [type.googleapis.com/aisdk.HandLiftCalculatorOptions] {
-      model_name: "3d_liftnimble"
+      model_name: "3d_lift"
       enable_constrain: false
     }
   }
@@ -106,9 +112,9 @@ node {
   output_stream: "BLOCK_OUT:kpt3d_blocked"
   node_options: {
     [type.googleapis.com/aisdk.BlockHardRulesCalculatorOptions] {
-      max_root_depth: 0.8
+      max_root_depth: 1.0
       # score_th = 0.8 ? model_name == 3d_liftnimble else 0.85
-      score_th: 0.775
+      score_th: 0.85
       score_th_width: 0.05
     }
   }

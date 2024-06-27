@@ -213,7 +213,7 @@ bool GestureRecognitionV2::is_ok_pinch(const std::vector<std::vector<Eigen::Vect
     AISDK_LOG_TRACE("HandTracking: pinch angle: {}", pinch_figure_angle);
     return pinch_figure_angle > 80;
 }
-bool GestureRecognitionV2::is_pinch_masked(const std::vector<Vec2f_t> &keypoints2d, bool is_to_face) {
+bool GestureRecognitionV2::is_pinch_masked(const std::vector<Vec2f_t> &keypoints2d, bool is_face_to_head) {
     Eigen::Vector2f thumb_mid_2d{keypoints2d[1][0], keypoints2d[1][1]};
     Eigen::Vector2f thumb_point_2d{keypoints2d[4][0], keypoints2d[4][1]};
     Eigen::Vector2f index_mid_pt_2d{keypoints2d[6][0], keypoints2d[6][1]};
@@ -222,7 +222,7 @@ bool GestureRecognitionV2::is_pinch_masked(const std::vector<Vec2f_t> &keypoints
     bool is_thumb_point_masked = isInsideTriangle(thumb_point_2d, thumb_mid_2d, index_mid_pt_2d, pinky_mid_2d, 1.1);
     bool is_index_point_masked = isInsideTriangle(index_point_2d, thumb_mid_2d, index_mid_pt_2d, pinky_mid_2d, 1.1);
     bool is_pinch_masked =
-        is_thumb_point_masked && is_index_point_masked && !is_to_face && last_gesture_ == HandGesture::Pinch;
+        is_thumb_point_masked && is_index_point_masked && !is_face_to_head && last_gesture_ == HandGesture::Pinch;
     AISDK_LOG_TRACE("HandTracking: pinch mask flag is {}", is_pinch_masked);
     return is_pinch_masked;
 }
