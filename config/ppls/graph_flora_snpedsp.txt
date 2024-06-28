@@ -133,9 +133,10 @@ node {
   name: "GestureRecognition"
   calculator: "GestureRecognitionCalculator"
   input_stream: "GR_KPT2D_INPUT:kpt2d"
-  input_stream: "GR_KPT_INPUT:kpt3d_world"
+  input_stream: "GR_KPT_INPUT:kpt3d_blocked"
   output_stream: "GR_OUTPUT:gesture"
 }
+
 node {
   name: "HandFilter"
   calculator: "HandFilterCalculator"

@@ -141,6 +141,7 @@ void HandFeatureUpdator::update_opposition_feature(const std::vector<float> &dis
         opposition_th_width = this->opposition_move_th_width;
     }
     AISDK_LOG_TRACE("HandTracking: pinch distance is {}", distances[0]);
+    AISDK_LOG_TRACE("pinch th flag relax {}, move flag {}", relax_th_flag, move_flag);
     for (int id = 0; id < feature_list.size() - 1; id++) {
         float distance = distances[id];
         feature_list[id + 1] = update_fingure_state(distance, opposition_closed_th, this->opposition_open_th,
@@ -248,7 +249,7 @@ std::pair<HandRawFeature, HandFeature> GestureRecognitionV2::extract_hand_featur
     raw_features.abduction_angles = abduction_angles;
     raw_features.opposition_distances = opposition_distances;
     raw_features.hand_angle = hand_angle;
-    raw_features.is_thumb_up = (keypoints3d[0][4](1) - keypoints3d[0][2](1)) > 0.F;
+    raw_features.is_thumb_up = (keypoints3d[0][4](1) - keypoints3d[0][2](1)) < 0.F;
     raw_features.pinch_distance = opposition_distances[0];
     if (is_tracked) {
         raw_features.pinch_velocity = get_pinch_velocity(keypoints3d);
@@ -257,6 +258,7 @@ std::pair<HandRawFeature, HandFeature> GestureRecognitionV2::extract_hand_featur
     // bool ok_pinch = is_ok_pinch(keypoints3d);
     bool pinch_masked = is_pinch_masked(keypoints2d, is_to_face);
     // whether pinch point is masked
+    AISDK_LOG_TRACE("pinch hand v is {}", hand_v);
     return {raw_features, feature_updator->update(fingure_angles, abduction_angles, opposition_distances, hand_angle,
                                                   is_to_face, pinch_masked, hand_v > move_flag_th_)};
 }

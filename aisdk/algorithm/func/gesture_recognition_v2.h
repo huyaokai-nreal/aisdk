@@ -6,6 +6,7 @@
 #include <vector>
 #include <opencv2/core.hpp>
 #include "aisdk/algorithm/common/hand_define.h"
+#include "aisdk/base/log.h"
 #include "aisdk/base/type.h"
 
 namespace aisdk::algorithm {
@@ -194,6 +195,7 @@ class GestureMatchRule {
     static bool Pinch(const HandFeature &hand_feature, const HandRawFeature &raw_feature) {
         auto [_, index_opposition, __, ___, ____] = hand_feature.opposition_features();
         bool pinch_flag =  index_opposition == FingureState::CLOSED;
+        AISDK_LOG_TRACE("pinch state flag is {}", pinch_flag);
         auto  pinch_v_strength = raw_feature.pinch_velocity;
         if(raw_feature.last_gesture !=HandGesture::Pinch){
             pinch_flag = (pinch_flag && (pinch_v_strength < pinch_v_th)) || raw_feature.pinch_distance < pinch_min_th;
