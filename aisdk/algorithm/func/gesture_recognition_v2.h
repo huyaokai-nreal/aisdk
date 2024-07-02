@@ -131,10 +131,10 @@ class HandFeatureUpdator {
 
    private:
     float curl_th_width = 10;
-    float curl_thumb_open_th = 145;
+    float curl_thumb_open_th = 140;
     float curl_thumb_closed_th = 130;
-    float curl_other_open_th = 130;
-    float curl_other_closed_th = 80;
+    float curl_other_open_th = 148;
+    float curl_other_closed_th = 70;
 
     float flexion_th_width = 8;
     float flexion_thumb_open_th = 150;
@@ -143,7 +143,7 @@ class HandFeatureUpdator {
     float flexion_other_closed_th = 110;
 
     float abduction_th_width = 2;
-    float abduction_thumb_open_th = 36;
+    float abduction_thumb_open_th = 42;
     float abduction_thumb_closed_th = 20;
     float abduction_other_open_th = 12;
     float abduction_other_closed_th = 10;

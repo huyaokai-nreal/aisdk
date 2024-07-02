@@ -38,7 +38,7 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
 
     uint32_t video_width_;
     uint32_t video_height_;
-    float min_bbox_area_th_ = 24 * 24;
+    float min_bbox_area_th_ = 10 * 10;
     int det_tracker_step_ = 0;
     int det_interval_ = 4;
     float valid_bbox_in_image_ratio_ = 0.8;
