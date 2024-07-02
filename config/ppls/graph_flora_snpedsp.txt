@@ -99,7 +99,6 @@ node {
   node_options: {
     [type.googleapis.com/aisdk.HandLiftCalculatorOptions] {
       model_name: "3d_lift"
-      enable_constrain: false
     }
   }
 }

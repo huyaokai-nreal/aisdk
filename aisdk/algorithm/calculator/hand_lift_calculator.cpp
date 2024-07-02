@@ -35,7 +35,6 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
     std::shared_ptr<base::BaseCameraModel> lcam_model_ = nullptr;
     std::shared_ptr<base::BaseCameraModel> rcam_model_ = nullptr;
     std::string model_name_;
-    bool enable_constrain_;
 
    public:
     static absl::Status GetContract(xgraph::CalculatorContract* cc) {
@@ -56,7 +55,6 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
         // 3d_lift
         const auto& config = cc->Options<HandLiftCalculatorOptions>();
         model_name_ = config.model_name();
-        enable_constrain_ = config.enable_constrain();
         if (model_name_ == "3d_lift") {
             netalgo = XGraphServiceUtils::CreateNetAlgoBase<GMLPLiftNet3>((void*)0x202310, "3d_lift");
         } else if (model_name_ == "3d_liftnimble") {
@@ -102,10 +100,6 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
                 output_buffer_->left_hand.source = CamType::BINO;
                 AISDK_LOG_TRACE("[LiftCalculator] left constrain start with {} kpts", lift_outputs->res3d.size());
                 output_buffer_->left_hand.kpt3d = lift_outputs->res3d;
-                if (enable_constrain_) {
-                    output_buffer_->left_hand.kpt3d = constrain_hand(output_buffer_->left_hand.kpt3d, true);
-                    AISDK_LOG_TRACE("[LiftCalculator] left constrain finish");
-                }
                 if (model_name_ == "3d_liftnimble") {
                     output_buffer_->left_hand.score = lift_outputs->kpt3d_score;
                 } else {
@@ -130,9 +124,6 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
                 output_buffer_->rhand_valid = true;
                 output_buffer_->right_hand.source = CamType::BINO;
                 output_buffer_->right_hand.kpt3d = lift_outputs->res3d;
-                if (enable_constrain_) {
-                    output_buffer_->right_hand.kpt3d = constrain_hand(output_buffer_->right_hand.kpt3d, false);
-                }
                 if (model_name_ == "3d_liftnimble") {
                     output_buffer_->right_hand.score = lift_outputs->kpt3d_score;
                 } else {

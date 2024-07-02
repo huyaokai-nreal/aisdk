@@ -3,6 +3,5 @@ syntax = "proto3";
 package aisdk;
 message HandLiftCalculatorOptions  {
   string model_name = 1;
-  bool enable_constrain = 2;
   
 }

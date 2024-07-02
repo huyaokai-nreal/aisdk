@@ -19,7 +19,6 @@ namespace aisdk::algorithm {
 // }
 
 class StandardizeKeypointsCalculator : public xgraph::CalculatorBase {
-   private:
    public:
     static absl::Status GetContract(xgraph::CalculatorContract* cc) {
         AISDK_LOG_TRACE("[StandardizeKeypointsCalculator] GetContract start.");
@@ -46,14 +45,16 @@ class StandardizeKeypointsCalculator : public xgraph::CalculatorBase {
         auto output_buffer_ = absl::make_unique<HandsData>();
         if (kpt_data.lhand_valid) {
             output_buffer_->left_hand = kpt_data.left_hand;
-            output_buffer_->left_hand.kpt3d = convert_to_23points(kpt_data.left_hand.kpt3d);
+            output_buffer_->left_hand.kpt3d = constrain_hand(output_buffer_->left_hand.kpt3d, true);
+            output_buffer_->left_hand.kpt3d = convert_to_23points(output_buffer_->left_hand.kpt3d);
             output_buffer_->lhand_valid = true;
             output_buffer_->left_hand.gesture = gesture_data.lhand_gesture;
             compute_joint_rotation(output_buffer_->left_hand.kpt3d, true, output_buffer_->left_hand.rotation);
         }
         if (kpt_data.rhand_valid) {
             output_buffer_->right_hand = kpt_data.right_hand;
-            output_buffer_->right_hand.kpt3d = convert_to_23points(kpt_data.right_hand.kpt3d);
+            output_buffer_->right_hand.kpt3d = constrain_hand(output_buffer_->right_hand.kpt3d, false);
+            output_buffer_->right_hand.kpt3d = convert_to_23points(output_buffer_->right_hand.kpt3d);
             output_buffer_->rhand_valid = true;
             output_buffer_->right_hand.gesture = gesture_data.rhand_gesture;
             compute_joint_rotation(output_buffer_->right_hand.kpt3d, false, output_buffer_->right_hand.rotation);
