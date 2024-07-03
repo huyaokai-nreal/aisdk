@@ -14,12 +14,14 @@ class SYM_EXPORT BaseNetAlgo {
     virtual void SetAlgoParams(const std::string &key, const std::string &value);
     virtual bool GetAlgoParams(const std::string &key, std::string &value);
     
+    virtual aisdk::xengine::ImageCategory GetInputImageCategory();
+    virtual aisdk::xengine::IoImageBlobs GetInputImageBlobs();
     virtual aisdk::xengine::IoTensors GetInputTensors();
     virtual aisdk::xengine::IoTensors GetOutputTensors();
 
+    virtual uint32_t GetInputImageBlobsIndex(const std::string &tensorname);
     virtual uint32_t GetInputTensorIndex(const std::string &tensorname);
     virtual uint32_t GetOutputTensorIndex(const std::string &tensorname);
-
     // inference
     virtual absl::Status RunNet();
 

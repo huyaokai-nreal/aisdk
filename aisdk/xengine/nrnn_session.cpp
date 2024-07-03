@@ -86,6 +86,22 @@ Status Inference::Init(std::string &netname) {
     return Status::MODEL_LOAD_FAILURE;
 }
 
+ImageCategory Inference::GetInputImageCategory() {
+    if (m_sessionimpl) {
+        return m_sessionimpl->m_input_category;
+    }
+
+    return ImageCategory::IS_TENSOR;
+}
+
+IoImageBlobs Inference::GetInputImageBlobs() {
+    if (m_sessionimpl) {
+        return m_sessionimpl->m_imagein;
+    }
+
+    return IoImageBlobs();
+}
+
 IoTensors Inference::GetInputTensors() {
     if (m_sessionimpl) {
         return m_sessionimpl->m_in;
@@ -99,6 +115,18 @@ IoTensors Inference::GetOutputTensors() {
     }
 
     return IoTensors();
+}
+
+uint32_t Inference::GetInputImageBlobsIndex(const std::string &tensorname) {
+    if (m_sessionimpl) {
+        for (uint32_t i = 0; i < m_sessionimpl->m_imagein.m_multiinput_num; i++) {
+            if (m_sessionimpl->m_imagein.m_imageblobs[i].m_name == tensorname) {
+                return i;
+            }
+        }
+    }
+    AISDK_LOG_TRACE("Inference::GetInputImageBlobsIndex error !!!!!");
+    return 0;
 }
 
 uint32_t Inference::GetInputTensorIndex(const std::string &tensorname) {

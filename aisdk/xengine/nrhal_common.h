@@ -6,6 +6,7 @@
 #include "nrnn_model.h"
 #include "nrnn_session.h"
 // #include "nrtime.h"
+int ArtosynNpuGetEntryIndex(int batch, int h, int w, int c, int byteUnit, aisdk::xengine::ArtosynTensorDims &pTensorInfo);
 absl::Status ConvertOldStatus(aisdk::xengine::Status old_status);
 void PrintfHalModelConfig(aisdk::xengine::ModelConfig& info);
 void PrintfHalSessionConfig(aisdk::xengine::SessionConfig& info);

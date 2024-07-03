@@ -33,7 +33,9 @@ class CalculatorBaseNet {
             if (!ret.ok()) {
                 return ret;
             }
-
+            
+            m_input_category = m_net->GetInputImageCategory();
+            iImageblobs = m_net->GetInputImageBlobs();
             itensor = m_net->GetInputTensors();
             AISDK_LOG_TRACE("itensor.m_tensors size: {}", itensor.m_tensors.size());
             otensor = m_net->GetOutputTensors();
@@ -51,6 +53,8 @@ class CalculatorBaseNet {
 
    public:
     BaseNetAlgoPtr m_net = nullptr;
+    aisdk::xengine::ImageCategory m_input_category;
+    aisdk::xengine::IoImageBlobs iImageblobs;
     aisdk::xengine::IoTensors itensor;
     aisdk::xengine::IoTensors otensor;
 };

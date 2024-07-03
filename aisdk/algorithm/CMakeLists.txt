@@ -24,6 +24,9 @@ target_include_directories(${ALGORITHM_LIBRARY_NAME} PRIVATE ${PROJECT_SOURCE_DI
 add_subdirectory(common)
 add_subdirectory(func)
 add_subdirectory(model)
+if(Xrlinux)
+    add_subdirectory(model_artosyn)
+endif()
 add_subdirectory(calculator)
 
 target_link_libraries(${ALGORITHM_LIBRARY_NAME}

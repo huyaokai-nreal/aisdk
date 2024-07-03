@@ -12,18 +12,17 @@ class ARTOSYN_AIModel : public AIModel {
     virtual ~ARTOSYN_AIModel();
     bool IsShared() { return false; }
 
-   private:
-    AR_NPU_CNN_DESC_S stCNNDesc;
-    void *handle;
-    AR_MEM_S stNPUInBuff;
-    AR_MEM_S stNPUOutBuff;
-    AR_MEM_S stPchbuff;
-    AR_NPU_TENSOR_S stInTensor;
-    AR_NPU_TENSOR_S stOutTensor;
-    AR_U16 u16Stride;
-    AR_U32 u32FrameId;
-    AR_IMG_SET_S stInImg;
+   public:
+    //1:AR9341 2:AR9311 4:AR9481
+    AR_S32 m_socversion = 0;
+    AR_NPU_CNN_DESC_S m_stCNNDesc;
+    void *m_handle = nullptr;
+    AR_U32 m_batch = 0;
+    AR_U32 m_ifc_inputn = 0;
+    AR_U32 m_inputn = 0;
+    AR_U32 m_outputn = 0;
 };
+
 }  // namespace aisdk::xengine
 
 #endif

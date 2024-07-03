@@ -14,6 +14,17 @@ input_stream_handler {
   }
 }
 
+executor {
+  name: ""
+  options {
+    [mediapipe.ThreadPoolExecutorOptions.ext] {
+      num_threads: 1
+      require_processor_performance: 2
+      thread_name_prefix: "xr_aisdk"
+    }
+  }
+}
+
 node {
   name: "HandDetection"
   calculator: "HandDetectCalculator"

@@ -42,6 +42,13 @@ bool BaseNetAlgo::GetAlgoParams(const std::string &key, std::string &value) {
     return false;
 }
 
+aisdk::xengine::ImageCategory BaseNetAlgo::GetInputImageCategory() {
+    if (m_impl) {
+        return m_impl->GetInputImageCategory();
+    }
+    return ImageCategory::IS_TENSOR;
+}
+
 aisdk::xengine::IoTensors BaseNetAlgo::GetInputTensors() {
     if (m_impl) {
         return m_impl->GetInputTensors();
@@ -68,6 +75,20 @@ uint32_t BaseNetAlgo::GetOutputTensorIndex(const std::string &tensorname) {
         return m_impl->GetOutputTensorIndex(tensorname);
     }
     return 0;
+}
+
+uint32_t BaseNetAlgo::GetInputImageBlobsIndex(const std::string &tensorname) {
+    if (m_impl) {
+        return m_impl->GetInputImageBlobsIndex(tensorname);
+    }
+    return 0;
+}
+
+aisdk::xengine::IoImageBlobs BaseNetAlgo::GetInputImageBlobs() {
+    if (m_impl) {
+        return m_impl->GetInputImageBlobs();
+    }
+    return aisdk::xengine::IoImageBlobs();
 }
 
 // inference

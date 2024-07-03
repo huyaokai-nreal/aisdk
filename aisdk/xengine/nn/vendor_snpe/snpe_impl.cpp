@@ -66,7 +66,10 @@ aisdk::xengine::TensorFormat SNPEConvertTensorFormat(int rank) {
     return ret;
 }
 
-SNPE_Session::SNPE_Session() : Session() {}
+SNPE_Session::SNPE_Session() : Session() {
+    m_input_category = ImageCategory::IS_TENSOR;
+}
+
 SNPE_Session::~SNPE_Session() {}
 
 Status SNPE_Session::Init(std::shared_ptr<AIModel> &model, SessionConfig &Sconfig) {

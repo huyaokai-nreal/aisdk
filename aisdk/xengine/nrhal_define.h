@@ -81,19 +81,35 @@ enum class TensorFormat : int32_t {
     NDHWC = 10,
     CDHW = 11,
     DHWC = 12,
+    BlockingNHWC = 13,
 };
 
 enum ImageFormat {
     UNKNOWN = 0,
     RGB = 1,
     BGR = 2,
-    gray = 3,
+    GRAY = 3,
 };
 
 enum class ImageCategory {
-    UNKNOWN = 0,
+    IS_TENSOR = 0,
     IS_BLOB = 1,
     IS_CVMAT = 2,
+};
+
+struct ArtosynTensorDims {
+    uint32_t u32ID;
+    uint32_t u32Bank;
+    uint32_t u32Offset;
+    uint32_t u32Width;
+    uint32_t u32Height;
+    uint32_t u32KStep;
+    uint32_t u32KNormNum;
+    uint32_t u32KSizeLast;
+    uint32_t u32KSizeNorm;
+    uint32_t u32OriChannels;
+    uint32_t u32RowStep;
+    uint32_t u32TensorStep; //used for batch mode
 };
 
 struct Tensor {
@@ -106,6 +122,8 @@ struct Tensor {
     // m_dims,从0到N-1,分别代表高维到低维
     // 举例: [c,h,w]=[1,128,123]
     std::vector<uint32_t> m_dims;
+    // artosyn的内存块排布比较独特，不走m_dims，走以下配置
+    ArtosynTensorDims m_artosyn_dims;
     // tensor的layout，这是个经验值，仅参考
     TensorFormat m_dimtype = TensorFormat::UNKNOWN;
     // 每个元素的数据类型
@@ -138,45 +156,25 @@ struct IoTensors {
 };
 
 struct ImageBlob {
+    std::string m_name;
     ImageFormat m_format = ImageFormat::UNKNOWN;
     uint32_t m_width = 0;
     uint32_t m_height = 0;
     uint32_t m_wstride = 0;
     ElementType m_elementype = ElementType::UNKNOWN;
-    uint64_t m_phyaddr[3] = {0};
-    void *m_viraddr[3] = {nullptr};
+    uint32_t m_elementbyte = 0;
+    uint32_t m_elementsize = 0;
+    uint64_t m_phyaddr[4] = {0};
+    void *m_viraddr[4] = {nullptr};
 };
 
-// struct Image {
-//     std::shared_ptr<NrUtils::XrMem> m_warpmem;
-//     ImageCategory m_category = ImageCategory::UNKNOWN;
-//     ImageBlob m_blob;
-//     cv::Mat m_mat;
-
-//     Image() { m_category = ImageCategory::UNKNOWN; }
-
-//     Image(const cv::Mat &mat) {
-//         m_mat = mat;
-//         m_category = ImageCategory::IS_CVMAT;
-//     }
-
-//     Image(const ImageBlob &blob) {
-//         m_blob = blob;
-//         m_category = ImageCategory::IS_BLOB;
-//     }
-
-//     Image(const cv::Mat &mat, std::shared_ptr<NrUtils::XrMem> &warp_mem) {
-//         m_mat = mat;
-//         m_warpmem = warp_mem;
-//         m_category = ImageCategory::IS_CVMAT;
-//     }
-
-//     Image(const ImageBlob &blob, std::shared_ptr<NrUtils::XrMem> &warp_mem) {
-//         m_blob = blob;
-//         m_warpmem = warp_mem;
-//         m_category = ImageCategory::IS_BLOB;
-//     }
-// };
+struct IoImageBlobs {
+    uint32_t m_batch = 0;
+    uint32_t m_ori_batch = 0;
+    uint32_t m_multiinput_num = 0;
+    bool m_packed_bybatch = false;
+    std::vector<ImageBlob> m_imageblobs;
+};
 
 struct Rect {
     float x = 0.f;

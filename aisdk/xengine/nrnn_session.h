@@ -1,6 +1,7 @@
 #ifndef _NRNN_SESSION_H_
 #define _NRNN_SESSION_H_
 
+#include <cstdint>
 #include <memory>
 #include <vector>
 
@@ -39,6 +40,8 @@ class Session {
     virtual Status Forword(ModelInfo &handle) = 0;
 
    public:
+    ImageCategory m_input_category = ImageCategory::IS_TENSOR;
+    IoImageBlobs m_imagein;
     IoTensors m_in;
     IoTensors m_out;
 };
@@ -51,9 +54,12 @@ class Inference {
     // load_model，create_IoTensors
     Status Init(std::string &netname);
 
+    ImageCategory GetInputImageCategory();
+    IoImageBlobs GetInputImageBlobs();
     IoTensors GetInputTensors();
     IoTensors GetOutputTensors();
 
+    uint32_t GetInputImageBlobsIndex(const std::string &tensorname);
     uint32_t GetInputTensorIndex(const std::string &tensorname);
     uint32_t GetOutputTensorIndex(const std::string &tensorname);
 

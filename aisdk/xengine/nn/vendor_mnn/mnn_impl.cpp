@@ -54,7 +54,8 @@ aisdk::xengine::TensorFormat MNNConvertTensorFormat(MNN::Tensor::DimensionType d
     return ret;
 }
 
-MNN_Session::MNN_Session() : Session() {}
+MNN_Session::MNN_Session() : Session() { m_input_category = ImageCategory::IS_TENSOR; }
+
 MNN_Session::~MNN_Session() {}
 
 Status MNN_Session::Init(std::shared_ptr<AIModel> &model, SessionConfig &Sconfig) {
