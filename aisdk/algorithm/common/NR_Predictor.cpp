@@ -44,11 +44,6 @@ void KFPredictor::reset_kalman_fileter() {
     // m_kf_impl->measurementMatrix.at<float>(M_Y, S_VY) = 1.0f;
     // m_kf_impl->measurementMatrix.at<float>(M_Z, S_VZ) = 1.0f;
 
-    cv::setIdentity(m_kf_impl->measurementNoiseCov, cv::Scalar(1e-4));
-
-    // m_kf_impl->measurementNoiseCov.at<float>(S_X, S_X) = 5e-2;
-    // m_kf_impl->measurementNoiseCov.at<float>(S_Y, S_Y) = 5e-2;
-    // m_kf_impl->measurementNoiseCov.at<float>(S_Z, S_Z) = 1e-3;
     // H: Measurement Matrix
     // 	 x  y  z  vx vy vz ax ay az
     // [ 1  0  0  0  0  0  0  0  0 ] x
@@ -65,7 +60,7 @@ void KFPredictor::reset_kalman_fileter() {
     m_kf_impl->measurementMatrix.at<float>(M_VX, S_VX) = 1.0f;
     m_kf_impl->measurementMatrix.at<float>(M_VY, S_VY) = 1.0f;
     m_kf_impl->measurementMatrix.at<float>(M_VZ, S_VZ) = 1.0f;
-    cv::setIdentity(m_kf_impl->errorCovPost, cv::Scalar::all(1));
+
     //   Q: Process Noise Covariance Matrix
     //   x    y    z    vx   vy   vz   ax   ay   az
     // [ E_x  0    0    0    0    0    0    0    0    ]
@@ -78,13 +73,6 @@ void KFPredictor::reset_kalman_fileter() {
     // [ 0    0    0    0    0    0    0    E_ay 0    ]
     // [ 0    0    0    0    0    0    0    0    E_az ]
 
-    m_kf_impl->measurementMatrix = cv::Mat::zeros(m_meas_size, m_state_size, m_type);
-    m_kf_impl->measurementMatrix.at<float>(M_X, S_X) = 1.0f;
-    m_kf_impl->measurementMatrix.at<float>(M_Y, S_Y) = 1.0f;
-    m_kf_impl->measurementMatrix.at<float>(M_Z, S_Z) = 1.0f;
-    m_kf_impl->measurementMatrix.at<float>(M_VX, S_VX) = 1.0f;
-    m_kf_impl->measurementMatrix.at<float>(M_VY, S_VY) = 1.0f;
-    m_kf_impl->measurementMatrix.at<float>(M_VZ, S_VZ) = 1.0f;
     cv::setIdentity(m_kf_impl->processNoiseCov, cv::Scalar(1e-1));
     // Override velocity errors
     m_kf_impl->processNoiseCov.at<float>(S_X, S_X) = 1.0;
@@ -92,18 +80,12 @@ void KFPredictor::reset_kalman_fileter() {
     m_kf_impl->processNoiseCov.at<float>(S_Z, S_Z) = 1.0;
 
     cv::setIdentity(m_kf_impl->measurementNoiseCov, cv::Scalar(1e-4));
-
-    // m_kf_impl->measurementNoiseCov.at<float>(S_X, S_X) = 5e-2;
-    // m_kf_impl->measurementNoiseCov.at<float>(S_Y, S_Y) = 5e-2;
-    // m_kf_impl->measurementNoiseCov.at<float>(S_Z, S_Z) = 1e-3;
-
-    // cv::setIdentity(m_kf_impl->errorCovPost, cv::Scalar(.1));
 }
 void KFPredictor::reset_predict_smoother() {
     OneEuroParams center_params;
     if (glasses_type_ == "flora") {
-        center_params.mincutoff = {0.08, 0.08, 0.08};  // 调静止状态下的稳定性,越小稳定性越好
-        center_params.beta = {18.0, 18.0, 18.0};  // 运动状态下alpha的变化速率，alpha越大，跟踪越及时
+        center_params.mincutoff = {0.1, 0.1, 0.1};  // 调静止状态下的稳定性,越小稳定性越好
+        center_params.beta = {20.0, 20.0, 20.0};  // 运动状态下alpha的变化速率，alpha越大，跟踪越及时
         center_params.dcutoff = {0.8, 0.8, 0.5};  // 速度滤波的固定效果
         predict_length_ratio_ = 1.0;
     } else if (glasses_type_ == "ella") {
@@ -180,6 +162,16 @@ PredictorState KFPredictor::correct(PredictorState meas) {
 
     return {m_momentum.pos, pred_vec};
 }
+Vec3f_t KFPredictor::track_with_correct(double target_ts, PredictorState meas) {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    update_transition_matrix(target_ts);
+    auto pred = this->predict();
+    auto cpred = this->correct(meas);
+    last_correct_time_ = target_ts;
+    last_measure_time_ = target_ts;
+
+    return cpred.pos;
+}
 
 Vec3f_t KFPredictor::track_only_pred(double target_ts, bool with_smooth) {
     double valid_target_ts = get_valid_predict_time_length(target_ts);
@@ -209,7 +201,7 @@ double KFPredictor::get_valid_predict_time_length(double target_ts) {
         hand_static_state = 1;
     }
     double target_timestamp = 0;
-    auto predict_interval = (target_ts - last_measure_time_) * predict_length_ratio_;
+    auto predict_interval = (target_ts - last_correct_time_) * predict_length_ratio_;
     predict_interval = std::min(predict_interval, predict_time_interval_vec[hand_static_state]);
     // if ((m_kf_impl->statePost.at<float>(S_AX) < -0.1) || (m_kf_impl->statePost.at<float>(S_AY) < -0.1)) {
     //     predict_interval = std::min(predict_interval, 0.02);
@@ -217,18 +209,8 @@ double KFPredictor::get_valid_predict_time_length(double target_ts) {
     // if ((m_kf_impl->statePost.at<float>(S_AX) < -0.2) || (m_kf_impl->statePost.at<float>(S_AY) < -0.2)) {
     //     predict_interval = std::min(predict_interval, 0.01);
     // }
-    target_timestamp = predict_interval + last_measure_time_;
+    target_timestamp = predict_interval + last_correct_time_;
     return target_timestamp;
-}
-Vec3f_t KFPredictor::track_with_correct(double target_ts, PredictorState meas) {
-    std::lock_guard<std::mutex> lock(m_mutex);
-    update_transition_matrix(target_ts);
-    auto pred = this->predict();
-    auto cpred = this->correct(meas);
-    last_correct_time_ = target_ts;
-    last_measure_time_ = target_ts;
-
-    return cpred.pos;
 }
 
 bool KFPredictor::get_tracking_status() const {
