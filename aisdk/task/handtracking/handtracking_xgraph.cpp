@@ -1,6 +1,7 @@
 #include "handtracking_xgraph.h"
 
 #include <Eigen/src/Core/Matrix.h>
+#include <absl/strings/match.h>
 #include <fmt/core.h>
 
 #include <cstdint>
@@ -12,6 +13,8 @@
 #include "aisdk/algorithm/common/hand_define.h"
 #include "aisdk/algorithm/common/nrcore_define.h"
 #include "aisdk/algorithm/common/nrnet_define.h"
+#include "aisdk/algorithm/func/hand_filters.h"
+#include "aisdk/algorithm/func/hand_rotation.h"
 #include "aisdk/algorithm/internal_structs/headpose_struct_internal.h"
 #include "aisdk/algorithm/internal_structs/kpt3d_struct_internal.h"
 #include "aisdk/base/log.h"
@@ -122,6 +125,12 @@ std::string AddDataRecordCalculater(aisdk::xengine::PipelineConfig& config) {
 
 aisdk::algorithm::Status HandTrackingXGraph::Init(aisdk::xengine::DlSymFuncs& funcs,
                                                   aisdk::xengine::PipelineConfig& config, CameraParams& camera) {
+    if (absl::StrContains(config.pipeline_name, "flora")) {
+        m_post_filter = std::make_unique<algorithm::HandFilters>("flora");
+    } else {
+        m_post_filter = std::make_unique<algorithm::HandFilters>("ella");
+    }
+    m_post_filter->init();
 #if defined(ENABLE_ALGORITHM_DATA_RECORD) && !defined(ENABLE_SEGMENT_JOINT_INFERENCE_MODE)
     config.graph_config = AddDataRecordCalculater(config);
 #endif
@@ -234,11 +243,16 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
                 if (i == 0) {
                     if (predictor_lhand.get_tracking_status()) {
                         root_kf_predicted = predictor_lhand.track_only_pred(query_time, true);
+                    } else {
+                        m_post_filter->reset(0);
                     }
 
                 } else {
-                    if (predictor_rhand.get_tracking_status())
+                    if (predictor_rhand.get_tracking_status()) {
                         root_kf_predicted = predictor_rhand.track_only_pred(query_time, true);
+                    } else {
+                        m_post_filter->reset(1);
+                    }
                 }
                 AISDK_LOG_TRACE("predict root is {}, {}, {}", root_kf_predicted[0], root_kf_predicted[1],
                                 root_kf_predicted[2]);
@@ -247,6 +261,8 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
                 for (int k = 0; k < EZXR_DEFINED_JOINTS; k++) {
                     predicted_points[k] = ontracked_points[i][k] + root_kf_predicted - root_meas;
                 }
+                m_post_filter->kpt_seq_3d_filter(i, predicted_points);
+                algorithm::compute_joint_rotation(predicted_points, (i == 0), ontracked_rotations[i]);
                 AISDK_LOG_TRACE("[PopResult Predict] {} hand begin", i);
                 for (int j = 0; j < EZXR_DEFINED_JOINTS; j++) {
                     out_hand_array[i].hand_joint_data[xreal_2_clay[j]].hand_joint_type =

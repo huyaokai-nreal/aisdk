@@ -360,6 +360,8 @@ bool SeqManager3D::reset() {
 }
 
 bool SeqManager3D::getFilterHandData(std::vector<Vec3f_t>& kpt_3d) {
+    AISDK_LOG_TRACE("Filter Sample num is {}", mSampleNum);
+    AISDK_LOG_TRACE("Filter data num is {}", kpt_3d.size());
     for (int i = 0; i < mSampleNum; i++) {
         kpt_3d[i][0] = mOneEuroFilterList[i * 3]->filter(kpt_3d[i][0]);
         kpt_3d[i][1] = mOneEuroFilterList[i * 3 + 1]->filter(kpt_3d[i][1]);

@@ -105,10 +105,6 @@ std::tuple<Eigen::Matrix3d, Eigen::Matrix3d, float> get_rotations_for_standard_s
     double baseline = baseline_vec.norm();
     return {left_R, right_R, baseline};
 }
-std::vector<Vec3f_t> constrain_hand(const std::vector<Vec3f_t>& input_kpt3d, bool is_left) {
-    return constraint_hand_v2(input_kpt3d, is_left);
-}
-
 std::vector<Vec3f_t> convert_to_23points(const std::vector<Vec3f_t>& input) {
     std::vector<Vec3f_t> result(23);
     // input size should be 21
