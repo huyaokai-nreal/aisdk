@@ -2008,7 +2008,7 @@ void NrResize(unsigned char *src, float *dst, int drows, int dcols, float _alpha
                       2, 18, 32, 33, 2, 18, 35, 36, 7, 23, 37, 38, 7, 23, 40, 41};
     int8_t *tab = table;
 
-    static aisdk::xengine::PlatformStatus *st = _ZN2NR200TK7FUNC001E();
+    static aisdk::xengine::PlatformStatus *st = _ZN2NR200TK7FUNC001E(nullptr);
     bool isdotsupport = st->is_dot_support;
     bool isfp16support = st->is_fp16_support;
 

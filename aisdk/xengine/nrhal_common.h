@@ -22,8 +22,8 @@ bool CheckEngineSingleBatch(aisdk::xengine::VendorType& vendor);
 
 extern "C" {
 
-typedef aisdk::xengine::PlatformStatus* (*GetPlatformStatusFunc)();
-SYM_EXPORT aisdk::xengine::PlatformStatus* _ZN2NR200TK7FUNC001E();
+typedef aisdk::xengine::PlatformStatus* (*GetPlatformStatusFunc)(aisdk::xengine::PlatformEnv* env);
+SYM_EXPORT aisdk::xengine::PlatformStatus* _ZN2NR200TK7FUNC001E(aisdk::xengine::PlatformEnv* env);
 }
 
 #endif

@@ -1,4 +1,5 @@
 #include <cassert>
+#include <cstddef>
 
 #include "CreateUserBuffer.h"
 #include "aisdk/base/log.h"
@@ -74,7 +75,7 @@ SNPE_Session::~SNPE_Session() {}
 
 Status SNPE_Session::Init(std::shared_ptr<AIModel> &model, SessionConfig &Sconfig) {
     auto aimodel = std::dynamic_pointer_cast<SNPE_AIModel>(model);
-    aisdk::xengine::PlatformStatus *platorm = _ZN2NR200TK7FUNC001E();
+    aisdk::xengine::PlatformStatus *platorm = _ZN2NR200TK7FUNC001E(nullptr);
 #if (defined(ANDROID) || defined(__ANDROID__))
     if (false == platorm->is_hexagon_dsp && false == platorm->is_hexagon_unsignedPD_dsp) {
         return Status::PLATFORM_NO_SUPPORT;

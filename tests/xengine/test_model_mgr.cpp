@@ -12,7 +12,7 @@ TEST_CASE("testing create netalgo") {
     profcnf.aisdk_init_report = true;
     _ZN2NR200TK7FUNC005E(profcnf);
 
-    aisdk::xengine::PlatformStatus* platform = _ZN2NR200TK7FUNC001E();
+    aisdk::xengine::PlatformStatus* platform = _ZN2NR200TK7FUNC001E(nullptr);
     AISDK_LOG_INFO("is_snpe_support={}",platform->is_snpe_support);
     
     std::string tar_name(NAME_TO_STRING(DEFAULT_PIPELINE_TAR_NAME));

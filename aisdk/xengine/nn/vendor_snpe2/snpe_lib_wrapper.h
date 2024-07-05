@@ -12,11 +12,12 @@
 #include <vector>
 
 #include "LoadInterface.h"
+#include "aisdk/xengine/nrhal_define.h"
 
 class SNPELibWrapper {
    public:
-    static SNPELibWrapper& getInstance() {
-        static SNPELibWrapper instance;
+    static SNPELibWrapper& getInstance(aisdk::xengine::PlatformEnv* env) {
+        static SNPELibWrapper instance(env);
         return instance;
     }
 
@@ -42,7 +43,7 @@ class SNPELibWrapper {
     int UnloadSnpe2CInterface();
     int UnloadSnpe2PlatformCInterface();
    private:
-    SNPELibWrapper();
+    SNPELibWrapper(aisdk::xengine::PlatformEnv* env);
     ~SNPELibWrapper();
 
     int LoadSnpe2CInterface(const char* snpe_soname, SnpeCInterface* api);

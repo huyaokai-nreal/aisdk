@@ -51,7 +51,7 @@ void SNPEWrapper::createUserBuffer(Snpe_UserBufferMap_Handle_t userBufferMapHand
 }
 
 SNPEWrapper::SNPEWrapper() {
-    int aa = SNPELibWrapper::getInstance().getSnpe2CInterface(&snpe2_capi);
+    int aa = SNPELibWrapper::getInstance(nullptr).getSnpe2CInterface(&snpe2_capi);
     // int aa = LoadSnpe2CInterface("./libSNPE.so",&snpe2_capi);
     if (0 != aa) {
         AISDK_LOG_TRACE("LoadSnpe2CInterface error");

@@ -366,10 +366,10 @@ void SignalHandler(int sig) {
 
 #if SNPE_VERSION > 2000
 #include "aisdk/xengine/nn/vendor_snpe2/snpe_lib_wrapper.h"
-bool checkHexagonDSP() {
+bool checkHexagonDSP(aisdk::xengine::PlatformEnv* env) {
     SnpeCInterface temp;
     AISDK_LOG_TRACE("checkHexagonDSP");
-    if (0 != SNPELibWrapper::getInstance().getSnpe2CInterface(&temp)) {
+    if (0 != SNPELibWrapper::getInstance(env).getSnpe2CInterface(&temp)) {
         AISDK_LOG_TRACE("getProviderfailed!");
         return false;
     }
@@ -385,7 +385,7 @@ bool checkHexagonDSP() {
 // bool checkHexagonSignedPD() {
 //     SnpePlatformCInterface temp;
 //     AISDK_LOG_TRACE("checkHexagonDSPPlatformPlatformValidator");
-//     if (0 != SNPELibWrapper::getInstance().getSnpe2PlatformCInterface(&temp)) {
+//     if (0 != SNPELibWrapper::getInstance(env).getSnpe2PlatformCInterface(&temp)) {
 //         AISDK_LOG_TRACE("getProviderfailed!");
 //         return false;
 //     }
@@ -404,14 +404,14 @@ bool checkHexagonDSP() {
 //         temp.Snpe_PlatformValidator_Delete(handle);
 //     }
 
-//     SNPELibWrapper::getInstance().UnloadSnpe2PlatformCInterface();
+//     SNPELibWrapper::getInstance(nullptr).UnloadSnpe2PlatformCInterface();
 //     return res ? true : false;
 // }
 
-bool checkHexagonSignedPD() {
+bool checkHexagonSignedPD(aisdk::xengine::PlatformEnv* env) {
     SnpeCInterface temp;
     AISDK_LOG_TRACE("checkHexagonSignedPD");
-    if (0 != SNPELibWrapper::getInstance().getSnpe2CInterface(&temp)) {
+    if (0 != SNPELibWrapper::getInstance(env).getSnpe2CInterface(&temp)) {
         AISDK_LOG_TRACE("getProviderfailed!");
         return false;
     }
@@ -425,10 +425,10 @@ bool checkHexagonSignedPD() {
     return res;
 }
 
-bool checkHexagonUnsignedPDDSP() {
+bool checkHexagonUnsignedPDDSP(aisdk::xengine::PlatformEnv* env) {
     SnpeCInterface temp;
     AISDK_LOG_TRACE("checkHexagonUnsignedPDDSP");
-    if (0 != SNPELibWrapper::getInstance().getSnpe2CInterface(&temp)) {
+    if (0 != SNPELibWrapper::getInstance(env).getSnpe2CInterface(&temp)) {
         AISDK_LOG_TRACE("getProviderfailed!");
         return false;
     }
@@ -442,11 +442,13 @@ bool checkHexagonUnsignedPDDSP() {
 }
 
 #else
-bool checkHexagonDSP() { return zdl::SNPE::SNPEFactory::isRuntimeAvailable(zdl::DlSystem::Runtime_t::DSP); }
+bool checkHexagonDSP(aisdk::xengine::PlatformEnv* env) {
+    return zdl::SNPE::SNPEFactory::isRuntimeAvailable(zdl::DlSystem::Runtime_t::DSP);
+}
 
-bool checkHexagonSignedPD() { return false; }
+bool checkHexagonSignedPD(aisdk::xengine::PlatformEnv* env) { return false; }
 
-bool checkHexagonUnsignedPDDSP() {
+bool checkHexagonUnsignedPDDSP(aisdk::xengine::PlatformEnv* env) {
     return zdl::SNPE::SNPEFactory::isRuntimeAvailable(zdl::DlSystem::Runtime_t::DSP,
                                                       zdl::DlSystem::RuntimeCheckOption_t::UNSIGNEDPD_CHECK);
 }
@@ -536,7 +538,7 @@ bool CheckEngineSingleBatch(aisdk::xengine::VendorType& vendor) {
 #if defined(HAVE_HAL_SNPE)
 #if SNPE_VERSION == SNPE_1660
     if (vendor == aisdk::xengine::VendorType::SNPE) {
-        aisdk::xengine::PlatformStatus st = _ZN2NR200TK7FUNC001E();
+        aisdk::xengine::PlatformStatus st = _ZN2NR200TK7FUNC001E(nullptr);
         if (st.is_snapdragon_8Gen1) {
             return true;
         }
@@ -604,7 +606,7 @@ void HexagonDspTest() {
 
 extern "C" {
 
-SYM_EXPORT aisdk::xengine::PlatformStatus* _ZN2NR200TK7FUNC001E() {
+SYM_EXPORT aisdk::xengine::PlatformStatus* _ZN2NR200TK7FUNC001E(aisdk::xengine::PlatformEnv* env) {
     static aisdk::xengine::PlatformStatus ret;
     static std::once_flag oc;
     std::call_once(oc, [&]() {
@@ -626,17 +628,17 @@ SYM_EXPORT aisdk::xengine::PlatformStatus* _ZN2NR200TK7FUNC001E() {
             if (setjmp(kansnpe) == 0) {
                 // 在自己手机手机上，优先进行SignedPD检查
                 if (ret.is_mobile_evapro) {
-                    // ret.is_hexagon_signedPD_dsp = checkHexagonSignedPD();
+                    // ret.is_hexagon_signedPD_dsp = checkHexagonSignedPD(env);
                     // ret.is_hexagon_dsp = ret.is_hexagon_signedPD_dsp;
                 }
                 // 其次进行UnsignedPD检查
                 if (false == ret.is_hexagon_signedPD_dsp) {
-                    ret.is_hexagon_dsp = checkHexagonDSP();
+                    ret.is_hexagon_dsp = checkHexagonDSP(env);
 #if SNPE_VERSION > 2000
-                    ret.is_hexagon_unsignedPD_dsp = checkHexagonUnsignedPDDSP();
+                    ret.is_hexagon_unsignedPD_dsp = checkHexagonUnsignedPDDSP(env);
 #else
                     if (false == ret.is_hexagon_dsp) {
-                        ret.is_hexagon_unsignedPD_dsp = checkHexagonUnsignedPDDSP();
+                        ret.is_hexagon_unsignedPD_dsp = checkHexagonUnsignedPDDSP(env);
                     }
 #endif
                 }

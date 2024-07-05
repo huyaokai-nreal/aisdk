@@ -183,6 +183,12 @@ struct Rect {
     float h = 0.f;
 };
 
+struct SYM_EXPORT PlatformEnv {
+    bool is_system_app = false;
+    bool is_untrusted_app = false;
+    const char* app_lib_path = nullptr;
+};
+
 struct SYM_EXPORT PlatformStatus {
     bool is_snpe_support = false;
     bool is_snapdragon_855 = false;

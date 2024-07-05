@@ -903,7 +903,9 @@ NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
         std::vector<aisdk::xengine::PipelineConfig> tmp = ins->m_tar_handle->GetPipelineConfig();
         AISDK_LOG_WARN("HandTracking: pipeline size={}", tmp.size());
         if (tmp.size() > 0) {
-            aisdk::xengine::PlatformStatus* plat = ins->m_handtracking.m_funcs.m_getplatform();
+            aisdk::xengine::PlatformEnv platenv;
+            platenv.app_lib_path = ins->m_handtracking.mNativeLibDir.c_str();
+            aisdk::xengine::PlatformStatus* plat = ins->m_handtracking.m_funcs.m_getplatform(&platenv);
             AISDK_LOG_WARN("HandTracking: dsp_support={}", plat->is_snpe_support);
             // clang-format off
             AISDK_LOG_TRACE("Plugin::Initialize is_snpe_support={},is_hexagon_dsp={},is_hexagon_signedPD_dsp={},is_hexagon_unsignedPD_dsp={},is_mobile_evapro={}",

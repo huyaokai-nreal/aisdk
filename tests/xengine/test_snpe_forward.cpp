@@ -45,7 +45,7 @@ TEST_CASE("testing snpe forward") {
     }
     SetAdspLibraryPath(mNativeLibDir);
 
-    aisdk::xengine::PlatformStatus* platform = symfuncs->m_getplatform();
+    aisdk::xengine::PlatformStatus* platform = symfuncs->m_getplatform(nullptr);
     AISDK_LOG_INFO("is_snpe_support={}",platform->is_snpe_support);
     CHECK_EQ(platform->is_snpe_support,true);
     

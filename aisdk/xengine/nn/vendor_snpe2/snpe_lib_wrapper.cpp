@@ -181,10 +181,18 @@ int SNPELibWrapper::UnloadSnpe2PlatformCInterface() {
     return 0;
 }
 
-SNPELibWrapper::SNPELibWrapper() {
+SNPELibWrapper::SNPELibWrapper(aisdk::xengine::PlatformEnv* env) {
     int res = LoadSnpe2CInterface("libSNPE.so", &snpe2_provider_);
     AISDK_LOG_ERROR("SNPELibWrapper init res: {}", res);
-    if (1) {
+    if (0 != res && env && env->app_lib_path) {
+        AISDK_LOG_ERROR("SNPELibWrapper try load fix path: {}", env->app_lib_path);
+        std::string fixpath(env->app_lib_path);
+        fixpath += "/libSNPE.so";
+        res = LoadSnpe2CInterface(fixpath.c_str(), &snpe2_provider_);
+        AISDK_LOG_ERROR("SNPELibWrapper init fix path res: {}", res);
+    }
+
+    if (0) {
         res = LoadSnpe2PlatformCInterface("libPlatformValidatorShared.so", &snpe2_platform_provider_);
         AISDK_LOG_ERROR("SNPEPlatformLibWrapper init res: {}", res);
     }
