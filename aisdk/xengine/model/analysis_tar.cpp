@@ -153,7 +153,7 @@ bool GenerateModelConfig(Json::Value &root, mtar_t &tar, aisdk::xengine::ModelCo
             }
         } else {
             // 必须参数
-            AISDK_LOG_TRACE("can not find {} in tar file", model_config["file_name"].asCString());
+            AISDK_LOG_ERROR("can not find {} in tar file", model_config["file_name"].asCString());
             return false;
         }
 
@@ -331,15 +331,15 @@ bool GenerateGlobalSharedConfig(Json::Value &root, mtar_t &tar, aisdk::xengine::
                             if (GenerateModelConfig(node_config, tar, std::get<0>(tp), std::get<2>(tp))) {
                                 config.netalgo_config[i] = std::move(tp);
                             } else {
-                                AISDK_LOG_TRACE("failed to genearete model config");
+                                AISDK_LOG_ERROR("failed to genearete model config");
                                 return false;
                             }
                         } else {
-                            AISDK_LOG_TRACE("failed to genearete session config");
+                            AISDK_LOG_ERROR("failed to genearete session config");
                             return false;
                         }
                     } else {
-                        AISDK_LOG_TRACE("failed to genearete netalgoconfig");
+                        AISDK_LOG_ERROR("failed to genearete netalgoconfig");
                         return false;
                     }
                 }
