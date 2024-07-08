@@ -72,6 +72,8 @@ class HandTracking {
     NRHandle m_handle = 0;
     std::string mNativeLibDir;
     std::string mSharedLibCopyDir;
+    std::string mAppPackageName;
+    bool m_system_app = false;
 
     bool never_dlopen_so = true;
     void* m_dlhandle = nullptr;

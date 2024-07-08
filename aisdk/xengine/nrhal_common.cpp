@@ -626,8 +626,8 @@ SYM_EXPORT aisdk::xengine::PlatformStatus* _ZN2NR200TK7FUNC001E(aisdk::xengine::
 
             // 以下执行可能会崩溃在libsnpe.so中，代码规避下：
             if (setjmp(kansnpe) == 0) {
-                // 在自己手机手机上，优先进行SignedPD检查
-                if (ret.is_mobile_evapro) {
+                // 在自己手机上,并且是system_app，优先进行SignedPD检查
+                if (env && env->is_system_app && ret.is_mobile_evapro) {
                     // ret.is_hexagon_signedPD_dsp = checkHexagonSignedPD(env);
                     // ret.is_hexagon_dsp = ret.is_hexagon_signedPD_dsp;
                 }

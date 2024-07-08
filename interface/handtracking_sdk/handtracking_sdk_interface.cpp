@@ -285,24 +285,50 @@ bool HandTracking::GetApkStorePath() {
             AISDK_LOG_TRACE("HandTracking: GetExternalFileDir failed");
         }
 
-        // 在apk中通过接口获取
+        //////////////////////////////////////////
         JNIEnv* jni_env;
         java_vm_->GetEnv((void**)&jni_env, JNI_VERSION_1_6);
         jclass cls_Context = jni_env->GetObjectClass(obj_activity_);
         jmethodID mid_getApplicationInfo =
             jni_env->GetMethodID(cls_Context, "getApplicationInfo", "()Landroid/content/pm/ApplicationInfo;");
         jobject obj_ApplicationInfo = jni_env->CallObjectMethod(obj_activity_, mid_getApplicationInfo);
+        jmethodID methodID =
+            jni_env->GetMethodID(cls_Context, "getPackageManager", "()Landroid/content/pm/PackageManager;");
+        jobject packageManagerObject = jni_env->CallObjectMethod(obj_activity_, methodID);
 
+        // 在apk中通过接口获取 原生lib库的路径
         jclass cls_ApplicationInfo = jni_env->GetObjectClass(obj_ApplicationInfo);
         jfieldID fld_nativeLibraryDir =
             jni_env->GetFieldID(cls_ApplicationInfo, "nativeLibraryDir", "Ljava/lang/String;");
         jstring jstr_dir = (jstring)jni_env->GetObjectField(obj_ApplicationInfo, fld_nativeLibraryDir);
-
         const char* nativeString = jni_env->GetStringUTFChars(jstr_dir, 0);
         mNativeLibDir = nativeString;
 
-        //////////////////////////////////////////
+        // 在apk中通过接口获取 原生app package_name
+        jfieldID packageNamefieldID = jni_env->GetFieldID(cls_ApplicationInfo, "packageName", "Ljava/lang/String;");
+        jstring packageName = (jstring)jni_env->GetObjectField(obj_ApplicationInfo, packageNamefieldID);
+        mAppPackageName = std::string(jni_env->GetStringUTFChars(packageName, 0));
 
+        // 在apk中通过接口获取 app的名称，以及是否system_app属性
+        jfieldID fieldID = jni_env->GetFieldID(cls_ApplicationInfo, "flags", "I");
+        jint applicationFlags = jni_env->GetIntField(obj_ApplicationInfo, fieldID);
+        jboolean isSystemApp = ((applicationFlags & 0x00000001) != 0);
+        m_system_app = isSystemApp;
+
+        // 在apk中通过接口获取 app的名称，以及是否system用户权限
+        jmethodID getPackageInfoId =
+            jni_env->GetMethodID(jni_env->GetObjectClass(packageManagerObject), "getPackageInfo",
+                                 "(Ljava/lang/String;I)Landroid/content/pm/PackageInfo;");
+        jobject packageInfo = jni_env->CallObjectMethod(packageManagerObject, getPackageInfoId, packageName, 0);
+        jfieldID sharedUserIdField =
+            jni_env->GetFieldID(jni_env->GetObjectClass(packageInfo), "sharedUserId", "Ljava/lang/String;");
+        jstring sharedUserId = (jstring)jni_env->GetObjectField(packageInfo, sharedUserIdField);
+        std::string sharedUserId1(jni_env->GetStringUTFChars(sharedUserId, 0));
+        // AISDK_LOG_WARN("HandTracking: sharedUserId1={}", sharedUserId1.c_str());
+        m_system_app = (sharedUserId1 == "android.uid.system");
+
+        //////////////////////////////////////////
+        // 在apk中通过接口获取 原生appjni_lib库的路径
         jclass j_context_wrapper_class = jni_env->FindClass("android/content/ContextWrapper");
         if (!j_context_wrapper_class) {
             return false;
@@ -904,11 +930,15 @@ NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
         AISDK_LOG_WARN("HandTracking: pipeline size={}", tmp.size());
         if (tmp.size() > 0) {
             aisdk::xengine::PlatformEnv platenv;
+            platenv.is_system_app = ins->m_handtracking.m_system_app;
+            platenv.is_untrusted_app = !platenv.is_system_app;
             platenv.app_lib_path = ins->m_handtracking.mNativeLibDir.c_str();
+            AISDK_LOG_WARN("HandTracking: is_system_app={},is_untrusted_app={},app_lib_path={}", platenv.is_system_app,
+                           platenv.is_untrusted_app, platenv.app_lib_path);
             aisdk::xengine::PlatformStatus* plat = ins->m_handtracking.m_funcs.m_getplatform(&platenv);
             AISDK_LOG_WARN("HandTracking: dsp_support={}", plat->is_snpe_support);
             // clang-format off
-            AISDK_LOG_TRACE("Plugin::Initialize is_snpe_support={},is_hexagon_dsp={},is_hexagon_signedPD_dsp={},is_hexagon_unsignedPD_dsp={},is_mobile_evapro={}",
+            AISDK_LOG_WARN("HandTracking: is_snpe_support={},is_hexagon_dsp={},is_hexagon_signedPD_dsp={},is_hexagon_unsignedPD_dsp={},is_mobile_evapro={}",
                 (int)plat->is_snpe_support, (int)plat->is_hexagon_dsp, (int)plat->is_hexagon_signedPD_dsp, (int)plat->is_hexagon_unsignedPD_dsp,
                 (int)plat->is_mobile_evapro);
             // clang-format on
