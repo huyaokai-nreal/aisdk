@@ -166,8 +166,8 @@ void HandTracking::SendGlassPredictionData() {
         while (ins->exec_exit) {
             status = impl->PopResult(&out_hand);
             if (status == aisdk::algorithm::Status::SUCCESS) {
-                // OnDeviceMessage(Plugin::GetInstance()->GetHandle(), (const void * )&out_hand,
-                // sizeof(GlassHandPredictionData));
+                ins->m_message.m_interface->SendDeviceMessage(ins->GetHandle(), &out_hand,
+                                                              sizeof(GlassHandPredictionData));
             }
         }
     }
@@ -619,24 +619,38 @@ void Hmd::GetCamerasInformation() {
     m_cam_param.m_params["generate_method"] = {(float)m_generate_method};
 }
 
-NRPluginResult HandTracking::ParseGlassPredictionData(const GlassHandPredictionData* data) {
-    NRPluginResult errorcode = NR_PLUGIN_RESULT_SUCCESS;
-    uint64_t nano_time_[2];
+NRPluginResult DeviceMessage::NotifyDeviceMessage(NRPluginHandle handle, const void* data, uint32_t data_size) {
+    NRPluginResult errorcode = NR_PLUGIN_RESULT_FAILURE;
+    uint64_t nano_time_;
     NRTransform head_pose;
     DevicePose headpose_proto;
 
-    auto ins = Plugin::GetInstance();
-    auto& pipeline = ins->GetPipeline();
-    if (ins->pipeline_work_scene == "handtracking_segment_next_host") {
-        errorcode = ins->m_handtracking.m_interface->GetDevicePose(ins->GetHandle(), &headpose_proto, nano_time_[0]);
-        head_pose = headpose_proto.transform;
-
-        std::shared_ptr<task::HandTrackingNextHostXGraph> impl =
-            std::dynamic_pointer_cast<task::HandTrackingNextHostXGraph>(pipeline.Impl());
-        impl->PushData(data, head_pose);
+    if (handle != Plugin::GetInstance()->GetHandle()) {
+        AISDK_LOG_ERROR("NotifyDeviceMessage handle error!");
+        return errorcode;
     }
 
-    AISDK_LOG_TRACE("interface ParseGlassPredictionData push");
+    if (data_size != sizeof(GlassHandPredictionData)) {
+        AISDK_LOG_ERROR("NotifyDeviceMessage Failed: data_size error, the interface is not compatible!");
+        return errorcode;
+    }
+
+    auto ins = Plugin::GetInstance();
+    if (ins->isStart()) {
+        auto& pipeline = ins->GetPipeline();
+        if (ins->pipeline_work_scene == "handtracking_segment_next_host") {
+            auto prediction_data = (const GlassHandPredictionData*)data;
+            nano_time_ = prediction_data->timestamp_nanos;
+            errorcode = ins->m_handtracking.m_interface->GetDevicePose(ins->GetHandle(), &headpose_proto, nano_time_);
+            head_pose = headpose_proto.transform;
+
+            std::shared_ptr<task::HandTrackingNextHostXGraph> impl =
+                std::dynamic_pointer_cast<task::HandTrackingNextHostXGraph>(pipeline.Impl());
+            impl->PushData(prediction_data, head_pose);
+            errorcode = NR_PLUGIN_RESULT_SUCCESS;
+        }
+    }
+
     return errorcode;
 }
 
@@ -732,15 +746,6 @@ void HandTracking::NotifyData(NRPluginHandle handle, NRChannelDataType channel_d
                 ParseAllCameraData((const NRGrayscaleCameraFrameData*)data);
             }
             break;
-        case NR_CHANNEL_DATA_TYPE_GLASSES_HANDTRACKING_PREDICTION:
-            if (data_size != sizeof(GlassHandPredictionData)) {
-                AISDK_LOG_ERROR("NotifyData Failed: data_size error, the interface is not compatible!");
-                return;
-            }
-            if (Plugin::GetInstance()->isStart()) {
-                ParseGlassPredictionData((const GlassHandPredictionData*)data);
-            }
-            break;
         default:
             break;
     }
@@ -806,6 +811,18 @@ bool Plugin::Init(NRPluginHandle handle, NRInterfaces* interfaces) {
                                               &Plugin::Update,   &Plugin::Pause,      &Plugin::Resume,
                                               &Plugin::Stop,     &Plugin::Release,    &Plugin::Unregister};
         ht->RegisterLifecycleProvider(handle, "nr_handtracking_id", "version1.0", &provider, sizeof(provider));
+
+        // 分段pipeline之间通信接口
+#if defined(PRIOR_GLASS_INFERENCE) || defined(NEXT_HOST_INFERENCE)
+        unsigned long long message_interface_size;
+        m_message.m_interface = interfaces->Get<DeviceMessageSendInterface>(&message_interface_size);
+        if (nullptr == m_message.m_interface) {
+            AISDK_LOG_ERROR("Plugin::Initialize Get<DeviceMessageSendInterface> error!!!");
+            return false;
+        }
+        DeviceMessageHandleProvider provider1 = {&DeviceMessage::NotifyDeviceMessage};
+        m_message.m_interface->RegisterProvider(handle, &provider1, sizeof(DeviceMessageHandleProvider));
+#endif
         return true;
     }
     return false;

@@ -8,6 +8,7 @@
 #include "perception/nr_perception_hand_tracking.h"
 #include "public/nr_plugin_lifecycle.h"
 #include "public/nr_plugin_types.h"
+#include "public/nr_plugin_message.h"
 
 #include "aisdk/base/mem_buffer.h"
 #include "aisdk/xengine/nrhal_capi_symbol.h"
@@ -103,8 +104,15 @@ class Hmd {
 
 class Generic {
    public:
-   public:
     NRGenericInterface* m_interface = nullptr;
+    NRHandle m_handle = 0;
+};
+
+class DeviceMessage {
+    public:
+    static NRPluginResult NotifyDeviceMessage(NRPluginHandle handle, const void* data,
+                           uint32_t data_size);
+    DeviceMessageSendInterface*  m_interface = nullptr;
     NRHandle m_handle = 0;
 };
 
@@ -158,6 +166,8 @@ class Plugin {
     Hmd m_hmd;
     // GrayscaleCamera m_grayscale;
     Generic m_generic;
+    DeviceMessage m_message;
+
     std::unique_ptr<base::FixedMembuffer> m_picbuf;
     bool m_load_external_modeltar = false;
     std::string pipeline_work_scene;
