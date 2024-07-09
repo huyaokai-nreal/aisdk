@@ -22,11 +22,19 @@ namespace aisdk::task {
 #define JOINTS_COUNT 25
 #define EZXR_DEFINED_JOINTS 23
 
+#if defined(ENABLE_OPENXR_HANDJOINT_FORMAT)
+static std::map<int, int> xreal_2_clay = {{0, 1},   {1, 2},   {2, 3},   {3, 4},   {4, 5},   {5, 7},   {6, 8},
+                                          {7, 9},   {8, 10},  {9, 12},  {10, 13}, {11, 14}, {12, 15}, {13, 17},
+                                          {14, 18}, {15, 19}, {16, 20}, {17, 22}, {18, 23}, {19, 24}, {20, 25},
+                                          {21, 0},  {22, 21}, {23, 6},  {24, 11}, {25, 16}};
+#else
 static std::map<int, int> xreal_2_clay = {
     {0, 24},  {1, 0},   {2, 1},   {3, 2},   {4, 3},   {5, 4},   {6, 5},   {7, 6},
     {8, 7},   {9, 8},   {10, 9},  {11, 10}, {12, 11}, {13, 12}, {14, 13}, {15, 14},
     {16, 15}, {17, 17}, {18, 18}, {19, 19}, {20, 20}, {21, 21}, {22, 16},
 };
+#endif
+
 using algorithm::HandGesture;
 
 static std::map<HandGesture, int> GestureMap = {
@@ -45,32 +53,31 @@ aisdk::algorithm::Status HandTrackingNextHostXGraph::Init(aisdk::xengine::DlSymF
     return BaseXGraph::Init(funcs, config, camera);
 }
 
-aisdk::algorithm::Status HandTrackingNextHostXGraph::PushData(uint64_t timestamp,
-                                                              std::vector<aisdk::algorithm::Image>& in_image,
+aisdk::algorithm::Status HandTrackingNextHostXGraph::PushData(const GlassHandPredictionData* predict_data,
                                                               NRTransform headpose) {
     // we use microseconds in xgraph pipeline
-    int64_t timestamp_micro = static_cast<int64_t>(timestamp / 1000);
-    auto image_packet = xgraph::MakePacket<std::vector<aisdk::algorithm::Image>>(std::move(in_image));
+    int64_t timestamp_micro = static_cast<int64_t>(predict_data->timestamp_nanos / 1000);
+    // auto image_packet = xgraph::MakePacket<std::vector<aisdk::algorithm::Image>>(std::move(in_image));
     auto headpose_packet = xgraph::MakePacket<algorithm::HeadPoseInternal>(headpose);
 
     // 先登记需要缓存的stream帧信息
     bool push_failure = false;
-    auto status = SetInputStreamCache(timestamp, timestamp_micro);
+    auto status = SetInputStreamCache(predict_data->timestamp_nanos, timestamp_micro);
     if (status == algorithm::Status::SUCCESS) {
         // 这里根据stream输入的返回值做
-        auto _status =
-            m_calculator_graph->AddPacketToInputStream("image", image_packet.At(xgraph::Timestamp(timestamp_micro)));
-        auto _status1 = m_calculator_graph->AddPacketToInputStream(
-            "head_pose", headpose_packet.At(xgraph::Timestamp(timestamp_micro)));
-        if (!_status.ok() || !_status1.ok()) {
-            AISDK_LOG_ERROR("HandTrackingNextHostXGraph::PushData image {}", _status.message().data());
-            AISDK_LOG_ERROR("HandTrackingNextHostXGraph::PushData head_pose {}", _status1.message().data());
-            push_failure = true;
-        }
-        // 若push失败，清除cahce
-        if (push_failure) {
-            ClearInputStreamCache(timestamp_micro);
-        }
+        // auto _status =
+        //     m_calculator_graph->AddPacketToInputStream("image", image_packet.At(xgraph::Timestamp(timestamp_micro)));
+        // auto _status1 = m_calculator_graph->AddPacketToInputStream(
+        //     "head_pose", headpose_packet.At(xgraph::Timestamp(timestamp_micro)));
+        // if (!_status.ok() || !_status1.ok()) {
+        //     AISDK_LOG_ERROR("HandTrackingNextHostXGraph::PushData image {}", _status.message().data());
+        //     AISDK_LOG_ERROR("HandTrackingNextHostXGraph::PushData head_pose {}", _status1.message().data());
+        //     push_failure = true;
+        // }
+        // // 若push失败，清除cahce
+        // if (push_failure) {
+        //     ClearInputStreamCache(timestamp_micro);
+        // }
     }
     // m_increase_timestep++;
     return aisdk::algorithm::Status::SUCCESS;

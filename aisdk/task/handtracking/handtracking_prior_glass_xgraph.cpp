@@ -56,9 +56,8 @@ aisdk::algorithm::Status HandTrackingPriorGlassXGraph::PushData(uint64_t timesta
     // m_increase_timestep++;
     return aisdk::algorithm::Status::SUCCESS;
 }
-aisdk::algorithm::Status HandTrackingPriorGlassXGraph::PopResult(uint64_t hmd_time_nano, uint32_t* hand_num,
-                                                                 HandData* out_hand_array) {
-    double query_time = static_cast<double>(hmd_time_nano) / 1e9;
+
+aisdk::algorithm::Status HandTrackingPriorGlassXGraph::PopResult(GlassHandPredictionData* out_hand) {
     std::shared_ptr<StreamCache> outlist = GetOutputStreamCache();
     if (outlist) {
         auto& hand_data_packet = outlist->m_output_packs[0];
@@ -66,7 +65,6 @@ aisdk::algorithm::Status HandTrackingPriorGlassXGraph::PopResult(uint64_t hmd_ti
         return aisdk::algorithm::Status::SUCCESS;
     }
 
-    *hand_num = 0;
     return aisdk::algorithm::Status::FAILURE;
 }
 

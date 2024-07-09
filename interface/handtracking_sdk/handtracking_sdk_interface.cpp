@@ -59,6 +59,28 @@ NRPluginResult HandTracking::GetAvailableGestureType(NRPluginHandle handle, uint
     return NR_PLUGIN_RESULT_SUCCESS;
 }
 
+#if defined(ENABLE_OPENXR_HANDJOINT_FORMAT)
+NRPluginResult HandTracking::GetAvailableHandJoint(NRPluginHandle handle, uint64_t* out_available_hand_joint_mask) {
+    if (handle != Plugin::GetInstance()->GetHandle()) {
+        AISDK_LOG_TRACE("HandTracking: GetAvailableHandJoint handle error!");
+        return NR_PLUGIN_RESULT_FAILURE;
+    }
+    *out_available_hand_joint_mask =
+        HAND_JOINT_TYPE_MASK_PALM | HAND_JOINT_TYPE_MASK_WRIST | HAND_JOINT_TYPE_MASK_THUMB_METACARPAL |
+        HAND_JOINT_TYPE_MASK_THUMB_PROXIMAL | HAND_JOINT_TYPE_MASK_THUMB_DISTAL | HAND_JOINT_TYPE_MASK_THUMB_TIP |
+        HAND_JOINT_TYPE_MASK_INDEX_FINGER_METACARPAL | HAND_JOINT_TYPE_MASK_INDEX_FINGER_PROXIMAL |
+        HAND_JOINT_TYPE_MASK_INDEX_FINGER_INTERMEDIATE | HAND_JOINT_TYPE_MASK_INDEX_FINGER_DISTAL |
+        HAND_JOINT_TYPE_MASK_INDEX_FINGER_TIP | HAND_JOINT_TYPE_MASK_MIDDLE_FINGER_METACARPAL |
+        HAND_JOINT_TYPE_MASK_MIDDLE_FINGER_PROXIMAL | HAND_JOINT_TYPE_MASK_MIDDLE_FINGER_INTERMEDIATE |
+        HAND_JOINT_TYPE_MASK_MIDDLE_FINGER_DISTAL | HAND_JOINT_TYPE_MASK_MIDDLE_FINGER_TIP |
+        HAND_JOINT_TYPE_MASK_RING_FINGER_METACARPAL | HAND_JOINT_TYPE_MASK_RING_FINGER_PROXIMAL |
+        HAND_JOINT_TYPE_MASK_RING_FINGER_INTERMEDIATE | HAND_JOINT_TYPE_MASK_RING_FINGER_DISTAL |
+        HAND_JOINT_TYPE_MASK_RING_FINGER_TIP | HAND_JOINT_TYPE_MASK_LITTLE_FINGER_METACARPAL |
+        HAND_JOINT_TYPE_MASK_LITTLE_FINGER_PROXIMAL | HAND_JOINT_TYPE_MASK_LITTLE_FINGER_INTERMEDIATE |
+        HAND_JOINT_TYPE_MASK_LITTLE_FINGER_DISTAL | HAND_JOINT_TYPE_MASK_LITTLE_FINGER_TIP;
+    return NR_PLUGIN_RESULT_SUCCESS;
+}
+#else
 NRPluginResult HandTracking::GetAvailableHandJoint(NRPluginHandle handle, uint64_t* out_available_hand_joint_mask) {
     if (handle != Plugin::GetInstance()->GetHandle()) {
         AISDK_LOG_TRACE("HandTracking: GetAvailableHandJoint handle error!");
@@ -75,6 +97,7 @@ NRPluginResult HandTracking::GetAvailableHandJoint(NRPluginHandle handle, uint64
         HAND_JOINT_TYPE_MASK_THUMB_0 | HAND_JOINT_TYPE_MASK_PINKY_0;
     return NR_PLUGIN_RESULT_SUCCESS;
 }
+#endif
 
 NRPluginResult HandTracking::GetSupportedFunctions(NRPluginHandle handle, uint64_t* out_supported_function_mask) {
     if (handle != Plugin::GetInstance()->GetHandle()) {
@@ -109,10 +132,6 @@ NRPluginResult HandTracking::GetHandData(NRPluginHandle handle, uint64_t hmd_tim
         std::shared_ptr<task::HandTrackingXGraph> impl =
             std::dynamic_pointer_cast<task::HandTrackingXGraph>(pipeline.Impl());
         status = impl->PopResult(hmd_time_nanos, out_hand_num, out_hand_array);
-    } else if (ins->pipeline_work_scene == "handtracking_segment_prior_glass") {
-        std::shared_ptr<task::HandTrackingPriorGlassXGraph> impl =
-            std::dynamic_pointer_cast<task::HandTrackingPriorGlassXGraph>(pipeline.Impl());
-        status = impl->PopResult(hmd_time_nanos, out_hand_num, out_hand_array);
     } else if (ins->pipeline_work_scene == "handtracking_segment_next_host") {
         std::shared_ptr<task::HandTrackingNextHostXGraph> impl =
             std::dynamic_pointer_cast<task::HandTrackingNextHostXGraph>(pipeline.Impl());
@@ -128,6 +147,30 @@ NRPluginResult HandTracking::GetHandData(NRPluginHandle handle, uint64_t hmd_tim
     }
 
     return NR_PLUGIN_RESULT_FAILURE;
+}
+
+void HandTracking::SendGlassPredictionData() {
+    auto* ins = Plugin::GetInstance();
+    if (false == ins->isInit()) {
+        AISDK_LOG_WARN("HandTracking: init Failure");
+        return;
+    }
+
+    auto& pipeline = ins->GetPipeline();
+    aisdk::algorithm::Status status;
+    if (ins->pipeline_work_scene == "handtracking_segment_prior_glass") {
+        std::shared_ptr<task::HandTrackingPriorGlassXGraph> impl =
+            std::dynamic_pointer_cast<task::HandTrackingPriorGlassXGraph>(pipeline.Impl());
+
+        GlassHandPredictionData out_hand;
+        while (ins->exec_exit) {
+            status = impl->PopResult(&out_hand);
+            if (status == aisdk::algorithm::Status::SUCCESS) {
+                // OnDeviceMessage(Plugin::GetInstance()->GetHandle(), (const void * )&out_hand,
+                // sizeof(GlassHandPredictionData));
+            }
+        }
+    }
 }
 
 int HandTracking::GetHandTrackingMidExecInfo(ProfilingInfo* info) {
@@ -576,6 +619,27 @@ void Hmd::GetCamerasInformation() {
     m_cam_param.m_params["generate_method"] = {(float)m_generate_method};
 }
 
+NRPluginResult HandTracking::ParseGlassPredictionData(const GlassHandPredictionData* data) {
+    NRPluginResult errorcode = NR_PLUGIN_RESULT_SUCCESS;
+    uint64_t nano_time_[2];
+    NRTransform head_pose;
+    DevicePose headpose_proto;
+
+    auto ins = Plugin::GetInstance();
+    auto& pipeline = ins->GetPipeline();
+    if (ins->pipeline_work_scene == "handtracking_segment_next_host") {
+        errorcode = ins->m_handtracking.m_interface->GetDevicePose(ins->GetHandle(), &headpose_proto, nano_time_[0]);
+        head_pose = headpose_proto.transform;
+
+        std::shared_ptr<task::HandTrackingNextHostXGraph> impl =
+            std::dynamic_pointer_cast<task::HandTrackingNextHostXGraph>(pipeline.Impl());
+        impl->PushData(data, head_pose);
+    }
+
+    AISDK_LOG_TRACE("interface ParseGlassPredictionData push");
+    return errorcode;
+}
+
 NRPluginResult HandTracking::ParseAllCameraData(const NRGrayscaleCameraFrameData* data) {
     // uint32_t camera_raw_data_size[4];
     // const uint8_t* camera_raw_data_[2];
@@ -668,6 +732,15 @@ void HandTracking::NotifyData(NRPluginHandle handle, NRChannelDataType channel_d
                 ParseAllCameraData((const NRGrayscaleCameraFrameData*)data);
             }
             break;
+        case NR_CHANNEL_DATA_TYPE_GLASSES_HANDTRACKING_PREDICTION:
+            if (data_size != sizeof(GlassHandPredictionData)) {
+                AISDK_LOG_ERROR("NotifyData Failed: data_size error, the interface is not compatible!");
+                return;
+            }
+            if (Plugin::GetInstance()->isStart()) {
+                ParseGlassPredictionData((const GlassHandPredictionData*)data);
+            }
+            break;
         default:
             break;
     }
@@ -753,6 +826,24 @@ task::Pipeline& Plugin::GetPipeline() {
 }
 
 void Plugin::ReleasePipeline() { m_pipeline = nullptr; }
+
+void Plugin::Start() {
+    m_is_start = true;
+    if (pipeline_work_scene == "handtracking_segment_prior_glass") {
+        exec_exit = false;
+        m_exec_thread = std::move(std::thread(&HandTracking::SendGlassPredictionData));
+    }
+}
+
+void Plugin::Stop() {
+    m_is_start = false;
+    if (pipeline_work_scene == "handtracking_segment_prior_glass") {
+        exec_exit = true;
+        if (m_exec_thread.joinable()) {
+            m_exec_thread.join();
+        }
+    }
+}
 
 bool Plugin::AnalysisTar() {
     bool is_ok = false;

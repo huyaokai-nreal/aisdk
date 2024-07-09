@@ -13,6 +13,8 @@
 #include "aisdk/xengine/nrhal_capi_symbol.h"
 #include "aisdk/task/handtracking/nrcore_pipeline.h"
 
+#include <mutex>
+#include <thread>
 // #include "version.h"
 
 namespace aisdk::interface {
@@ -59,8 +61,10 @@ class HandTracking {
     static NRPluginResult UpdateNRHandData();
     static NRPluginResult GetHandData(NRPluginHandle handle, uint64_t hmd_time_nanos, HandData* out_hand_array,
                                       uint32_t* out_hand_num);
+    static void SendGlassPredictionData();                                  
     static void NotifyData(NRPluginHandle handle, NRChannelDataType channel_data_type, const void* data,
                            uint32_t data_size);
+    static NRPluginResult ParseGlassPredictionData(const GlassHandPredictionData* data);
     static NRPluginResult ParseAllCameraData(const NRGrayscaleCameraFrameData* data);
     static int GetHandTrackingMidExecInfo(ProfilingInfo* info);
     bool GetApkStorePath();
@@ -120,8 +124,8 @@ class Plugin {
 
     bool isInit() { return m_is_init; }
     bool isStart() { return m_is_start; }
-    void Start() { m_is_start = true; }
-    void Stop() { m_is_start = false; }
+    void Start();
+    void Stop();
 
     void setDeviceType(NRDeviceType device_type) { m_act_device_type = device_type; }
     NRDeviceType getDeviceType() { return m_act_device_type; }
@@ -161,6 +165,9 @@ class Plugin {
     // model_tar
     bool AnalysisTar();
     xengine::AnalysisTar *m_tar_handle = nullptr;
+
+    bool exec_exit = false;
+    std::thread m_exec_thread;
 };
 
 }  // namespace aisdk::interface

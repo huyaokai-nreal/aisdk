@@ -16,7 +16,7 @@ class HandTrackingPriorGlassXGraph : public BaseXGraph {
                                   CameraParams &camera) override;
     // 接口参数自定义
     algorithm::Status PushData(uint64_t timestamp, std::vector<algorithm::Image>& in_image);
-    algorithm::Status PopResult(uint64_t hmd_time_nanos, uint32_t* hand_num, HandData* out_hand_array);
+    algorithm::Status PopResult(GlassHandPredictionData* out_hand);
     // 其他接口自定义
 };
 

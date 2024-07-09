@@ -31,6 +31,75 @@ NR_PLUGIN_ENUM64(GestureTypeMask){
     GESTURE_TYPE_MASK_ALL        = 0x7FFFFFFFFFFFFFFFLL,
 };
 
+#if defined(ENABLE_OPENXR_HANDJOINT_FORMAT)
+/// @brief The skeleton id of a hand
+NR_PLUGIN_ENUM(HandJointType){
+    HAND_JOINT_TYPE_INVALID                            = -1,
+    HAND_JOINT_TYPE_PALM                               = 0,
+    HAND_JOINT_TYPE_WRIST                              = 1,
+    HAND_JOINT_TYPE_THUMB_METACARPAL                   = 2,
+    HAND_JOINT_TYPE_THUMB_PROXIMAL                     = 3,
+    HAND_JOINT_TYPE_THUMB_DISTAL                       = 4,
+    HAND_JOINT_TYPE_THUMB_TIP                          = 5,
+    HAND_JOINT_TYPE_INDEX_FINGER_METACARPAL            = 6, 
+    HAND_JOINT_TYPE_INDEX_FINGER_PROXIMAL              = 7,
+    HAND_JOINT_TYPE_INDEX_FINGER_INTERMEDIATE          = 8,
+    HAND_JOINT_TYPE_INDEX_FINGER_DISTAL                = 9,
+    HAND_JOINT_TYPE_INDEX_FINGER_TIP                   = 10,
+    HAND_JOINT_TYPE_MIDDLE_FINGER_METACARPAL           = 11,
+    HAND_JOINT_TYPE_MIDDLE_FINGER_PROXIMAL             = 12,
+    HAND_JOINT_TYPE_MIDDLE_FINGER_INTERMEDIATE         = 13,
+    HAND_JOINT_TYPE_MIDDLE_FINGER_DISTAL               = 14,
+    HAND_JOINT_TYPE_MIDDLE_FINGER_TIP                  = 15,
+    HAND_JOINT_TYPE_RING_FINGER_METACARPAL             = 16,
+    HAND_JOINT_TYPE_RING_FINGER_PROXIMAL               = 17,
+    HAND_JOINT_TYPE_RING_FINGER_INTERMEDIATE           = 18,
+    HAND_JOINT_TYPE_RING_FINGER_DISTAL                 = 19,
+    HAND_JOINT_TYPE_RING_FINGER_TIP                    = 20,
+    HAND_JOINT_TYPE_LITTLE_FINGER_METACARPAL           = 21,
+    HAND_JOINT_TYPE_LITTLE_FINGER_PROXIMAL             = 22,
+    HAND_JOINT_TYPE_LITTLE_FINGER_INTERMEDIATE         = 23,
+    HAND_JOINT_TYPE_LITTLE_FINGER_DISTAL               = 24,
+    HAND_JOINT_TYPE_LITTLE_FINGER_TIP                  = 25,
+    HAND_JOINT_TYPE_MAX                                = 32,
+};
+
+NR_PLUGIN_ENUM64(HandJointMask){
+    HAND_JOINT_TYPE_MASK_PALM                        = (1LL << HandJointType::HAND_JOINT_TYPE_PALM),
+    HAND_JOINT_TYPE_MASK_WRIST                       = (1LL << HandJointType::HAND_JOINT_TYPE_WRIST),
+
+    HAND_JOINT_TYPE_MASK_THUMB_METACARPAL            = (1LL << HandJointType::HAND_JOINT_TYPE_THUMB_METACARPAL),
+    HAND_JOINT_TYPE_MASK_THUMB_PROXIMAL              = (1LL << HandJointType::HAND_JOINT_TYPE_THUMB_PROXIMAL),
+    HAND_JOINT_TYPE_MASK_THUMB_DISTAL                = (1LL << HandJointType::HAND_JOINT_TYPE_THUMB_DISTAL),
+    HAND_JOINT_TYPE_MASK_THUMB_TIP                   = (1LL << HandJointType::HAND_JOINT_TYPE_THUMB_TIP),
+
+    HAND_JOINT_TYPE_MASK_INDEX_FINGER_METACARPAL     = (1LL << HandJointType::HAND_JOINT_TYPE_INDEX_FINGER_METACARPAL),
+    HAND_JOINT_TYPE_MASK_INDEX_FINGER_PROXIMAL       = (1LL << HandJointType::HAND_JOINT_TYPE_INDEX_FINGER_PROXIMAL),
+    HAND_JOINT_TYPE_MASK_INDEX_FINGER_INTERMEDIATE   = (1LL << HandJointType::HAND_JOINT_TYPE_INDEX_FINGER_INTERMEDIATE),
+    HAND_JOINT_TYPE_MASK_INDEX_FINGER_DISTAL         = (1LL << HandJointType::HAND_JOINT_TYPE_INDEX_FINGER_DISTAL),
+    HAND_JOINT_TYPE_MASK_INDEX_FINGER_TIP            = (1LL << HandJointType::HAND_JOINT_TYPE_INDEX_FINGER_TIP),
+
+    HAND_JOINT_TYPE_MASK_MIDDLE_FINGER_METACARPAL    = (1LL << HandJointType::HAND_JOINT_TYPE_MIDDLE_FINGER_METACARPAL),
+    HAND_JOINT_TYPE_MASK_MIDDLE_FINGER_PROXIMAL      = (1LL << HandJointType::HAND_JOINT_TYPE_MIDDLE_FINGER_PROXIMAL),
+    HAND_JOINT_TYPE_MASK_MIDDLE_FINGER_INTERMEDIATE  = (1LL << HandJointType::HAND_JOINT_TYPE_MIDDLE_FINGER_INTERMEDIATE),
+    HAND_JOINT_TYPE_MASK_MIDDLE_FINGER_DISTAL        = (1LL << HandJointType::HAND_JOINT_TYPE_MIDDLE_FINGER_DISTAL),
+    HAND_JOINT_TYPE_MASK_MIDDLE_FINGER_TIP           = (1LL << HandJointType::HAND_JOINT_TYPE_MIDDLE_FINGER_TIP),
+
+    HAND_JOINT_TYPE_MASK_RING_FINGER_METACARPAL      = (1LL << HandJointType::HAND_JOINT_TYPE_RING_FINGER_METACARPAL),
+    HAND_JOINT_TYPE_MASK_RING_FINGER_PROXIMAL        = (1LL << HandJointType::HAND_JOINT_TYPE_RING_FINGER_PROXIMAL),
+    HAND_JOINT_TYPE_MASK_RING_FINGER_INTERMEDIATE    = (1LL << HandJointType::HAND_JOINT_TYPE_RING_FINGER_INTERMEDIATE),
+    HAND_JOINT_TYPE_MASK_RING_FINGER_DISTAL          = (1LL << HandJointType::HAND_JOINT_TYPE_RING_FINGER_DISTAL),
+    HAND_JOINT_TYPE_MASK_RING_FINGER_TIP             = (1LL << HandJointType::HAND_JOINT_TYPE_RING_FINGER_TIP),
+
+    HAND_JOINT_TYPE_MASK_LITTLE_FINGER_METACARPAL    = (1LL << HandJointType::HAND_JOINT_TYPE_LITTLE_FINGER_METACARPAL),
+    HAND_JOINT_TYPE_MASK_LITTLE_FINGER_PROXIMAL      = (1LL << HandJointType::HAND_JOINT_TYPE_LITTLE_FINGER_PROXIMAL),
+    HAND_JOINT_TYPE_MASK_LITTLE_FINGER_INTERMEDIATE  = (1LL << HandJointType::HAND_JOINT_TYPE_LITTLE_FINGER_INTERMEDIATE),
+    HAND_JOINT_TYPE_MASK_LITTLE_FINGER_DISTAL        = (1LL << HandJointType::HAND_JOINT_TYPE_LITTLE_FINGER_DISTAL),
+    HAND_JOINT_TYPE_MASK_LITTLE_FINGER_TIP           = (1LL << HandJointType::HAND_JOINT_TYPE_LITTLE_FINGER_TIP),
+
+    HAND_JOINT_TYPE_MASK_ALL                 = 0x7FFFFFFFFFFFFFFFLL,
+};
+#else
 /// @brief The skeleton id of a hand
 NR_PLUGIN_ENUM(HandJointType){
     HAND_JOINT_TYPE_INVALID          = -1,
@@ -90,6 +159,7 @@ NR_PLUGIN_ENUM64(HandJointMask){
     HAND_JOINT_TYPE_MASK_WRIST_CENTER        = (1LL << HandJointType::HAND_JOINT_TYPE_WRIST_CENTER),
     HAND_JOINT_TYPE_MASK_ALL                 = 0x7FFFFFFFFFFFFFFFLL,
 };
+#endif
 
 NR_PLUGIN_ENUM(HandType){
     HAND_TYPE_UNKNOWN    = -1,
@@ -132,10 +202,29 @@ typedef struct HandData {
             uint32_t hand_joint_count;
             HandJointData hand_joint_data[32];
             uint64_t image_timestamp_nanos;
+            #if defined(ENABLE_OPENXR_HANDJOINT_FORMAT)
+            float pinch_strength;
+            #endif
         };
         uint8_t padding[3300];
     };
 } HandData;
+
+typedef struct GlassHandPredictionData {
+    struct InterData {
+        int32_t version;
+        int32_t hand_type;
+        NRRectf hand_rect;
+        uint32_t hand_joint_count;
+        HandJointData hand_joint_data[32];
+    } ;
+    int32_t version;
+    int32_t hand_num;
+    uint64_t timestamp_nanos;
+    InterData hand_data[4];
+} GlassHandPredictionData;
+
+
 #pragma pack()
 
 typedef struct HandTrackingProvider {
