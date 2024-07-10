@@ -147,8 +147,12 @@ class HandFeatureUpdator {
     float abduction_thumb_closed_th = 20;
     float abduction_other_open_th = 12;
     float abduction_other_closed_th = 10;
-     // in 1 cm, out 2 cm
-    float opposition_closed_th = 0.015; 
+     // in 1 cm, out 2 cm for lift3d
+    // float opposition_closed_th = 0.015; 
+    // float opposition_open_th = 0.1;     
+    // float opposition_th_width = 0.01;    
+     // in 2 cm, out 3 cm for liftnimble
+    float opposition_closed_th = 0.025; 
     float opposition_open_th = 0.1;     
     float opposition_th_width = 0.01;    
     // pinch relax th, in 1.5cm, out 3 cm
@@ -161,7 +165,7 @@ class HandFeatureUpdator {
 };
 
 constexpr float pinch_v_th = -0.02; //m/s
-constexpr float pinch_min_th = 0.007;
+constexpr float pinch_min_th = 0.01;
 class GestureMatchRule {
    private:
    public:

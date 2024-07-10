@@ -119,7 +119,7 @@
         },
         "2d_rtmtiny_pcl": {
             "model_config": {
-                "file_name": "models/rtmtiny_dark_pcl_res26s_128_bs1_240516_15e8ec_quantized.dlc",
+                "file_name": "models/rtmtiny_dark_pcl_res26s_128_bs1_240710_79f002_quantized.dlc",
                 "vendor": "snpe"
             },
             "session_config": {
@@ -191,7 +191,7 @@
         },
         "3d_liftnimble": {
             "model_config": {
-                "file_name": "models/liftnimble_predict_RNN_0607_3b5e39.mnn",
+                "file_name": "models/liftnimble_seq_0704_472c5b.mnn",
                 "vendor": "mnn"
             },
             "session_config": {
