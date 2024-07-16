@@ -137,7 +137,7 @@ std::string AddDataRecordCalculater(aisdk::xengine::PipelineConfig& config) {
 aisdk::algorithm::Status HandTrackingXGraph::Init(aisdk::xengine::DlSymFuncs& funcs,
                                                   aisdk::xengine::PipelineConfig& config, CameraParams& camera) {
     if (absl::StrContains(config.pipeline_name, "flora")) {
-        m_post_filter = std::make_unique<algorithm::HandFilters>("flora");
+        m_post_filter = std::make_unique<algorithm::HandFilters>("ella");
     } else {
         m_post_filter = std::make_unique<algorithm::HandFilters>("ella");
     }

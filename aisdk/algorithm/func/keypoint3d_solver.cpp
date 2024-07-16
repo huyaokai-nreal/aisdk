@@ -8,11 +8,14 @@
 
 #include <cstdlib>
 
+#include "aisdk/base/log.h"
+
 namespace aisdk::algorithm {
 absl::StatusOr<Eigen::Matrix<float, 21, 3>> Keypoint3DSolver::SolveKeypoints(
     const Eigen::Matrix<float, 21, 3>& kpt25d, float hand_scale, const Eigen::Matrix<float, 21, 3>& last_kpt3d,
     float last_kpt3d_weight, const base::CameraIntrinsics& camera_k, bool flip_x_axis, bool source_change) const {
-    Eigen::Matrix<float, 20, 1> user_bones = template_bones_.array();
+    AISDK_LOG_WARN("get handscale {}", hand_scale);
+    Eigen::Matrix<float, 20, 1> user_bones = template_bones_.array() * hand_scale;
     Eigen::Matrix<float, 25, 3> norm_kpt3d = Eigen::Matrix<float, 25, 3>::Ones();
     Eigen::Matrix<float, 25, 3> format_kpt3d = Eigen::Matrix<float, 25, 3>::Zero();
     Eigen::Matrix<float, 25, 3> format_last_kpt3d = Eigen::Matrix<float, 25, 3>::Zero();
@@ -28,7 +31,7 @@ absl::StatusOr<Eigen::Matrix<float, 21, 3>> Keypoint3DSolver::SolveKeypoints(
         ((format_kpt3d.block<25, 2>(0, 0).array().rowwise() - camera_c.array().row(0)).rowwise() /
          camera_f.array().row(0))
             .matrix();
-    auto rel_depth = format_kpt3d.block<25, 1>(0, 2);
+    Eigen::Matrix<float, 25, 1> rel_depth = format_kpt3d.block<25, 1>(0, 2).array() * hand_scale;
     constexpr int residual_dim = 20 + 3;
     using AutoDiffFunction = ceres::TinySolverAutoDiffFunction<CostFunctor, residual_dim, 1>;
     CostFunctor cost_functor(norm_kpt3d, rel_depth, user_bones, format_last_kpt3d, last_kpt3d_weight);
@@ -39,7 +42,7 @@ absl::StatusOr<Eigen::Matrix<float, 21, 3>> Keypoint3DSolver::SolveKeypoints(
     auto summary = solver.Solve(kpt_function, &kpt_root);
     if (summary.final_cost < converage_cost_th_) {
         // smooth the depth change
-        if (last_kpt3d_weight > 0 && source_change) {
+        if (source_change) {
             if (abs(kpt_root(0, 0) - last_kpt3d(0, 2)) > 0.02) {
                 kpt_root(0, 0) = (kpt_root(0, 0) + last_kpt3d(0, 2)) * 0.5;
             }
@@ -54,7 +57,6 @@ absl::StatusOr<Eigen::Matrix<float, 21, 3>> Keypoint3DSolver::SolveKeypoints(
         if (flip_x_axis) {
             valid_kpt3d.block<21, 1>(0, 0) *= -1;
         }
-        valid_kpt3d *= hand_scale;
         return valid_kpt3d;
     }
     return absl::UnavailableError(fmt::format("kpt3d solver failed to coverage, with cost {:.6f}", summary.final_cost));
