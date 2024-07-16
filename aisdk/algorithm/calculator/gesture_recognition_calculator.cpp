@@ -54,7 +54,7 @@ class GestureRecognitionCalculator : public xgraph::CalculatorBase {
         const auto& kpt2d_data = cc->Inputs().Tag("GR_KPT2D_INPUT").Get<Kpt2dInternal>();
 
         std::unique_ptr<HandGestureInternal> output_buffer_ = absl::make_unique<HandGestureInternal>();
-        const auto& kpt3d_world_pre = GlobalPredictorService::getInstance().get_last_kpt3d_world();
+        const auto kpt3d_world_pre = GlobalPredictorService::getInstance().get_last_kpt3d_world();
         AISDK_LOG_TRACE("[GestureRecognitionCalculator] Process start 2.");
 
         if (kpt3d_data.lhand_valid) {

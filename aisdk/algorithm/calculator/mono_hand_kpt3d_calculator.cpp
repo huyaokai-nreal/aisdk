@@ -23,7 +23,7 @@ class MonoHandKpt3DCalculator : public xgraph::CalculatorBase {
     std::unique_ptr<Keypoint3DSolver> solver_;
     std::shared_ptr<base::BaseCameraModel> lcam_model_ = nullptr;
     std::shared_ptr<base::BaseCameraModel> rcam_model_ = nullptr;
-    float last_kpt3d_weight_ = 0.4;
+    float last_kpt3d_weight_ = 0.1;
 
    public:
     static absl::Status GetContract(xgraph::CalculatorContract* cc) {
@@ -74,6 +74,9 @@ class MonoHandKpt3DCalculator : public xgraph::CalculatorBase {
             }
             last_kpt3d_weight = last_kpt3d_weight_;
         }
+        if (source_change) {
+            last_kpt3d_weight = 0;
+        }
         float hand_scale = GlobalPredictorService::getInstance().get_hand_scale();
         AISDK_LOG_TRACE("[MonoHandKpt3DCalculator] get hand scale {}", hand_scale);
         auto virtual_kpt3d = solver_->SolveKeypoints(kpt25d, hand_scale, last_kpt3d, last_kpt3d_weight,
@@ -101,7 +104,7 @@ class MonoHandKpt3DCalculator : public xgraph::CalculatorBase {
         const auto& kpt2d = cc->Inputs().Tag("LANDMARK_INPUT").Get<Kpt2dInternal>();
         const auto& headpose_data = cc->Inputs().Tag("HEADPOSE").Get<HeadPoseInternal>();
         std::unique_ptr<HandsData> output_buffer_ = absl::make_unique<HandsData>();
-        const auto& kpt3d_world_pre = GlobalPredictorService::getInstance().get_last_kpt3d_world();
+        const auto kpt3d_world_pre = GlobalPredictorService::getInstance().get_last_kpt3d_world();
         // left hand
         bool source_change = (kpt3d_world_pre.left_hand.source == CamType::BINO);
         if (kpt2d.lhand_lcam_valid && !kpt2d.lhand_rcam_valid && kpt2d.lhand_lcam_virtual_camera) {

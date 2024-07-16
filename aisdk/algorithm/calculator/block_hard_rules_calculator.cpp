@@ -80,7 +80,7 @@ class BlockHardRulesCalculator : public xgraph::CalculatorBase {
 #endif
         AISDK_LOG_TRACE("[BlockHardRulesCalculator] Process start");
         auto output_buffer_ = absl::make_unique<HandsData>();
-        const auto& kpt3d_world_pre = GlobalPredictorService::getInstance().get_last_kpt3d_world();
+        const auto kpt3d_world_pre = GlobalPredictorService::getInstance().get_last_kpt3d_world();
         for (int i = 0; i < cc->Inputs().NumEntries(); i++) {
             const auto& input_data = cc->Inputs().Index(i).Get<HandsData>();
             if (input_data.lhand_valid) {

@@ -16,7 +16,8 @@ class GlobalPredictorService {
 
     KFPredictor& get_predictor_rhand() { return kfpredictor_rhand; }
 
-    HandsData& get_last_kpt3d_world() { return last_kpt3d_world; }
+    HandsData get_last_kpt3d_world() { return last_kpt3d_world; }
+    void set_last_kpt3d_world(const HandsData& data) { last_kpt3d_world = data; }
     GlobalPredictorService(const GlobalPredictorService&) = delete;
     GlobalPredictorService& operator=(const GlobalPredictorService&) = delete;
     void update_hand_scale(float hand_scale) {

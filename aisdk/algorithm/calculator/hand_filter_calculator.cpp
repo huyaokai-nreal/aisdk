@@ -55,7 +55,7 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
         *output_buffer_ = kpt3d_world;
         auto& predictor_lhand = GlobalPredictorService::getInstance().get_predictor_lhand();
         auto& predictor_rhand = GlobalPredictorService::getInstance().get_predictor_rhand();
-        const auto& kpt3d_world_pre = GlobalPredictorService::getInstance().get_last_kpt3d_world();
+        const auto kpt3d_world_pre = GlobalPredictorService::getInstance().get_last_kpt3d_world();
 
         if (!kpt3d_world.lhand_valid) {
             predictor_lhand.stop_tracking();

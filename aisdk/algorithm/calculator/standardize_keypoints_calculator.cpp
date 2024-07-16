@@ -1,5 +1,6 @@
 #include "../common/NR_GlobalPredictorService.h"
 #include "../internal_structs/kpt3d_struct_internal.h"
+#include "aisdk/algorithm/common/nrcore_define.h"
 #include "aisdk/algorithm/func/hand_rotation.h"
 #include "aisdk/algorithm/func/hand_rotation_v2.h"
 #include "aisdk/algorithm/func/netalgo_utils.h"
@@ -61,8 +62,7 @@ class StandardizeKeypointsCalculator : public xgraph::CalculatorBase {
             output_buffer_->rhand_valid = true;
             output_buffer_->right_hand.gesture = gesture_data.rhand_gesture;
         }
-        auto& global_kpt3d = GlobalPredictorService::getInstance().get_last_kpt3d_world();
-        global_kpt3d = kpt_data;
+        GlobalPredictorService::getInstance().set_last_kpt3d_world(kpt_data);
         cc->Outputs().Tag("OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
         AISDK_LOG_TRACE("[StandardizeKeypointsCalculator] Process complete.");
         return absl::OkStatus();
