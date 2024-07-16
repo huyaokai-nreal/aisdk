@@ -38,7 +38,7 @@ endif()
 
 set(PROJECT_SRC_DIR "aisdk")
 set(EXTERNAL_PROJECT_DIR ${PROJECT_SOURCE_DIR}/external/project)
-list( APPEND CMAKE_MODULE_PATH "${EXTERNAL_PROJECT_DIR}/cmake" )
+list(APPEND CMAKE_MODULE_PATH "${EXTERNAL_PROJECT_DIR}/cmake" )
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 # build aisdk
 # 构建标准业务的SDK
@@ -69,6 +69,7 @@ else()
 endif()
 
 option(BUILD_EXAMPLE "Build examples." ON)
+option(BUILD_PYTHON "Build python wrapper." ON)
 option(BUILD_TOOL "Build tools."  OFF)
 option(ENABLE_CLANG_TIDY_CHECK       "Analyze code with clang-tidy."                OFF)
 
@@ -222,6 +223,10 @@ message(STATUS "enable build examples")
 add_subdirectory(example)
 endif()
 
+if(BUILD_PYTHON)
+message(STATUS "enable build python wrapper")
+add_subdirectory(python/aisdk)
+endif()
 if(BUILD_TOOL)
 message(STATUS "enable build tools")
 add_subdirectory(tool)

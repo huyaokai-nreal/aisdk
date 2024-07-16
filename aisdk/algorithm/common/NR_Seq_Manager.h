@@ -125,7 +125,7 @@ class DynamicFilter2D final {
     float mLambda;
 };
 
-typedef struct OneEuroParams {
+struct OneEuroParams {
     OneEuroParams() {
         mincutoff.resize(3);
         beta.resize(3);
@@ -136,7 +136,7 @@ typedef struct OneEuroParams {
     std::vector<float> mincutoff;
     std::vector<float> beta;
     std::vector<float> dcutoff;
-} OneEuroParams;
+};
 
 class SeqManager3D final {
    public:

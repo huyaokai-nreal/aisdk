@@ -60,6 +60,9 @@ class KFPredictor {
         glasses_type_ = std::move(glass_type);
         reset_predict_smoother();
     }
+    void set_smooth_filter(const OneEuroParams& param){
+        predict_smoother_ = std::make_unique<SeqManager3D>(1, param);
+    }
 
    private:
     PredictorState predict();

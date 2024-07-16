@@ -22,5 +22,29 @@ tool # 各种工具，如 profiler
 tests # 单元测试
 ```
 
+## python
+
+### 编译
+```bash
+# 1.install pybind11
+pip install "pybind11[global]"
+# 2. enable python build
+# set PYTHON_VERSION in python/aisdk/CMakeLists.txt
+# set BUILD_PYTHON in CMakeLists.txt
+# 3. build dynamic lib
+./compile.sh  -c linux install
+# 4. install  python package 
+pip install -v .
+# 5. run example
+python python/example.py
+```
+
+### 从 github安装
+目前支持python3.11
+
+```bash
+pip install git+ssh://git@github.com/nreal-alg-ai/aisdk.git@python
+```
+
 ## 开发测试流程
 https://xreal.feishu.cn/wiki/S2dSwvleziXIRYkYDIkc4as8nEf
