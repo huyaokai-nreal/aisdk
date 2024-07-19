@@ -1,3 +1,4 @@
+#include <pybind11/cast.h>
 #include <pybind11/eigen.h>
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
@@ -6,6 +7,7 @@
 #include "aisdk/algorithm/common/NR_Predictor.h"
 #include "aisdk/algorithm/common/NR_Seq_Manager.h"
 #include "aisdk/algorithm/common/ofxOneEuroFilter.h"
+#include "aisdk/algorithm/func/hand_filters.h"
 namespace aisdk {
 namespace py = pybind11;
 PYBIND11_MODULE(_pyaisdk, m) {
@@ -33,6 +35,13 @@ PYBIND11_MODULE(_pyaisdk, m) {
         .def(py::init<double, double, double, double>())
         .def("reset", &algorithm::OneEuroFilter::reset)
         .def("filter", &algorithm::OneEuroFilter::filter);
+    py::class_<algorithm::HandFilters>(m, "HandFilters")
+        .def(py::init<std::string>())
+        .def("init", &algorithm::HandFilters::init)
+        .def("reset", &algorithm::HandFilters::reset)
+        .def("process", &algorithm::HandFilters::process)
+        .def("set_filter_param", &algorithm::HandFilters::set_filter_param, py::arg("palm_param"),
+             py::arg("finger_param"));
 }
 
 }  // namespace aisdk

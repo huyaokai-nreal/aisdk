@@ -1,1 +1,1 @@
-from ._pyaisdk import  KFPredictor, PredictorState, OneEuroFilter, OneEuroParams
+from ._pyaisdk import  KFPredictor, PredictorState, OneEuroFilter, OneEuroParams, HandFilters

@@ -27,6 +27,7 @@ tests # 单元测试
 ### 编译
 ```bash
 # 1.install pybind11
+pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 pip install "pybind11[global]"
 # 2. enable python build
 # set PYTHON_VERSION in python/aisdk/CMakeLists.txt
@@ -36,6 +37,7 @@ pip install "pybind11[global]"
 # 4. install  python package 
 pip install -v .
 # 5. run example
+pip install numpy
 python python/example.py
 ```
 
