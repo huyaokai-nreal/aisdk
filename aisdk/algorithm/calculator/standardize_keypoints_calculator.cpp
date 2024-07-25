@@ -1,6 +1,7 @@
 #include "../common/NR_GlobalPredictorService.h"
 #include "../internal_structs/kpt3d_struct_internal.h"
 #include "aisdk/algorithm/func/hand_rotation.h"
+#include "aisdk/algorithm/func/hand_rotation_v2.h"
 #include "aisdk/algorithm/func/netalgo_utils.h"
 #include "aisdk/algorithm/internal_structs/hand_gesture_struct_internal.h"
 #include "aisdk/base/log.h"
@@ -47,14 +48,22 @@ class StandardizeKeypointsCalculator : public xgraph::CalculatorBase {
         if (kpt_data.lhand_valid) {
             output_buffer_->left_hand = kpt_data.left_hand;
             output_buffer_->left_hand.kpt3d = constraint_hand_v2(output_buffer_->left_hand.kpt3d, true);
+#if defined(ENABLE_OPENXR_HANDJOINT_FORMAT)
+            output_buffer_->left_hand.kpt3d = convert_to_26points(output_buffer_->left_hand.kpt3d);
+#else
             output_buffer_->left_hand.kpt3d = convert_to_23points(output_buffer_->left_hand.kpt3d);
+#endif
             output_buffer_->lhand_valid = true;
             output_buffer_->left_hand.gesture = gesture_data.lhand_gesture;
         }
         if (kpt_data.rhand_valid) {
             output_buffer_->right_hand = kpt_data.right_hand;
             output_buffer_->right_hand.kpt3d = constraint_hand_v2(output_buffer_->right_hand.kpt3d, false);
+#if defined(ENABLE_OPENXR_HANDJOINT_FORMAT)
+            output_buffer_->right_hand.kpt3d = convert_to_26points(output_buffer_->right_hand.kpt3d);
+#else
             output_buffer_->right_hand.kpt3d = convert_to_23points(output_buffer_->right_hand.kpt3d);
+#endif
             output_buffer_->rhand_valid = true;
             output_buffer_->right_hand.gesture = gesture_data.rhand_gesture;
         }

@@ -10,6 +10,7 @@ ${CMAKE_CURRENT_SOURCE_DIR}/warpaffine.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/hand_filters.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/hand_nimble.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/hand_rotation.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/hand_rotation_v2.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/gesture_recognition_v2.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/keypoint3d_solver.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/perspective_crop.cpp

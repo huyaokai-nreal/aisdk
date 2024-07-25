@@ -23,7 +23,7 @@ class AISDK(ConanFile):
         self.requires("opencv/4.5.5", transitive_headers=True, transitive_libs=True)
         self.requires("eigen/3.3.7", transitive_headers=True, transitive_libs=True)
         self.requires("jsoncpp/1.9.5", transitive_headers=True, transitive_libs=True)
-        self.requires("openssl/1.1.1m", transitive_headers=True, transitive_libs=True)
+        self.requires("openssl/3.2.2", transitive_headers=True, transitive_libs=True)
         self.requires("nreal_mnn/2.0.0", transitive_headers=True, transitive_libs=True)
         if self.settings.os in ["Linux", "Android"] and self.conf.get("user.os:distro") != "Xrlinux":
             self.requires("snpe/2.17.0", transitive_headers=False, transitive_libs=False)

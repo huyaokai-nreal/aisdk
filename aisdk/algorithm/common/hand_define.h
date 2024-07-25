@@ -7,6 +7,11 @@
 #include "aisdk/base/type.h"
 namespace aisdk::algorithm {
 constexpr int kAlgoKeypointNum = 21;
+#if defined(ENABLE_OPENXR_HANDJOINT_FORMAT)
+constexpr int k3DAlgoStdKeypointNum = 26;
+#else
+constexpr int k3DAlgoStdKeypointNum = 23;
+#endif
 enum class HandGesture { Invalid = 0, Pinch, Click, Grab, ThumbUp, OpenHand, Victory, Call, Home, MaxNum };
 const std::vector<std::string> HandGestureNames{"Invalid",  "Pinch", "Click", "Grab", "ThumbUp", "OpenHand", "Victory", "Call", "Home"};
 struct SingleHandData {

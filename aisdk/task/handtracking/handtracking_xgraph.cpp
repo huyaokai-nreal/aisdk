@@ -15,6 +15,7 @@
 #include "aisdk/algorithm/common/nrnet_define.h"
 #include "aisdk/algorithm/func/hand_filters.h"
 #include "aisdk/algorithm/func/hand_rotation.h"
+#include "aisdk/algorithm/func/hand_rotation_v2.h"
 #include "aisdk/algorithm/internal_structs/headpose_struct_internal.h"
 #include "aisdk/algorithm/internal_structs/kpt3d_struct_internal.h"
 #include "aisdk/base/log.h"
@@ -25,7 +26,7 @@ namespace aisdk::task {
 
 #if defined(ENABLE_OPENXR_HANDJOINT_FORMAT)
 #define JOINTS_COUNT 26
-#define EZXR_DEFINED_JOINTS 23
+#define EZXR_DEFINED_JOINTS 26
 static std::map<int, int> xreal_2_clay = {{0, 1},   {1, 2},   {2, 3},   {3, 4},   {4, 5},   {5, 7},   {6, 8},
                                           {7, 9},   {8, 10},  {9, 12},  {10, 13}, {11, 14}, {12, 15}, {13, 17},
                                           {14, 18}, {15, 19}, {16, 20}, {17, 22}, {18, 23}, {19, 24}, {20, 25},
@@ -187,7 +188,7 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
 
         AISDK_LOG_TRACE("[PopResult] lhand begin");
         if (hand_data_internal.lhand_valid) {
-            for (int i = 0; i < 21; i++) {
+            for (int i = 0; i < aisdk::algorithm::k3DAlgoStdKeypointNum; i++) {
                 AISDK_LOG_TRACE("{}, {}, {}", hand_data_internal.left_hand.kpt3d[i][0],
                                 hand_data_internal.left_hand.kpt3d[i][1], hand_data_internal.left_hand.kpt3d[i][2]);
             }
@@ -196,7 +197,7 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
 
         AISDK_LOG_TRACE("[PopResult] rhand begin");
         if (hand_data_internal.rhand_valid) {
-            for (int i = 0; i < 21; i++) {
+            for (int i = 0; i < aisdk::algorithm::k3DAlgoStdKeypointNum; i++) {
                 AISDK_LOG_TRACE("{}, {}, {}", hand_data_internal.right_hand.kpt3d[i][0],
                                 hand_data_internal.right_hand.kpt3d[i][1], hand_data_internal.right_hand.kpt3d[i][2]);
             }
@@ -247,6 +248,15 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
             auto predicted_points = ontracked_points[i];
 
             if (tracked_internal[i] && query_time != 0) {
+#if defined(ENABLE_OPENXR_HANDJOINT_FORMAT)
+                // get pinch strength
+                float pinch_stength = 0.f;
+                float pinch_distance = (ontracked_points[i][4] - ontracked_points[i][8]).norm();
+                pinch_stength = 1 - (std::min(std::max(pinch_distance, 0.01F), 0.1F) - 0.01) / (0.09);
+                out_hand_array[i].pinch_strength = pinch_stength;
+                AISDK_LOG_TRACE("PINCH STRENGTH is {}", pinch_stength)
+#endif
+
                 Vec3f_t root_meas = ontracked_points[i][0];
                 Vec3f_t root_kf_predicted = ontracked_points[i][0];
 
@@ -268,11 +278,15 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
                                 root_kf_predicted[2]);
                 AISDK_LOG_TRACE("predict dist is {}, {}, {}", abs(root_kf_predicted[0] - root_meas[0]),
                                 abs(root_kf_predicted[1] - root_meas[1]), abs(root_kf_predicted[2] - root_meas[2]));
-                for (int k = 0; k < EZXR_DEFINED_JOINTS; k++) {
+                for (int k = 0; k < aisdk::algorithm::k3DAlgoStdKeypointNum; k++) {
                     predicted_points[k] = ontracked_points[i][k] + root_kf_predicted - root_meas;
                 }
                 m_post_filter->kpt_seq_3d_filter(i, predicted_points);
+#if defined(ENABLE_OPENXR_HANDJOINT_FORMAT)
+                algorithm::compute_xr_joint_rotation_v1(predicted_points, (i == 0), ontracked_rotations[i]);
+#else
                 algorithm::compute_joint_rotation(predicted_points, (i == 0), ontracked_rotations[i]);
+#endif
                 AISDK_LOG_TRACE("[PopResult Predict] {} hand begin", i);
                 for (int j = 0; j < EZXR_DEFINED_JOINTS; j++) {
                     out_hand_array[i].hand_joint_data[xreal_2_clay[j]].hand_joint_type =

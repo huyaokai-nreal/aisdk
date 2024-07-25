@@ -105,6 +105,7 @@ std::tuple<Eigen::Matrix3d, Eigen::Matrix3d, float> get_rotations_for_standard_s
     double baseline = baseline_vec.norm();
     return {left_R, right_R, baseline};
 }
+
 std::vector<Vec3f_t> convert_to_23points(const std::vector<Vec3f_t>& input) {
     std::vector<Vec3f_t> result(23);
     // input size should be 21
@@ -113,6 +114,46 @@ std::vector<Vec3f_t> convert_to_23points(const std::vector<Vec3f_t>& input) {
     }
     result[21] = 0.5 * (input[0] + input[9]);
     result[22] = 0.5 * (0.5 * (input[0] - input[9]) + 0.5 * (input[0] - input[17])) + input[17];
+    return result;
+}
+
+void get_metacarpal_xr_joints_v1(std::vector<Vec3f_t>& joints) {
+    auto root_joint = joints[0];
+    auto middle_vec = (root_joint - joints[9]).normalized();
+
+    root_joint = joints[9] + 1.2 * (joints[0] - joints[9]).norm() * middle_vec;
+
+    auto little_vec = ((root_joint - joints[9]) + (root_joint - joints[17])).normalized();
+    auto little_metacarpal = joints[17] + 0.6667 * ((root_joint - joints[17])).norm() * little_vec;
+
+    auto ring_vec = ((root_joint - joints[9]) + (root_joint - joints[13])).normalized();
+    auto ring_metacarpal = joints[13] + 0.6667 * (root_joint - joints[13]).norm() * ring_vec;
+
+    auto middle_metacarpal = joints[9] + 0.6667 * (root_joint - joints[9]).norm() * middle_vec;
+
+    auto index_vec = 2 * middle_vec - ring_vec;
+    auto index_metacarpal = joints[5] + 0.6667 * (root_joint - joints[5]).norm() * index_vec;
+    // center point
+    auto palm_center = joints[9] + 0.333 * (root_joint - joints[9]).norm() * middle_vec;
+
+    joints[0] = root_joint;
+    joints[21] = palm_center;
+    joints[22] = little_metacarpal;
+    joints[23] = index_metacarpal;
+    joints[24] = middle_metacarpal;
+    joints[25] = ring_metacarpal;
+}
+
+std::vector<Vec3f_t> convert_to_26points(const std::vector<Vec3f_t>& input) {
+    std::vector<Vec3f_t> result(26);
+    // input size should be 21
+    for (int i = 0; i < input.size(); i++) {
+        result[i] = input[i];
+    }
+    result[21] = 0.5 * (input[0] + input[9]);
+    result[22] = 0.5 * (0.5 * (input[0] - input[9]) + 0.5 * (input[0] - input[17])) + input[17];
+
+    get_metacarpal_xr_joints_v1(result);
     return result;
 }
 

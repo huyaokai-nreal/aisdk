@@ -25,8 +25,8 @@ HandTrackingProvider g_provider;
 
 CameraParams g_camera_params;
 
-#define JOINTS_COUNT 25
-#define KPT_NUMS 21
+// #define JOINTS_COUNT 25
+// #define KPT_NUMS 21
 HandData g_out_hand_array[2];
 /*********************************plugin**********************************************/
 
@@ -849,8 +849,8 @@ int HandTrackingSdk::RecvResult(uint64_t frame_id, std::shared_ptr<StreamResult>
                 root["hand_type"] = g_out_hand_array[i].hand_type;
                 root["hand_type"] = g_out_hand_array[i].hand_type;
                 root["gesture_type"] = g_out_hand_array[i].gesture_type;
-                root["handjoint_count"] = 23;  // g_out_hand_array[i].handjoint_count;
-                for (uint32_t j = 0; j < 23; j++) {
+                root["handjoint_count"] = g_out_hand_array[i].hand_joint_count;
+                for (uint32_t j = 0; j < g_out_hand_array[i].hand_joint_count; j++) {
                     root["hand_joint_data"][j]["version"] = g_out_hand_array[i].hand_joint_data[j].version;
                     root["hand_joint_data"][j]["hand_joint_type"] =
                         g_out_hand_array[i].hand_joint_data[j].hand_joint_type;

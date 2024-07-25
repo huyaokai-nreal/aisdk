@@ -39,8 +39,8 @@ bool HandFilters::init() {
     m_seq3d_lhand = std::make_shared<SeqManager3D>(15, finger_params);
     m_seq3d_rhand = std::make_shared<SeqManager3D>(15, finger_params);
     // palm
-    m_seq3d_palm_lhand = std::make_shared<SeqManager3D>(7, palm_params);
-    m_seq3d_palm_rhand = std::make_shared<SeqManager3D>(7, palm_params);
+    m_seq3d_palm_lhand = std::make_shared<SeqManager3D>(PalmKeypointNum, palm_params);
+    m_seq3d_palm_rhand = std::make_shared<SeqManager3D>(PalmKeypointNum, palm_params);
 
     return true;
 }
@@ -52,7 +52,7 @@ void HandFilters::kpt_seq_3d_filter(int hand_side, std::vector<Vec3f_t>& point3d
         if (i == 0) {
             continue;
         }
-        if (i == 1 || i == 5 || i == 9 || i == 13 || i == 17 || i == 22 || i == 21) {
+        if (PalmKeypointSet.count(i)) {
             palm_points.emplace_back(point3d[i] - root_point);
         } else {
             rel_points.emplace_back(point3d[i] - root_point);
@@ -69,7 +69,7 @@ void HandFilters::kpt_seq_3d_filter(int hand_side, std::vector<Vec3f_t>& point3d
     for (int i = 0, p = 0, q = 0; i < point3d.size(); i++) {
         if (i == 0)
             point3d[i] = root_point;
-        else if (i == 1 || i == 5 || i == 9 || i == 13 || i == 17 || i == 22 || i == 21) {
+        else if (PalmKeypointSet.count(i)) {
             point3d[i] = root_point + palm_points[q];
             q++;
         } else {

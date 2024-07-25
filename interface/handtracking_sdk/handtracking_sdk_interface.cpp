@@ -351,10 +351,11 @@ bool HandTracking::GetApkStorePath() {
         jfieldID packageNamefieldID = jni_env->GetFieldID(cls_ApplicationInfo, "packageName", "Ljava/lang/String;");
         jstring packageName = (jstring)jni_env->GetObjectField(obj_ApplicationInfo, packageNamefieldID);
         mAppPackageName = std::string(jni_env->GetStringUTFChars(packageName, 0));
-
+        AISDK_LOG_TRACE("packageName={}", mAppPackageName.c_str());
         // 在apk中通过接口获取 app的名称，以及是否system_app属性
         jfieldID fieldID = jni_env->GetFieldID(cls_ApplicationInfo, "flags", "I");
         jint applicationFlags = jni_env->GetIntField(obj_ApplicationInfo, fieldID);
+        AISDK_LOG_TRACE("applicationFlags={:x}", applicationFlags);
         jboolean isSystemApp = ((applicationFlags & 0x00000001) != 0);
         m_system_app = isSystemApp;
 
@@ -366,10 +367,12 @@ bool HandTracking::GetApkStorePath() {
         jfieldID sharedUserIdField =
             jni_env->GetFieldID(jni_env->GetObjectClass(packageInfo), "sharedUserId", "Ljava/lang/String;");
         jstring sharedUserId = (jstring)jni_env->GetObjectField(packageInfo, sharedUserIdField);
-        std::string sharedUserId1(jni_env->GetStringUTFChars(sharedUserId, 0));
-        // AISDK_LOG_WARN("HandTracking: sharedUserId1={}", sharedUserId1.c_str());
-        m_system_app = (sharedUserId1 == "android.uid.system");
-
+        const char* sharedUserIdString = jni_env->GetStringUTFChars(sharedUserId, 0);
+        if (sharedUserIdString) {
+            AISDK_LOG_TRACE("sharedUserIdString={}", sharedUserIdString);
+            std::string sharedUserId1(sharedUserIdString);
+            m_system_app = (sharedUserId1 == "android.uid.system");
+        }
         //////////////////////////////////////////
         // 在apk中通过接口获取 原生appjni_lib库的路径
         jclass j_context_wrapper_class = jni_env->FindClass("android/content/ContextWrapper");

@@ -74,7 +74,7 @@ class HandTracking {
 
    public:
     HandTrackingInterface* m_interface = nullptr;
-    NRHandle m_handle = 0;
+    // NRHandle m_handle = 0;
     std::string mNativeLibDir;
     std::string mSharedLibCopyDir;
     std::string mAppPackageName;
@@ -93,7 +93,7 @@ class Hmd {
 
    public:
     NRHMDInterface* m_interface = nullptr;
-    NRHandle m_handle = 0;
+    // NRHandle m_handle = 0;
     // 1: radial 2: fisheye 3: fisheye624
     uint32_t m_camera_model = 1;
     // 1: nrsdk_api for real_camera  2: nreal_studio/slam_raw_config for test
@@ -105,7 +105,7 @@ class Hmd {
 class Generic {
    public:
     NRGenericInterface* m_interface = nullptr;
-    NRHandle m_handle = 0;
+    // NRHandle m_handle = 0;
 };
 
 class DeviceMessage {
@@ -113,7 +113,7 @@ class DeviceMessage {
     static NRPluginResult NotifyDeviceMessage(NRPluginHandle handle, const void* data,
                            uint32_t data_size);
     DeviceMessageSendInterface*  m_interface = nullptr;
-    NRHandle m_handle = 0;
+    // NRHandle m_handle = 0;
 };
 
 class Plugin;

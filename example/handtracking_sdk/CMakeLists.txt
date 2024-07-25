@@ -10,6 +10,10 @@ target_include_directories(${HANDTRACKING_SDK_DEMO_NAME} PRIVATE "../../interfac
 
 target_compile_options(${HANDTRACKING_SDK_DEMO_NAME} PRIVATE -DNRPLUGIN)
 
+if(NOT Xrlinux AND ENABLE_OPENXR_HANDJOINT_FORMAT) 
+    target_compile_options(${HANDTRACKING_SDK_DEMO_NAME} PRIVATE -DENABLE_OPENXR_HANDJOINT_FORMAT)
+endif()
+
 target_link_libraries(${HANDTRACKING_SDK_DEMO_NAME} PUBLIC base jsoncpp Eigen3::Eigen opencv::opencv)
 
 install(TARGETS ${HANDTRACKING_SDK_DEMO_NAME}

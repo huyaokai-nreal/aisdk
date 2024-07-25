@@ -19,8 +19,8 @@
 #include "aisdk/xgraph/xgraph.h"
 
 namespace aisdk::task {
-#define JOINTS_COUNT 25
-#define EZXR_DEFINED_JOINTS 23
+// #define JOINTS_COUNT 25
+// #define EZXR_DEFINED_JOINTS 23
 
 HandTrackingPriorGlassXGraph::HandTrackingPriorGlassXGraph() {}
 HandTrackingPriorGlassXGraph::~HandTrackingPriorGlassXGraph() {}
