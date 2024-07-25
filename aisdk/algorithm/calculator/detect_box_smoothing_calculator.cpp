@@ -54,14 +54,10 @@ class DetectBoxSmoothingCalculator : public xgraph::CalculatorBase {
         const auto& input_data = cc->Inputs().Tag("BBOX_INPUT").Get<DetOutputInternal>();
 
         std::unique_ptr<DetOutputInternal> output_buffer_ = absl::make_unique<DetOutputInternal>();
-        output_buffer_->clear();
+        *output_buffer_ = input_data;
 
         if (input_data.lhand_lcam_valid) {
             AISDK_LOG_TRACE("[DetectBoxSmoothingCalculator] Do smoothing on lhand lcam bboxes");
-            output_buffer_->lhand_lcam_valid = true;
-
-            output_buffer_->lhand_lcam_rect = input_data.lhand_lcam_rect;
-
             float p_score = 1.0f;
             m_seq_lcam_lhand->getFilterBoxData(output_buffer_->lhand_lcam_rect, p_score);
 
@@ -72,10 +68,6 @@ class DetectBoxSmoothingCalculator : public xgraph::CalculatorBase {
 
         if (input_data.lhand_rcam_valid) {
             AISDK_LOG_TRACE("[DetectBoxSmoothingCalculator] Do smoothing on lhand rcam bboxes");
-            output_buffer_->lhand_rcam_valid = true;
-
-            output_buffer_->lhand_rcam_rect = input_data.lhand_rcam_rect;
-
             float p_score = 1.0f;
             m_seq_rcam_lhand->getFilterBoxData(output_buffer_->lhand_rcam_rect, p_score);
 
@@ -86,10 +78,6 @@ class DetectBoxSmoothingCalculator : public xgraph::CalculatorBase {
 
         if (input_data.rhand_lcam_valid) {
             AISDK_LOG_TRACE("[DetectBoxSmoothingCalculator] Do smoothing on rhand lcam bboxes");
-            output_buffer_->rhand_lcam_valid = true;
-
-            output_buffer_->rhand_lcam_rect = input_data.rhand_lcam_rect;
-
             float p_score = 1.0f;
             m_seq_lcam_rhand->getFilterBoxData(output_buffer_->rhand_lcam_rect, p_score);
 
@@ -100,10 +88,6 @@ class DetectBoxSmoothingCalculator : public xgraph::CalculatorBase {
 
         if (input_data.rhand_rcam_valid) {
             AISDK_LOG_TRACE("[DetectBoxSmoothingCalculator] Do smoothing on rhand rcam bboxes");
-            output_buffer_->rhand_rcam_valid = true;
-
-            output_buffer_->rhand_rcam_rect = input_data.rhand_rcam_rect;
-
             float p_score = 1.0f;
             m_seq_rcam_rhand->getFilterBoxData(output_buffer_->rhand_rcam_rect, p_score);
 
