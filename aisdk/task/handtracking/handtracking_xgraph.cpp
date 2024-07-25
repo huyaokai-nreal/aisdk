@@ -137,7 +137,7 @@ std::string AddDataRecordCalculater(aisdk::xengine::PipelineConfig& config) {
 aisdk::algorithm::Status HandTrackingXGraph::Init(aisdk::xengine::DlSymFuncs& funcs,
                                                   aisdk::xengine::PipelineConfig& config, CameraParams& camera) {
     if (absl::StrContains(config.pipeline_name, "flora")) {
-        m_post_filter = std::make_unique<algorithm::HandFilters>("ella");
+        m_post_filter = std::make_unique<algorithm::HandFilters>("flora");
     } else {
         m_post_filter = std::make_unique<algorithm::HandFilters>("ella");
     }
@@ -262,14 +262,14 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
 
                 if (i == 0) {
                     if (predictor_lhand.get_tracking_status()) {
-                        root_kf_predicted = predictor_lhand.track_only_pred(query_time, true);
+                        root_kf_predicted = predictor_lhand.track_only_pred(query_time, true, true);
                     } else {
                         m_post_filter->reset(0);
                     }
 
                 } else {
                     if (predictor_rhand.get_tracking_status()) {
-                        root_kf_predicted = predictor_rhand.track_only_pred(query_time, true);
+                        root_kf_predicted = predictor_rhand.track_only_pred(query_time, true, true);
                     } else {
                         m_post_filter->reset(1);
                     }

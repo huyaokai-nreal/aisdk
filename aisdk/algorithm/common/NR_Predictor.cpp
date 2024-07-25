@@ -175,14 +175,21 @@ Vec3f_t KFPredictor::track_with_correct(double target_ts, PredictorState meas) {
     return cpred.pos;
 }
 
-Vec3f_t KFPredictor::track_only_pred(double target_ts, bool with_smooth) {
+Vec3f_t KFPredictor::track_only_pred(double target_ts, bool with_smooth, bool update_state) {
     double valid_target_ts = get_valid_predict_time_length(target_ts);
     std::lock_guard<std::mutex> lock(m_mutex);
     update_transition_matrix(valid_target_ts);
-    auto pred = this->predict();
-    std::vector<Vec3f_t> pred_pose{pred.pos};
-    this->correct(pred);
-    last_correct_time_ = target_ts;
+    std::vector<Vec3f_t> pred_pose;
+    PredictorState pred;
+    if (update_state) {
+        pred = this->predict();
+        pred_pose.emplace_back(pred.pos);
+        this->correct(pred);
+        last_correct_time_ = target_ts;
+    } else {
+        cv::Mat pred_state = m_kf_impl->transitionMatrix * m_kf_impl->statePost;
+        pred_pose.emplace_back(pred_state.at<float>(S_X), pred_state.at<float>(S_Y), pred_state.at<float>(S_Z));
+    }
     if (with_smooth) {
         predict_smoother_->getFilterHandData(pred_pose);
     }
