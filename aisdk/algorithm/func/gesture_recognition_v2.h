@@ -148,13 +148,13 @@ class HandFeatureUpdator {
     float abduction_other_open_th = 12;
     float abduction_other_closed_th = 10;
      // in 1 cm, out 2 cm for lift3d
-    // float opposition_closed_th = 0.015; 
-    // float opposition_open_th = 0.1;     
-    // float opposition_th_width = 0.01;    
-     // in 2 cm, out 3 cm for liftnimble
-    float opposition_closed_th = 0.025; 
+    float opposition_closed_th = 0.015; 
     float opposition_open_th = 0.1;     
     float opposition_th_width = 0.01;    
+     // in 2 cm, out 3 cm for liftnimble
+    //float opposition_closed_th = 0.025; 
+    //float opposition_open_th = 0.1;     
+    //float opposition_th_width = 0.01;    
     // pinch relax th, in 1.5cm, out 3 cm
     float opposition_relax_closed_th = 0.0225;  
     float opposition_relax_th_width = 0.015;     
@@ -199,10 +199,13 @@ class GestureMatchRule {
     static bool Pinch(const HandFeature &hand_feature, const HandRawFeature &raw_feature) {
         auto [_, index_opposition, __, ___, ____] = hand_feature.opposition_features();
         bool pinch_flag =  index_opposition == FingureState::CLOSED;
-        AISDK_LOG_TRACE("pinch state flag is {}", pinch_flag);
         auto  pinch_v_strength = raw_feature.pinch_velocity;
         if(raw_feature.last_gesture !=HandGesture::Pinch){
             pinch_flag = (pinch_flag && (pinch_v_strength < pinch_v_th)) || raw_feature.pinch_distance < pinch_min_th;
+            if(pinch_flag){
+                AISDK_LOG_TRACE("pinch velocity is {}, {}", pinch_v_strength, raw_feature.pinch_distance);
+                AISDK_LOG_TRACE("pinch state flag is {}", pinch_flag);
+            }
         }
         return pinch_flag;
     }

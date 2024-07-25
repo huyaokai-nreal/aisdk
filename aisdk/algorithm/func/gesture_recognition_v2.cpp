@@ -253,6 +253,9 @@ std::pair<HandRawFeature, HandFeature> GestureRecognitionV2::extract_hand_featur
     raw_features.pinch_distance = opposition_distances[0];
     if (is_tracked) {
         raw_features.pinch_velocity = get_pinch_velocity(keypoints3d);
+        last_kpt3d_ = keypoints3d;
+    } else {
+        last_kpt3d_.clear();
     }
     bool is_to_face = is_face_to_head(keypoints3d, is_left_hand);
     // bool ok_pinch = is_ok_pinch(keypoints3d);
