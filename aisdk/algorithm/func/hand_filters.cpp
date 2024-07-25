@@ -1,5 +1,6 @@
 #include "hand_filters.h"
 
+#include "aisdk/algorithm/common/hand_define.h"
 #include "aisdk/base/log.h"
 
 namespace aisdk::algorithm {
@@ -47,12 +48,12 @@ bool HandFilters::init() {
 
 void HandFilters::kpt_seq_3d_filter(int hand_side, std::vector<Vec3f_t>& point3d) {
     std::vector<Vec3f_t> rel_points, palm_points;
-    const auto& root_point = point3d[0];
+    const auto& root_point = point3d[kKeypointRootId];
     for (int i = 0; i < point3d.size(); i++) {
-        if (i == 0) {
+        if (i == kKeypointRootId) {
             continue;
         }
-        if (PalmKeypointSet.count(i)) {
+        if (kPalmKeypointIndexSet.find(i) != kPalmKeypointIndexSet.end()) {
             palm_points.emplace_back(point3d[i] - root_point);
         } else {
             rel_points.emplace_back(point3d[i] - root_point);
@@ -67,9 +68,9 @@ void HandFilters::kpt_seq_3d_filter(int hand_side, std::vector<Vec3f_t>& point3d
     }
 
     for (int i = 0, p = 0, q = 0; i < point3d.size(); i++) {
-        if (i == 0)
+        if (i == kKeypointRootId)
             point3d[i] = root_point;
-        else if (PalmKeypointSet.count(i)) {
+        else if (kPalmKeypointIndexSet.find(i) != kPalmKeypointIndexSet.end()) {
             point3d[i] = root_point + palm_points[q];
             q++;
         } else {

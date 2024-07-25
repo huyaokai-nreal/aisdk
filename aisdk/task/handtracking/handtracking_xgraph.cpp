@@ -256,9 +256,8 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
                 out_hand_array[i].pinch_strength = pinch_stength;
                 AISDK_LOG_TRACE("PINCH STRENGTH is {}", pinch_stength)
 #endif
-
-                Vec3f_t root_meas = ontracked_points[i][0];
-                Vec3f_t root_kf_predicted = ontracked_points[i][0];
+                Vec3f_t root_meas = ontracked_points[i][algorithm::kKeypointRootId];
+                Vec3f_t root_kf_predicted = ontracked_points[i][algorithm::kKeypointRootId];
 
                 if (i == 0) {
                     if (predictor_lhand.get_tracking_status()) {

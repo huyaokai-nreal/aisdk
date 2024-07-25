@@ -1,10 +1,13 @@
 #include "../common/NR_GlobalPredictorService.h"
 #include "aisdk/algorithm/calculator/hand_filter_calculator.pb.h"
+#include "aisdk/algorithm/common/hand_define.h"
+#include "aisdk/algorithm/func/netalgo_utils.h"
 #include "aisdk/algorithm/internal_structs/kpt3d_struct_internal.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/time.h"
 #include "aisdk/xgraph/xgraph.h"
 #include "hand_filter_calculator.pb.h"
+#include "thirdparty/MANO_IK-main/mano/AIK.h"
 
 namespace aisdk::algorithm {
 
@@ -62,14 +65,19 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
             output_buffer_->lhand_valid = false;
         } else {
             output_buffer_->left_hand.kpt3d = kpt3d_world.left_hand.kpt3d;
+            output_buffer_->left_hand.kpt3d = constraint_hand_v2(output_buffer_->left_hand.kpt3d, true);
+            output_buffer_->left_hand.kpt3d = convert_to_23points(output_buffer_->left_hand.kpt3d);
             if (!predictor_lhand.get_tracking_status()) {
-                predictor_lhand.start_tracking(timestamp, {output_buffer_->left_hand.kpt3d[0], {0., 0., 0.}});
+                predictor_lhand.start_tracking(timestamp,
+                                               {output_buffer_->left_hand.kpt3d[kKeypointRootId], {0., 0., 0.}});
             } else {
                 if (kpt3d_world_pre.lhand_valid) {
-                    auto measure_v = (output_buffer_->left_hand.kpt3d[0] - kpt3d_world_pre.left_hand.kpt3d[0]) /
+                    auto measure_v = (output_buffer_->left_hand.kpt3d[kKeypointRootId] -
+                                      kpt3d_world_pre.left_hand.kpt3d[kKeypointRootId]) /
                                      (timestamp - last_timestamp_);
                     output_buffer_->left_hand.root_v = measure_v;
-                    predictor_lhand.track_with_correct(timestamp, {output_buffer_->left_hand.kpt3d[0], measure_v});
+                    predictor_lhand.track_with_correct(timestamp,
+                                                       {output_buffer_->left_hand.kpt3d[kKeypointRootId], measure_v});
                 }
             }
         }
@@ -79,14 +87,19 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
             output_buffer_->rhand_valid = false;
         } else {
             output_buffer_->right_hand.kpt3d = kpt3d_world.right_hand.kpt3d;
+            output_buffer_->right_hand.kpt3d = constraint_hand_v2(output_buffer_->right_hand.kpt3d, false);
+            output_buffer_->right_hand.kpt3d = convert_to_23points(output_buffer_->right_hand.kpt3d);
             if (!predictor_rhand.get_tracking_status()) {
-                predictor_rhand.start_tracking(timestamp, {output_buffer_->right_hand.kpt3d[0], {0., 0., 0.}});
+                predictor_rhand.start_tracking(timestamp,
+                                               {output_buffer_->right_hand.kpt3d[kKeypointRootId], {0., 0., 0.}});
             } else {
                 if (kpt3d_world_pre.rhand_valid) {
-                    auto measure_v = (output_buffer_->right_hand.kpt3d[0] - kpt3d_world_pre.right_hand.kpt3d[0]) /
+                    auto measure_v = (output_buffer_->right_hand.kpt3d[kKeypointRootId] -
+                                      kpt3d_world_pre.right_hand.kpt3d[kKeypointRootId]) /
                                      (timestamp - last_timestamp_);
                     output_buffer_->right_hand.root_v = measure_v;
-                    predictor_rhand.track_with_correct(timestamp, {output_buffer_->right_hand.kpt3d[0], measure_v});
+                    predictor_rhand.track_with_correct(timestamp,
+                                                       {output_buffer_->right_hand.kpt3d[kKeypointRootId], measure_v});
                 }
             }
         }

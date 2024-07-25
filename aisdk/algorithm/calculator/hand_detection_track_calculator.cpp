@@ -4,6 +4,7 @@
 #include "aisdk/algorithm/calculator/hand_detection_track_calculator.pb.h"
 #include "aisdk/algorithm/common/NR_GlobalPredictorService.h"
 #include "aisdk/algorithm/common/NR_Transfer.h"
+#include "aisdk/algorithm/common/hand_define.h"
 #include "aisdk/algorithm/common/metrics.h"
 #include "aisdk/algorithm/internal_structs/det_struct_internal.h"
 #include "aisdk/algorithm/internal_structs/headpose_struct_internal.h"
@@ -136,7 +137,7 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
                 DetectRect proj_bbox_lcam_lhand, proj_bbox_rcam_lhand;
                 std::vector<Vec3f_t> lhand_predict_frame = lastframe_kpt3d.left_hand.kpt3d;
                 Vec3f_t root_kf_predicted;
-                Vec3f_t root_meas = lhand_predict_frame[0];
+                Vec3f_t root_meas = lhand_predict_frame[kKeypointRootId];
 
                 root_kf_predicted = predictor_lhand.track_only_pred(timestamp, false, false);
 
@@ -163,7 +164,7 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
                 DetectRect proj_bbox_lcam_rhand, proj_bbox_rcam_rhand;
                 std::vector<Vec3f_t> rhand_predict_frame = lastframe_kpt3d.right_hand.kpt3d;
                 Vec3f_t root_kf_predicted;
-                Vec3f_t root_meas = rhand_predict_frame[0];
+                Vec3f_t root_meas = rhand_predict_frame[kKeypointRootId];
 
                 root_kf_predicted = predictor_rhand.track_only_pred(timestamp, false, false);
 
@@ -173,27 +174,23 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
 
                 reproj_bbox_with_new_headpose(lcam_model_, rcam_model_, headpose_data.transform, rhand_predict_frame,
                                               proj_bbox_lcam_rhand, proj_bbox_rcam_rhand);
-                AISDK_LOG_WARN("reproj right hand bbox");
 
                 if (check_if_rect_valid(proj_bbox_lcam_rhand, video_width_, video_height_, valid_bbox_in_image_ratio_,
                                         min_bbox_area_th_)) {
                     output_buffer_->rhand_lcam_valid = true;
                     output_buffer_->rhand_lcam_rect = proj_bbox_lcam_rhand;
-                    AISDK_LOG_WARN("left cam reproj right hand bbox succeed");
                 }
                 // 单目流, track不会出右目的框
                 if (!is_mono && check_if_rect_valid(proj_bbox_rcam_rhand, video_width_, video_height_,
                                                     valid_bbox_in_image_ratio_, min_bbox_area_th_)) {
                     output_buffer_->rhand_rcam_valid = true;
                     output_buffer_->rhand_rcam_rect = proj_bbox_rcam_rhand;
-                    AISDK_LOG_WARN("right cam reproj right hand bbox succeed");
                 }
             }
 
             if (output_buffer_->lhand_lcam_valid || output_buffer_->lhand_rcam_valid ||
                 output_buffer_->rhand_lcam_valid || output_buffer_->rhand_rcam_valid) {
                 output_buffer_->det_flag = false;
-                AISDK_LOG_WARN("bbox track succeed");
 
                 det_tracker_step_++;
                 if (det_tracker_step_ > det_interval_) {
@@ -236,7 +233,6 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
 
         if (output_buffer_->lhand_lcam_valid || output_buffer_->lhand_rcam_valid || output_buffer_->rhand_lcam_valid ||
             output_buffer_->rhand_rcam_valid) {
-            AISDK_LOG_WARN("output bbox det flag is {}", output_buffer_->det_flag);
             cc->Outputs().Tag("DET_BBOX_OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
             cc->Outputs().Tag("IMAGE_OUTPUT").AddPacket(cc->Inputs().Tag("IMAGE_INPUT").Value());
             cc->Outputs().Tag("HEADPOSE_OUTPUT").AddPacket(cc->Inputs().Tag("HEADPOSE").Value());

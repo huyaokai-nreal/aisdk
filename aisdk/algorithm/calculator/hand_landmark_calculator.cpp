@@ -89,10 +89,6 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
                 AISDK_LOG_WARN("[HandLandmarkCalculator] failed to load rtmtiny, load rsntiny for int8")
                 netalgo = XGraphServiceUtils::CreateNetAlgoBase<RSNTiny>((void*)0x202310, std::string("2d_rsntiny"));
             }
-        } else if (model_name_ == "2d_rtmtiny_pcl") {
-            AISDK_LOG_TRACE("[HandLandmarkCalculator] start init rtmtiny_pcl");
-            netalgo = XGraphServiceUtils::CreateNetAlgoBase<RTMTiny>((void*)0x202310, model_name_);
-            AISDK_LOG_TRACE("[HandLandmarkCalculator] finish init rtmtiny_pcl");
         } else if (model_name_ == "2d_rsnnano") {
             AISDK_LOG_TRACE("[HandLandmarkCalculator] start init rsnnano");
             netalgo = XGraphServiceUtils::CreateNetAlgoBase<RSNNano>((void*)0x202310, model_name_);
@@ -129,9 +125,6 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
                                    std::shared_ptr<base::PerspectiveCameraModel>& virutal_camera, bool det_flag) {
         cv::Mat crop_image;
         float bbox_scale = bbox_expand_ratio_;
-        if (!det_flag) {
-            bbox_scale += 0.2;
-        }
         Vec4f_t rect = GetCropBboxShape(bbox, bbox_scale);
         if (crop_method == CropMethod::WarpAffine) {
             crop_image = generate_roi_image(image_data.m_mat, rect, input_width_, input_height_);
