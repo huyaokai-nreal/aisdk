@@ -79,7 +79,6 @@ node {
   node_options: {
     [type.googleapis.com/aisdk.HandLiftCalculatorOptions] {
       model_name: "3d_lift_ella"
-      enable_constrain: true
     }
   }
 }
