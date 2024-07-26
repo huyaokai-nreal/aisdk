@@ -287,7 +287,7 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
                 for (int k = 0; k < aisdk::algorithm::k3DAlgoStdKeypointNum; k++) {
                     predicted_points[k] = ontracked_points[i][k] + root_kf_predicted - root_meas;
                 }
-                m_post_filter->kpt_seq_3d_filter(i, predicted_points);
+                predicted_points = m_post_filter->process(i, predicted_points);
 #if defined(ENABLE_OPENXR_HANDJOINT_FORMAT)
                 algorithm::compute_xr_joint_rotation_v1(predicted_points, (i == 0), ontracked_rotations[i]);
 #else

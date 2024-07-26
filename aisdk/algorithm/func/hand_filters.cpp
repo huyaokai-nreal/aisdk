@@ -1,6 +1,8 @@
 #include "hand_filters.h"
-#include "aisdk/algorithm/common/hand_define.h"
+
 #include <vector>
+
+#include "aisdk/algorithm/common/hand_define.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/type.h"
 
@@ -71,9 +73,9 @@ std::vector<Vec3f_t> HandFilters::process(int hand_side, const std::vector<Vec3f
 
     for (int i = 0, p = 0, q = 0; i < point3d.size(); i++) {
         if (i == kKeypointRootId)
-            point3d[i] = root_point;
+            result[i] = root_point;
         else if (kPalmKeypointIndexSet.find(i) != kPalmKeypointIndexSet.end()) {
-            point3d[i] = root_point + palm_points[q];
+            result[i] = root_point + palm_points[q];
             q++;
         } else {
             result[i] = root_point + rel_points[p];

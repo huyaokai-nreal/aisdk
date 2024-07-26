@@ -69,7 +69,7 @@ else()
 endif()
 
 option(BUILD_EXAMPLE "Build examples." ON)
-option(BUILD_PYTHON "Build python wrapper." ON)
+option(BUILD_PYTHON "Build python wrapper." OFF)
 option(BUILD_TOOL "Build tools."  OFF)
 option(ENABLE_CLANG_TIDY_CHECK       "Analyze code with clang-tidy."                OFF)
 
