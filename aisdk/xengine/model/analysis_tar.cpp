@@ -322,7 +322,6 @@ bool GenerateGlobalSharedConfig(Json::Value &root, mtar_t &tar, aisdk::xengine::
                 // 优先确定是netalgo
                 if (models_mgr.isMember(models_name[i].asString()) &&
                     models_mgr[models_name[i].asString()].isObject()) {
-                    AISDK_LOG_TRACE("start parsing model {}", models_name[i].asString());
                     auto &node_config = models_mgr[models_name[i].asString()];
                     NetAlgoNodeTupleConfig tp;
                     // 按步找关键配置

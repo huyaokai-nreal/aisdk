@@ -38,6 +38,7 @@ node {
   node_options: {
     [type.googleapis.com/aisdk.HandDetTrackCalculatorOptions] {
       model_name: "detect_cpu_ella"
+      enable_track: true
     }
   }
 }

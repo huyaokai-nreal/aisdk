@@ -43,6 +43,7 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
     int det_tracker_step_ = 0;
     int det_interval_ = 4;
     float valid_bbox_in_image_ratio_ = 0.8;
+    bool enable_track = true;
 
    public:
     static absl::Status GetContract(xgraph::CalculatorContract *cc) {
@@ -86,6 +87,7 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
         if (options.det_interval() > 0) {
             det_interval_ = options.det_interval();
         }
+        enable_track = options.enable_track();
 
         const auto &cam_info = cc->InputSidePackets()
                                    .Tag("CAM_INFO_INPUT")
@@ -129,9 +131,7 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
         }
         auto &predictor_lhand = GlobalPredictorService::getInstance().get_predictor_lhand();
         auto &predictor_rhand = GlobalPredictorService::getInstance().get_predictor_rhand();
-        // det_tracker_step_ = 0;
-
-        if ((det_tracker_step_ != 0) &&
+        if ((det_tracker_step_ != 0) && enable_track &&
             (predictor_rhand.get_tracking_status() || predictor_lhand.get_tracking_status())) {
             if (lastframe_kpt3d.lhand_valid) {
                 DetectRect proj_bbox_lcam_lhand, proj_bbox_rcam_lhand;

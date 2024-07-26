@@ -185,6 +185,7 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
     if (outlist) {
         auto& hand_data_packet = outlist->m_output_packs[0];
         auto& hand_data_internal = hand_data_packet.Get<algorithm::HandsData>();
+        const auto& latest_timestamp = hand_data_packet.Timestamp().Seconds();
 
         AISDK_LOG_TRACE("[PopResult] lhand begin");
         if (hand_data_internal.lhand_valid) {
@@ -261,6 +262,9 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
 
                 if (i == 0) {
                     if (predictor_lhand.get_tracking_status()) {
+                        if (hand_data_internal.left_hand.source == algorithm::CamType::MONO) {
+                            query_time = latest_timestamp;
+                        }
                         root_kf_predicted = predictor_lhand.track_only_pred(query_time, true, true);
                     } else {
                         m_post_filter->reset(0);
@@ -268,6 +272,9 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
 
                 } else {
                     if (predictor_rhand.get_tracking_status()) {
+                        if (hand_data_internal.right_hand.source == algorithm::CamType::MONO) {
+                            query_time = latest_timestamp;
+                        }
                         root_kf_predicted = predictor_rhand.track_only_pred(query_time, true, true);
                     } else {
                         m_post_filter->reset(1);

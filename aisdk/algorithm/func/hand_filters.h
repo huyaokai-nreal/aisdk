@@ -22,13 +22,6 @@ class HandFilters final {
     std::shared_ptr<SeqManager3D> m_seq3d_palm_rhand;
 
     std::string glasses_type_;
-    #if defined(ENABLE_OPENXR_HANDJOINT_FORMAT)
-    int PalmKeypointNum = 10;
-    std::set<uint32_t> PalmKeypointSet{1,5,9,13,17,21,22,23,24,25};
-    #else
-    int PalmKeypointNum = 7;
-    std::set<uint32_t> PalmKeypointSet{1,5,9,13,17,21,22};
-    #endif
 };
 
 }  // namespace aisdk::algorithm

@@ -259,8 +259,8 @@ class GestureRecognitionV2 {
 
     std::pair<HandRawFeature, HandFeature> extract_hand_feature(
         const std::vector<std::vector<Eigen::Vector3f>> &keypoints3d, const std::vector<Vec2f_t> &keypoints2d,
-        bool is_left_hand, bool is_tracked, float hand_v);
-    std::pair<HandGesture, HandRawFeature> predict_with_keypoints3d(const std::vector<Eigen::Vector3f> &keypoints3d,
+        bool is_left_hand, bool is_tracked, float hand_v, bool mono_cam);
+    std::pair<HandGesture, HandRawFeature> predict_with_keypoints3d(const SingleHandData& hand_data,
                                                                     const std::vector<Vec2f_t> &keypoints2d,
                                                                     bool is_left_hand, bool is_tracked, float hand_v);
 

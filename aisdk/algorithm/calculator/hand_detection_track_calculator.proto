@@ -5,4 +5,5 @@ package aisdk;
 message HandDetTrackCalculatorOptions  {
   string  model_name = 1;
   int32 det_interval = 2;
+  bool enable_track = 3;
 }

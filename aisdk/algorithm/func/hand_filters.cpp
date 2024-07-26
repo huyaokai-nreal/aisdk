@@ -40,8 +40,8 @@ bool HandFilters::init() {
     m_seq3d_lhand = std::make_shared<SeqManager3D>(15, finger_params);
     m_seq3d_rhand = std::make_shared<SeqManager3D>(15, finger_params);
     // palm
-    m_seq3d_palm_lhand = std::make_shared<SeqManager3D>(PalmKeypointNum, palm_params);
-    m_seq3d_palm_rhand = std::make_shared<SeqManager3D>(PalmKeypointNum, palm_params);
+    m_seq3d_palm_lhand = std::make_shared<SeqManager3D>(kPalmKeypointIndexSet.size(), palm_params);
+    m_seq3d_palm_rhand = std::make_shared<SeqManager3D>(kPalmKeypointIndexSet.size(), palm_params);
 
     return true;
 }

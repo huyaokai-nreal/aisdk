@@ -4,6 +4,7 @@
 #include <map>
 
 #include "aisdk/algorithm/common/hand_define.h"
+#include "aisdk/algorithm/common/nrcore_define.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/type.h"
 
@@ -238,7 +239,7 @@ float GestureRecognitionV2::get_pinch_velocity(const std::vector<std::vector<Eig
 }
 std::pair<HandRawFeature, HandFeature> GestureRecognitionV2::extract_hand_feature(
     const std::vector<std::vector<Eigen::Vector3f>> &keypoints3d, const std::vector<Vec2f_t> &keypoints2d,
-    bool is_left_hand, bool is_tracked, float hand_v) {
+    bool is_left_hand, bool is_tracked, float hand_v, bool mono_cam) {
     auto fingure_angles = calculate_fingure_angles(keypoints3d);
     auto abduction_angles = calculate_abduction_angles(keypoints3d);
     auto opposition_distances = calculate_opposition_distances(keypoints3d);
@@ -263,11 +264,12 @@ std::pair<HandRawFeature, HandFeature> GestureRecognitionV2::extract_hand_featur
     // whether pinch point is masked
     AISDK_LOG_TRACE("pinch hand v is {}", hand_v);
     return {raw_features, feature_updator->update(fingure_angles, abduction_angles, opposition_distances, hand_angle,
-                                                  is_to_face, pinch_masked, hand_v > move_flag_th_)};
+                                                  is_to_face || mono_cam, pinch_masked, hand_v > move_flag_th_)};
 }
 std::pair<HandGesture, HandRawFeature> GestureRecognitionV2::predict_with_keypoints3d(
-    const std::vector<Eigen::Vector3f> &keypoints3d, const std::vector<Vec2f_t> &keypoints2d, bool is_left_hand,
-    bool is_tracked, float hand_v) {
+    const SingleHandData &hand_data, const std::vector<Vec2f_t> &keypoints2d, bool is_left_hand, bool is_tracked,
+    float hand_v) {
+    const auto &keypoints3d = hand_data.kpt3d;
     std::vector<std::vector<Eigen::Vector3f>> points(5, std::vector<Eigen::Vector3f>(5));
     float hand_length = (keypoints3d[9] - keypoints3d[0]).norm();
     const auto &root_kpt = keypoints3d[0];
@@ -278,7 +280,8 @@ std::pair<HandGesture, HandRawFeature> GestureRecognitionV2::predict_with_keypoi
         }
     }
 
-    auto [raw_features, feature] = extract_hand_feature(points, keypoints2d, is_left_hand, is_tracked, hand_v);
+    auto [raw_features, feature] =
+        extract_hand_feature(points, keypoints2d, is_left_hand, is_tracked, hand_v, hand_data.source == CamType::MONO);
     raw_features.feature = feature;
 
     for (int i = static_cast<int>(HandGesture::Invalid); i < static_cast<int>(HandGesture::MaxNum); i++) {

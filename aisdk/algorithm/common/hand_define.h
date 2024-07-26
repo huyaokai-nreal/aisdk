@@ -13,7 +13,11 @@ constexpr int k3DAlgoStdKeypointNum = 26;
 constexpr int k3DAlgoStdKeypointNum = 23;
 #endif
 constexpr int kKeypointRootId = 21;
+#if defined(ENABLE_OPENXR_HANDJOINT_FORMAT)
+const std::set<int> kPalmKeypointIndexSet {0,1,5,9,13,17,22,23,24,25};
+#else
 const std::set<int> kPalmKeypointIndexSet {0, 1, 5, 9, 13, 17, 22};
+#endif
 enum class HandGesture { Invalid = 0, Pinch, Click, Grab, ThumbUp, OpenHand, Victory, Call, Home, MaxNum };
 const std::vector<std::string> HandGestureNames{"Invalid",  "Pinch", "Click", "Grab", "ThumbUp", "OpenHand", "Victory", "Call", "Home"};
 struct SingleHandData {

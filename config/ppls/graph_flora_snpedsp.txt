@@ -38,6 +38,7 @@ node {
   node_options: {
     [type.googleapis.com/aisdk.HandDetTrackCalculatorOptions] {
       model_name: "detect"
+      enable_track: true
     }
   }
 }
@@ -82,14 +83,14 @@ node {
   input_stream: "LANDMARK_INPUT:kpt2d"
   output_stream: "LANDMARK_OUTPUT:kpt2d_filter"
 }
-#node {
-#  name: "MonoHand_3D"
-#  calculator: "MonoHandKpt3DCalculator"
-#  input_side_packet: "CAM_INFO_INPUT:cam_info"
-#  input_stream: "LANDMARK_INPUT:kpt2d_filter"
-#  input_stream: "HEADPOSE:head_pose_out"
-#  output_stream: "KPT3D_OUTPUT:kpt3d_mono"
-#}
+node {
+  name: "MonoHand_3D"
+  calculator: "MonoHandKpt3DCalculator"
+  input_side_packet: "CAM_INFO_INPUT:cam_info"
+  input_stream: "LANDMARK_INPUT:kpt2d"
+  input_stream: "HEADPOSE:head_pose_out"
+  output_stream: "KPT3D_OUTPUT:kpt3d_mono"
+}
 
 node {
   name: "LiftNet_3D"
@@ -107,7 +108,7 @@ node {
 node {
   name: "BlockHardRules"
   calculator: "BlockHardRulesCalculator"
-  #input_stream: "kpt3d_mono"
+  input_stream: "kpt3d_mono"
   input_stream: "kpt3d_bino"
   output_stream: "BLOCK_OUT:kpt3d_blocked"
   node_options: {

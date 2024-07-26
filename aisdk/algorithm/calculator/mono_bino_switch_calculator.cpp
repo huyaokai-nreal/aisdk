@@ -42,8 +42,6 @@ class MonoBinoSwitchCalculator : public xgraph::CalculatorBase {
         const auto& bbox_data = cc->Inputs().Tag("BBOX_IN").Get<DetOutputInternal>();
         *output_buffer_ = bbox_data;
         if (mode_ == "MONO") {
-            // left cam for left hand, right cam for right hand
-            // output_buffer_->lhand_rcam_valid = false;
             output_buffer_->rhand_lcam_valid = false;
 
         } else if (mode_ == "BINO") {
