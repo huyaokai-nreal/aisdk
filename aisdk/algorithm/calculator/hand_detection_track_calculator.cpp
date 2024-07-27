@@ -129,8 +129,8 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
             det_tracker_step_ = 0;
             output_buffer_->det_flag = false;
         }
-        auto &predictor_lhand = GlobalPredictorService::getInstance().get_predictor_lhand();
-        auto &predictor_rhand = GlobalPredictorService::getInstance().get_predictor_rhand();
+        auto &predictor_lhand = GlobalPredictorService::getInstance().get_predictor_lhand_bbox();
+        auto &predictor_rhand = GlobalPredictorService::getInstance().get_predictor_rhand_bbox();
         if ((det_tracker_step_ != 0) && enable_track &&
             (predictor_rhand.get_tracking_status() || predictor_lhand.get_tracking_status())) {
             if (lastframe_kpt3d.lhand_valid) {
@@ -139,7 +139,7 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
                 Vec3f_t root_kf_predicted;
                 Vec3f_t root_meas = lhand_predict_frame[kKeypointRootId];
 
-                root_kf_predicted = predictor_lhand.track_only_pred(timestamp, false, false);
+                root_kf_predicted = predictor_lhand.track_only_pred(timestamp, false, true);
 
                 for (int k = 0; k < lhand_predict_frame.size(); k++) {
                     lhand_predict_frame[k] = lhand_predict_frame[k] + root_kf_predicted - root_meas;
@@ -166,7 +166,7 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
                 Vec3f_t root_kf_predicted;
                 Vec3f_t root_meas = rhand_predict_frame[kKeypointRootId];
 
-                root_kf_predicted = predictor_rhand.track_only_pred(timestamp, false, false);
+                root_kf_predicted = predictor_rhand.track_only_pred(timestamp, false, true);
 
                 for (int k = 0; k < rhand_predict_frame.size(); k++) {
                     rhand_predict_frame[k] = rhand_predict_frame[k] + root_kf_predicted - root_meas;
@@ -212,20 +212,32 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
             // check stereo det bbox pair valid
             if (result.images_lhand_rects[0].size() > 0) {
                 result.lhand_lcam_rect = result.images_lhand_rects[0][0];
-                result.lhand_lcam_valid = true;
+                if (check_if_rect_valid(result.lhand_lcam_rect, video_width_, video_height_, valid_bbox_in_image_ratio_,
+                                        min_bbox_area_th_)) {
+                    result.lhand_lcam_valid = true;
+                }
             }
             if (!is_mono && result.images_lhand_rects[1].size() > 0) {
                 result.lhand_rcam_rect = result.images_lhand_rects[1][0];
-                result.lhand_rcam_valid = true;
+                if (check_if_rect_valid(result.lhand_rcam_rect, video_width_, video_height_, valid_bbox_in_image_ratio_,
+                                        min_bbox_area_th_)) {
+                    result.lhand_rcam_valid = true;
+                }
             }
 
             if (result.images_rhand_rects[0].size() > 0) {
                 result.rhand_lcam_rect = result.images_rhand_rects[0][0];
-                result.rhand_lcam_valid = true;
+                if (check_if_rect_valid(result.rhand_lcam_rect, video_width_, video_height_, valid_bbox_in_image_ratio_,
+                                        min_bbox_area_th_)) {
+                    result.rhand_lcam_valid = true;
+                }
             }
             if (!is_mono && result.images_rhand_rects[1].size() > 0) {
                 result.rhand_rcam_rect = result.images_rhand_rects[1][0];
-                result.rhand_rcam_valid = true;
+                if (check_if_rect_valid(result.rhand_rcam_rect, video_width_, video_height_, valid_bbox_in_image_ratio_,
+                                        min_bbox_area_th_)) {
+                    result.rhand_rcam_valid = true;
+                }
             }
 
             det_tracker_step_ = 1;
@@ -241,9 +253,9 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
             // update lastframe kpt3d
             lastframe_kpt3d.lhand_valid = false;
             lastframe_kpt3d.rhand_valid = false;
-            auto &predictor_lhand = GlobalPredictorService::getInstance().get_predictor_lhand();
+            auto &predictor_lhand = GlobalPredictorService::getInstance().get_predictor_lhand_bbox();
             predictor_lhand.stop_tracking();
-            auto &predictor_rhand = GlobalPredictorService::getInstance().get_predictor_rhand();
+            auto &predictor_rhand = GlobalPredictorService::getInstance().get_predictor_rhand_bbox();
             predictor_rhand.stop_tracking();
 
             AISDK_LOG_TRACE("[HandDetTrackCalculator] No valid hand, truncated here");

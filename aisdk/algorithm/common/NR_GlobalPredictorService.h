@@ -15,6 +15,9 @@ class GlobalPredictorService {
     KFPredictor& get_predictor_lhand() { return kfpredictor_lhand; }
 
     KFPredictor& get_predictor_rhand() { return kfpredictor_rhand; }
+    KFPredictor& get_predictor_lhand_bbox() { return bboxpredictor_lhand; }
+
+    KFPredictor& get_predictor_rhand_bbox() { return bboxpredictor_rhand; }
 
     HandsData get_last_kpt3d_world() { return last_kpt3d_world; }
     void set_last_kpt3d_world(const HandsData& data) { last_kpt3d_world = data; }
@@ -28,6 +31,8 @@ class GlobalPredictorService {
    private:
     KFPredictor kfpredictor_lhand;
     KFPredictor kfpredictor_rhand;
+    KFPredictor bboxpredictor_lhand;
+    KFPredictor bboxpredictor_rhand;
     float hand_scale_{1.0};
     float hand_scale_alpha_ = 0.01;
     HandsData last_kpt3d_world;
@@ -35,6 +40,8 @@ class GlobalPredictorService {
     GlobalPredictorService() {
         kfpredictor_lhand.init();
         kfpredictor_rhand.init();
+        bboxpredictor_lhand.init();
+        bboxpredictor_rhand.init();
     }
 
     ~GlobalPredictorService() {}

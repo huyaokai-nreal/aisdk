@@ -176,8 +176,8 @@ Vec3f_t KFPredictor::track_with_correct(double target_ts, PredictorState meas) {
 }
 
 Vec3f_t KFPredictor::track_only_pred(double target_ts, bool with_smooth, bool update_state) {
-    double valid_target_ts = get_valid_predict_time_length(target_ts);
     std::lock_guard<std::mutex> lock(m_mutex);
+    double valid_target_ts = get_valid_predict_time_length(target_ts);
     update_transition_matrix(valid_target_ts);
     std::vector<Vec3f_t> pred_pose;
     PredictorState pred;

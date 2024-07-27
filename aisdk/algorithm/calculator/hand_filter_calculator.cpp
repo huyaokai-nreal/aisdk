@@ -43,6 +43,10 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
         auto& predictor_rhand = GlobalPredictorService::getInstance().get_predictor_rhand();
         predictor_lhand.set_glasses_type(glasses_type_);
         predictor_rhand.set_glasses_type(glasses_type_);
+        auto& predictor_lhand_bbox = GlobalPredictorService::getInstance().get_predictor_lhand_bbox();
+        auto& predictor_rhand_bbox = GlobalPredictorService::getInstance().get_predictor_rhand_bbox();
+        predictor_lhand_bbox.set_glasses_type(glasses_type_);
+        predictor_rhand_bbox.set_glasses_type(glasses_type_);
         AISDK_LOG_TRACE("[HandFilterCalculator] Open complete.");
         return absl::OkStatus();
     }
@@ -58,10 +62,13 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
         *output_buffer_ = kpt3d_world;
         auto& predictor_lhand = GlobalPredictorService::getInstance().get_predictor_lhand();
         auto& predictor_rhand = GlobalPredictorService::getInstance().get_predictor_rhand();
+        auto& predictor_lhand_bbox = GlobalPredictorService::getInstance().get_predictor_lhand_bbox();
+        auto& predictor_rhand_bbox = GlobalPredictorService::getInstance().get_predictor_rhand_bbox();
         const auto kpt3d_world_pre = GlobalPredictorService::getInstance().get_last_kpt3d_world();
 
         if (!kpt3d_world.lhand_valid) {
             predictor_lhand.stop_tracking();
+            predictor_lhand_bbox.stop_tracking();
             output_buffer_->lhand_valid = false;
         } else {
             output_buffer_->left_hand.kpt3d = kpt3d_world.left_hand.kpt3d;
@@ -70,6 +77,8 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
             if (!predictor_lhand.get_tracking_status()) {
                 predictor_lhand.start_tracking(timestamp,
                                                {output_buffer_->left_hand.kpt3d[kKeypointRootId], {0., 0., 0.}});
+                predictor_lhand_bbox.start_tracking(timestamp,
+                                                    {output_buffer_->left_hand.kpt3d[kKeypointRootId], {0., 0., 0.}});
             } else {
                 if (kpt3d_world_pre.lhand_valid) {
                     auto measure_v = (output_buffer_->left_hand.kpt3d[kKeypointRootId] -
@@ -78,12 +87,15 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
                     output_buffer_->left_hand.root_v = measure_v;
                     predictor_lhand.track_with_correct(timestamp,
                                                        {output_buffer_->left_hand.kpt3d[kKeypointRootId], measure_v});
+                    predictor_lhand_bbox.track_with_correct(
+                        timestamp, {output_buffer_->left_hand.kpt3d[kKeypointRootId], measure_v});
                 }
             }
         }
 
         if (!kpt3d_world.rhand_valid) {
             predictor_rhand.stop_tracking();
+            predictor_rhand_bbox.stop_tracking();
             output_buffer_->rhand_valid = false;
         } else {
             output_buffer_->right_hand.kpt3d = kpt3d_world.right_hand.kpt3d;
@@ -92,6 +104,8 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
             if (!predictor_rhand.get_tracking_status()) {
                 predictor_rhand.start_tracking(timestamp,
                                                {output_buffer_->right_hand.kpt3d[kKeypointRootId], {0., 0., 0.}});
+                predictor_rhand_bbox.start_tracking(timestamp,
+                                                    {output_buffer_->right_hand.kpt3d[kKeypointRootId], {0., 0., 0.}});
             } else {
                 if (kpt3d_world_pre.rhand_valid) {
                     auto measure_v = (output_buffer_->right_hand.kpt3d[kKeypointRootId] -
@@ -100,6 +114,8 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
                     output_buffer_->right_hand.root_v = measure_v;
                     predictor_rhand.track_with_correct(timestamp,
                                                        {output_buffer_->right_hand.kpt3d[kKeypointRootId], measure_v});
+                    predictor_rhand_bbox.track_with_correct(
+                        timestamp, {output_buffer_->right_hand.kpt3d[kKeypointRootId], measure_v});
                 }
             }
         }

@@ -53,11 +53,16 @@ float get_bbox_distance(cv::Rect src, cv::Rect dst) {
 
 bool check_if_rect_valid(const DetectRect& rect, float max_width, float max_height, float bbox_in_image_ratio_th,
                          float min_bbox_area) {
-    float valid_x1 = std::max(0.0F, rect.x);
-    float valid_y1 = std::max(0.0F, rect.y);
-    float valid_x2 = std::min(max_width, rect.x + rect.w);
-    float valid_y2 = std::min(max_height, rect.y + rect.h);
-    float valid_area_ratio = (valid_x2 - valid_x1) * (valid_y2 - valid_y1) / (rect.w * rect.h + 0.1);
+    float rect_size = std::max(rect.w, rect.h) * 1.5;
+    float cx = rect.x + rect.w / 2;
+    float cy = rect.y + rect.h / 2;
+    float new_x = cx - rect_size / 2;
+    float new_y = cy - rect_size / 2;
+    float valid_x1 = std::max(0.0F, new_x);
+    float valid_y1 = std::max(0.0F, new_y);
+    float valid_x2 = std::min(max_width, new_x + rect_size);
+    float valid_y2 = std::min(max_height, new_y + rect_size);
+    float valid_area_ratio = (valid_x2 - valid_x1) * (valid_y2 - valid_y1) / (rect_size * rect_size + 0.1);
     return valid_area_ratio > bbox_in_image_ratio_th && rect.w * rect.h > min_bbox_area;
 }
 
