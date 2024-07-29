@@ -24,7 +24,9 @@ namespace aisdk::algorithm {
 //   input_stream: "LANDMARK_OUTPUT:kpt2d"
 //   input_stream: "LIFT_OUTPUT:kpt3d"  或者 //   input_stream: "LIFT_OUTPUT:kpt3d_bino"
 //   input_stream: "BLOCK_OUT:kpt3d_blocked"
+//   input_stream: "CONVERTWORLD_OUT:kpt3d_world"
 //   input_stream: "GR_OUTPUT:gesture"
+//   input_stream: "ALL_RESULTS:hand_result"
 //   input_side_packet: "CAM_INFO_INPUT:cam_info"
 //   input_stream_handler {
 //     input_stream_handler: "ImmediateInputStreamHandler"
@@ -37,7 +39,7 @@ class HandDataRecordState {
         for (auto iter = frame_datacache.begin(); iter != frame_datacache.end(); iter++) {
             // iter->second.m_nodestatus == NodeStatus::GESTURE_FINISH 当前帧被分析
             // iter->first < image_latest_time 新帧以及到达，但是上一帧还没完成(没detect到目标)
-            if (force || iter->second.m_nodestatus == NodeStatus::GESTURE_FINISH || iter->first < image_latest_time) {
+            if (force || iter->second.m_nodestatus == NodeStatus::STDHAND_FINISH || iter->first < image_latest_time) {
                 AISDK_LOG_TRACE("[HandDataRecordState] FindCanExport {}", iter->first);
                 return &iter->second;
             }
@@ -93,7 +95,9 @@ class HandDataRecordCalculator : public xgraph::CalculatorBase {
         cc->Inputs().Tag("LANDMARK_OUTPUT").Set<Kpt2dInternal>();
         cc->Inputs().Tag("LIFT_OUTPUT").Set<HandsData>();
         cc->Inputs().Tag("BLOCK_OUT").Set<HandsData>();
+        cc->Inputs().Tag("CONVERTWORLD_OUT").Set<HandsData>();
         cc->Inputs().Tag("GR_OUTPUT").Set<HandGestureInternal>();
+        cc->Inputs().Tag("ALL_RESULTS").Set<HandsData>();
 
         AISDK_LOG_TRACE("[HandDataRecordCalculator] GetContract complete");
         return absl::OkStatus();
@@ -233,6 +237,14 @@ class HandDataRecordCalculator : public xgraph::CalculatorBase {
                                                       : cache->rhand_status;
                             cache->lhand_valid = kpt3d_data.lhand_valid;
                             cache->rhand_valid = kpt3d_data.rhand_valid;
+                            // recorder.DebugGlobalFilter(cache, kpt3d_data, 1);
+                        }
+                    } else if (coll.Name() == "kpt3d_world") {
+                        Recordcache* cache = m_mgr.FindCache(time_id, false);
+                        if (cache) {
+                            const auto& kpt3d_data = package.Get<HandsData>();
+                            cache->m_nodestatus = NodeStatus::GLOBAL_FILTER_FINISH;
+                            recorder.DebugGlobalFilter(cache, kpt3d_data, 2);
                         }
                     } else if (coll.Name() == "gesture") {
                         Recordcache* cache = m_mgr.FindCache(time_id, false);
@@ -240,6 +252,13 @@ class HandDataRecordCalculator : public xgraph::CalculatorBase {
                             const auto& gesture = package.Get<HandGestureInternal>();
                             cache->m_nodestatus = NodeStatus::GESTURE_FINISH;
                             recorder.DebugGestureReg(cache, gesture);
+                        }
+                    } else if (coll.Name() == "hand_result") {
+                        Recordcache* cache = m_mgr.FindCache(time_id, false);
+                        if (cache) {
+                            const auto& kpt3d_data = package.Get<HandsData>();
+                            cache->m_nodestatus = NodeStatus::STDHAND_FINISH;
+                            recorder.DebugGlobalFilter(cache, kpt3d_data, 5);
                         }
                     }
                     AISDK_LOG_TRACE("HandDataRecordCalculator name = {} id = {} time_id = {}\n",

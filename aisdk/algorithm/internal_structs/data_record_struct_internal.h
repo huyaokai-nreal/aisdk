@@ -18,7 +18,8 @@ enum class NodeStatus {
     LIFT_FINISH = 6,
     MANO_FINISH = 7,
     GLOBAL_FILTER_FINISH = 8,
-    GESTURE_FINISH = 9
+    GESTURE_FINISH = 9,
+    STDHAND_FINISH = 20,
 };
 
 enum class ObjectStatus { NO_MISS = 0, DETECT_MISS = 1, PF_MISS = 2, LANDMARK_MISS=3, LIFT_MISS=4, HARDRULE_MISS = 5};

@@ -445,6 +445,7 @@ bool AnalysisTar::Analysis(unsigned char *tar_mem, uint32_t tar_len) {
                 pipelineconifg.framework_type = aisdk::xengine::FrameworkType::XGRAPH;
                 pipelineconifg.graph_config = std::string((const char *)p, h.size);
                 pipelineconifg.global_shared_config = m_global_shared_config;
+                // 检查单双面的逻辑可能会变化!!!
                 pipelineconifg.related_feature.bind_mono_bino =
                     (tar_hand_graph.find("mono") != std::string::npos) ? "mono_bino" : "bino";
                 pipelineconifg.related_feature.bind_glass =

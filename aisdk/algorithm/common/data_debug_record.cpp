@@ -1008,52 +1008,65 @@ void DataDebugRecord::liftToJsonString(Recordcache* record, const aisdk::algorit
     }
 }
 
-// void DataDebugRecord::GlobalFilterToJsonString(NrCore::PipelineNodeInfo& nodeinfo, std::vector<cv::Vec3f>& world,
-//                                                uint32_t step) {
-//     if (enable_globalfilter_tojson) {
-//         uint32_t lrhand = step & 1;
-//         uint32_t transferworld = (step & (1 << 1)) >> 1;
-//         uint32_t worldfilter = (step & (1 << 2)) >> 2;
-//         uint32_t worldmano = (step & (1 << 3)) >> 3;
+void DataDebugRecord::GlobalFilterToJsonString(Recordcache* record, const aisdk::algorithm::HandsData& kpt3d_result,
+                                               uint32_t step) {
+    uint32_t blocked = 0;
+    uint32_t transferworld = 0;
+    uint32_t worldfilter = 0;
+    uint32_t worldmano = 0;
+    uint32_t stdhands = 0;
+    if (1 == step) {
+        blocked = 1;
+    } else if (2 == step) {
+        transferworld = 1;
+    } else if (3 == step) {
+        worldfilter = 1;
+    } else if (4 == step) {
+        worldmano = 1;
+    } else if (5 == step) {
+        stdhands = 1;
+    }
 
-//         Json::Value root1;
-//         for (int kpt_index = 0; kpt_index < EZXR_DEFINED_JOINTS; kpt_index++) {
-//             Json::Value root2;
-//             root2[0] = world[kpt_index][0];
-//             root2[1] = world[kpt_index][1];
-//             root2[2] = world[kpt_index][2];
-//             root1[kpt_index] = root2;
-//         }
+    if (kpt3d_result.lhand_valid) {
+        Json::Value root1;
+        for (int kpt_index = 0; kpt_index < kpt3d_result.left_hand.kpt3d.size(); kpt_index++) {
+            Json::Value root2;
+            root2[0] = kpt3d_result.left_hand.kpt3d[kpt_index][0];
+            root2[1] = kpt3d_result.left_hand.kpt3d[kpt_index][1];
+            root2[2] = kpt3d_result.left_hand.kpt3d[kpt_index][2];
+            root1[kpt_index] = root2;
+        }
 
-//         if (0 == lrhand) {
-//             if (1 == transferworld)
-//                 nodeinfo.export_root["07_transferworld"]["lefthand"] = root1;
-//             else if (1 == worldfilter)
-//                 nodeinfo.export_root["08_worldfilter"]["lefthand"] = root1;
-//             else if (1 == worldmano)
-//                 nodeinfo.export_root["09_worldmano"]["lefthand"] = root1;
-//         } else if (1 == lrhand) {
-//             if (1 == transferworld)
-//                 nodeinfo.export_root["07_transferworld"]["righthand"] = root1;
-//             else if (1 == worldfilter)
-//                 nodeinfo.export_root["08_worldfilter"]["righthand"] = root1;
-//             else if (1 == worldmano)
-//                 nodeinfo.export_root["09_worldmano"]["righthand"] = root1;
-//         }
+        if (1 == transferworld)
+            record->export_root["07_transferworld"]["lefthand"] = root1;
+        else if (1 == worldfilter)
+            record->export_root["08_worldfilter"]["lefthand"] = root1;
+        else if (1 == worldmano)
+            record->export_root["09_worldmano"]["lefthand"] = root1;
+        else if (1 == stdhands)
+            record->export_root["12_worldstandardize"]["lefthand"] = root1;
+    }
 
-//         if (1 == transferworld) {
-//             Json::Value root3;
-//             root3[0] = nodeinfo.headpose.rotation.qx;
-//             root3[1] = nodeinfo.headpose.rotation.qy;
-//             root3[2] = nodeinfo.headpose.rotation.qz;
-//             root3[3] = nodeinfo.headpose.rotation.qw;
-//             root3[4] = nodeinfo.headpose.position.x;
-//             root3[5] = nodeinfo.headpose.position.y;
-//             root3[6] = nodeinfo.headpose.position.z;
-//             nodeinfo.export_root["07_transferworld"]["headpose"] = root3;
-//         }
-//     }
-// }
+    if (kpt3d_result.rhand_valid) {
+        Json::Value root1;
+        for (int kpt_index = 0; kpt_index < kpt3d_result.right_hand.kpt3d.size(); kpt_index++) {
+            Json::Value root2;
+            root2[0] = kpt3d_result.right_hand.kpt3d[kpt_index][0];
+            root2[1] = kpt3d_result.right_hand.kpt3d[kpt_index][1];
+            root2[2] = kpt3d_result.right_hand.kpt3d[kpt_index][2];
+            root1[kpt_index] = root2;
+        }
+
+        if (1 == transferworld)
+            record->export_root["07_transferworld"]["righthand"] = root1;
+        else if (1 == worldfilter)
+            record->export_root["08_worldfilter"]["righthand"] = root1;
+        else if (1 == worldmano)
+            record->export_root["09_worldmano"]["righthand"] = root1;
+        else if (1 == stdhands)
+            record->export_root["12_worldstandardize"]["righthand"] = root1;
+    }
+}
 
 // void DataDebugRecord::RotationToJsonString(NrCore::PipelineNodeInfo& nodeinfo, std::vector<Eigen::Matrix3d>&
 // rotation,
@@ -1157,7 +1170,12 @@ void DataDebugRecord::DebugLift(Recordcache* record, const aisdk::algorithm::Han
     }
 }
 
-// void DataDebugRecord::DebugGlobalFilter(NrCore::PipelineNodeInfo& nodeinfo) {}
+void DataDebugRecord::DebugGlobalFilter(Recordcache* record, const aisdk::algorithm::HandsData& kpt3d_result,
+                                        uint32_t step) {
+    if (enable_globalfilter_tojson) {
+        GlobalFilterToJsonString(record, kpt3d_result, step);
+    }
+}
 
 void DataDebugRecord::DebugGestureReg(Recordcache* record, const aisdk::algorithm::HandGestureInternal& gesture) {
     if (enable_gesturereg_tojson) {

@@ -57,6 +57,7 @@ std::string AddDataRecordCalculater(aisdk::xengine::PipelineConfig& config) {
     // clang-format off
     // 参考："aisdk/algorithm/calculator/hand_data_record_calculator.cpp"
     // 一定需要整体graph和calcutor的实现同时匹配
+    // 数据录制单独走一个执行器
     std::string new_exector_config = 
         "\n"
         "executor {\n"
@@ -68,6 +69,7 @@ std::string AddDataRecordCalculater(aisdk::xengine::PipelineConfig& config) {
         "    }\n"
         "  }\n"
         "}\n";
+    // 3d模块输出kpt3d
     std::string new_bino_node_config1 =     
         "node {\n"
         "  name: \"HandDataRecord\"\n"
@@ -79,12 +81,15 @@ std::string AddDataRecordCalculater(aisdk::xengine::PipelineConfig& config) {
         "  input_stream: \"LANDMARK_OUTPUT:kpt2d\"\n"
         "  input_stream: \"LIFT_OUTPUT:kpt3d\"\n"
         "  input_stream: \"BLOCK_OUT:kpt3d_blocked\"\n"
+        "  input_stream: \"CONVERTWORLD_OUT:kpt3d_world\"\n"
         "  input_stream: \"GR_OUTPUT:gesture\"\n"
+        "  input_stream: \"ALL_RESULTS:hand_result\"\n"
         "  input_side_packet: \"CAM_INFO_INPUT:cam_info\"\n"
         "  input_stream_handler {\n"
         "    input_stream_handler: \"ImmediateInputStreamHandler\"\n"
         "  }\n"
         "}\n";
+    // 3d模块输出kpt3d_bino
     std::string new_bino_node_config2 =     
         "node {\n"
         "  name: \"HandDataRecord\"\n"
@@ -96,12 +101,15 @@ std::string AddDataRecordCalculater(aisdk::xengine::PipelineConfig& config) {
         "  input_stream: \"LANDMARK_OUTPUT:kpt2d\"\n"
         "  input_stream: \"LIFT_OUTPUT:kpt3d_bino\"\n"
         "  input_stream: \"BLOCK_OUT:kpt3d_blocked\"\n"
+        "  input_stream: \"CONVERTWORLD_OUT:kpt3d_world\"\n"
         "  input_stream: \"GR_OUTPUT:gesture\"\n"
+        "  input_stream: \"ALL_RESULTS:hand_result\"\n"
         "  input_side_packet: \"CAM_INFO_INPUT:cam_info\"\n"
         "  input_stream_handler {\n"
         "    input_stream_handler: \"ImmediateInputStreamHandler\"\n"
         "  }\n"
         "}\n";
+    // 3d模块输出kpt3d_bino+kpt3d_mono // 暂未实现
     std::string new_mono_node_config2 =     
         "node {\n"
         "  name: \"MonoHandDataRecord\"\n"
@@ -111,10 +119,12 @@ std::string AddDataRecordCalculater(aisdk::xengine::PipelineConfig& config) {
         "  input_stream: \"HEADPOSE_INPUT:head_pose\"\n"
         "  input_stream: \"DET_BBOX_OUTPUT:detection_output\"\n"
         "  input_stream: \"LANDMARK_OUTPUT:kpt2d\"\n"
-        "  input_stream: \"LIFT_OUTPUT:kpt3d_mono\"\n"
+        "  input_stream: \"KPT3D_OUTPUT:kpt3d_mono\"\n"
         "  input_stream: \"LIFT_OUTPUT:kpt3d_bino\"\n"
         "  input_stream: \"BLOCK_OUT:kpt3d_blocked\"\n"
+        "  input_stream: \"CONVERTWORLD_OUT:kpt3d_world\"\n"
         "  input_stream: \"GR_OUTPUT:gesture\"\n"
+        "  input_stream: \"ALL_RESULTS:hand_result\"\n"
         "  input_side_packet: \"CAM_INFO_INPUT:cam_info\"\n"
         "  input_stream_handler {\n"
         "    input_stream_handler: \"ImmediateInputStreamHandler\"\n"
