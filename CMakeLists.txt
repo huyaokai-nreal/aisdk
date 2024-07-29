@@ -92,6 +92,11 @@ if(ENABLE_ALGORITHM_DATA_RECORD)
     # add_definitions(-DDATA_RECORD_METHOD="UnityButton")
     add_definitions(-DDATA_RECORD_METHOD="DebugConfig")
 endif()
+# 开启M2P延时测试
+option(ENBALE_M2P_DELAYED_TIME_PROFILER "enable gesture M2P delayed time profiler" OFF)
+if(ENBALE_M2P_DELAYED_TIME_PROFILER)
+    add_definitions(-DENBALE_M2P_DELAYED_TIME_PROFILER)
+endif()
 
 # build xengine nn
 option(ENABLE_XENGINE_SHARED_LIB "enable xengine shared lib."  OFF)

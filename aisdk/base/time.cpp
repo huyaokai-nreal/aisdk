@@ -46,4 +46,11 @@ NaiveTimer::~NaiveTimer() {
     }
 }
 
+uint64_t getTime2() {
+    struct timespec cur_sys_t;
+    clock_gettime(CLOCK_MONOTONIC, &cur_sys_t);
+    uint64_t cur_sys_time = cur_sys_t.tv_sec * (uint64_t)1000000000 + cur_sys_t.tv_nsec;
+    return cur_sys_time;
+}
+
 }  // namespace aisdk::base

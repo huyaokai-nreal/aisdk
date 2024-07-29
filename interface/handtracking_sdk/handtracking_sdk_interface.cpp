@@ -699,7 +699,10 @@ NRPluginResult HandTracking::ParseAllCameraData(const NRGrayscaleCameraFrameData
                    image_buffer + data->cameras[cam_id].step * row, data->cameras[cam_id].width);
         }
     }
-
+#ifdef ENBALE_M2P_DELAYED_TIME_PROFILER
+    AISDK_LOG_WARN("[HandTrackingProfiler] image_ts: {}, HandAlgoGetImage: {}", last_time_nanos,
+                   aisdk::base::getTime2());
+#endif
     aisdk::algorithm::Image d1(image[0], leftmem);
     aisdk::algorithm::Image d2(image[1], rightmem);
 

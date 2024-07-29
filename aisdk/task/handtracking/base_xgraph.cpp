@@ -88,6 +88,10 @@ bool BaseXGraph::ClearGraphNoResultInferenceCache(int64_t graph_stream_stamp) {
     (void)graph_stream_stamp;
     for (auto iter = m_inference_stream_cache.begin(); iter != m_inference_stream_cache.end();) {
         if (m_inference_stream_cache.size() >= 1800) {
+#ifdef ENBALE_M2P_DELAYED_TIME_PROFILER
+            AISDK_LOG_WARN("[HandTrackingProfiler], image_ts, {}, HandAlgoNoResultDroped, {}",
+                           iter->second->raw_timestamp, aisdk::base::getTime2());
+#endif
             iter = m_inference_stream_cache.erase(iter);
         } else {
             break;
@@ -104,6 +108,10 @@ bool BaseXGraph::ClearMediapipeDropedInferenceCache(int64_t graph_stream_stamp) 
         if (iter->first < graph_stream_stamp) {
 #if defined(ENABLE_ALGORITHM_GRAPH_STREAM_EVAL_TIME)
             iter->second->m_stream_time->valid = false;
+#endif
+#ifdef ENBALE_M2P_DELAYED_TIME_PROFILER
+            AISDK_LOG_WARN("[HandTrackingProfiler], image_ts, {}, HandAlgoFlowCtrolDroped, {}",
+                           iter->second->raw_timestamp, aisdk::base::getTime2());
 #endif
             AISDK_LOG_WARN("BaseXGraph::ClearMediapipeDropedInferenceCache stream_stamp {} < {} is droped !!!!!",
                            iter->first, graph_stream_stamp)
@@ -127,6 +135,10 @@ bool BaseXGraph::MoveOutputCache(std::shared_ptr<StreamCache> &stream) {
         if (m_output_stream_cache.size() > m_max_output_cahce_num) {
             m_output_stream_cache.pop_back();
         }
+#ifdef ENBALE_M2P_DELAYED_TIME_PROFILER
+        AISDK_LOG_WARN("[HandTrackingProfiler], image_ts, {}, HandAlgoProcessComplete, {}", stream->raw_timestamp,
+                       aisdk::base::getTime2());
+#endif
         m_output_stream_cache.push_front(std::move(stream));
     }
     return true;

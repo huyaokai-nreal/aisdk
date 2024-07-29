@@ -19,6 +19,7 @@
 #include "aisdk/algorithm/internal_structs/headpose_struct_internal.h"
 #include "aisdk/algorithm/internal_structs/kpt3d_struct_internal.h"
 #include "aisdk/base/log.h"
+#include "aisdk/base/time.h"
 #include "aisdk/base/type.h"
 #include "aisdk/xgraph/xgraph.h"
 
@@ -185,6 +186,11 @@ aisdk::algorithm::Status HandTrackingXGraph::PushData(uint64_t timestamp,
         // 若push失败，清除cahce
         if (push_failure) {
             ClearInputStreamCache(timestamp_micro);
+        } else {
+#ifdef ENBALE_M2P_DELAYED_TIME_PROFILER
+            AISDK_LOG_WARN("[HandTrackingProfiler], image_ts, {}, HandAlgoStartProcess, {}", timestamp,
+                           aisdk::base::getTime2());
+#endif
         }
     }
     // m_increase_timestep++;

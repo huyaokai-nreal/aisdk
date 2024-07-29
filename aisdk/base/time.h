@@ -45,6 +45,9 @@ class NaiveTimer : TimerBase {
     bool valid = true;
     uint64_t id = 0;
 };
+
+uint64_t getTime2();
+
 }  // namespace aisdk::base
 
 #define TIMER_ONCE aisdk::base::NaiveTimer ___t(__LINE__, __PRETTY_FUNCTION__)
