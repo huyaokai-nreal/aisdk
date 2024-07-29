@@ -5,6 +5,7 @@
         "record_name": "test4",
         "record_raw_images": true,
         "raw_images_interval_time_ms": 70,
+        "images_encoding": "jpg",
         "record_det_res_data": true,
         "record_pf_res_data": true,
         "record_kpt2d_res_data": true,

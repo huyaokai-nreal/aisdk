@@ -10,9 +10,9 @@ import pandas as pd
 KPT_NUM = 21
 
 def process_single_data(filename, leftcam_raw_path, rightcam_raw_path, 
-                        record_data_path, leftcam_res_path, rightcam_res_path, root_path_res, res_id):
-    leftcam_raw_img = cv2.imread(os.path.join(leftcam_raw_path, filename) + "_detect.jpg")
-    rightcam_raw_img = cv2.imread(os.path.join(rightcam_raw_path, filename) + "_detect.jpg")
+                        record_data_path, leftcam_res_path, rightcam_res_path, root_path_res, res_id, pic_encoding):
+    leftcam_raw_img = cv2.imread(os.path.join(leftcam_raw_path, filename) + "_detect." + pic_encoding)
+    rightcam_raw_img = cv2.imread(os.path.join(rightcam_raw_path, filename) + "_detect." + pic_encoding)
     
     with open(os.path.join(record_data_path, filename) + "_inference.json") as f:
         record_data = json.load(f)
@@ -135,7 +135,7 @@ def process_single_data(filename, leftcam_raw_path, rightcam_raw_path,
         file.write(combined_string)
     
 
-def process_all(leftcam_raw_path, rightcam_raw_path, record_data_path, leftcam_res_path, rightcam_res_path, predicted_data_path, root_path_res):
+def process_all(leftcam_raw_path, rightcam_raw_path, record_data_path, leftcam_res_path, rightcam_res_path, predicted_data_path, root_path_res, pic_encoding):
     leftcam_raw_namelist = set()
     rightcam_raw_namelist = set()
     record_data_namelist = []
@@ -171,7 +171,7 @@ def process_all(leftcam_raw_path, rightcam_raw_path, record_data_path, leftcam_r
         if key_pic in leftcam_raw_namelist:
             if key_pic in rightcam_raw_namelist:
                 print(key_pic, res_id)
-                process_single_data(key, leftcam_raw_path, rightcam_raw_path, record_data_path, leftcam_res_path, rightcam_res_path, root_path_res, res_id)
+                process_single_data(key, leftcam_raw_path, rightcam_raw_path, record_data_path, leftcam_res_path, rightcam_res_path, root_path_res, res_id, pic_encoding)
                 res_id+=1
                 
     data =[]
@@ -207,7 +207,9 @@ def process_all(leftcam_raw_path, rightcam_raw_path, record_data_path, leftcam_r
                 
 if __name__ == "__main__":
     print("root_path=", sys.argv[1])
+    print("pic_encoding=", sys.argv[2])
     root_path = sys.argv[1]
+    pic_encoding = sys.argv[2]
     
     # 存放结果的目录
     root_path_res = root_path + "_template"
@@ -227,7 +229,8 @@ if __name__ == "__main__":
     left_res_dir,
     right_res_dir,
     predicted_data_dir,
-    root_path_res)
+    root_path_res,
+    pic_encoding)
     
     sys.exit(ret)
     

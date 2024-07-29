@@ -125,9 +125,11 @@ std::string AddDataRecordCalculater(aisdk::xengine::PipelineConfig& config) {
     // 目前仅支持双目
     if (config.related_feature.bind_mono_bino == "bino") {
         if (config.pipeline_name == "graph_flora_snpedsp.txt") {
+            AISDK_LOG_WARN("[HandDataRecordCalculator] Process Enbale Bino2");
             return config.graph_config + new_exector_config + new_bino_node_config2;
         }
 
+        AISDK_LOG_WARN("[HandDataRecordCalculator] Process Enbale Bino1");
         return config.graph_config + new_exector_config + new_bino_node_config1;
     }
 

@@ -168,6 +168,13 @@ int DataDebugRecord::CheckRealTimeDebugUnityButton(uint64_t timestamp) {
                                 detect_record_rawimage_interval_ms = 0;
                             }
 
+                            if (local_config.isMember("images_encoding") &&
+                                local_config["images_encoding"].isString()) {
+                                rawimage_images_encoding = local_config["images_encoding"].asString();
+                            } else {
+                                rawimage_images_encoding = "jpg";
+                            }
+
                             if (local_config.isMember("record_det_res_data") &&
                                 local_config["record_det_res_data"].isBool()) {
                                 enable_detect_tojson = local_config["record_det_res_data"].asBool();
@@ -331,6 +338,13 @@ int DataDebugRecord::CheckRealTimeDebugGesture(uint64_t timestamp, std::string l
                                 detect_record_rawimage_interval_ms = 0;
                             }
 
+                            if (local_config.isMember("images_encoding") &&
+                                local_config["images_encoding"].isString()) {
+                                rawimage_images_encoding = local_config["images_encoding"].asString();
+                            } else {
+                                rawimage_images_encoding = "jpg";
+                            }
+
                             if (local_config.isMember("record_det_res_data") &&
                                 local_config["record_det_res_data"].isBool()) {
                                 enable_detect_tojson = local_config["record_det_res_data"].asBool();
@@ -406,9 +420,13 @@ int DataDebugRecord::CheckRealTimeDebugGesture(uint64_t timestamp, std::string l
 
 int DataDebugRecord::CheckRealTimeDebugConfig(uint64_t new_timestamp) {
     static uint64_t last_timestamp = 0;
-    // 10s
-    if (new_timestamp - last_timestamp >= 10 * 1000 * 1000 * 1000 && local_pipeline_node_data_record) {
-        last_timestamp = new_timestamp;
+    static uint32_t mkdir_off = 0;
+    // 5s
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    uint64_t cur_time_ms = tv.tv_sec * 1000 + tv.tv_usec / 1000;
+    if (cur_time_ms - last_timestamp >= 5 * 1000 && local_pipeline_node_data_record) {
+        last_timestamp = cur_time_ms;
         auto& prof = aisdk::base::DebugProfiling::Get().GetOpt();
         std::string data_record_configf = prof.local_data_record_rootpath + "record_configs.json";
         std::string local_data_record_jsonconfig;
@@ -424,94 +442,120 @@ int DataDebugRecord::CheckRealTimeDebugConfig(uint64_t new_timestamp) {
         if (reader.parse(local_data_record_jsonconfig, root)) {
             if (root.isMember("enable_local_records") && root["enable_local_records"].isBool()) {
                 if (root["enable_local_records"].asBool()) {
-                    if (root.isMember("local_records_config") && root["local_records_config"].isObject()) {
-                        auto& local_config = root["local_records_config"];
+                    // 跳过重复打开
+                    if (false == pipeline_debug) {
+                        if (root.isMember("local_records_config") && root["local_records_config"].isObject()) {
+                            auto& local_config = root["local_records_config"];
 
-                        std::string local_record_rootpath;
-                        if (local_config.isMember("record_name") && local_config["record_name"].isString()) {
-                            auto record_name = local_config["record_name"].asString();
-                            local_record_rootpath = prof.local_data_record_rootpath + "/" + record_name;
+                            std::string local_record_rootpath;
+                            if (local_config.isMember("record_name") && local_config["record_name"].isString()) {
+                                auto record_name = local_config["record_name"].asString();
+                                local_record_rootpath = prof.local_data_record_rootpath + "/" + record_name;
+                            } else {
+                                local_record_rootpath = prof.local_data_record_rootpath + "/" + "DefaultDir";
+                            }
+
+                            // 自动递增目录
+                            std::string local_record_rootpath_autoadd;
+                            while (mkdir_off < 10000) {
+                                local_record_rootpath_autoadd = local_record_rootpath + "_" + std::to_string(mkdir_off);
+                                if (false == aisdk::base::IsDirExist(local_record_rootpath_autoadd)) {
+                                    break;
+                                }
+                                mkdir_off++;
+                            }
+
+                            AISDK_LOG_TRACE("CheckRealTimeDebugConfig local_record_rootpath_autoadd={}",
+                                            local_record_rootpath_autoadd.c_str());
+                            local_record_rootpath = local_record_rootpath_autoadd;
+                            aisdk::base::CreateDir(local_record_rootpath);
+
+                            lcam_local_record_rootpath = local_record_rootpath + "/" + "leftcam_raw";
+                            rcam_local_record_rootpath = local_record_rootpath + "/" + "rightcam_raw";
+                            json_local_record_rootpath = local_record_rootpath + "/" + "hand_record_data";
+                            predict_json_local_record_rootpath = local_record_rootpath + "/" + "predicted_data";
+                            aisdk::base::CreateDir(lcam_local_record_rootpath);
+                            aisdk::base::CreateDir(rcam_local_record_rootpath);
+                            aisdk::base::CreateDir(json_local_record_rootpath);
+                            aisdk::base::CreateDir(predict_json_local_record_rootpath);
+
+                            if (local_config.isMember("record_raw_images") &&
+                                local_config["record_raw_images"].isBool()) {
+                                enable_detect_record_rawimage = local_config["record_raw_images"].asBool();
+                            } else {
+                                enable_detect_record_rawimage = false;
+                            }
+
+                            if (local_config.isMember("raw_images_interval_time_ms") &&
+                                local_config["raw_images_interval_time_ms"].isUInt()) {
+                                detect_record_rawimage_interval_ms =
+                                    local_config["raw_images_interval_time_ms"].asUInt();
+                            } else {
+                                detect_record_rawimage_interval_ms = 0;
+                            }
+
+                            if (local_config.isMember("images_encoding") &&
+                                local_config["images_encoding"].isString()) {
+                                rawimage_images_encoding = local_config["images_encoding"].asString();
+                            } else {
+                                rawimage_images_encoding = "jpg";
+                            }
+
+                            if (local_config.isMember("record_det_res_data") &&
+                                local_config["record_det_res_data"].isBool()) {
+                                enable_detect_tojson = local_config["record_det_res_data"].asBool();
+                                inference_json_save_file = true;
+                            } else {
+                                enable_detect_tojson = false;
+                            }
+
+                            if (local_config.isMember("record_kpt2d_res_data") &&
+                                local_config["record_kpt2d_res_data"].isBool()) {
+                                enable_rsn_tojson = local_config["record_kpt2d_res_data"].asBool();
+                                enable_filter_tojson = enable_rsn_tojson;
+                                inference_json_save_file = true;
+                            } else {
+                                enable_rsn_tojson = false;
+                                enable_filter_tojson = false;
+                            }
+
+                            if (local_config.isMember("record_kpt3d_res_data") &&
+                                local_config["record_kpt3d_res_data"].isBool()) {
+                                enable_liftmano_tojson = local_config["record_kpt3d_res_data"].asBool();
+                                inference_json_save_file = true;
+                            } else {
+                                enable_liftmano_tojson = false;
+                            }
+
+                            if (local_config.isMember("record_global_kpt3d_res_data") &&
+                                local_config["record_global_kpt3d_res_data"].isBool()) {
+                                enable_globalfilter_tojson = local_config["record_global_kpt3d_res_data"].asBool();
+                                enable_rotation_tojson = enable_globalfilter_tojson;
+                                inference_json_save_file = true;
+                            } else {
+                                enable_globalfilter_tojson = false;
+                                enable_rotation_tojson = false;
+                            }
+
+                            if (local_config.isMember("record_gesturereg") &&
+                                local_config["record_gesturereg"].isBool()) {
+                                enable_gesturereg_tojson = local_config["record_gesturereg"].asBool();
+                                inference_json_save_file = true;
+                            } else {
+                                enable_gesturereg_tojson = false;
+                            }
+
+                            if (local_config.isMember("record_predicted_data") &&
+                                local_config["record_predicted_data"].isBool()) {
+                                enable_predicted_tojson = local_config["record_predicted_data"].asBool();
+                            } else {
+                                enable_predicted_tojson = false;
+                            }
+
+                            pipeline_debug = true;
                         } else {
-                            local_record_rootpath = prof.local_data_record_rootpath + "/" + "DefaultDir";
+                            pipeline_debug = false;
                         }
-
-                        aisdk::base::CreateDir(local_record_rootpath);
-
-                        lcam_local_record_rootpath = local_record_rootpath + "/" + "leftcam_raw";
-                        rcam_local_record_rootpath = local_record_rootpath + "/" + "rightcam_raw";
-                        json_local_record_rootpath = local_record_rootpath + "/" + "hand_record_data";
-                        predict_json_local_record_rootpath = local_record_rootpath + "/" + "predicted_data";
-                        aisdk::base::CreateDir(lcam_local_record_rootpath);
-                        aisdk::base::CreateDir(rcam_local_record_rootpath);
-                        aisdk::base::CreateDir(json_local_record_rootpath);
-                        aisdk::base::CreateDir(predict_json_local_record_rootpath);
-
-                        if (local_config.isMember("record_raw_images") && local_config["record_raw_images"].isBool()) {
-                            enable_detect_record_rawimage = local_config["record_raw_images"].asBool();
-                        } else {
-                            enable_detect_record_rawimage = false;
-                        }
-
-                        if (local_config.isMember("raw_images_interval_time_ms") &&
-                            local_config["raw_images_interval_time_ms"].isUInt()) {
-                            detect_record_rawimage_interval_ms = local_config["raw_images_interval_time_ms"].asUInt();
-                        } else {
-                            detect_record_rawimage_interval_ms = 0;
-                        }
-
-                        if (local_config.isMember("record_det_res_data") &&
-                            local_config["record_det_res_data"].isBool()) {
-                            enable_detect_tojson = local_config["record_det_res_data"].asBool();
-                            inference_json_save_file = true;
-                        } else {
-                            enable_detect_tojson = false;
-                        }
-
-                        if (local_config.isMember("record_kpt2d_res_data") &&
-                            local_config["record_kpt2d_res_data"].isBool()) {
-                            enable_rsn_tojson = local_config["record_kpt2d_res_data"].asBool();
-                            enable_filter_tojson = enable_rsn_tojson;
-                            inference_json_save_file = true;
-                        } else {
-                            enable_rsn_tojson = false;
-                            enable_filter_tojson = false;
-                        }
-
-                        if (local_config.isMember("record_kpt3d_res_data") &&
-                            local_config["record_kpt3d_res_data"].isBool()) {
-                            enable_liftmano_tojson = local_config["record_kpt3d_res_data"].asBool();
-                            inference_json_save_file = true;
-                        } else {
-                            enable_liftmano_tojson = false;
-                        }
-
-                        if (local_config.isMember("record_global_kpt3d_res_data") &&
-                            local_config["record_global_kpt3d_res_data"].isBool()) {
-                            enable_globalfilter_tojson = local_config["record_global_kpt3d_res_data"].asBool();
-                            enable_rotation_tojson = enable_globalfilter_tojson;
-                            inference_json_save_file = true;
-                        } else {
-                            enable_globalfilter_tojson = false;
-                            enable_rotation_tojson = false;
-                        }
-
-                        if (local_config.isMember("record_gesturereg") && local_config["record_gesturereg"].isBool()) {
-                            enable_gesturereg_tojson = local_config["record_gesturereg"].asBool();
-                            inference_json_save_file = true;
-                        } else {
-                            enable_gesturereg_tojson = false;
-                        }
-
-                        if (local_config.isMember("record_predicted_data") &&
-                            local_config["record_predicted_data"].isBool()) {
-                            enable_predicted_tojson = local_config["record_predicted_data"].asBool();
-                        } else {
-                            enable_predicted_tojson = false;
-                        }
-
-                        pipeline_debug = true;
-                    } else {
-                        pipeline_debug = false;
                     }
                 } else {
                     pipeline_debug = false;
@@ -544,9 +588,11 @@ void DataDebugRecord::DebugImage(Recordcache* record, const std::vector<Image>& 
 
         if ((cur_time_ms - last_detect_record_rawimage_time_ms) > detect_record_rawimage_interval_ms) {
             std::string lcam_pic_name = lcam_local_record_rootpath + "/seq_" +
-                                        aisdk::base::StringSprintf("%010d", record->sequence_id) + "_detect.jpg";
+                                        aisdk::base::StringSprintf("%010d", record->sequence_id) + "_detect." +
+                                        rawimage_images_encoding;
             std::string rcam_pic_name = rcam_local_record_rootpath + "/seq_" +
-                                        aisdk::base::StringSprintf("%010d", record->sequence_id) + "_detect.jpg";
+                                        aisdk::base::StringSprintf("%010d", record->sequence_id) + "_detect." +
+                                        rawimage_images_encoding;
             const cv::Mat& lcam = input_image[0].m_mat;
             const cv::Mat& rcam = input_image[1].m_mat;
 

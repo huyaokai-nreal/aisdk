@@ -18,7 +18,7 @@ tool_version='1.2'
 
 # aisdk_version='v1' 第1版sdk，2个算法so
 # aisdk_version='v2' 第2版sdk，1个算法so
-aisdk_version='v1'
+aisdk_version='v2'
 
 PWD=os.getcwd()
 SCRIPT_DIR=PWD+'/script/'
@@ -120,7 +120,8 @@ if __name__ == "__main__":
         # 判断文件目录是否存在
         run_cmd('adb shell "if [ ! -d {} ]; then mkdir {}; fi"'.format(files_path, files_path))
         # 显示MD5值
-        print("libnr_hand_algo.so md5sum= ",calculate_md5(libnr_hand_algo_so_path))
+        if aisdk_version == "v1":
+            print("libnr_hand_algo.so md5sum= ",calculate_md5(libnr_hand_algo_so_path))
         print("libnr_hand_tracking.so md5sum= ",calculate_md5(libnr_hand_tracking_so_path))
         
         # 手动推库和推配置
@@ -204,6 +205,7 @@ if __name__ == "__main__":
         
         record_path = data["local_records_config"]["record_path"]
         record_name = data["local_records_config"]["record_name"]
+        pic_encoding = data["local_records_config"]["images_encoding"]
         
         adb_command = 'adb -s {} shell "find {} -type d -name \'{}_[0-9]*\' -printf \'%f\\n\'" '.format(device,record_path,record_name)
         print(adb_command)
@@ -220,7 +222,7 @@ if __name__ == "__main__":
             print("{} download completed.".format(subrecord_path))
             
             # 假设脚本在当前目录下
-            result = subprocess.run(["bash", SCRIPT_DIR+"build_hand_res.sh", RESULT_DIR+subrecord, fps])
+            result = subprocess.run(["bash", SCRIPT_DIR+"build_hand_res.sh", RESULT_DIR+subrecord, fps, pic_encoding])
             # print(result.stdout)  # 输出标准输出
             # print(result.stderr)  # 输出标准错误
             if result.returncode == 0:

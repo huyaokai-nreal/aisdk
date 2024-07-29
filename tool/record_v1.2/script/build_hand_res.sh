@@ -5,8 +5,9 @@
 
 root_path=${1}
 fps=${2}
+pic_encoding=${3}
 
-python $(pwd)/script/gennerate_hand_res_aisdk.py ${root_path}
+python $(pwd)/script/gennerate_hand_res_aisdk.py ${root_path} ${pic_encoding}
 status=$?
 
 fr=30   

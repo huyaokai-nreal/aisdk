@@ -86,6 +86,12 @@ option(ENABLE_ALGORITHM_GRAPH_STREAM_EVAL_TIME "enable algorithm mediapipe graph
 option(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME "enable algorithm mediapipe calculator process eval time."  OFF)
 # 开启数据录制功能
 option(ENABLE_ALGORITHM_DATA_RECORD "enable algorithm data record/debug"  OFF)
+if(ENABLE_ALGORITHM_DATA_RECORD)
+    # 启动数据录制的方式
+    # add_definitions(-DDATA_RECORD_METHOD="Gesture")
+    # add_definitions(-DDATA_RECORD_METHOD="UnityButton")
+    add_definitions(-DDATA_RECORD_METHOD="DebugConfig")
+endif()
 
 # build xengine nn
 option(ENABLE_XENGINE_SHARED_LIB "enable xengine shared lib."  OFF)

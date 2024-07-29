@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <mutex>
+#include <string>
 
 #include "aisdk/algorithm/internal_structs/det_struct_internal.h"
 #include "aisdk/algorithm/internal_structs/headpose_struct_internal.h"
@@ -80,6 +81,7 @@ class DataDebugRecord {
     bool enable_detect_record_rawimage = false;
     uint32_t detect_record_rawimage_interval_ms = 0;
     uint64_t last_detect_record_rawimage_time_ms = 0;
+    std::string rawimage_images_encoding = "jpg";
     bool enable_detect_record_drawimage = false;
     bool enable_rsn_record_drawimage = false;
     bool enable_filter_record_drawimage = false;

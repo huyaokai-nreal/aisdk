@@ -116,11 +116,24 @@ class HandDataRecordCalculator : public xgraph::CalculatorBase {
         TIMER_ONCE_WITH_TAG(HandDataRecordCalculator::Process);
 #endif
         AISDK_LOG_TRACE("[HandDataRecordCalculator] Process start");
+        bool is_record_start = false;
         bool is_any_input_close = false;
         bool is_debug_close = false;
+
+#ifdef DATA_RECORD_METHOD
+        std::string method = DATA_RECORD_METHOD;
+        if (method == "Gesture") {
+        } else if (method == "UnityButton") {
+            int debug_state = recorder.CheckRealTimeDebugUnityButton(0);
+            is_record_start = (debug_state > 0) ? true : false;
+        } else if (method == "DebugConfig") {
+            int debug_state = recorder.CheckRealTimeDebugConfig(0);
+            is_record_start = (debug_state > 0) ? true : false;
+        }
+#endif
         // 输入streamhandle是多输入，并且不是同步的，是及时响应类型的。
         // 意味着有输入就需要响应，多输入同时完成的动作，需要自己判断。
-        if (recorder.CheckRealTimeDebugUnityButton(0)) {
+        if (is_record_start) {
             // 某个输入以及产生
             for (aisdk::xgraph::CollectionItemId id = cc->Inputs().BeginId(); id < cc->Inputs().EndId(); ++id) {
                 auto& coll = cc->Inputs().Get(id);
