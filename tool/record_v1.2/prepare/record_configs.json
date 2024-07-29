@@ -1,10 +1,11 @@
 {
     "enable_local_records": false,
     "local_records_config": {
-		"record_path": "/sdcard/Android/data/com.xreal.HandInteractionExamples_NRSDK/files/",
-        "record_name": "test5",
+        "record_path": "/sdcard/Android/data/com.xreal.evapro.nebula/files/",
+        "record_name": "0726",
         "record_raw_images": true,
         "raw_images_interval_time_ms": 70,
+        "images_encoding": "jpg",
         "record_det_res_data": true,
         "record_pf_res_data": true,
         "record_kpt2d_res_data": true,

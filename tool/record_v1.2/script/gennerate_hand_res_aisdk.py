@@ -152,6 +152,9 @@ def process_all(leftcam_raw_path, rightcam_raw_path, record_data_path, leftcam_r
     for fileName in os.listdir(rightcam_raw_path):
         rightcam_raw_namelist.add(os.path.splitext(fileName)[0])
 
+    if len(leftcam_raw_namelist) == 0 or len(rightcam_raw_namelist) == 0:
+        return 1
+
     for fileName in os.listdir(record_data_path):
         record_data_namelist.append(os.path.splitext(fileName)[0])
     record_data_namelist.sort()
@@ -198,6 +201,8 @@ def process_all(leftcam_raw_path, rightcam_raw_path, record_data_path, leftcam_r
 
     # 将DataFrame写入Excel文件
     df.to_excel(root_path_res +'/output.xlsx', index=False)
+    
+    return 0
                  
                 
 if __name__ == "__main__":
@@ -216,12 +221,14 @@ if __name__ == "__main__":
     right_res_dir = root_path_res + "/rightcam_res"
     predicted_data_dir = root_path + "/predicted_data"
     
-    process_all(left_raw_dir,
+    ret = process_all(left_raw_dir,
     right_raw_dir, 
     record_data_dir, 
     left_res_dir,
     right_res_dir,
     predicted_data_dir,
     root_path_res)
+    
+    sys.exit(ret)
     
     
