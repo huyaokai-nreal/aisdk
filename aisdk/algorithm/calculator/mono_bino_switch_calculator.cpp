@@ -50,16 +50,6 @@ class MonoBinoSwitchCalculator : public xgraph::CalculatorBase {
             output_buffer_->rhand_lcam_valid = bbox_data.rhand_lcam_valid && bbox_data.rhand_rcam_valid;
             output_buffer_->rhand_rcam_valid = bbox_data.rhand_lcam_valid && bbox_data.rhand_rcam_valid;
         } else if (mode_ == "SWITCH") {
-            if (bbox_data.lhand_rcam_valid) {
-                if (bbox_data.lhand_rcam_rect.x + bbox_data.lhand_rcam_rect.w < image_data[0].m_mat.cols / 4) {
-                    output_buffer_->lhand_rcam_valid = false;
-                }
-            }
-            if (bbox_data.rhand_lcam_valid) {
-                if (bbox_data.rhand_lcam_rect.x > image_data[1].m_mat.cols / 4 * 3) {
-                    output_buffer_->rhand_lcam_valid = false;
-                }
-            }
             if (!bbox_data.lhand_lcam_valid) {
                 output_buffer_->lhand_rcam_valid = false;
             }

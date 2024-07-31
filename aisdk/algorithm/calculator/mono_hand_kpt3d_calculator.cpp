@@ -74,9 +74,6 @@ class MonoHandKpt3DCalculator : public xgraph::CalculatorBase {
             }
             last_kpt3d_weight = last_kpt3d_weight_;
         }
-        if (source_change) {
-            last_kpt3d_weight = 0;
-        }
         float hand_scale = GlobalPredictorService::getInstance().get_hand_scale();
         AISDK_LOG_TRACE("[MonoHandKpt3DCalculator] get hand scale {}", hand_scale);
         auto virtual_kpt3d = solver_->SolveKeypoints(kpt25d, hand_scale, last_kpt3d, last_kpt3d_weight,

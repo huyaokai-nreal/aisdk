@@ -164,7 +164,7 @@ class HandFeatureUpdator {
     std::unique_ptr<HandFeature> cur_hand_feature;
 };
 
-constexpr float pinch_v_th = -0.02; //m/s
+constexpr float pinch_v_th = -0.015; //m/s
 constexpr float pinch_min_th = 0.01;
 class GestureMatchRule {
    private:
