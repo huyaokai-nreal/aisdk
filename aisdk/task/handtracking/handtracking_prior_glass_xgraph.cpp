@@ -58,7 +58,7 @@ aisdk::algorithm::Status HandTrackingPriorGlassXGraph::PushData(uint64_t timesta
 }
 
 aisdk::algorithm::Status HandTrackingPriorGlassXGraph::PopResult(GlassHandPredictionData* out_hand) {
-    std::shared_ptr<StreamCache> outlist = GetOutputStreamCache();
+    std::shared_ptr<StreamCache> outlist = GetOutputStreamCache(0);
     if (outlist) {
         auto& hand_data_packet = outlist->m_output_packs[0];
         auto& hand_data_internal = hand_data_packet.Get<algorithm::HandsData>();

@@ -28,6 +28,7 @@ namespace aisdk::algorithm {
 //   input_stream: "GR_OUTPUT:gesture"
 //   input_stream: "ALL_RESULTS:hand_result"
 //   input_side_packet: "CAM_INFO_INPUT:cam_info"
+//   output_stream: "RECORD_RESULTS:record_result“
 //   input_stream_handler {
 //     input_stream_handler: "ImmediateInputStreamHandler"
 //   }
@@ -39,7 +40,10 @@ class HandDataRecordState {
         for (auto iter = frame_datacache.begin(); iter != frame_datacache.end(); iter++) {
             // iter->second.m_nodestatus == NodeStatus::GESTURE_FINISH 当前帧被分析
             // iter->first < image_latest_time 新帧以及到达，但是上一帧还没完成(没detect到目标)
-            if (force || iter->second.m_nodestatus == NodeStatus::STDHAND_FINISH || iter->first < image_latest_time) {
+            auto& sc = iter->second;
+            bool allTrue = std::all_of(sc.async_nodestatus.begin() + int32_t(NodeStatus::DETECT_FINISH),
+                                       sc.async_nodestatus.end(), [](bool elem) { return elem; });
+            if (force || (sc.is_get_detect_node && allTrue) || iter->first < image_latest_time) {
                 AISDK_LOG_TRACE("[HandDataRecordState] FindCanExport {}", iter->first);
                 return &iter->second;
             }
@@ -62,6 +66,7 @@ class HandDataRecordState {
             Recordcache* ret = &(insert_iter.first->second);
             ret->sequence_id = m_gsequence_inference_id++;
             ret->frame_timestamp = frame_timestamp;
+            ret->async_nodestatus.resize(uint32_t(NodeStatus::MAX_FLAG));
             return ret;
         }
         return nullptr;
@@ -98,6 +103,7 @@ class HandDataRecordCalculator : public xgraph::CalculatorBase {
         cc->Inputs().Tag("CONVERTWORLD_OUT").Set<HandsData>();
         cc->Inputs().Tag("GR_OUTPUT").Set<HandGestureInternal>();
         cc->Inputs().Tag("ALL_RESULTS").Set<HandsData>();
+        cc->Outputs().Tag("RECORD_RESULTS").Set<RecordExport>();
 
         AISDK_LOG_TRACE("[HandDataRecordCalculator] GetContract complete");
         return absl::OkStatus();
@@ -137,7 +143,7 @@ class HandDataRecordCalculator : public xgraph::CalculatorBase {
 #endif
         // 输入streamhandle是多输入，并且不是同步的，是及时响应类型的。
         // 意味着有输入就需要响应，多输入同时完成的动作，需要自己判断。
-        if (is_record_start) {
+        if (is_record_start || recorder.CheckDeveloperDebug()) {
             // 某个输入以及产生
             for (aisdk::xgraph::CollectionItemId id = cc->Inputs().BeginId(); id < cc->Inputs().EndId(); ++id) {
                 auto& coll = cc->Inputs().Get(id);
@@ -148,6 +154,7 @@ class HandDataRecordCalculator : public xgraph::CalculatorBase {
                         Recordcache* cache = m_mgr.FindCache(time_id, true);
                         if (cache) {
                             const auto& image_data = package.Get<std::vector<Image>>();
+                            cache->async_nodestatus[int32_t(NodeStatus::INPUT_IMAGE)] = true;
                             cache->m_nodestatus = NodeStatus::INPUT_IMAGE;
                             cache->detect_images.resize(2);
                             cache->detect_images[0].m_mat = image_data[0].m_mat.clone();
@@ -159,6 +166,7 @@ class HandDataRecordCalculator : public xgraph::CalculatorBase {
                         Recordcache* cache = m_mgr.FindCache(time_id, true);
                         if (cache) {
                             const auto& headpose_data = package.Get<HeadPoseInternal>();
+                            cache->async_nodestatus[int32_t(NodeStatus::INPUT_HEADPOSE)] = true;
                             cache->m_nodestatus = NodeStatus::INPUT_HEADPOSE;
                             recorder.DebugHeadpose(cache, headpose_data);
                         }
@@ -166,7 +174,9 @@ class HandDataRecordCalculator : public xgraph::CalculatorBase {
                         Recordcache* cache = m_mgr.FindCache(time_id, false);
                         if (cache) {
                             const auto& detect_data = package.Get<DetOutputInternal>();
-                            cache->m_nodestatus = NodeStatus::DETECT_FINISH;
+                            cache->is_get_detect_node = true;
+                            cache->async_nodestatus[int32_t(NodeStatus::DETECT_FINISH)] = true;
+                            // cache->m_nodestatus = NodeStatus::DETECT_FINISH;
                             cache->is_tracker_detect = !detect_data.det_flag;
                             cache->lhand_lcam_valid = detect_data.lhand_lcam_valid;
                             cache->lhand_rcam_valid = detect_data.lhand_rcam_valid;
@@ -185,7 +195,8 @@ class HandDataRecordCalculator : public xgraph::CalculatorBase {
                         Recordcache* cache = m_mgr.FindCache(time_id, false);
                         if (cache) {
                             const auto& kpt2d_data = package.Get<Kpt2dInternal>();
-                            cache->m_nodestatus = NodeStatus::RSN_FINISH;
+                            cache->async_nodestatus[int32_t(NodeStatus::RSN_FINISH)] = true;
+                            // cache->m_nodestatus = NodeStatus::RSN_FINISH;
                             cache->lhand_status = (cache->lhand_valid && !kpt2d_data.lhand_lcam_valid)
                                                       ? ObjectStatus::LANDMARK_MISS
                                                       : cache->lhand_status;
@@ -200,7 +211,9 @@ class HandDataRecordCalculator : public xgraph::CalculatorBase {
                         Recordcache* cache = m_mgr.FindCache(time_id, false);
                         if (cache) {
                             const auto& kpt3d_data = package.Get<HandsData>();
-                            cache->m_nodestatus = NodeStatus::LIFT_FINISH;
+                            cache->async_nodestatus[int32_t(NodeStatus::FILTER_FINISH)] = true;
+                            cache->async_nodestatus[int32_t(NodeStatus::LIFT_FINISH)] = true;
+                            // cache->m_nodestatus = NodeStatus::LIFT_FINISH;
                             cache->lhand_status = (cache->lhand_valid && !kpt3d_data.lhand_valid)
                                                       ? ObjectStatus::LIFT_MISS
                                                       : cache->lhand_status;
@@ -228,7 +241,8 @@ class HandDataRecordCalculator : public xgraph::CalculatorBase {
                         Recordcache* cache = m_mgr.FindCache(time_id, false);
                         if (cache) {
                             const auto& kpt3d_data = package.Get<HandsData>();
-                            cache->m_nodestatus = NodeStatus::MANO_FINISH;
+                            cache->async_nodestatus[int32_t(NodeStatus::MANO_FINISH)] = true;
+                            // cache->m_nodestatus = NodeStatus::MANO_FINISH;
                             cache->lhand_status = (cache->lhand_valid && !kpt3d_data.lhand_valid)
                                                       ? ObjectStatus::HARDRULE_MISS
                                                       : cache->lhand_status;
@@ -243,20 +257,23 @@ class HandDataRecordCalculator : public xgraph::CalculatorBase {
                         Recordcache* cache = m_mgr.FindCache(time_id, false);
                         if (cache) {
                             const auto& kpt3d_data = package.Get<HandsData>();
-                            cache->m_nodestatus = NodeStatus::GLOBAL_FILTER_FINISH;
+                            cache->async_nodestatus[int32_t(NodeStatus::GLOBAL_FILTER_FINISH)] = true;
+                            // cache->m_nodestatus = NodeStatus::GLOBAL_FILTER_FINISH;
                             recorder.DebugGlobalFilter(cache, kpt3d_data, 2);
                         }
                     } else if (coll.Name() == "gesture") {
                         Recordcache* cache = m_mgr.FindCache(time_id, false);
                         if (cache) {
                             const auto& gesture = package.Get<HandGestureInternal>();
-                            cache->m_nodestatus = NodeStatus::GESTURE_FINISH;
+                            cache->async_nodestatus[int32_t(NodeStatus::GESTURE_FINISH)] = true;
+                            // cache->m_nodestatus = NodeStatus::GESTURE_FINISH;
                             recorder.DebugGestureReg(cache, gesture);
                         }
                     } else if (coll.Name() == "hand_result") {
                         Recordcache* cache = m_mgr.FindCache(time_id, false);
                         if (cache) {
                             const auto& kpt3d_data = package.Get<HandsData>();
+                            cache->async_nodestatus[int32_t(NodeStatus::STDHAND_FINISH)] = true;
                             cache->m_nodestatus = NodeStatus::STDHAND_FINISH;
                             recorder.DebugGlobalFilter(cache, kpt3d_data, 5);
                         }
@@ -267,6 +284,7 @@ class HandDataRecordCalculator : public xgraph::CalculatorBase {
                     is_any_input_close = true;
                     AISDK_LOG_ERROR("HandDataRecordCalculator name = {} id = {} IsDone\n",
                                     cc->Inputs().Get(id).Name().c_str(), id.value());
+                    break;
                 }
             }
 
@@ -274,7 +292,11 @@ class HandDataRecordCalculator : public xgraph::CalculatorBase {
                 // 多输入中某些输入不满足 或者 多输入全部已经完成
                 Recordcache* all_cache = m_mgr.FindCanExport(false);
                 if (all_cache) {
-                    recorder.DebugWholeInference(all_cache);
+                    std::unique_ptr<RecordExport> output_buffer_ = absl::make_unique<RecordExport>();
+                    recorder.DebugWholeInference(all_cache, output_buffer_.get());
+                    cc->Outputs().Tag("RECORD_RESULTS").Add(output_buffer_.release(), cc->InputTimestamp());
+                    AISDK_LOG_TRACE("HandDataRecordCalculator pushout frame_timestamp = {}",
+                                    all_cache->frame_timestamp);
                     m_mgr.ClearHasExported(all_cache->frame_timestamp);
                 }
             }
@@ -287,7 +309,11 @@ class HandDataRecordCalculator : public xgraph::CalculatorBase {
             while (1) {
                 Recordcache* all_cache = m_mgr.FindCanExport(true);
                 if (all_cache) {
-                    recorder.DebugWholeInference(all_cache);
+                    std::unique_ptr<RecordExport> output_buffer_ = absl::make_unique<RecordExport>();
+                    recorder.DebugWholeInference(all_cache, output_buffer_.get());
+                    cc->Outputs().Tag("RECORD_RESULTS").Add(output_buffer_.release(), cc->InputTimestamp());
+                    AISDK_LOG_TRACE("HandDataRecordCalculator force pushout frame_timestamp = {}",
+                                    all_cache->frame_timestamp);
                     m_mgr.ClearHasExported(all_cache->frame_timestamp);
                 } else {
                     break;

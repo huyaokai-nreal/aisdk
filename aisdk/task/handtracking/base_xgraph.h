@@ -2,6 +2,8 @@
 #include "aisdk/xgraph/xgraph.h"
 #include <cstdint>
 #include <mutex>
+#include <string>
+#include <vector>
 
 #include "aisdk/algorithm/common/nrcore_define.h"
 #include "aisdk/base/time.h"
@@ -13,6 +15,7 @@ class StreamCache {
     std::mutex m_lock;
     uint64_t raw_timestamp;
     uint32_t m_output_packs_sum;
+    uint64_t sync_bitmap;
     std::vector<xgraph::Packet> m_output_packs;
     std::shared_ptr<aisdk::base::NaiveTimer> m_stream_time;
 };
@@ -24,6 +27,8 @@ class BaseXGraph : public PipeGraphImpl {
 
     virtual aisdk::algorithm::Status Init(aisdk::xengine::DlSymFuncs &funcs, aisdk::xengine::PipelineConfig &config,
                                   CameraParams &camera) override;
+    // 更改默认的多输出之间的同步策略和分组策略
+    void SetMultipleOutputSync(std::vector<uint64_t>& order_sync_bitmaps, std::vector<uint64_t>& order_groud_index);                              
     aisdk::algorithm::Status Start() override;
     aisdk::algorithm::Status Stop() override;
     // 登记已经push到grapgh中的stream，后续我们将graph输出的stream结果做匹配。
@@ -31,10 +36,11 @@ class BaseXGraph : public PipeGraphImpl {
     // graph添加stream失败，主动删除SetInputStreamCache登记的stream
     aisdk::algorithm::Status ClearInputStreamCache(int64_t graph_stream_stamp);
     // 获取最新的stream结果，如果不被调用，也不会阻塞graph运行。MoveOutputCahce函数将会将超过m_max_output_cahce_num的stream结果删除
-    std::shared_ptr<StreamCache> GetOutputStreamCache();
+    std::shared_ptr<StreamCache> GetOutputStreamCache(uint64_t groud_index);
     // 内部函数，graph将多输出的packet合并到StreamCache中。
     bool CallBackInferenceResult(const xgraph::Packet &packet, int64_t output_packs_order);
-
+    std::vector<std::string>& GetInputStreamName() { return m_input_stream_name;}
+    std::vector<std::string>& GetOutputStreamName() { return m_output_stream_name;}
     std::unique_ptr<xgraph::CalculatorGraph> m_calculator_graph;
    private:
     bool graph_started = false; 
@@ -50,10 +56,14 @@ class BaseXGraph : public PipeGraphImpl {
 
     std::mutex m_output_lock;
     uint32_t m_max_output_cahce_num = 3;
+    // 每个输出和其他输出的同步关系，bitmaps表示
+    std::vector<uint64_t> m_output_order_sync_bitmaps;
+    // 每个输出和其他输出合并后，输出的groud_index
+    std::vector<uint64_t> m_output_order_groud_index;
     // 假设graph可以正常按时间戳顺序输出
-    std::list<std::shared_ptr<StreamCache>> m_output_stream_cache;
+    std::vector<std::list<std::shared_ptr<StreamCache>>> m_output_stream_groud_cache;
     // 删除缓存中最旧的stream
-    bool MoveOutputCache(std::shared_ptr<StreamCache> &stream);
+    bool MoveOutputCache(std::shared_ptr<StreamCache> &stream, uint64_t groud_index);
 };
 
 }  // namespace aisdk::task

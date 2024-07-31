@@ -79,6 +79,13 @@ void DataDebugRecord::InitDebugConfig() {
     }
 }
 
+int DataDebugRecord::CheckDeveloperDebug() {
+    if (export_pipeline_node_data_jsonstring || developer_test_all) {
+        return 1;
+    }
+    return 0;
+}
+
 int DataDebugRecord::CheckRealTimeDebugUnityButton(uint64_t timestamp) {
     static int debug_state = 0;  // 0: 不启动 1：进入ing 2：录制中 3：停止ing
     static uint32_t mkdir_off = 0;
@@ -103,7 +110,7 @@ int DataDebugRecord::CheckRealTimeDebugUnityButton(uint64_t timestamp) {
         }
         last_timestamp = cur_time_ms;
     }
-    if (local_pipeline_node_data_record || developer_test_all) {
+    if (local_pipeline_node_data_record) {
         if (0 == debug_state && true == prof.pipeline_debug) {
             debug_state = 2;
             pipeline_debug = true;
@@ -1183,13 +1190,13 @@ void DataDebugRecord::DebugGestureReg(Recordcache* record, const aisdk::algorith
     }
 }
 
-void DataDebugRecord::DebugWholeInference(Recordcache* record) {
+void DataDebugRecord::DebugWholeInference(Recordcache* record, RecordExport* record_export) {
+    PipelineNodeInfoToJsonString(record, record_export->export_jsonstring);
+
     if (inference_json_save_file) {
-        std::string json_string;
-        PipelineNodeInfoToJsonString(record, json_string);
         std::string json_name = json_local_record_rootpath + "/seq_" +
                                 aisdk::base::StringSprintf("%010d", record->sequence_id) + "_inference.json";
-        aisdk::base::WriteToFile(json_name, json_string, false);
+        aisdk::base::WriteToFile(json_name, record_export->export_jsonstring, false);
     }
 }
 

@@ -16,6 +16,7 @@
 #include "aisdk/algorithm/func/hand_filters.h"
 #include "aisdk/algorithm/func/hand_rotation.h"
 #include "aisdk/algorithm/func/hand_rotation_v2.h"
+#include "aisdk/algorithm/internal_structs/data_record_struct_internal.h"
 #include "aisdk/algorithm/internal_structs/headpose_struct_internal.h"
 #include "aisdk/algorithm/internal_structs/kpt3d_struct_internal.h"
 #include "aisdk/base/log.h"
@@ -54,13 +55,14 @@ static std::map<HandGesture, int> GestureMap = {
 HandTrackingXGraph::HandTrackingXGraph() {}
 HandTrackingXGraph::~HandTrackingXGraph() {}
 
-std::string AddDataRecordCalculater(aisdk::xengine::PipelineConfig& config) {
+bool AddDataRecordCalculater(aisdk::xengine::PipelineConfig& config, std::string& new_graph_config) {
     // clang-format off
     // 参考："aisdk/algorithm/calculator/hand_data_record_calculator.cpp"
     // 一定需要整体graph和calcutor的实现同时匹配
     // 数据录制单独走一个执行器
     std::string new_exector_config = 
         "\n"
+        "output_stream: \"RECORD_RESULTS:record_result\"\n"
         "executor {\n"
         "  name: \"handtracking_data_exector\"\n"
         "  type: \"ThreadPoolExecutor\"\n"
@@ -86,6 +88,7 @@ std::string AddDataRecordCalculater(aisdk::xengine::PipelineConfig& config) {
         "  input_stream: \"GR_OUTPUT:gesture\"\n"
         "  input_stream: \"ALL_RESULTS:hand_result\"\n"
         "  input_side_packet: \"CAM_INFO_INPUT:cam_info\"\n"
+        "  output_stream: \"RECORD_RESULTS:record_result\"\n"
         "  input_stream_handler {\n"
         "    input_stream_handler: \"ImmediateInputStreamHandler\"\n"
         "  }\n"
@@ -106,6 +109,7 @@ std::string AddDataRecordCalculater(aisdk::xengine::PipelineConfig& config) {
         "  input_stream: \"GR_OUTPUT:gesture\"\n"
         "  input_stream: \"ALL_RESULTS:hand_result\"\n"
         "  input_side_packet: \"CAM_INFO_INPUT:cam_info\"\n"
+        "  output_stream: \"RECORD_RESULTS:record_result\"\n"
         "  input_stream_handler {\n"
         "    input_stream_handler: \"ImmediateInputStreamHandler\"\n"
         "  }\n"
@@ -127,6 +131,7 @@ std::string AddDataRecordCalculater(aisdk::xengine::PipelineConfig& config) {
         "  input_stream: \"GR_OUTPUT:gesture\"\n"
         "  input_stream: \"ALL_RESULTS:hand_result\"\n"
         "  input_side_packet: \"CAM_INFO_INPUT:cam_info\"\n"
+        "  output_stream: \"RECORD_RESULTS:record_result\"\n"
         "  input_stream_handler {\n"
         "    input_stream_handler: \"ImmediateInputStreamHandler\"\n"
         "  }\n"
@@ -137,14 +142,16 @@ std::string AddDataRecordCalculater(aisdk::xengine::PipelineConfig& config) {
     if (config.related_feature.bind_mono_bino == "bino") {
         if (config.pipeline_name == "graph_flora_snpedsp.txt") {
             AISDK_LOG_WARN("[HandDataRecordCalculator] Process Enbale Bino2");
-            return config.graph_config + new_exector_config + new_bino_node_config2;
+            new_graph_config = config.graph_config + new_exector_config + new_bino_node_config2;
+            return true;
         }
 
         AISDK_LOG_WARN("[HandDataRecordCalculator] Process Enbale Bino1");
-        return config.graph_config + new_exector_config + new_bino_node_config1;
+        new_graph_config = config.graph_config + new_exector_config + new_bino_node_config1;
+        return true;
     }
 
-    return config.graph_config;
+    return false;
 }
 
 aisdk::algorithm::Status HandTrackingXGraph::Init(aisdk::xengine::DlSymFuncs& funcs,
@@ -155,10 +162,47 @@ aisdk::algorithm::Status HandTrackingXGraph::Init(aisdk::xengine::DlSymFuncs& fu
         m_post_filter = std::make_unique<algorithm::HandFilters>("ella");
     }
     m_post_filter->init();
+    bool add_record = false;
 #if defined(ENABLE_ALGORITHM_DATA_RECORD) && !defined(ENABLE_SEGMENT_JOINT_INFERENCE_MODE)
-    config.graph_config = AddDataRecordCalculater(config);
+    std::string new_graph_config;
+    add_record = AddDataRecordCalculater(config, new_graph_config);
+    if (add_record) {
+        config.graph_config = new_graph_config;
+    }
 #endif
-    return BaseXGraph::Init(funcs, config, camera);
+    aisdk::algorithm::Status ret = BaseXGraph::Init(funcs, config, camera);
+    if (ret == aisdk::algorithm::Status::SUCCESS) {
+#if defined(ENABLE_ALGORITHM_DATA_RECORD) && !defined(ENABLE_SEGMENT_JOINT_INFERENCE_MODE)
+        if (add_record) {
+            auto outnames = GetOutputStreamName();
+            std::vector<uint64_t> order_sync_bitmaps(outnames.size());
+            std::vector<uint64_t> order_groud_index(outnames.size());
+            uint64_t default_sync_bitmaps = 0;
+            for (uint32_t order = 0; order < outnames.size(); order++) {
+                if (outnames[order] == "record_result") {
+                    order_sync_bitmaps[order] = (1ULL << order);
+                    order_groud_index[order] = recordresult_output_groud_index;
+                } else {
+                    default_sync_bitmaps |= (1ULL << order);
+                    order_groud_index[order] = handresult_output_groud_index;
+                }
+            }
+
+            for (uint32_t order = 0; order < outnames.size(); order++) {
+                if (outnames[order] != "record_result") {
+                    order_sync_bitmaps[order] = default_sync_bitmaps;
+                }
+
+                if (outnames[order] == "hand_result") {
+                    handresult_output_packet_index = order;
+                }
+            }
+
+            SetMultipleOutputSync(order_sync_bitmaps, order_groud_index);
+        }
+#endif
+    }
+    return ret;
 }
 
 aisdk::algorithm::Status HandTrackingXGraph::PushData(uint64_t timestamp,
@@ -196,12 +240,13 @@ aisdk::algorithm::Status HandTrackingXGraph::PushData(uint64_t timestamp,
     // m_increase_timestep++;
     return aisdk::algorithm::Status::SUCCESS;
 }
+
 aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, uint32_t* hand_num,
                                                        HandData* out_hand_array) {
     double query_time = static_cast<double>(hmd_time_nano) / 1e9;
-    std::shared_ptr<StreamCache> outlist = GetOutputStreamCache();
+    std::shared_ptr<StreamCache> outlist = GetOutputStreamCache(handresult_output_groud_index);
     if (outlist) {
-        auto& hand_data_packet = outlist->m_output_packs[0];
+        auto& hand_data_packet = outlist->m_output_packs[handresult_output_packet_index];
         auto& hand_data_internal = hand_data_packet.Get<algorithm::HandsData>();
         const auto& latest_timestamp = hand_data_packet.Timestamp().Seconds();
 
@@ -340,6 +385,22 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
     }
 
     *hand_num = 0;
+    return aisdk::algorithm::Status::FAILURE;
+}
+
+algorithm::Status HandTrackingXGraph::PopExecInfo(uint64_t& timestamp, std::string& jsonstring) {
+    std::shared_ptr<StreamCache> outlist = GetOutputStreamCache(recordresult_output_groud_index);
+    if (outlist) {
+        auto& record_data_packet = outlist->m_output_packs[recordresult_output_packet_index];
+        auto& record_data_internal = record_data_packet.Get<algorithm::RecordExport>();
+        auto latest_timestamp = record_data_packet.Timestamp().Value();
+        AISDK_LOG_TRACE("PopExecInfo latest_timestamp={} export_jsonstring={}", latest_timestamp,
+                        record_data_internal.export_jsonstring.c_str());
+        timestamp = outlist->raw_timestamp;
+        jsonstring = record_data_internal.export_jsonstring;
+        return aisdk::algorithm::Status::SUCCESS;
+    }
+
     return aisdk::algorithm::Status::FAILURE;
 }
 

@@ -61,6 +61,7 @@ aisdk::algorithm::Status BaseXGraph::SetInputStreamCache(uint64_t raw_timestamp,
     std::shared_ptr<StreamCache> stream = std::make_shared<StreamCache>();
     stream->raw_timestamp = raw_timestamp;
     stream->m_output_packs_sum = 0;
+    stream->sync_bitmap = 0;
     stream->m_output_packs.resize(m_output_stream_name.size());
 #if defined(ENABLE_ALGORITHM_GRAPH_STREAM_EVAL_TIME)
     stream->m_stream_time =
@@ -124,14 +125,17 @@ bool BaseXGraph::ClearMediapipeDropedInferenceCache(int64_t graph_stream_stamp) 
     return true;
 }
 
-bool BaseXGraph::MoveOutputCache(std::shared_ptr<StreamCache> &stream) {
+bool BaseXGraph::MoveOutputCache(std::shared_ptr<StreamCache> &stream, uint64_t groud_index) {
 #if defined(ENABLE_ALGORITHM_GRAPH_STREAM_EVAL_TIME)
     // 销毁计时器，打印耗时
-    stream->m_stream_time = nullptr;
+    if (0 == groud_index) {
+        stream->m_stream_time = nullptr;
+    }
 #endif
 
     if (graph_started) {
         std::lock_guard<std::mutex> guard(m_output_lock);
+        auto &m_output_stream_cache = m_output_stream_groud_cache[groud_index];
         if (m_output_stream_cache.size() > m_max_output_cahce_num) {
             m_output_stream_cache.pop_back();
         }
@@ -144,22 +148,49 @@ bool BaseXGraph::MoveOutputCache(std::shared_ptr<StreamCache> &stream) {
     return true;
 }
 
+bool SyncOrderBitmap(uint64_t target_sync_bitmaps, uint64_t current_bitmaps) {
+    if (target_sync_bitmaps == (target_sync_bitmaps & current_bitmaps)) {
+        return true;
+    }
+    return false;
+}
+
 bool BaseXGraph::CallBackInferenceResult(const xgraph::Packet &packet, int64_t output_packs_order) {
     bool ret = false;
     std::shared_ptr<StreamCache> cache;
     int64_t graph_stream_stamp = packet.Timestamp().Value();
-    // AISDK_LOG_WARN("BaseXGraph::CallBackInferenceResult stamp={}", graph_stream_stamp);
     bool is_move = false;
+    bool is_parted_shared = false;
+    bool is_finish = false;
+    uint64_t groud_index = m_output_order_groud_index[output_packs_order];
+    uint32_t groud_size = m_output_stream_groud_cache.size();
+    uint64_t target_sync_bitmaps = m_output_order_sync_bitmaps[output_packs_order];
+    // AISDK_LOG_WARN(
+    //     "CallBackInferenceResult stamp={} stream_name={} groud_index={},groud_size={} target_sync_bitmaps={}",
+    //     graph_stream_stamp, m_output_stream_name[output_packs_order].c_str(), groud_index, groud_size,
+    //     target_sync_bitmaps);
     {
         std::lock_guard<std::mutex> guard(m_inference_lock);
         auto iter = m_inference_stream_cache.find(graph_stream_stamp);
         if (iter != m_inference_stream_cache.end()) {
             cache = iter->second;
             cache->m_output_packs_sum++;
+            cache->sync_bitmap |= (1ULL << output_packs_order);
             cache->m_output_packs[output_packs_order] = packet;
-            if (cache->m_output_packs_sum == cache->m_output_packs.size()) {
+            if (groud_size == 1 && cache->m_output_packs_sum == cache->m_output_packs.size()) {
                 m_inference_stream_cache.erase(graph_stream_stamp);
                 is_move = true;
+                is_finish = true;
+            } else if (groud_size > 1) {
+                // 局部完成
+                if (SyncOrderBitmap(target_sync_bitmaps, cache->sync_bitmap)) {
+                    is_parted_shared = true;
+                }
+                //全部已经完成
+                if (cache->m_output_packs_sum == cache->m_output_packs.size()) {
+                    m_inference_stream_cache.erase(graph_stream_stamp);
+                    is_finish = true;
+                }
             }
             ret = true;
         } else {
@@ -171,25 +202,52 @@ bool BaseXGraph::CallBackInferenceResult(const xgraph::Packet &packet, int64_t o
         }
     }
 
+    // AISDK_LOG_WARN("BaseXGraph::CallBackInferenceResult is_move={} is_parted_shared={} is_finish={}", is_move,
+    //                is_parted_shared, is_finish);
+
     if (cache && is_move) {
-        MoveOutputCache(cache);
+        MoveOutputCache(cache, groud_index);
     }
 
-    if (m_inference_stream_cache.size() >= 5) {
+    if (cache && is_parted_shared) {
+        MoveOutputCache(cache, groud_index);
+    }
+
+    if (m_inference_stream_cache.size() >= 60) {
         // 删除已经被MediapipeDroped的cache
         ClearMediapipeDropedInferenceCache(graph_stream_stamp);
     }
     return ret;
 }
 
-std::shared_ptr<StreamCache> BaseXGraph::GetOutputStreamCache() {
+std::shared_ptr<StreamCache> BaseXGraph::GetOutputStreamCache(uint64_t groud_index) {
     std::shared_ptr<StreamCache> ret;
+    auto &m_output_stream_cache = m_output_stream_groud_cache[groud_index];
     if (m_output_stream_cache.size()) {
         std::lock_guard<std::mutex> guard(m_output_lock);
         ret = m_output_stream_cache.front();
     }
 
     return ret;
+}
+
+void BaseXGraph::SetMultipleOutputSync(std::vector<uint64_t> &order_sync_bitmaps,
+                                       std::vector<uint64_t> &order_groud_index) {
+    m_output_order_sync_bitmaps = order_sync_bitmaps;
+    m_output_order_groud_index = order_groud_index;
+    // for (auto t1 : m_output_order_sync_bitmaps) {
+    //     AISDK_LOG_TRACE("BaseXGraph::SetMultipleOutputSync sync_bitmaps={}", t1);
+    // }
+    // for (auto t2 : m_output_order_groud_index) {
+    //     AISDK_LOG_TRACE("BaseXGraph::SetMultipleOutputSync groud_index={}", t2);
+    // }
+    uint64_t max_groud_id = 0;
+    for (auto iter : order_groud_index) {
+        if (iter > max_groud_id) {
+            max_groud_id = iter;
+        }
+    }
+    m_output_stream_groud_cache.resize(max_groud_id + 1);
 }
 
 aisdk::algorithm::CamInfo ConvertCameraInfo(aisdk::algorithm::CameraParams cam_info) {
@@ -355,10 +413,17 @@ aisdk::algorithm::Status BaseXGraph::Init(aisdk::xengine::DlSymFuncs &funcs, ais
         std::vector<absl::string_view> names = absl::StrSplit(graph_config.input_stream(i), ':');
         m_input_stream_name.emplace_back(names[names.size() - 1]);
     }
+
+    uint64_t sync_bitmaps = 0;
     for (int i = 0; i < graph_config.output_stream_size(); i++) {
         std::vector<absl::string_view> names = absl::StrSplit(graph_config.output_stream(i), ':');
         m_output_stream_name.emplace_back(names[names.size() - 1]);
+        sync_bitmaps |= (1ULL << i);
     }
+
+    std::vector<uint64_t> order_sync_bitmaps(m_output_stream_name.size(), sync_bitmaps);
+    std::vector<uint64_t> order_groud_index(m_output_stream_name.size(), 0);
+    SetMultipleOutputSync(order_sync_bitmaps, order_groud_index);
 
     for (uint32_t order = 0; order < m_output_stream_name.size(); order++) {
         auto callback = [this, order](const xgraph::Packet &packet) -> ::absl::Status {

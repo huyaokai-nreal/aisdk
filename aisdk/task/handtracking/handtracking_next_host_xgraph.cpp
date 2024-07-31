@@ -86,7 +86,7 @@ aisdk::algorithm::Status HandTrackingNextHostXGraph::PushData(const GlassHandPre
 aisdk::algorithm::Status HandTrackingNextHostXGraph::PopResult(uint64_t hmd_time_nano, uint32_t* hand_num,
                                                                HandData* out_hand_array) {
     double query_time = static_cast<double>(hmd_time_nano) / 1e9;
-    std::shared_ptr<StreamCache> outlist = GetOutputStreamCache();
+    std::shared_ptr<StreamCache> outlist = GetOutputStreamCache(0);
     if (outlist) {
         auto& hand_data_packet = outlist->m_output_packs[0];
         auto& hand_data_internal = hand_data_packet.Get<algorithm::HandsData>();

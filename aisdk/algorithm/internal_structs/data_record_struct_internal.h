@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <vector>
 #include "aisdk/algorithm/common/nrnet_define.h"
 #include "aisdk/algorithm/internal_structs/kpt3d_struct_internal.h"
@@ -19,7 +20,8 @@ enum class NodeStatus {
     MANO_FINISH = 7,
     GLOBAL_FILTER_FINISH = 8,
     GESTURE_FINISH = 9,
-    STDHAND_FINISH = 20,
+    STDHAND_FINISH = 10,
+    MAX_FLAG = 11,
 };
 
 enum class ObjectStatus { NO_MISS = 0, DETECT_MISS = 1, PF_MISS = 2, LANDMARK_MISS=3, LIFT_MISS=4, HARDRULE_MISS = 5};
@@ -28,6 +30,8 @@ struct Recordcache {
     uint64_t sequence_id = 0;
     int64_t frame_timestamp = 0;
     NodeStatus m_nodestatus = NodeStatus::UNKNOWN;
+    bool is_get_detect_node = false;
+    std::vector<bool> async_nodestatus;
     std::vector<Image> detect_images; // 后续画图使用，必须copy
 
     bool is_tracker_detect = false;
@@ -46,6 +50,10 @@ struct Recordcache {
     std::vector<Eigen::Vector2f> rhand_rcam_reproj_kpt2d;
 
     Json::Value export_root;  // debug_export
+};
+
+struct RecordExport {
+    std::string export_jsonstring;
 };
 
 }  // namespace aisdk::algorithm

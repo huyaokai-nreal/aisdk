@@ -176,19 +176,30 @@ void HandTracking::SendGlassPredictionData() {
 int HandTracking::GetHandTrackingMidExecInfo(ProfilingInfo* info) {
     (void)info;
     auto* ins = Plugin::GetInstance();
+    if (false == ins->isInit()) {
+        AISDK_LOG_WARN("HandTracking: init Failure");
+        return -1;
+    }
+
     auto& pipline = ins->GetPipeline();
-    // std::shared_ptr<task::HandTrackingXGraph> impl =
-    //     std::dynamic_pointer_cast<task::HandTrackingXGraph>(pipline.Impl());
-    // NrCore::Status status = impl->PopExecInfo(tmp);
-    // if (status == NrCore::Status::SUCCESS) {
-    //     info->timestamp = result->timestamp;
-    //     uint32_t lens = result->noderesult_jsonstring.size();
-    //     // 使用者释放
-    //     info->noderesult_jsonstring = (char*)malloc(lens + 1);
-    //     memcpy(info->noderesult_jsonstring, result->noderesult_jsonstring.data(), lens);
-    //     info->noderesult_jsonstring[lens] = '\0';
-    //     return 0;
-    // }
+    aisdk::algorithm::Status status;
+    uint64_t timestamp;
+    std::string jsonstring;
+    if (ins->pipeline_work_scene == "handtracking_std_all_host") {
+        std::shared_ptr<task::HandTrackingXGraph> impl =
+            std::dynamic_pointer_cast<task::HandTrackingXGraph>(pipline.Impl());
+        status = impl->PopExecInfo(timestamp, jsonstring);
+        if (status == aisdk::algorithm::Status::SUCCESS) {
+            info->timestamp = timestamp;
+            uint32_t lens = jsonstring.size();
+            // 使用者释放
+            info->noderesult_jsonstring = (char*)malloc(lens + 1);
+            memcpy(info->noderesult_jsonstring, jsonstring.data(), lens);
+            info->noderesult_jsonstring[lens] = '\0';
+            return 0;
+        }
+    }
+
     return -1;
 }
 

@@ -30,6 +30,7 @@ class DataDebugRecord {
     int CheckRealTimeDebugGesture(uint64_t timestamp, std::string left_gesture_type, std::string right_gesture_type);
     // 动态录制判断：检查后台存储路径中的record_configs.json的状态变化
     int CheckRealTimeDebugConfig(uint64_t timestamp);
+    int CheckDeveloperDebug();
 
     void DebugImage(Recordcache* record, const std::vector<Image>& input_image);
     void DebugHeadpose(Recordcache* record, const aisdk::algorithm::HeadPoseInternal& headpose);
@@ -39,7 +40,7 @@ class DataDebugRecord {
     void DebugLift(Recordcache* record, const aisdk::algorithm::HandsData& kpt3d_result);
     void DebugGlobalFilter(Recordcache* record, const aisdk::algorithm::HandsData& kpt3d_result, uint32_t step);
     void DebugGestureReg(Recordcache* record, const aisdk::algorithm::HandGestureInternal& gesture);
-    void DebugWholeInference(Recordcache* record);
+    void DebugWholeInference(Recordcache* record, RecordExport* record_export);
     // void DebugPredicted(HandPredictData& cur_hand, uint64_t predicted_time_nanos, uint64_t target_timestamp,
     //                     std::vector<cv::Vec3f>& predicted_hand_points, uint32_t step, Json::Value& export_root,
     //                     uint64_t cur_equence_id, uint64_t predicted_equence_id);
