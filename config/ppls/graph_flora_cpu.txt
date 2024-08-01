@@ -49,9 +49,22 @@ node {
   output_stream: "BBOX_SMOOTHED_OUTPUT:detection_smoothed_output"
 }
 node {
+  name: "MonoBinoSwitch"
+  calculator: "MonoBinoSwitchCalculator"
+  input_stream: "IMAGE_IN:image_out"
+  input_stream: "BBOX_IN:detection_smoothed_output"
+  output_stream: "BBOX_OUT:detection_valid"
+  node_options: {
+    [type.googleapis.com/aisdk.MonoBinoSwitchCalculatorOptions] {
+ #BINO, MONO, SWITCH
+      mode: "BINO" 
+    }
+  }
+}
+node {
   name: "HandLandmark_2D"
   calculator: "HandLandmarkCalculator"
-  input_stream: "BBOX_SMOOTHED_OUTPUT:detection_smoothed_output"
+  input_stream: "BBOX_SMOOTHED_OUTPUT:detection_valid"
   input_stream: "IMAGE_INPUT:image_out"
   input_side_packet: "CAM_INFO_INPUT:cam_info"
   output_stream: "LANDMARK_OUTPUT:kpt2d"
@@ -59,20 +72,26 @@ node {
     [type.googleapis.com/aisdk.HandLandmarkCalculatorOptions] {
       input_height: 128
       input_width: 128
-      model_name: "2d_rsnnano"
       bbox_expand_ratio: 1.5
+      model_name: "2d_rsnnano"
     }
   }
+}
+node {
+  name: "LandmarkFilter"
+  calculator: "LandmarkFilterCalculator"
+  input_stream: "LANDMARK_INPUT:kpt2d"
+  output_stream: "LANDMARK_OUTPUT:kpt2d_filter"
 }
 node {
   name: "LiftNet_3D"
   calculator: "HandLiftCalculator"
   input_side_packet: "CAM_INFO_INPUT:cam_info"
-  input_stream: "LANDMARK_INPUT:kpt2d"
-  output_stream: "LIFT_OUTPUT:kpt3d"
+  input_stream: "LANDMARK_INPUT:kpt2d_filter"
+  output_stream: "LIFT_OUTPUT:kpt3d_bino"
   node_options: {
     [type.googleapis.com/aisdk.HandLiftCalculatorOptions] {
-      model_name: "3d_liftnimble"
+      model_name: "3d_lift"
     }
   }
 }
@@ -80,13 +99,13 @@ node {
 node {
   name: "BlockHardRules"
   calculator: "BlockHardRulesCalculator"
-  input_stream: "BLOCK_IN:kpt3d"
+  input_stream: "kpt3d_bino"
   output_stream: "BLOCK_OUT:kpt3d_blocked"
   node_options: {
     [type.googleapis.com/aisdk.BlockHardRulesCalculatorOptions] {
       max_root_depth: 1.0
       # score_th = 0.8 ? model_name == 3d_liftnimble else 0.85
-      score_th: 0.775
+      score_th: 0.875
       score_th_width: 0.05
     }
   }

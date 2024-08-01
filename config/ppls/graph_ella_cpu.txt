@@ -49,9 +49,22 @@ node {
   output_stream: "BBOX_SMOOTHED_OUTPUT:detection_smoothed_output"
 }
 node {
+  name: "MonoBinoSwitch"
+  calculator: "MonoBinoSwitchCalculator"
+  input_stream: "IMAGE_IN:image_out"
+  input_stream: "BBOX_IN:detection_smoothed_output"
+  output_stream: "BBOX_OUT:detection_valid"
+  node_options: {
+    [type.googleapis.com/aisdk.MonoBinoSwitchCalculatorOptions] {
+ #BINO, MONO, SWITCH
+      mode: "BINO" 
+    }
+  }
+}
+node {
   name: "HandLandmark_2D"
   calculator: "HandLandmarkCalculator"
-  input_stream: "BBOX_SMOOTHED_OUTPUT:detection_smoothed_output"
+  input_stream: "BBOX_SMOOTHED_OUTPUT:detection_valid"
   input_stream: "IMAGE_INPUT:image_out"
   input_side_packet: "CAM_INFO_INPUT:cam_info"
   output_stream: "LANDMARK_OUTPUT:kpt2d"
@@ -75,7 +88,7 @@ node {
   calculator: "HandLiftCalculator"
   input_side_packet: "CAM_INFO_INPUT:cam_info"
   input_stream: "LANDMARK_INPUT:kpt2d_filter"
-  output_stream: "LIFT_OUTPUT:kpt3d"
+  output_stream: "LIFT_OUTPUT:kpt3d_bino"
   node_options: {
     [type.googleapis.com/aisdk.HandLiftCalculatorOptions] {
       model_name: "3d_lift_ella"
@@ -86,7 +99,7 @@ node {
 node {
   name: "BlockHardRules"
   calculator: "BlockHardRulesCalculator"
-  input_stream: "BLOCK_IN:kpt3d"
+  input_stream: "kpt3d_bino"
   output_stream: "BLOCK_OUT:kpt3d_blocked"
   node_options: {
     [type.googleapis.com/aisdk.BlockHardRulesCalculatorOptions] {
@@ -110,7 +123,7 @@ node {
 node {
   name: "GestureRecognition"
   calculator: "GestureRecognitionCalculator"
-  input_stream: "GR_KPT2D_INPUT:kpt2d_filter"
+  input_stream: "GR_KPT2D_INPUT:kpt2d"
   input_stream: "GR_KPT_INPUT:kpt3d_blocked"
   output_stream: "GR_OUTPUT:gesture"
 }
