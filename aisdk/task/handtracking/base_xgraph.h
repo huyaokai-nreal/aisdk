@@ -11,7 +11,7 @@
 
 namespace aisdk::task {
 
-constexpr int BASEXGRAPH_MAX_GLOBALCACHEDEPTH = 1800;
+constexpr int BASEXGRAPH_MAX_GLOBALCACHEDEPTH = 900;
 constexpr int BASEXGRAPH_MIN_GLOBALCACHEDEPTH = 30;
 
 enum class FIFOStrategy {

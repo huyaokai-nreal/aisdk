@@ -49,6 +49,9 @@ aisdk::algorithm::Status BaseXGraph::Start() {
 aisdk::algorithm::Status BaseXGraph::Stop() {
     if (m_calculator_graph) {
         graph_started = false;
+        // graph_started 一定在WaitUntilDone之前，
+        // 因为我们对xgraph的输出可以启动阻塞模式，并且在Stop之前已经陷入阻塞模式中，
+        // 将导致WaitUntilDone无法完成
         MP_RETURN_IF_ERROR_WITH_LOG(m_calculator_graph->CloseAllInputStreams());
         auto res_done = m_calculator_graph->WaitUntilDone();
     }
@@ -161,12 +164,14 @@ bool BaseXGraph::MoveOutputCache(std::shared_ptr<StreamCache> &stream, uint64_t 
             }
             m_output_stream_cache.push_front(std::move(stream));
         } else if (clean_policy.clean_policy == FIFOStrategy::FIFO_FULL_BLOCK) {
-            while (m_output_stream_cache.size() >= clean_policy.max_depth) {
+            while (graph_started && m_output_stream_cache.size() >= clean_policy.max_depth) {
                 AISDK_LOG_WARN("MoveOutputCache FIFO_FULL_BLOCK: groud_index={},max_depth={}", groud_index,
                                clean_policy.max_depth);
                 std::this_thread::sleep_for(std::chrono::milliseconds(33));
             }
-            m_output_stream_cache.push_front(std::move(stream));
+            if (graph_started) {
+                m_output_stream_cache.push_front(std::move(stream));
+            }
         } else if (clean_policy.clean_policy == FIFOStrategy::FIFO_FULL_DROP) {
             if (m_output_stream_cache.size() < clean_policy.max_depth) {
                 m_output_stream_cache.push_front(std::move(stream));

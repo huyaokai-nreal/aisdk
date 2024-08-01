@@ -20,6 +20,7 @@
 #include "aisdk/algorithm/internal_structs/headpose_struct_internal.h"
 #include "aisdk/algorithm/internal_structs/kpt3d_struct_internal.h"
 #include "aisdk/base/log.h"
+#include "aisdk/base/profiling.h"
 #include "aisdk/base/time.h"
 #include "aisdk/base/type.h"
 #include "aisdk/xgraph/xgraph.h"
@@ -195,6 +196,8 @@ aisdk::algorithm::Status HandTrackingXGraph::Init(aisdk::xengine::DlSymFuncs& fu
 
                 if (outnames[order] == "hand_result") {
                     handresult_output_packet_index = order;
+                } else if (outnames[order] == "record_result") {
+                    recordresult_output_packet_index = order;
                 }
             }
 
@@ -204,10 +207,20 @@ aisdk::algorithm::Status HandTrackingXGraph::Init(aisdk::xengine::DlSymFuncs& fu
             groud_output_cache_clean_policy[handresult_output_groud_index].clean_policy =
                 FIFOStrategy::FIFO_FULL_LOOP_COVER;
             groud_output_cache_clean_policy[handresult_output_groud_index].max_depth = 3;
-            groud_output_cache_clean_policy[recordresult_output_groud_index].clean_policy =
-                FIFOStrategy::FIFO_FULL_BLOCK;
-            groud_output_cache_clean_policy[recordresult_output_groud_index].max_depth =
-                BASEXGRAPH_MAX_GLOBALCACHEDEPTH;
+
+            auto& prof = aisdk::base::DebugProfiling::Get().GetOpt();
+            if (prof.export_pipeline_exec_info_jsonstring) {
+                // 此情况是要求对导出的结果：保帧保序
+                groud_output_cache_clean_policy[recordresult_output_groud_index].clean_policy =
+                    FIFOStrategy::FIFO_FULL_BLOCK;
+                groud_output_cache_clean_policy[recordresult_output_groud_index].max_depth =
+                    BASEXGRAPH_MAX_GLOBALCACHEDEPTH;
+            } else {
+                // 其他录制模式，只关系录制存储，不关心导出结果给上层服务的情况。
+                groud_output_cache_clean_policy[recordresult_output_groud_index].clean_policy =
+                    FIFOStrategy::FIFO_FULL_LOOP_COVER;
+                groud_output_cache_clean_policy[recordresult_output_groud_index].max_depth = 3;
+            }
             SetMultipleOutputCleanStrategy(groud_output_cache_clean_policy);
         }
 #endif
