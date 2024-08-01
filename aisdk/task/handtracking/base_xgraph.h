@@ -12,7 +12,7 @@
 namespace aisdk::task {
 
 constexpr int BASEXGRAPH_MAX_GLOBALCACHEDEPTH = 1800;
-constexpr int BASEXGRAPH_MIN_GLOBALCACHEDEPTH = 60;
+constexpr int BASEXGRAPH_MIN_GLOBALCACHEDEPTH = 30;
 
 enum class FIFOStrategy {
     FIFO_FULL_LOOP_COVER = 0,
@@ -81,7 +81,7 @@ class BaseXGraph : public PipeGraphImpl {
     // 删除缓存的策略
     std::vector<StreamCacheCleanStrategy> m_output_stream_groud_clean_policy;
     // 删除缓存中最旧的stream
-    bool MoveOutputCache(std::shared_ptr<StreamCache> &stream, uint64_t groud_index);
+    bool MoveOutputCache(std::shared_ptr<StreamCache> &stream, uint64_t groud_index, bool move, bool shared);
 };
 
 }  // namespace aisdk::task

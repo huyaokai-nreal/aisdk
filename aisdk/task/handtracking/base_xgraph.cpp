@@ -101,12 +101,13 @@ bool BaseXGraph::CleanGraphNoResultInferenceCache(int64_t graph_stream_stamp) {
             break;
         }
     }
-
+    // AISDK_LOG_TRACE("CleanGraphNoResultInferenceCache");
     return true;
 }
 
 bool BaseXGraph::CleanMediapipeDropedInferenceCache(int64_t graph_stream_stamp) {
     std::lock_guard<std::mutex> guard(m_inference_lock);
+    uint32_t old_depth = m_inference_stream_cache.size();
     for (auto iter = m_inference_stream_cache.begin(); iter != m_inference_stream_cache.end();) {
         // 被流控主动放弃，但不会返回的帧
         if (iter->first < graph_stream_stamp) {
@@ -119,22 +120,29 @@ bool BaseXGraph::CleanMediapipeDropedInferenceCache(int64_t graph_stream_stamp) 
             AISDK_LOG_WARN("[HandTrackingProfiler], image_ts, {}, HandAlgoFlowCtrolDroped, {}",
                            iter->second->raw_timestamp, aisdk::base::getTime2());
 #endif
-            AISDK_LOG_WARN("BaseXGraph::ClearMediapipeDropedInferenceCache stream_stamp {} < {} is droped !!!!!",
-                           iter->first, graph_stream_stamp)
+            AISDK_LOG_TRACE("BaseXGraph::CleanMediapipeDropedInferenceCache stream_stamp {} < {} is droped !!!!!",
+                            iter->first, graph_stream_stamp)
             iter = m_inference_stream_cache.erase(iter);
         } else {
             iter++;
             break;
         }
     }
+    uint32_t new_depth = m_inference_stream_cache.size();
+    AISDK_LOG_WARN("CleanMediapipeDropedInferenceCache stream_stamp={},old_depth={},new_depth={}", graph_stream_stamp,
+                   old_depth, new_depth);
     return true;
 }
 
-bool BaseXGraph::MoveOutputCache(std::shared_ptr<StreamCache> &stream, uint64_t groud_index) {
+bool BaseXGraph::MoveOutputCache(std::shared_ptr<StreamCache> &stream, uint64_t groud_index, bool move, bool shared) {
 #if defined(ENABLE_ALGORITHM_GRAPH_STREAM_EVAL_TIME)
     // 销毁计时器，打印耗时
-    std::string tag2 = std::to_string(groud_index);
-    stream->m_stream_time->BreakPoint(tag2);
+    if (move) {
+        stream->m_stream_time = nullptr;
+    } else if (shared) {
+        std::string tag2 = std::to_string(groud_index);
+        stream->m_stream_time->BreakPoint(tag2);
+    }
 #endif
 #ifdef ENBALE_M2P_DELAYED_TIME_PROFILER
     if (0 == groud_index) {
@@ -148,7 +156,7 @@ bool BaseXGraph::MoveOutputCache(std::shared_ptr<StreamCache> &stream, uint64_t 
         auto &clean_policy = m_output_stream_groud_clean_policy[groud_index];
 
         if (clean_policy.clean_policy == FIFOStrategy::FIFO_FULL_LOOP_COVER) {
-            if (m_output_stream_cache.size() > clean_policy.max_depth) {
+            if (m_output_stream_cache.size() >= clean_policy.max_depth) {
                 m_output_stream_cache.pop_back();
             }
             m_output_stream_cache.push_front(std::move(stream));
@@ -229,12 +237,8 @@ bool BaseXGraph::CallBackInferenceResult(const xgraph::Packet &packet, int64_t o
     // AISDK_LOG_WARN("BaseXGraph::CallBackInferenceResult is_move={} is_parted_shared={} is_finish={}", is_move,
     //                is_parted_shared, is_finish);
 
-    if (cache && is_move) {
-        MoveOutputCache(cache, groud_index);
-    }
-
-    if (cache && is_parted_shared) {
-        MoveOutputCache(cache, groud_index);
+    if (cache && (is_move || is_parted_shared)) {
+        MoveOutputCache(cache, groud_index, is_move, is_parted_shared);
     }
 
     if (groud_size == 1 && m_inference_stream_cache.size() >= BASEXGRAPH_MIN_GLOBALCACHEDEPTH) {
