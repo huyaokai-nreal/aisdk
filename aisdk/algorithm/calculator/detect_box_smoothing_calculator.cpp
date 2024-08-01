@@ -1,7 +1,9 @@
 #include <memory>
 
+#include "../common/NR_GlobalPredictorService.h"
 #include "../common/NR_Seq_Manager.h"
 #include "../internal_structs/det_struct_internal.h"
+#include "aisdk/algorithm/common/nrcore_define.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/time.h"
 #include "aisdk/xgraph/xgraph.h"
@@ -55,15 +57,27 @@ class DetectBoxSmoothingCalculator : public xgraph::CalculatorBase {
 
         std::unique_ptr<DetOutputInternal> output_buffer_ = absl::make_unique<DetOutputInternal>();
         *output_buffer_ = input_data;
-
+        const auto kpt3d_world_pre = GlobalPredictorService::getInstance().get_last_kpt3d_world();
+        if (!kpt3d_world_pre.lhand_valid) {
+            m_seq_lcam_lhand->reset();
+            m_seq_rcam_lhand->reset();
+        }
+        if (!kpt3d_world_pre.rhand_valid) {
+            m_seq_lcam_rhand->reset();
+            m_seq_rcam_rhand->reset();
+        }
+        if (kpt3d_world_pre.lhand_valid && kpt3d_world_pre.left_hand.source == CamType::MONO) {
+            m_seq_rcam_lhand.reset();
+        }
+        if (kpt3d_world_pre.rhand_valid && kpt3d_world_pre.right_hand.source == CamType::MONO) {
+            m_seq_lcam_rhand.reset();
+        }
         if (input_data.lhand_lcam_valid) {
             AISDK_LOG_TRACE("[DetectBoxSmoothingCalculator] Do smoothing on lhand lcam bboxes");
             float p_score = 1.0f;
             m_seq_lcam_lhand->getFilterBoxData(output_buffer_->lhand_lcam_rect, p_score);
 
             AISDK_LOG_TRACE("[DetectBoxSmoothingCalculator] Done smoothing on lhand lcam bboxes");
-        } else {
-            m_seq_lcam_lhand->reset();
         }
 
         if (input_data.lhand_rcam_valid) {
@@ -72,8 +86,6 @@ class DetectBoxSmoothingCalculator : public xgraph::CalculatorBase {
             m_seq_rcam_lhand->getFilterBoxData(output_buffer_->lhand_rcam_rect, p_score);
 
             AISDK_LOG_TRACE("[DetectBoxSmoothingCalculator] Done smoothing on lhand rcam bboxes");
-        } else {
-            m_seq_rcam_lhand->reset();
         }
 
         if (input_data.rhand_lcam_valid) {
@@ -82,8 +94,6 @@ class DetectBoxSmoothingCalculator : public xgraph::CalculatorBase {
             m_seq_lcam_rhand->getFilterBoxData(output_buffer_->rhand_lcam_rect, p_score);
 
             AISDK_LOG_TRACE("[DetectBoxSmoothingCalculator] Done smoothing on rhand lcam bboxes");
-        } else {
-            m_seq_lcam_rhand->reset();
         }
 
         if (input_data.rhand_rcam_valid) {
@@ -92,10 +102,7 @@ class DetectBoxSmoothingCalculator : public xgraph::CalculatorBase {
             m_seq_rcam_rhand->getFilterBoxData(output_buffer_->rhand_rcam_rect, p_score);
 
             AISDK_LOG_TRACE("[DetectBoxSmoothingCalculator] Done smoothing on rhand rcam bboxes");
-        } else {
-            m_seq_rcam_rhand->reset();
         }
-
         if (output_buffer_->lhand_lcam_valid || output_buffer_->lhand_rcam_valid || output_buffer_->rhand_lcam_valid ||
             output_buffer_->rhand_rcam_valid) {
             cc->Outputs().Tag("BBOX_SMOOTHED_OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
