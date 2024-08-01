@@ -46,6 +46,15 @@ NaiveTimer::~NaiveTimer() {
     }
 }
 
+int NaiveTimer::BreakPoint(std::string &_tag2) {
+    if (valid) {
+        auto timeInUs = durationInUs();
+        AISDK_LOG_WARN("[Name:{}],[Line:{}],[fun:{}],[bp:{}],[id:{}],[cost:{:.3f}ms]", name_, line_, tag_.c_str(),
+                       _tag2.c_str(), id, (double)timeInUs / 1000.0F);
+    }
+    return 0;
+}
+
 uint64_t getTime2() {
     struct timespec cur_sys_t;
     clock_gettime(CLOCK_MONOTONIC, &cur_sys_t);

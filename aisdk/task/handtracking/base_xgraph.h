@@ -10,6 +10,21 @@
 #include "nrcore_pipeline.h"
 
 namespace aisdk::task {
+
+constexpr int BASEXGRAPH_MAX_GLOBALCACHEDEPTH = 1800;
+constexpr int BASEXGRAPH_MIN_GLOBALCACHEDEPTH = 60;
+
+enum class FIFOStrategy {
+    FIFO_FULL_LOOP_COVER = 0,
+    FIFO_FULL_DROP = 1,
+    FIFO_FULL_BLOCK = 2,
+};
+
+struct StreamCacheCleanStrategy {
+    FIFOStrategy clean_policy;
+    uint32_t max_depth;
+};
+
 class StreamCache {
    public:
     std::mutex m_lock;
@@ -28,7 +43,9 @@ class BaseXGraph : public PipeGraphImpl {
     virtual aisdk::algorithm::Status Init(aisdk::xengine::DlSymFuncs &funcs, aisdk::xengine::PipelineConfig &config,
                                   CameraParams &camera) override;
     // 更改默认的多输出之间的同步策略和分组策略
-    void SetMultipleOutputSync(std::vector<uint64_t>& order_sync_bitmaps, std::vector<uint64_t>& order_groud_index);                              
+    void SetMultipleOutputSync(std::vector<uint64_t>& order_sync_bitmaps, std::vector<uint64_t>& order_groud_index);
+    // 更改默认的多输出分组的缓存删除策略
+    void SetMultipleOutputCleanStrategy(std::vector<StreamCacheCleanStrategy>& groud_clean_policy);                              
     aisdk::algorithm::Status Start() override;
     aisdk::algorithm::Status Stop() override;
     // 登记已经push到grapgh中的stream，后续我们将graph输出的stream结果做匹配。
@@ -50,18 +67,19 @@ class BaseXGraph : public PipeGraphImpl {
     std::mutex m_inference_lock;
     std::map<int64_t, std::shared_ptr<StreamCache>> m_inference_stream_cache;
     // 删除推理过程中无结果返回的推理缓存
-    bool ClearGraphNoResultInferenceCache(int64_t graph_stream_stamp);
+    bool CleanGraphNoResultInferenceCache(int64_t graph_stream_stamp);
     // 删除推理过程中被graph主动drop的StreamCache
-    bool ClearMediapipeDropedInferenceCache(int64_t graph_stream_stamp);
+    bool CleanMediapipeDropedInferenceCache(int64_t graph_stream_stamp);
 
     std::mutex m_output_lock;
-    uint32_t m_max_output_cahce_num = 3;
     // 每个输出和其他输出的同步关系，bitmaps表示
     std::vector<uint64_t> m_output_order_sync_bitmaps;
     // 每个输出和其他输出合并后，输出的groud_index
     std::vector<uint64_t> m_output_order_groud_index;
     // 假设graph可以正常按时间戳顺序输出
     std::vector<std::list<std::shared_ptr<StreamCache>>> m_output_stream_groud_cache;
+    // 删除缓存的策略
+    std::vector<StreamCacheCleanStrategy> m_output_stream_groud_clean_policy;
     // 删除缓存中最旧的stream
     bool MoveOutputCache(std::shared_ptr<StreamCache> &stream, uint64_t groud_index);
 };

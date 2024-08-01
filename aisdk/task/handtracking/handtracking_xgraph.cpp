@@ -199,6 +199,16 @@ aisdk::algorithm::Status HandTrackingXGraph::Init(aisdk::xengine::DlSymFuncs& fu
             }
 
             SetMultipleOutputSync(order_sync_bitmaps, order_groud_index);
+
+            std::vector<StreamCacheCleanStrategy> groud_output_cache_clean_policy(2);
+            groud_output_cache_clean_policy[handresult_output_groud_index].clean_policy =
+                FIFOStrategy::FIFO_FULL_LOOP_COVER;
+            groud_output_cache_clean_policy[handresult_output_groud_index].max_depth = 3;
+            groud_output_cache_clean_policy[recordresult_output_groud_index].clean_policy =
+                FIFOStrategy::FIFO_FULL_BLOCK;
+            groud_output_cache_clean_policy[recordresult_output_groud_index].max_depth =
+                BASEXGRAPH_MAX_GLOBALCACHEDEPTH;
+            SetMultipleOutputCleanStrategy(groud_output_cache_clean_policy);
         }
 #endif
     }

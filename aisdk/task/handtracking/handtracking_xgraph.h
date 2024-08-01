@@ -11,9 +11,10 @@ namespace aisdk::task {
 class HandTrackingXGraph : public BaseXGraph {
    private:
     std::unique_ptr<algorithm::HandFilters> m_post_filter;
+    // 不能随意修改此值，注意数组下标越界
     uint64_t handresult_output_groud_index = 0;
     uint64_t handresult_output_packet_index = 0;
-
+    // 不能随意修改此值，注意数组下标越界
     uint64_t recordresult_output_groud_index = 1;
     uint64_t recordresult_output_packet_index = 1;
 

@@ -36,7 +36,7 @@ class NaiveTimer : TimerBase {
     NaiveTimer(const NaiveTimer&&) = delete;
     NaiveTimer& operator=(const NaiveTimer&) = delete;
     NaiveTimer& operator=(const NaiveTimer&&) = delete;
-
+    int BreakPoint(std::string& _tag2);
    private:
     int line_;
     char* name_;

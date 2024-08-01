@@ -5,6 +5,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <string>
 
 #include "aisdk/algorithm/common/nrcore_define.h"
 #include "aisdk/algorithm/common/nrnet_define.h"
@@ -29,7 +30,9 @@ BaseXGraph::~BaseXGraph() {
     std::lock_guard<std::mutex> guard(m_inference_lock);
     for (auto iter = m_inference_stream_cache.begin(); iter != m_inference_stream_cache.end(); iter++) {
 #if defined(ENABLE_ALGORITHM_GRAPH_STREAM_EVAL_TIME)
-        iter->second->m_stream_time->valid = false;
+        if (iter->second->m_stream_time) {
+            iter->second->m_stream_time->valid = false;
+        }
 #endif
     }
 }
@@ -71,7 +74,7 @@ aisdk::algorithm::Status BaseXGraph::SetInputStreamCache(uint64_t raw_timestamp,
 #endif
 
     std::lock_guard<std::mutex> guard(m_inference_lock);
-    ClearGraphNoResultInferenceCache(graph_stream_stamp);
+    CleanGraphNoResultInferenceCache(graph_stream_stamp);
     m_inference_stream_cache.insert(std::make_pair(graph_stream_stamp, stream));
     return aisdk::algorithm::Status::SUCCESS;
 }
@@ -84,11 +87,11 @@ aisdk::algorithm::Status BaseXGraph::ClearInputStreamCache(int64_t graph_stream_
 }
 
 // 无手势结果，graph将没有任何输出，无法通过ClearMediapipeDropedInferenceCache进行清除
-bool BaseXGraph::ClearGraphNoResultInferenceCache(int64_t graph_stream_stamp) {
+bool BaseXGraph::CleanGraphNoResultInferenceCache(int64_t graph_stream_stamp) {
     // 仅保留最新30s内的,删除旧的
     (void)graph_stream_stamp;
     for (auto iter = m_inference_stream_cache.begin(); iter != m_inference_stream_cache.end();) {
-        if (m_inference_stream_cache.size() >= 1800) {
+        if (m_inference_stream_cache.size() >= BASEXGRAPH_MAX_GLOBALCACHEDEPTH) {
 #ifdef ENBALE_M2P_DELAYED_TIME_PROFILER
             AISDK_LOG_WARN("[HandTrackingProfiler], image_ts, {}, HandAlgoNoResultDroped, {}",
                            iter->second->raw_timestamp, aisdk::base::getTime2());
@@ -102,13 +105,15 @@ bool BaseXGraph::ClearGraphNoResultInferenceCache(int64_t graph_stream_stamp) {
     return true;
 }
 
-bool BaseXGraph::ClearMediapipeDropedInferenceCache(int64_t graph_stream_stamp) {
+bool BaseXGraph::CleanMediapipeDropedInferenceCache(int64_t graph_stream_stamp) {
     std::lock_guard<std::mutex> guard(m_inference_lock);
     for (auto iter = m_inference_stream_cache.begin(); iter != m_inference_stream_cache.end();) {
         // 被流控主动放弃，但不会返回的帧
         if (iter->first < graph_stream_stamp) {
 #if defined(ENABLE_ALGORITHM_GRAPH_STREAM_EVAL_TIME)
-            iter->second->m_stream_time->valid = false;
+            if (iter->second->m_stream_time) {
+                iter->second->m_stream_time->valid = false;
+            }
 #endif
 #ifdef ENBALE_M2P_DELAYED_TIME_PROFILER
             AISDK_LOG_WARN("[HandTrackingProfiler], image_ts, {}, HandAlgoFlowCtrolDroped, {}",
@@ -128,22 +133,39 @@ bool BaseXGraph::ClearMediapipeDropedInferenceCache(int64_t graph_stream_stamp) 
 bool BaseXGraph::MoveOutputCache(std::shared_ptr<StreamCache> &stream, uint64_t groud_index) {
 #if defined(ENABLE_ALGORITHM_GRAPH_STREAM_EVAL_TIME)
     // 销毁计时器，打印耗时
+    std::string tag2 = std::to_string(groud_index);
+    stream->m_stream_time->BreakPoint(tag2);
+#endif
+#ifdef ENBALE_M2P_DELAYED_TIME_PROFILER
     if (0 == groud_index) {
-        stream->m_stream_time = nullptr;
+        AISDK_LOG_WARN("[HandTrackingProfiler], image_ts, {}, HandAlgoProcessComplete, {}", stream->raw_timestamp,
+                       aisdk::base::getTime2());
     }
 #endif
-
     if (graph_started) {
         std::lock_guard<std::mutex> guard(m_output_lock);
         auto &m_output_stream_cache = m_output_stream_groud_cache[groud_index];
-        if (m_output_stream_cache.size() > m_max_output_cahce_num) {
-            m_output_stream_cache.pop_back();
+        auto &clean_policy = m_output_stream_groud_clean_policy[groud_index];
+
+        if (clean_policy.clean_policy == FIFOStrategy::FIFO_FULL_LOOP_COVER) {
+            if (m_output_stream_cache.size() > clean_policy.max_depth) {
+                m_output_stream_cache.pop_back();
+            }
+            m_output_stream_cache.push_front(std::move(stream));
+        } else if (clean_policy.clean_policy == FIFOStrategy::FIFO_FULL_BLOCK) {
+            while (m_output_stream_cache.size() >= clean_policy.max_depth) {
+                AISDK_LOG_WARN("MoveOutputCache FIFO_FULL_BLOCK: groud_index={},max_depth={}", groud_index,
+                               clean_policy.max_depth);
+                std::this_thread::sleep_for(std::chrono::milliseconds(33));
+            }
+            m_output_stream_cache.push_front(std::move(stream));
+        } else if (clean_policy.clean_policy == FIFOStrategy::FIFO_FULL_DROP) {
+            if (m_output_stream_cache.size() < clean_policy.max_depth) {
+                m_output_stream_cache.push_front(std::move(stream));
+            } else {
+                AISDK_LOG_WARN("MoveOutputCache FIFO_FULL_DROP: groud_index={}", groud_index);
+            }
         }
-#ifdef ENBALE_M2P_DELAYED_TIME_PROFILER
-        AISDK_LOG_WARN("[HandTrackingProfiler], image_ts, {}, HandAlgoProcessComplete, {}", stream->raw_timestamp,
-                       aisdk::base::getTime2());
-#endif
-        m_output_stream_cache.push_front(std::move(stream));
     }
     return true;
 }
@@ -195,7 +217,9 @@ bool BaseXGraph::CallBackInferenceResult(const xgraph::Packet &packet, int64_t o
             ret = true;
         } else {
 #if defined(ENABLE_ALGORITHM_GRAPH_STREAM_EVAL_TIME)
-            cache->m_stream_time->valid = false;
+            if (cache->m_stream_time) {
+                cache->m_stream_time->valid = false;
+            }
 #endif
             AISDK_LOG_ERROR("XGraph::CallBackInferenceResult graph_stream_stamp={} NOT MATCH !!!!!", graph_stream_stamp)
             ret = false;
@@ -213,15 +237,19 @@ bool BaseXGraph::CallBackInferenceResult(const xgraph::Packet &packet, int64_t o
         MoveOutputCache(cache, groud_index);
     }
 
-    if (m_inference_stream_cache.size() >= 60) {
+    if (groud_size == 1 && m_inference_stream_cache.size() >= BASEXGRAPH_MIN_GLOBALCACHEDEPTH) {
         // 删除已经被MediapipeDroped的cache
-        ClearMediapipeDropedInferenceCache(graph_stream_stamp);
+        CleanMediapipeDropedInferenceCache(graph_stream_stamp);
     }
     return ret;
 }
 
 std::shared_ptr<StreamCache> BaseXGraph::GetOutputStreamCache(uint64_t groud_index) {
     std::shared_ptr<StreamCache> ret;
+    if (groud_index >= m_output_stream_groud_cache.size()) {
+        return ret;
+    }
+
     auto &m_output_stream_cache = m_output_stream_groud_cache[groud_index];
     if (m_output_stream_cache.size()) {
         std::lock_guard<std::mutex> guard(m_output_lock);
@@ -248,6 +276,10 @@ void BaseXGraph::SetMultipleOutputSync(std::vector<uint64_t> &order_sync_bitmaps
         }
     }
     m_output_stream_groud_cache.resize(max_groud_id + 1);
+}
+
+void BaseXGraph::SetMultipleOutputCleanStrategy(std::vector<StreamCacheCleanStrategy> &groud_clean_policy) {
+    m_output_stream_groud_clean_policy = groud_clean_policy;
 }
 
 aisdk::algorithm::CamInfo ConvertCameraInfo(aisdk::algorithm::CameraParams cam_info) {
@@ -423,7 +455,11 @@ aisdk::algorithm::Status BaseXGraph::Init(aisdk::xengine::DlSymFuncs &funcs, ais
 
     std::vector<uint64_t> order_sync_bitmaps(m_output_stream_name.size(), sync_bitmaps);
     std::vector<uint64_t> order_groud_index(m_output_stream_name.size(), 0);
+    std::vector<StreamCacheCleanStrategy> groud_output_cache_clean_policy(1);
+    groud_output_cache_clean_policy[0].clean_policy = FIFOStrategy::FIFO_FULL_LOOP_COVER;
+    groud_output_cache_clean_policy[0].max_depth = 3;
     SetMultipleOutputSync(order_sync_bitmaps, order_groud_index);
+    SetMultipleOutputCleanStrategy(groud_output_cache_clean_policy);
 
     for (uint32_t order = 0; order < m_output_stream_name.size(); order++) {
         auto callback = [this, order](const xgraph::Packet &packet) -> ::absl::Status {
