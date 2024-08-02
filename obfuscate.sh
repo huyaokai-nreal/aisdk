@@ -12,6 +12,8 @@ find aisdk -type f -iname "*.c" -or -iname "*.cpp" -or -iname "*.cc" | \
     egrep -v "nrhal_define.h" | \
     egrep -v "coord_transform_service.h" | \
     egrep -v "handtracking_xgraph.cpp" | \
+    egrep -v "handtracking_prior_glass_xgraph.cpp" | \
+    egrep -v "handtracking_next_host_xgraph.cpp" | \
     egrep -v "snpe_wrapper.cpp" | \
     xargs $BIN >> obfuscate.log
 
