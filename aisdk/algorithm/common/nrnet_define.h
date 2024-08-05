@@ -48,6 +48,7 @@ struct DetectRect {
 struct Image {
     std::shared_ptr<aisdk::base::XrMem> m_warpmem;
     cv::Mat m_mat;
+    uint64_t raw_time_nanos;
 
     Image() {}
 

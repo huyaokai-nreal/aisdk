@@ -1120,16 +1120,33 @@ void DataDebugRecord::PipelineNodeInfoToJsonString(Recordcache* record, std::str
     if (record->m_nodestatus == NodeStatus::BUSY_DISCARD) {
         json_result["node_status"] = "busy_discard";
     } else {
-        json_result["node_status"] = "finish";
+        if (record->m_nodestatus == NodeStatus::ASYNC_WAIT_TIMEOUT) {
+            json_result["node_status"] = "async_wait_timeout";
+        } else if (record->m_nodestatus == NodeStatus::STOP_FORCE_DROPED) {
+            json_result["node_status"] = "stop_force_drpoed";
+        } else {
+            json_result["node_status"] = "finish";
+        }
         json_result["mid_inference"] = record->export_root;
         json_result["leftright_hand_status"][0] = record->lhand_valid;
         json_result["leftright_hand_status"][1] = record->rhand_valid;
         json_result["leftright_hand_miss"][0] = miss_str[uint32_t(record->lhand_status)];
         json_result["leftright_hand_miss"][1] = miss_str[uint32_t(record->rhand_status)];
-        json_result["current_time_nanos"] = record->frame_timestamp;
+        json_result["current_time_nanos"] = record->raw_time_nanos;
+        json_result["xgraph_frame_timestamp"] = record->frame_timestamp;
         json_result["tracker_detect"] = record->is_tracker_detect;
         json_result["sequence_id"] = record->sequence_id;
     }
+    json_result["current_system_time"] = absl::FormatTime("%Y-%m-%d %H:%M:%E3S", absl::Now(), absl::LocalTimeZone());
+
+    // Json::FastWriter fwriter;
+    Json::StyledWriter fwriter;
+    json_string = fwriter.write(json_result);
+}
+
+void DataDebugRecord::MakeBusyPipelineNodeInfoToJsonString(std::string& json_string) {
+    Json::Value json_result;
+    json_result["node_status"] = "busy_discard";
     json_result["current_system_time"] = absl::FormatTime("%Y-%m-%d %H:%M:%E3S", absl::Now(), absl::LocalTimeZone());
 
     // Json::FastWriter fwriter;

@@ -44,7 +44,7 @@ class DataDebugRecord {
     // void DebugPredicted(HandPredictData& cur_hand, uint64_t predicted_time_nanos, uint64_t target_timestamp,
     //                     std::vector<cv::Vec3f>& predicted_hand_points, uint32_t step, Json::Value& export_root,
     //                     uint64_t cur_equence_id, uint64_t predicted_equence_id);
-
+    static void MakeBusyPipelineNodeInfoToJsonString(std::string& json_string);
    private:
     // debug模式下，可视化op结果信息到图片
     void DetectOpRecord(Recordcache* record, const aisdk::algorithm::DetOutputInternal& detect_result);

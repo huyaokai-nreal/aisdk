@@ -9,6 +9,8 @@
 namespace aisdk::algorithm {
 
 enum class NodeStatus {
+    STOP_FORCE_DROPED = -3,
+    ASYNC_WAIT_TIMEOUT = -2,
     BUSY_DISCARD = -1,
     UNKNOWN = 0,
     INPUT_IMAGE = 1,
@@ -28,6 +30,7 @@ enum class ObjectStatus { NO_MISS = 0, DETECT_MISS = 1, PF_MISS = 2, LANDMARK_MI
 
 struct Recordcache {
     uint64_t sequence_id = 0;
+    uint64_t raw_time_nanos = 0;
     int64_t frame_timestamp = 0;
     NodeStatus m_nodestatus = NodeStatus::UNKNOWN;
     bool is_get_detect_node = false;

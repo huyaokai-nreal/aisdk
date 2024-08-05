@@ -8,6 +8,11 @@
 
 namespace aisdk::task {
 
+struct FrameTrackInfo {
+    uint64_t frame_timestamp;
+    FrameState frame_state;
+};
+
 class HandTrackingXGraph : public BaseXGraph {
    private:
     std::unique_ptr<algorithm::HandFilters> m_post_filter;
@@ -17,7 +22,10 @@ class HandTrackingXGraph : public BaseXGraph {
     // 不能随意修改此值，注意数组下标越界
     uint64_t recordresult_output_groud_index = 1;
     uint64_t recordresult_output_packet_index = 1;
-
+    // debug状态下，全部帧的状态
+    std::mutex m_track_frame_lock;
+    // 按timestamp关联，并且timestamp不重复，并且timestamp是时序递增的
+    std::map<uint64_t, FrameTrackInfo> m_debug_frame_infos;
    public:
     HandTrackingXGraph();
     virtual ~HandTrackingXGraph();
@@ -28,6 +36,7 @@ class HandTrackingXGraph : public BaseXGraph {
     algorithm::Status PushData(uint64_t timestamp, std::vector<algorithm::Image>& in_image, NRTransform headpose);
     algorithm::Status PopResult(uint64_t hmd_time_nanos, uint32_t* hand_num, HandData* out_hand_array);
     algorithm::Status PopExecInfo(uint64_t& timestamp, std::string& jsonstring);
+    void SetTrackFrameState(uint64_t timestamp, FrameState state);
     // 其他接口自定义
 };
 
