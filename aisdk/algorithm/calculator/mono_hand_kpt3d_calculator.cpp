@@ -95,7 +95,7 @@ class MonoHandKpt3DCalculator : public xgraph::CalculatorBase {
     }
     absl::Status Process(xgraph::CalculatorContext* cc) final {
 #if defined(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
-        TIMER_ONCE_WITH_TAG(LiftCalculator::Process);
+        TIMER_ONCE_WITH_TAG(MonoHandKpt3DCalculator::Process);
 #endif
         AISDK_LOG_TRACE("[MonoHandKpt3DCalculator] Process start");
         const auto& kpt2d = cc->Inputs().Tag("LANDMARK_INPUT").Get<Kpt2dInternal>();
