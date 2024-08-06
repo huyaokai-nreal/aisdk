@@ -265,7 +265,7 @@ aisdk::algorithm::Status HandTrackingXGraph::PushData(uint64_t timestamp,
     }
 
     AISDK_LOG_TRACE("HandTrackingXGraph::PushData raw_timestamp={} graph_stream_stamp={} push_failure={} !!!!",
-                   timestamp, timestamp_micro, push_failure);
+                    timestamp, timestamp_micro, push_failure);
     // m_increase_timestep++;
     if (push_failure) {
         return aisdk::algorithm::Status::FAILURE;
@@ -442,7 +442,7 @@ algorithm::Status HandTrackingXGraph::PopExecInfo(uint64_t& timestamp, std::stri
             auto& record_data_internal = record_data_packet.Get<algorithm::RecordExport>();
             auto graph_timestamp = (uint64_t)record_data_packet.Timestamp().Value();
             AISDK_LOG_TRACE("HandTrackingXGraph::PopExecInfo raw_timestamp={} graph_stream_stamp={} ok!!!!",
-                           outlist->raw_timestamp, graph_timestamp);
+                            outlist->raw_timestamp, graph_timestamp);
             timestamp = outlist->raw_timestamp;
             jsonstring = record_data_internal.export_jsonstring;
 

@@ -125,6 +125,11 @@ node {
   input_stream: "GR_KPT2D_INPUT:kpt2d"
   input_stream: "GR_KPT_INPUT:kpt3d_blocked"
   output_stream: "GR_OUTPUT:gesture"
+  node_options: {
+    [type.googleapis.com/aisdk.GestureRecognitionCalculatorOptions] {
+      pinch_th: 0.02
+    }
+  }
 }
 node {
   name: "HandFilter"

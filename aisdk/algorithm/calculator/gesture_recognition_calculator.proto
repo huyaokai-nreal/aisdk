@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+package aisdk;
+message GestureRecognitionCalculatorOptions  {
+  float pinch_th = 1;
+  float pinch_th_width = 2;
+}

@@ -9,6 +9,7 @@
 #include "aisdk/base/log.h"
 #include "aisdk/base/time.h"
 #include "aisdk/xgraph/xgraph.h"
+#include "gesture_recognition_calculator.pb.h"
 
 namespace aisdk::algorithm {
 
@@ -41,6 +42,15 @@ class GestureRecognitionCalculator : public xgraph::CalculatorBase {
         AISDK_LOG_TRACE("[GestureRecognitionCalculator] Open start.");
         m_gesture_classifier_lhand = std::make_unique<GestureRecognitionV2>();
         m_gesture_classifier_rhand = std::make_unique<GestureRecognitionV2>();
+        const auto& options = cc->Options<aisdk::GestureRecognitionCalculatorOptions>();
+        if (options.pinch_th() > 0) {
+            m_gesture_classifier_lhand->set_pinch_close_th(options.pinch_th());
+            m_gesture_classifier_rhand->set_pinch_close_th(options.pinch_th());
+        }
+        if (options.pinch_th_width() > 0) {
+            m_gesture_classifier_lhand->set_pinch_close_th_width(options.pinch_th_width());
+            m_gesture_classifier_rhand->set_pinch_close_th_width(options.pinch_th_width());
+        }
         AISDK_LOG_TRACE("[GestureRecognitionCalculator] Open complete.");
         return absl::OkStatus();
     }

@@ -147,6 +147,8 @@ class HandFeatureUpdator {
     float abduction_thumb_closed_th = 20;
     float abduction_other_open_th = 12;
     float abduction_other_closed_th = 10;
+    std::unique_ptr<HandFeature> cur_hand_feature;
+  public:
      // in 1 cm, out 2 cm for lift3d
     float opposition_closed_th = 0.015; 
     float opposition_open_th = 0.1;     
@@ -161,11 +163,10 @@ class HandFeatureUpdator {
     // moving pinch th, in 1 cm, out 3 cm
     float opposition_move_closed_th = 0.02; 
     float opposition_move_th_width = 0.02; 
-    std::unique_ptr<HandFeature> cur_hand_feature;
 };
 
 constexpr float pinch_v_th = -0.015; //m/s
-constexpr float pinch_min_th = 0.01;
+constexpr float pinch_min_th = 0.008;
 class GestureMatchRule {
    private:
    public:
@@ -252,6 +253,21 @@ class GestureRecognitionV2 {
    public:
     GestureRecognitionV2()
         : feature_updator(std::make_unique<HandFeatureUpdator>()){}
+    std::pair<HandGesture, HandRawFeature> predict_with_keypoints3d(const SingleHandData& hand_data,
+                                                                    const std::vector<Vec2f_t> &keypoints2d,
+                                                                    bool is_left_hand, bool is_tracked, float hand_v);
+    inline void set_pinch_close_th(float val) noexcept{
+        feature_updator->opposition_closed_th = val;
+    }
+    inline void set_pinch_close_th_width(float val) noexcept{
+        feature_updator->opposition_th_width = val;
+    }
+
+   private:
+    bool is_face_to_head(const std::vector<std::vector<Eigen::Vector3f>> &keypoints3d, bool is_left_hand);
+    bool is_ok_pinch(const std::vector<std::vector<Eigen::Vector3f>> &keypoints3d);
+    bool is_pinch_masked(const std::vector<Vec2f_t> &keypoints2d, bool is_face_to_head);
+    float get_pinch_velocity(const std::vector<std::vector<Eigen::Vector3f>>& kpt3d);
     void reset_feature() {
         feature_updator->reset_feature();
         last_gesture_ = HandGesture::Invalid;
@@ -260,22 +276,10 @@ class GestureRecognitionV2 {
     std::pair<HandRawFeature, HandFeature> extract_hand_feature(
         const std::vector<std::vector<Eigen::Vector3f>> &keypoints3d, const std::vector<Vec2f_t> &keypoints2d,
         bool is_left_hand, bool is_tracked, float hand_v, bool mono_cam);
-    std::pair<HandGesture, HandRawFeature> predict_with_keypoints3d(const SingleHandData& hand_data,
-                                                                    const std::vector<Vec2f_t> &keypoints2d,
-                                                                    bool is_left_hand, bool is_tracked, float hand_v);
-
-   private:
-    bool is_face_to_head(const std::vector<std::vector<Eigen::Vector3f>> &keypoints3d, bool is_left_hand);
-    bool is_ok_pinch(const std::vector<std::vector<Eigen::Vector3f>> &keypoints3d);
-    bool is_pinch_masked(const std::vector<Vec2f_t> &keypoints2d, bool is_face_to_head);
-    float get_pinch_velocity(const std::vector<std::vector<Eigen::Vector3f>>& kpt3d);
-    bool is_hand_at_bottom(const std::vector<cv::Vec2f> &keypoints2d);
     std::unique_ptr<HandFeatureUpdator> feature_updator;
     std::vector<std::string> gesture_list;
     float std_hand_length_ = 0.08;  // 8cm
     HandGesture last_gesture_ = HandGesture::Invalid;
-    int image_height_ = 640;
-    int image_width_ = 480;
     std::vector<std::vector<Eigen::Vector3f>> last_kpt3d_;
     float bottom_image_ratio_ = 0.7;
     float move_flag_th_ = 0.1; 
