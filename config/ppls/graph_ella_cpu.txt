@@ -51,7 +51,6 @@ node {
 node {
   name: "MonoBinoSwitch"
   calculator: "MonoBinoSwitchCalculator"
-  input_stream: "IMAGE_IN:image_out"
   input_stream: "BBOX_IN:detection_smoothed_output"
   output_stream: "BBOX_OUT:detection_valid"
   node_options: {
