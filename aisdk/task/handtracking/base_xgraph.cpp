@@ -439,6 +439,10 @@ ConvertCameraModel(const aisdk::algorithm::CamInfo &cam_info) {
 aisdk::algorithm::Status BaseXGraph::Init(aisdk::xengine::DlSymFuncs &funcs, aisdk::xengine::PipelineConfig &config,
                                           CameraParams &camera) {
     auto camera_info = ConvertCameraInfo(camera);
+    if (camera_info.camera_type == 2) {
+        // flora fisheye600
+        return aisdk::algorithm::Status::FAILURE;
+    }
     auto camera_model = ConvertCameraModel(camera_info);
 
     std::map<std::string, xgraph::Packet> side_packets;

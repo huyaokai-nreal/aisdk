@@ -434,7 +434,7 @@ algorithm::Status HandTrackingXGraph::PopExecInfo(uint64_t& timestamp, std::stri
             std::lock_guard<std::mutex> guard(m_track_frame_lock);
             target_frame = m_debug_frame_infos.begin()->first;
         }
-        AISDK_LOG_TRACE("PopExecInfo target_frame={} get_raw_timestamp={}", target_frame, outlist->raw_timestamp);
+        AISDK_LOG_ERROR("PopExecInfo target_frame={} get_raw_timestamp={}", target_frame, outlist->raw_timestamp);
         // PopExecInfo期望结果是保帧保序的。
         if (outlist->raw_timestamp < target_frame) {
             // 哪里出现问题了
