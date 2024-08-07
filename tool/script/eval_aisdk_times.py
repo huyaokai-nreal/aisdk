@@ -44,6 +44,14 @@ for function_name, time_data in data_times.items():
     print(f" {function_name} min : {np.min(time_data):.3f} ms")
     print(f" {function_name} max : {np.max(time_data):.3f} ms")
     print(f" {function_name} 95per : {np.percentile(time_data, 95):.3f} ms")
+cal_cost = bottom
+function_name = 'calculator sum'
+time_data = bottom
+print(f" {function_name} mean : {np.mean(time_data):.3f} ms")
+print(f" {function_name} std : {np.std(time_data):.3f} ms")
+print(f" {function_name} min : {np.min(time_data):.3f} ms")
+print(f" {function_name} max : {np.max(time_data):.3f} ms")
+print(f" {function_name} 95per : {np.percentile(time_data, 95):.3f} ms")
 graph_cost = graph_time - bottom
 function_name = 'graph delta'
 time_data = graph_cost

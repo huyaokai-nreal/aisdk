@@ -76,12 +76,12 @@ node {
     }
   }
 }
-node {
-  name: "LandmarkFilter"
-  calculator: "LandmarkFilterCalculator"
-  input_stream: "LANDMARK_INPUT:kpt2d"
-  output_stream: "LANDMARK_OUTPUT:kpt2d_filter"
-}
+#node {
+#  name: "LandmarkFilter"
+#  calculator: "LandmarkFilterCalculator"
+#  input_stream: "LANDMARK_INPUT:kpt2d"
+#  output_stream: "LANDMARK_OUTPUT:kpt2d_filter"
+#}
 #node {
 #  name: "MonoHand_3D"
 #  calculator: "MonoHandKpt3DCalculator"
@@ -95,7 +95,7 @@ node {
   name: "LiftNet_3D"
   calculator: "HandLiftCalculator"
   input_side_packet: "CAM_INFO_INPUT:cam_info"
-  input_stream: "LANDMARK_INPUT:kpt2d_filter"
+  input_stream: "LANDMARK_INPUT:kpt2d"
   output_stream: "LIFT_OUTPUT:kpt3d_bino"
   node_options: {
     [type.googleapis.com/aisdk.HandLiftCalculatorOptions] {
