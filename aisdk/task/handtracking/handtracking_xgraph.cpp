@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "aisdk/algorithm/common/NR_GlobalPredictorService.h"
+#include "aisdk/algorithm/common/data_debug_record.h"
 #include "aisdk/algorithm/common/hand_define.h"
 #include "aisdk/algorithm/common/nrcore_define.h"
 #include "aisdk/algorithm/common/nrnet_define.h"
@@ -259,9 +260,18 @@ aisdk::algorithm::Status HandTrackingXGraph::PushData(uint64_t timestamp,
                            aisdk::base::getTime2());
 #endif
         }
+    } else {
+        push_failure = true;
     }
+
+    AISDK_LOG_TRACE("HandTrackingXGraph::PushData raw_timestamp={} graph_stream_stamp={} push_failure={} !!!!",
+                    timestamp, timestamp_micro, push_failure);
     // m_increase_timestep++;
-    return aisdk::algorithm::Status::SUCCESS;
+    if (push_failure) {
+        return aisdk::algorithm::Status::FAILURE;
+    } else {
+        return aisdk::algorithm::Status::SUCCESS;
+    }
 }
 
 aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, uint32_t* hand_num,
@@ -412,19 +422,70 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
 }
 
 algorithm::Status HandTrackingXGraph::PopExecInfo(uint64_t& timestamp, std::string& jsonstring) {
-    std::shared_ptr<StreamCache> outlist = GetOutputStreamCache(recordresult_output_groud_index);
+    auto& prof = aisdk::base::DebugProfiling::Get().GetOpt();
+    if (false == prof.export_pipeline_exec_info_jsonstring) {
+        return aisdk::algorithm::Status::FAILURE;
+    }
+
+    std::shared_ptr<StreamCache> outlist = GetOutputStreamCache(recordresult_output_groud_index, true);
     if (outlist) {
-        auto& record_data_packet = outlist->m_output_packs[recordresult_output_packet_index];
-        auto& record_data_internal = record_data_packet.Get<algorithm::RecordExport>();
-        auto latest_timestamp = record_data_packet.Timestamp().Value();
-        AISDK_LOG_TRACE("PopExecInfo latest_timestamp={} export_jsonstring={}", latest_timestamp,
-                        record_data_internal.export_jsonstring.c_str());
-        timestamp = outlist->raw_timestamp;
-        jsonstring = record_data_internal.export_jsonstring;
+        uint64_t target_frame = 0;
+        {
+            std::lock_guard<std::mutex> guard(m_track_frame_lock);
+            target_frame = m_debug_frame_infos.begin()->first;
+        }
+        AISDK_LOG_TRACE("PopExecInfo target_frame={} get_raw_timestamp={}", target_frame, outlist->raw_timestamp);
+        // PopExecInfo期望结果是保帧保序的。
+        if (outlist->raw_timestamp < target_frame) {
+            // 哪里出现问题了
+            timestamp = target_frame;
+            AISDK_LOG_ERROR("PopExecInfo raw_timestamp < target_frame segment11 !!!!!!!!!");
+            return aisdk::algorithm::Status::FAILURE;
+        } else if (outlist->raw_timestamp == target_frame) {
+            auto& record_data_packet = outlist->m_output_packs[recordresult_output_packet_index];
+            auto& record_data_internal = record_data_packet.Get<algorithm::RecordExport>();
+            auto graph_timestamp = (uint64_t)record_data_packet.Timestamp().Value();
+            AISDK_LOG_TRACE("HandTrackingXGraph::PopExecInfo raw_timestamp={} graph_stream_stamp={} ok!!!!",
+                            outlist->raw_timestamp, graph_timestamp);
+            timestamp = target_frame;
+            jsonstring = record_data_internal.export_jsonstring;
+
+            // 使用完毕清除
+            GetOutputStreamCache(recordresult_output_groud_index, false);
+            std::lock_guard<std::mutex> guard(m_track_frame_lock);
+            m_debug_frame_infos.erase(target_frame);
+        } else if (outlist->raw_timestamp > target_frame) {
+            // 这里说明base_xgraph已经出现种种drop的行为。统一处理
+            timestamp = target_frame;
+            aisdk::algorithm::DataDebugRecord::MakeBusyPipelineNodeInfoToJsonString(jsonstring);
+            // 使用完毕清除
+            std::lock_guard<std::mutex> guard(m_track_frame_lock);
+            m_debug_frame_infos.erase(target_frame);
+        }
+        AISDK_LOG_TRACE("PopExecInfo timestamp={} jsonstring={}", timestamp, jsonstring.c_str());
         return aisdk::algorithm::Status::SUCCESS;
     }
 
     return aisdk::algorithm::Status::FAILURE;
+}
+
+void HandTrackingXGraph::SetTrackFrameState(uint64_t timestamp, FrameState state) {
+    auto& prof = aisdk::base::DebugProfiling::Get().GetOpt();
+    if (false == prof.export_pipeline_exec_info_jsonstring) {
+        return;
+    }
+
+    // 登记需要保帧保序的帧列表。
+    std::lock_guard<std::mutex> guard(m_track_frame_lock);
+    auto iter = m_debug_frame_infos.find(timestamp);
+    if (iter == m_debug_frame_infos.end()) {
+        FrameTrackInfo info;
+        info.frame_timestamp = timestamp;
+        info.frame_state = state;
+        m_debug_frame_infos.insert(std::make_pair(timestamp, info));
+    } else {
+        iter->second.frame_state = state;
+    }
 }
 
 }  // namespace aisdk::task

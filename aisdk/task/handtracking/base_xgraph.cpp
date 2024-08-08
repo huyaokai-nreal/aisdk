@@ -77,8 +77,14 @@ aisdk::algorithm::Status BaseXGraph::SetInputStreamCache(uint64_t raw_timestamp,
 #endif
 
     std::lock_guard<std::mutex> guard(m_inference_lock);
-    CleanGraphNoResultInferenceCache(graph_stream_stamp);
-    m_inference_stream_cache.insert(std::make_pair(graph_stream_stamp, stream));
+    if (m_inference_stream_cache.find(graph_stream_stamp) == m_inference_stream_cache.end()) {
+        m_inference_stream_cache.insert(std::make_pair(graph_stream_stamp, stream));
+        CleanGraphNoResultInferenceCache(graph_stream_stamp);
+    } else {
+        AISDK_LOG_WARN("BaseXGraph::SetInputStreamCache stamp={} is repeated! ", graph_stream_stamp);
+        return aisdk::algorithm::Status::FAILURE;
+    }
+
     return aisdk::algorithm::Status::SUCCESS;
 }
 
@@ -253,7 +259,7 @@ bool BaseXGraph::CallBackInferenceResult(const xgraph::Packet &packet, int64_t o
     return ret;
 }
 
-std::shared_ptr<StreamCache> BaseXGraph::GetOutputStreamCache(uint64_t groud_index) {
+std::shared_ptr<StreamCache> BaseXGraph::GetOutputStreamCache(uint64_t groud_index, bool reuse) {
     std::shared_ptr<StreamCache> ret;
     if (groud_index >= m_output_stream_groud_cache.size()) {
         return ret;
@@ -263,6 +269,9 @@ std::shared_ptr<StreamCache> BaseXGraph::GetOutputStreamCache(uint64_t groud_ind
     if (m_output_stream_cache.size()) {
         std::lock_guard<std::mutex> guard(m_output_lock);
         ret = m_output_stream_cache.front();
+        if (false == reuse) {
+            m_output_stream_cache.pop_front();
+        }
     }
 
     return ret;
@@ -430,6 +439,10 @@ ConvertCameraModel(const aisdk::algorithm::CamInfo &cam_info) {
 aisdk::algorithm::Status BaseXGraph::Init(aisdk::xengine::DlSymFuncs &funcs, aisdk::xengine::PipelineConfig &config,
                                           CameraParams &camera) {
     auto camera_info = ConvertCameraInfo(camera);
+    if (camera_info.camera_type == 2) {
+        // flora fisheye600
+        return aisdk::algorithm::Status::FAILURE;
+    }
     auto camera_model = ConvertCameraModel(camera_info);
 
     std::map<std::string, xgraph::Packet> side_packets;

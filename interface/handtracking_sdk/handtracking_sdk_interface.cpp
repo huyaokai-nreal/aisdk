@@ -675,10 +675,16 @@ NRPluginResult HandTracking::ParseAllCameraData(const NRGrayscaleCameraFrameData
     NRTransform head_pose;
     DevicePose headpose_proto;
     NRPluginResult errorcode = NR_PLUGIN_RESULT_SUCCESS;
+    static uint64_t last_time_nanos = 0;
+    uint64_t current_time_nanos = data->cameras[0].hmd_time_nanos;
+    AISDK_LOG_TRACE("get image time: {}", current_time_nanos);
+    AISDK_LOG_TRACE("elapsed_time: {}", (current_time_nanos - last_time_nanos) / 1e9f);
+    last_time_nanos = current_time_nanos;
 
     // We only use cam0 and cam1 now (coresponding to leftcam and rightcam on Light/Air Pro)
     std::vector<cv::Mat> image(2);
     auto ins = Plugin::GetInstance();
+    auto& pipeline = ins->GetPipeline();
     std::shared_ptr<aisdk::base::XrMem> leftmem =
         ins->m_picbuf->RequestMemBlob(data->cameras[0].width * data->cameras[0].height);
 
@@ -687,6 +693,13 @@ NRPluginResult HandTracking::ParseAllCameraData(const NRGrayscaleCameraFrameData
 
     if (!leftmem || !rightmem) {
         AISDK_LOG_ERROR("HandTracking::ParseAllCameraData RequestMemBlob error");
+#if defined(ENABLE_ALGORITHM_DATA_RECORD) && !defined(ENABLE_SEGMENT_JOINT_INFERENCE_MODE)
+        if (ins->pipeline_work_scene == "handtracking_std_all_host") {
+            std::shared_ptr<task::HandTrackingXGraph> impl =
+                std::dynamic_pointer_cast<task::HandTrackingXGraph>(pipeline.Impl());
+            impl->SetTrackFrameState(current_time_nanos, aisdk::task::FrameState::MEM_FULL_DROP);
+        }
+#endif
         return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
     }
 
@@ -695,13 +708,6 @@ NRPluginResult HandTracking::ParseAllCameraData(const NRGrayscaleCameraFrameData
     image[1] = cv::Mat(cv::Size(data->cameras[1].width, data->cameras[1].height), CV_8UC1,
                        reinterpret_cast<uint8_t*>(rightmem->addr));
 
-    // AISDK_LOG_TRACE("ParseAllCameraData input rcam size: %d, %d", image[0].rows, image[0].cols);
-
-    // AISDK_LOG_TRACE("ParseAllCameraData input rcam size: %d, %d", image[1].rows, image[1].cols);
-    static uint64_t last_time_nanos = 0;
-    AISDK_LOG_TRACE("get image time: {}", data->cameras[0].hmd_time_nanos);
-    AISDK_LOG_TRACE("elapsed_time: {}", (data->cameras[0].hmd_time_nanos - last_time_nanos) / 1e9f);
-    last_time_nanos = data->cameras[0].hmd_time_nanos;
     for (int cam_id = 0; cam_id < 2; cam_id++) {
         nano_time_[cam_id] = data->cameras[cam_id].hmd_time_nanos;
         const uint8_t* image_buffer = ((uint8_t*)data->data) + data->cameras[cam_id].offset;
@@ -716,6 +722,8 @@ NRPluginResult HandTracking::ParseAllCameraData(const NRGrayscaleCameraFrameData
 #endif
     aisdk::algorithm::Image d1(image[0], leftmem);
     aisdk::algorithm::Image d2(image[1], rightmem);
+    d1.raw_time_nanos = nano_time_[0];
+    d2.raw_time_nanos = nano_time_[0];
 
     AISDK_LOG_TRACE("ParseAllCameraData input rcam size: h={}, w={}", d1.m_mat.rows, d1.m_mat.cols);
     AISDK_LOG_TRACE("ParseAllCameraData input rcam size: h={}, w={}", d2.m_mat.rows, d2.m_mat.cols);
@@ -724,7 +732,6 @@ NRPluginResult HandTracking::ParseAllCameraData(const NRGrayscaleCameraFrameData
     errorcode = ins->m_handtracking.m_interface->GetDevicePose(ins->GetHandle(), &headpose_proto, nano_time_[0]);
     head_pose = headpose_proto.transform;
 
-    auto& pipeline = ins->GetPipeline();
     std::vector<aisdk::algorithm::Image> images;
     images.emplace_back(std::move(d1));
     if (!ins->m_handtracking.is_mono) {
@@ -734,7 +741,14 @@ NRPluginResult HandTracking::ParseAllCameraData(const NRGrayscaleCameraFrameData
     if (ins->pipeline_work_scene == "handtracking_std_all_host") {
         std::shared_ptr<task::HandTrackingXGraph> impl =
             std::dynamic_pointer_cast<task::HandTrackingXGraph>(pipeline.Impl());
-        impl->PushData(nano_time_[0], images, head_pose);
+        auto push_ret = impl->PushData(nano_time_[0], images, head_pose);
+#if defined(ENABLE_ALGORITHM_DATA_RECORD) && !defined(ENABLE_SEGMENT_JOINT_INFERENCE_MODE)
+        if (push_ret == aisdk::algorithm::Status::SUCCESS) {
+            impl->SetTrackFrameState(current_time_nanos, aisdk::task::FrameState::PUSH_XGRAPH_WAIT_RESULT);
+        } else {
+            impl->SetTrackFrameState(current_time_nanos, aisdk::task::FrameState::PUSH_XGRAPH_FAILURE);
+        }
+#endif
     } else if (ins->pipeline_work_scene == "handtracking_segment_prior_glass") {
         std::shared_ptr<task::HandTrackingPriorGlassXGraph> impl =
             std::dynamic_pointer_cast<task::HandTrackingPriorGlassXGraph>(pipeline.Impl());

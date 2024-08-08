@@ -41,10 +41,24 @@ class HandDataRecordState {
             // iter->second.m_nodestatus == NodeStatus::GESTURE_FINISH 当前帧被分析
             // iter->first < image_latest_time 新帧以及到达，但是上一帧还没完成(没detect到目标)
             auto& sc = iter->second;
-            bool allTrue = std::all_of(sc.async_nodestatus.begin() + int32_t(NodeStatus::DETECT_FINISH),
-                                       sc.async_nodestatus.end(), [](bool elem) { return elem; });
-            if (force || (sc.is_get_detect_node && allTrue) || iter->first < image_latest_time) {
-                AISDK_LOG_TRACE("[HandDataRecordState] FindCanExport {}", iter->first);
+            if (sc.is_get_detect_node) {
+                bool allTrue = std::all_of(sc.async_nodestatus.begin() + int32_t(NodeStatus::DETECT_FINISH),
+                                           sc.async_nodestatus.end(), [](bool elem) { return elem; });
+                if (allTrue) {
+                    AISDK_LOG_TRACE("[HandDataRecordState] FindCanExport {} is normal", iter->first);
+                    return &iter->second;
+                }
+            }
+
+            if (iter->first < image_latest_time) {
+                sc.m_nodestatus = NodeStatus::ASYNC_WAIT_TIMEOUT;
+                AISDK_LOG_WARN("[HandDataRecordState] FindCanExport {} is timeout", iter->first);
+                return &iter->second;
+            }
+
+            if (force) {
+                sc.m_nodestatus = NodeStatus::STOP_FORCE_DROPED;
+                AISDK_LOG_WARN("[HandDataRecordState] FindCanExport {} is force droped", iter->first);
                 return &iter->second;
             }
         }
@@ -156,6 +170,7 @@ class HandDataRecordCalculator : public xgraph::CalculatorBase {
                             const auto& image_data = package.Get<std::vector<Image>>();
                             cache->async_nodestatus[int32_t(NodeStatus::INPUT_IMAGE)] = true;
                             cache->m_nodestatus = NodeStatus::INPUT_IMAGE;
+                            cache->raw_time_nanos = image_data[0].raw_time_nanos;
                             cache->detect_images.resize(2);
                             cache->detect_images[0].m_mat = image_data[0].m_mat.clone();
                             cache->detect_images[1].m_mat = image_data[1].m_mat.clone();
@@ -294,7 +309,10 @@ class HandDataRecordCalculator : public xgraph::CalculatorBase {
                 if (all_cache) {
                     std::unique_ptr<RecordExport> output_buffer_ = absl::make_unique<RecordExport>();
                     recorder.DebugWholeInference(all_cache, output_buffer_.get());
-                    cc->Outputs().Tag("RECORD_RESULTS").Add(output_buffer_.release(), cc->InputTimestamp());
+                    // cc->Outputs().Tag("RECORD_RESULTS").Add(output_buffer_.release(), cc->InputTimestamp());
+                    cc->Outputs()
+                        .Tag("RECORD_RESULTS")
+                        .Add(output_buffer_.release(), xgraph::Timestamp(all_cache->frame_timestamp));
                     AISDK_LOG_TRACE("HandDataRecordCalculator pushout frame_timestamp = {}",
                                     all_cache->frame_timestamp);
                     m_mgr.ClearHasExported(all_cache->frame_timestamp);
@@ -311,7 +329,9 @@ class HandDataRecordCalculator : public xgraph::CalculatorBase {
                 if (all_cache) {
                     std::unique_ptr<RecordExport> output_buffer_ = absl::make_unique<RecordExport>();
                     recorder.DebugWholeInference(all_cache, output_buffer_.get());
-                    cc->Outputs().Tag("RECORD_RESULTS").Add(output_buffer_.release(), cc->InputTimestamp());
+                    cc->Outputs()
+                        .Tag("RECORD_RESULTS")
+                        .Add(output_buffer_.release(), xgraph::Timestamp(all_cache->frame_timestamp));
                     AISDK_LOG_TRACE("HandDataRecordCalculator force pushout frame_timestamp = {}",
                                     all_cache->frame_timestamp);
                     m_mgr.ClearHasExported(all_cache->frame_timestamp);

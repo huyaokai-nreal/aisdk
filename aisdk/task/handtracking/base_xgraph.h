@@ -35,6 +35,18 @@ class StreamCache {
     std::shared_ptr<aisdk::base::NaiveTimer> m_stream_time;
 };
 
+enum class FrameState {
+    INIT = 0,
+    MEM_FULL_DROP = 1,
+    PUSH_XGRAPH_WAIT_RESULT = 2,
+    PUSH_XGRAPH_FAILURE = 3,
+    XGRAPH_FLOWCTROL_DROP = 4,
+    CALCULATOR_HADNTRACKING_DETECT_DROP = 5,
+    XGRAPH_RESULT_FINISH = 6,
+    OUTPUT_CACHE_FULL_DROP = 7,
+    GET_RESULT_FINISH = 8,
+};
+
 class BaseXGraph : public PipeGraphImpl {
    public:
     BaseXGraph() : PipeGraphImpl() {}
@@ -53,7 +65,7 @@ class BaseXGraph : public PipeGraphImpl {
     // graph添加stream失败，主动删除SetInputStreamCache登记的stream
     aisdk::algorithm::Status ClearInputStreamCache(int64_t graph_stream_stamp);
     // 获取最新的stream结果，如果不被调用，也不会阻塞graph运行。MoveOutputCahce函数将会将超过m_max_output_cahce_num的stream结果删除
-    std::shared_ptr<StreamCache> GetOutputStreamCache(uint64_t groud_index);
+    std::shared_ptr<StreamCache> GetOutputStreamCache(uint64_t groud_index, bool reuse = true);
     // 内部函数，graph将多输出的packet合并到StreamCache中。
     bool CallBackInferenceResult(const xgraph::Packet &packet, int64_t output_packs_order);
     std::vector<std::string>& GetInputStreamName() { return m_input_stream_name;}

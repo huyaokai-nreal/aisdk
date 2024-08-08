@@ -17,7 +17,6 @@ class MonoBinoSwitchCalculator : public xgraph::CalculatorBase {
     static absl::Status GetContract(xgraph::CalculatorContract* cc) {
         AISDK_LOG_TRACE("[MonoBinoSwitchCalculator] GetContract start");
         cc->Inputs().Tag("BBOX_IN").Set<DetOutputInternal>();
-        cc->Inputs().Tag("IMAGE_IN").Set<std::vector<Image>>();
         cc->Outputs().Tag("BBOX_OUT").Set<DetOutputInternal>();
         AISDK_LOG_TRACE("[MonoBinoSwitchCalculator] GetContract finish");
         return absl::OkStatus();
@@ -34,11 +33,10 @@ class MonoBinoSwitchCalculator : public xgraph::CalculatorBase {
 
     absl::Status Process(xgraph::CalculatorContext* cc) final {
 #if defined(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
-        TIMER_ONCE_WITH_TAG(BlockHardRulesCalculator::Process);
+        TIMER_ONCE_WITH_TAG(MonoBinoSwitchCalculator::Process);
 #endif
         AISDK_LOG_TRACE("[BlockHardRulesCalculator] Process start");
         auto output_buffer_ = absl::make_unique<DetOutputInternal>();
-        const auto& image_data = cc->Inputs().Tag("IMAGE_IN").Get<std::vector<Image>>();
         const auto& bbox_data = cc->Inputs().Tag("BBOX_IN").Get<DetOutputInternal>();
         *output_buffer_ = bbox_data;
         if (mode_ == "MONO") {

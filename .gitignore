@@ -58,3 +58,5 @@ work_dir
 *.key
 out/
 __pycache__
+*.log
+*.png
