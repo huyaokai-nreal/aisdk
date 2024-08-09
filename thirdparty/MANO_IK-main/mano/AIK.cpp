@@ -506,7 +506,7 @@ std::vector<Eigen::Vector3f> constraint_hand_kernel(std::vector<Eigen::Vector3f>
 }
 
 std::vector<Eigen::Vector3f> constraint_hand_v2(std::vector<Eigen::Vector3f> pred_xyz, bool left_hand) {
-	std::vector<Eigen::Vector3f> j3d_pre       = pred_xyz;
+	std::vector<Eigen::Vector3f> j3d_pre(pred_xyz.begin(), pred_xyz.begin()+21);
 	auto                         hand_template = left_hand ? lhand_template : rhand_template;
 
 	const float ratio = 1000.;

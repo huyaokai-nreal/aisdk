@@ -1,5 +1,7 @@
+#pragma once
 #include "aisdk/base/type.h"
 #include <Eigen/Dense>
+
 namespace aisdk::algorithm {
     inline Vec4f_t bbox_xyxy2cs(const Vec4f_t& bbox){
         Vec4f_t result = Vec4f_t::Zero();

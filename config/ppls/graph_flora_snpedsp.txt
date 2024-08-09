@@ -62,7 +62,7 @@ node {
 }
 node {
   name: "HandLandmark_2D"
-  calculator: "HandLandmarkCalculator"
+  calculator: "HandLandmarkBatchCalculator"
   input_stream: "BBOX_SMOOTHED_OUTPUT:detection_valid"
   input_stream: "IMAGE_INPUT:image_out"
   input_side_packet: "CAM_INFO_INPUT:cam_info"
@@ -72,7 +72,7 @@ node {
       input_height: 128
       input_width: 128
       bbox_expand_ratio: 1.5
-      model_name: "2d_rtmtiny"
+      model_name: "2d_rtmtinyb2"
     }
   }
 }

@@ -9,11 +9,11 @@
 #include "aisdk/algorithm/calculator/hand_data_record_calculator.cpp"
 #include "aisdk/algorithm/calculator/hand_detection_track_calculator.cpp"
 #include "aisdk/algorithm/calculator/hand_filter_calculator.cpp"
+#include "aisdk/algorithm/calculator/hand_landmark_batch_calculator.cpp"
 #include "aisdk/algorithm/calculator/hand_landmark_calculator.cpp"
 #include "aisdk/algorithm/calculator/hand_lift_calculator.cpp"
 #include "aisdk/algorithm/calculator/landmark_filter_calculator.cpp"
 #include "aisdk/algorithm/calculator/mono_bino_switch_calculator.cpp"
-#include "aisdk/algorithm/calculator/mono_bino_switch_calculator.pb.h"
 #include "aisdk/algorithm/calculator/mono_hand_kpt3d_calculator.cpp"
 #include "aisdk/algorithm/calculator/standardize_keypoints_calculator.cpp"
 
@@ -27,6 +27,7 @@ void TriggerGloalGraphCalculatorsConstructForHandTracking() {
     REGISTER_CALCULATOR(DetectBoxSmoothingCalculator);    // ok!
     REGISTER_CALCULATOR(GestureRecognitionCalculator);    // ok!
     REGISTER_CALCULATOR(HandLandmarkCalculator);          // ok!
+    REGISTER_CALCULATOR(HandLandmarkBatchCalculator);     // ok!
     REGISTER_CALCULATOR(HandFilterCalculator);            // ok!
     REGISTER_CALCULATOR(HandLiftCalculator);              // ok!
     REGISTER_CALCULATOR(StandardizeKeypointsCalculator);  // ok！

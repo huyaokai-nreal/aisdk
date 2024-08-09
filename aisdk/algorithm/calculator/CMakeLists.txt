@@ -25,6 +25,7 @@ ${CMAKE_CURRENT_SOURCE_DIR}/xgraph_service_utils.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/hand_detection_track_calculator.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/hand_detection_track_calculator.pb.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/hand_landmark_calculator.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/hand_landmark_batch_calculator.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/hand_landmark_calculator.pb.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/block_hard_rules_calculator.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/block_hard_rules_calculator.pb.cc

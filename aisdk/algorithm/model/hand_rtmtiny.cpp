@@ -8,6 +8,7 @@
 #include "aisdk/algorithm/common/math.h"
 #include "aisdk/algorithm/func/softmax.h"
 #include "aisdk/base/log.h"
+#include "aisdk/base/time.h"
 namespace aisdk::algorithm {
 
 /**
@@ -59,9 +60,8 @@ void RTMTiny::PreProcess(const std::vector<Image> &net_input) {
         unsigned int mem_size = height * width * channels * element_byte;
         char *mem = (char *)itensor.m_tensors[multi_i].m_viraddr + batch_i * mem_size;
 
-        cv::Mat image_resized;
+        cv::Mat image_resized(img.size(), CV_32FC1, mem);
         img.convertTo(image_resized, CV_32FC1);
-        memcpy(mem, image_resized.data, mem_size);
     }
 }
 
@@ -112,11 +112,21 @@ void RTMTiny::PostProcess(Kpt2dResult &result) {
 }
 
 absl::StatusOr<Kpt2dResult> RTMTiny::Inference(const std::vector<Image> &baseinput) {
-    PreProcess(baseinput);
+    {
+        TIMER_ONCE_WITH_TAG(RTMTiny::Preprocess);
+        PreProcess(baseinput);
+    }
     Kpt2dResult baseresult;
-    auto ret = m_net->RunNet();
+    absl::Status ret;
+    {
+        TIMER_ONCE_WITH_TAG(RTMTiny::RunNet);
+        ret = m_net->RunNet();
+    }
     if (ret.ok()) {
-        PostProcess(baseresult);
+        {
+            TIMER_ONCE_WITH_TAG(RTMTiny::PoseProcess);
+            PostProcess(baseresult);
+        }
         return baseresult;
     }
     return absl::UnavailableError("failed to get 2d hand kpt result from rtmtiny");

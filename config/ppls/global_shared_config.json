@@ -7,7 +7,7 @@
             "detect_cpu_ella",
             "detect_cpu_flora",
             "detect_dsp_flora_mono",
-            "2d_rtmtiny",
+            "2d_rtmtinyb2",
             "2d_rsntiny",
             "2d_rsnnano",
             "2d_filter",
@@ -99,13 +99,13 @@
                 ]
             }
         },
-        "2d_rtmtiny": {
+        "2d_rtmtinyb2": {
             "model_config": {
-                "file_name": "models/rtmtiny_dark_pcl_res26s_128_bs1_240715_7a24f2_int16.dlc",
+                "file_name": "models/rtmtiny_dark_pcl_res26s_128_bs2_240715_ee0c98_int16.dlc",
                 "vendor": "snpe"
             },
             "session_config": {
-                "batch": 1,
+                "batch": 2,
                 "precision": "int16",
                 "thread_num": 1,
                 "runtime": "dsp",
