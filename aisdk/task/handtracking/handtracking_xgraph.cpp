@@ -148,6 +148,9 @@ bool AddDataRecordCalculater(aisdk::xengine::PipelineConfig& config, std::string
             AISDK_LOG_WARN("[HandDataRecordCalculator] Process Enbale Bino2");
             new_graph_config = config.graph_config + new_exector_config + new_bino_node_config2;
             return true;
+        } else {
+            // 没测试过
+            return false;
         }
 
         AISDK_LOG_WARN("[HandDataRecordCalculator] Process Enbale Bino1");
@@ -438,7 +441,7 @@ algorithm::Status HandTrackingXGraph::PopExecInfo(uint64_t& timestamp, std::stri
             std::lock_guard<std::mutex> guard(m_track_frame_lock);
             target_frame = m_debug_frame_infos.begin()->first;
         }
-        AISDK_LOG_TRACE("PopExecInfo target_frame={} get_raw_timestamp={}", target_frame, outlist->raw_timestamp);
+        AISDK_LOG_ERROR("PopExecInfo target_frame={} get_raw_timestamp={}", target_frame, outlist->raw_timestamp);
         // PopExecInfo期望结果是保帧保序的。
         if (outlist->raw_timestamp < target_frame) {
             // 哪里出现问题了
@@ -478,7 +481,7 @@ void HandTrackingXGraph::SetTrackFrameState(uint64_t timestamp, FrameState state
     if (false == prof.export_pipeline_exec_info_jsonstring) {
         return;
     }
-
+    AISDK_LOG_TRACE("SetTrackFrameState timestamp={} ", timestamp);
     // 登记需要保帧保序的帧列表。
     std::lock_guard<std::mutex> guard(m_track_frame_lock);
     auto iter = m_debug_frame_infos.find(timestamp);
