@@ -25,6 +25,15 @@ absl::Status ArtosynHandDetectNetv2::Init(aisdk::xengine::NetAlgoConfig &algo, a
         return absl::InternalError("model input is not blob");
     }
 
+    int index_images = m_net->GetInputImageBlobsIndex("images");
+    uint32_t height = iImageblobs.m_imageblobs[index_images].m_height;
+    uint32_t width = iImageblobs.m_imageblobs[index_images].m_width;
+    if (height > width) {
+        // w x h = 480 x 640
+        grid_w = 12;
+        grid_h = 16;
+    }
+
     grid_anchor.resize(grid_h * grid_w);
     for (auto i = 0; i < grid_h; i++) {
         for (auto j = 0; j < grid_w; j++) {
@@ -85,12 +94,6 @@ void ArtosynHandDetectNetv2::PreProcess(const std::vector<Image> &net_input) {
 }
 
 void ArtosynHandDetectNetv2::PostProcess(DetOutputInternal &result) {
-    // if (otensor.m_packed_bybatch == false) {
-    //     return;
-    // }
-
-    AISDK_LOG_TRACE("ArtosynHandDetectNetv2::PostProcess");
-
     result.images_lhand_rects.resize(otensor.m_batch);
     result.images_rhand_rects.resize(otensor.m_batch);
 
@@ -122,17 +125,21 @@ void ArtosynHandDetectNetv2::PostProcess(DetOutputInternal &result) {
         int box_idx_group;
         for (int idx_i = 0; idx_i < cls_h; idx_i++) {      // y
             for (int idx_j = 0; idx_j < cls_w; idx_j++) {  // x
-                cls_idx_group = ArtosynNpuGetEntryIndex(batch_i, idx_i, idx_j, 0, sizeof(float), cls_dims);
+                cls_idx_group =
+                    ArtosynNpuGetEntryIndex(batch_i, otensor.m_batch, idx_i, idx_j, 0, sizeof(float), cls_dims);
                 cls_idx_score = cls_idx_group;
-                cls_idx_left = ArtosynNpuGetEntryIndex(batch_i, idx_i, idx_j, 1, sizeof(float), cls_dims);
-                cls_idx_right = ArtosynNpuGetEntryIndex(batch_i, idx_i, idx_j, 2, sizeof(float), cls_dims);
+                cls_idx_left =
+                    ArtosynNpuGetEntryIndex(batch_i, otensor.m_batch, idx_i, idx_j, 1, sizeof(float), cls_dims);
+                cls_idx_right =
+                    ArtosynNpuGetEntryIndex(batch_i, otensor.m_batch, idx_i, idx_j, 2, sizeof(float), cls_dims);
 
                 float score = cls_data[cls_idx_score];
                 bool is_left = cls_data[cls_idx_left] * score > cls_data[cls_idx_right] * score;
                 if (score > score_threshold) {
                     float _coord[box_c];
                     for (int i = 0; i < 4; i++) {
-                        box_idx_group = ArtosynNpuGetEntryIndex(batch_i, idx_i, idx_j, i, sizeof(float), box_dims);
+                        box_idx_group =
+                            ArtosynNpuGetEntryIndex(batch_i, otensor.m_batch, idx_i, idx_j, i, sizeof(float), box_dims);
                         _coord[i] = box_data[box_idx_group];
                     }
 

@@ -60,7 +60,7 @@ elseif(Xrlinux AND NOT ENABLE_SEGMENT_JOINT_INFERENCE_MODE)
     message(FATAL_ERROR "Xrlinux && !ENABLE_SEGMENT_JOINT_INFERENCE_MODE")
 elseif(NOT Xrlinux AND ENABLE_SEGMENT_JOINT_INFERENCE_MODE)
     # 分段联合模式下，手机业务的模型包
-    set(tar_ppls "ppls")
+    set(tar_ppls "gina_joint_ppls")
     set(tar_model "hand_tracking")
 else()
     # 默认模式下的模型包

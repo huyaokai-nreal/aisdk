@@ -40,7 +40,7 @@
 #endif
 #endif  // __APPLE__
 
-int ArtosynNpuGetEntryIndex(int batch, int h, int w, int c, int byteUnit,
+int ArtosynNpuGetEntryIndex(int batch, int batch_total, int h, int w, int c, int byteUnit,
                             aisdk::xengine::ArtosynTensorDims& pTensorInfo) {
     /*
     int n = location / (layer_w*layer_h);
@@ -52,14 +52,18 @@ int ArtosynNpuGetEntryIndex(int batch, int h, int w, int c, int byteUnit,
     int tensor_row_ddr_step = pTensorInfo.u32RowStep;
     int tensor_k_norm_num = pTensorInfo.u32KNormNum;
     int tensor_last = pTensorInfo.u32KSizeLast;
-    // int tensor_last_valid = pTensorInfo.u32OriChannel -tensor_k_norm_num*tensor_k_size_norm;
+    int BatchOffset = (tensor_k_ddr_step / byteUnit) / batch_total * batch;
 
+    // printf("tensor_k_ddr_step:%d,tensor_k_norm_num:%d,tensor_last:%d\n",tensor_k_ddr_step,tensor_k_norm_num,tensor_last);
+    // int tensor_last_valid = pTensorInfo.u32OriChannel -tensor_k_norm_num*tensor_k_size_norm;
     int AddressOffset = (c / tensor_k_size_norm) * tensor_k_ddr_step + h * tensor_row_ddr_step;
     int memoryMigration =
         (c < tensor_k_norm_num * tensor_k_size_norm)
             ? (AddressOffset + c % tensor_k_size_norm * byteUnit + w * tensor_k_size_norm * byteUnit)
             : (AddressOffset + (c - tensor_k_norm_num * tensor_k_size_norm) * byteUnit + w * tensor_last * byteUnit);
-    return memoryMigration / byteUnit;
+    return memoryMigration / byteUnit + BatchOffset;
+
+    // return memoryMigration;
 }
 
 absl::Status ConvertOldStatus(aisdk::xengine::Status old_status) {

@@ -1,0 +1,60 @@
+{
+    "models_mgr": {
+        "_statement": "the models name is globally unique",
+        "models_name": [
+            "2d_filter",
+            "3d_lift",
+            "3d_lift_ella",
+            "3d_liftnimble"
+        ],
+        "2d_filter": {
+            "model_config": {
+                "file_name": "models/FilterNet_20220307_linux.enc",
+                "aes_key": "4D 3A B1 19 F0 2A 4A 41 C1 7F 82 0F 30 30 D4 0D 9C 0C 78 E0 A9 98 3C 74 FA 5F 8B 34 A4 CF B8 80",
+                "vendor": "mnn"
+            },
+            "session_config": {
+                "batch": 1,
+                "precision": "float32",
+                "thread_num": 1,
+                "runtime": "cpu"
+            }
+        },
+        "3d_lift_ella": {
+            "model_config": {
+                "file_name": "models/GMLP_20230417.mnn",
+                "vendor": "mnn"
+            },
+            "session_config": {
+                "batch": 1,
+                "precision": "float32",
+                "thread_num": 1,
+                "runtime": "cpu"
+            }
+        },
+        "3d_lift": {
+            "model_config": {
+                "file_name": "models/hand_liftv2_stdv2_convrnn_240315_02d78c.mnn",
+                "vendor": "mnn"
+            },
+            "session_config": {
+                "batch": 1,
+                "precision": "float32",
+                "thread_num": 1,
+                "runtime": "cpu"
+            }
+        },
+        "3d_liftnimble": {
+            "model_config": {
+                "file_name": "models/liftnimble_seq_0704_472c5b.mnn",
+                "vendor": "mnn"
+            },
+            "session_config": {
+                "batch": 1,
+                "precision": "float32",
+                "thread_num": 1,
+                "runtime": "cpu"
+            }
+        }
+    }
+}

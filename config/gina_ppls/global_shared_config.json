@@ -2,16 +2,16 @@
     "models_mgr": {
         "_statement": "the models name is globally unique",
         "models_name": [
-            "detect_ar9311npu_jina",
-            "2d_rtmtiny_ar9311npu_jina"
+            "detect_ar9481npu_gina",
+            "2d_rtmtiny_ar9481npu_gina"
         ],
-        "detect_ar9311npu_jina": {
+        "detect_ar9481npu_gina": {
             "model_config": {
-                "file_name": "models/det_tiny_240415.h2.s.B.npubin",
+                "file_name": "models/det_tiny_240415.h2.s.B.batch2.ar9401.npubin",
                 "vendor": "artosyn"
             },
             "session_config": {
-                "batch": 1,
+                "batch": 2,
                 "precision": "int8",
                 "thread_num": 1,
                 "runtime": "npu",
@@ -21,9 +21,9 @@
                 ]
             }
         },
-        "2d_rtmtiny_ar9311npu_jina": {
+        "2d_rtmtiny_ar9481npu_gina": {
             "model_config": {
-                "file_name": "models/rtmtiny_dark_res26s_128_bs1_240412_d85797.npubin",
+                "file_name": "models/rtmtiny_dark_res26s_128_bs1_240412_d85797.ar9401.npubin",
                 "vendor": "artosyn"
             },
             "session_config": {

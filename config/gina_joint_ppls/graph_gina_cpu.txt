@@ -1,0 +1,94 @@
+
+max_queue_size: 10
+input_stream: "LANDMARK_INPUT:kpt2d"
+input_stream: "HEADPOSE:head_pose"
+output_stream: "ALL_RESULTS:hand_result"
+
+input_stream_handler {
+  input_stream_handler: "FixedSizeInputStreamHandler"
+  options {
+    [mediapipe.FixedSizeInputStreamHandlerOptions.ext] {
+      trigger_queue_size: 2
+      target_queue_size: 1
+      fixed_min_size: false
+    }
+  }
+}
+
+executor {
+  name: ""
+  options {
+    [mediapipe.ThreadPoolExecutorOptions.ext] {
+      num_threads: 1
+      require_processor_performance: 2
+      thread_name_prefix: "xr_aisdk"
+    }
+  }
+}
+
+node {
+  name: "LiftNet_3D"
+  calculator: "HandLiftCalculator"
+  input_side_packet: "CAM_INFO_INPUT:cam_info"
+  input_stream: "HEADPOSE:head_pose"
+  input_stream: "LANDMARK_INPUT:kpt2d"
+  output_stream: "LIFT_OUTPUT:kpt3d_bino"
+  node_options: {
+    [type.googleapis.com/aisdk.HandLiftCalculatorOptions] {
+      model_name: "3d_lift"
+    }
+  }
+}
+
+node {
+  name: "BlockHardRules"
+  calculator: "BlockHardRulesCalculator"
+  #input_stream: "kpt3d_mono"
+  input_stream: "kpt3d_bino"
+  output_stream: "BLOCK_OUT:kpt3d_blocked"
+  node_options: {
+    [type.googleapis.com/aisdk.BlockHardRulesCalculatorOptions] {
+      max_root_depth: 1.0
+      # score_th = 0.8 ? model_name == 3d_liftnimble else 0.85
+      score_th: 0.875
+      score_th_width: 0.05
+    }
+  }
+}
+
+
+node {
+  name: "ConvertToWorld"
+  calculator: "ConvertToWorldCalculator"
+  input_stream: "INPUT:kpt3d_blocked"
+  input_stream: "HEADPOSE:head_pose_out"
+  output_stream: "OUTPUT:kpt3d_world"
+}
+
+node {
+  name: "GestureRecognition"
+  calculator: "GestureRecognitionCalculator"
+  input_stream: "GR_KPT2D_INPUT:kpt2d"
+  input_stream: "GR_KPT_INPUT:kpt3d_blocked"
+  output_stream: "GR_OUTPUT:gesture"
+}
+
+node {
+  name: "HandFilter"
+  calculator: "HandFilterCalculator"
+  input_stream: "INPUT:kpt3d_world"
+  output_stream: "OUTPUT:kpt3d_filtered"
+  node_options: {
+    [type.googleapis.com/aisdk.HandFilterCalculatorOptions] {
+      glasses_type: "flora"
+    }
+  }
+}
+
+node {
+  name: "StandardizeKeypoints"
+  calculator: "StandardizeKeypointsCalculator"
+  input_stream: "INPUT_KPT:kpt3d_filtered"
+  input_stream: "INPUT_GR:gesture"
+  output_stream: "OUTPUT:hand_result"
+}

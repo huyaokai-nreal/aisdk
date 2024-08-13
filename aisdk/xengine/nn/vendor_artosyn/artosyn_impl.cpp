@@ -10,15 +10,19 @@
 
 namespace aisdk::xengine {
 
-static std::atomic<uint16_t> g_NetworkID{100};
+static std::atomic<uint16_t> g_NetworkID(100);
 
 ARTOSYN_AIModel::ARTOSYN_AIModel(ModelConfig &config) : AIModel() {
+#if defined(AR9341)
+    m_socversion 1;
+#else
     m_socversion = AR_MPI_NPU_GetSocVersion();
+#endif
 
     memset(&m_stCNNDesc, 0, sizeof(m_stCNNDesc));
     m_stCNNDesc.u16NetworkID = (AR_U16)g_NetworkID.fetch_add(1);
     m_stCNNDesc.u32Priority = NETWORK_PRIORITY_NORMAL;
-    m_stCNNDesc.u32CBToArm = 1;
+    m_stCNNDesc.u32CBToArm = 0;
     m_stCNNDesc.u32SramAddrPhy = 0;
     m_stCNNDesc.u32SramSize = 0;
     m_stCNNDesc.uptrNpubinVirtAddr = (AR_UINTPTR)config.model_mem;
@@ -134,6 +138,7 @@ int ARTOSYN_Session::MallocNPUBuff(void *handle, AR_U16 u16NetworkID) {
 
     std::string input_name = std::to_string(u16NetworkID) + "/input";
     m_stNPUInBuff.u64Len = u32Size;
+    // m_stNPUInBuff.u64Cacheable = 1;
     s32Ret = AR_MPI_NPU_MallocCachedBuff((AR_CHAR *)input_name.c_str(), &m_stNPUInBuff);
     if (s32Ret) {
         AISDK_LOG_ERROR("AR_MPI_NPU_MallocCachedBuff {} s32Ret={}", input_name.c_str(), s32Ret);
@@ -150,6 +155,7 @@ int ARTOSYN_Session::MallocNPUBuff(void *handle, AR_U16 u16NetworkID) {
 
     std::string output_name = std::to_string(u16NetworkID) + "/output";
     m_stNPUOutBuff.u64Len = u32Size;
+    // m_stNPUOutBuff.u64Cacheable = 1;
     s32Ret = AR_MPI_NPU_MallocCachedBuff((AR_CHAR *)output_name.c_str(), &m_stNPUOutBuff);
     if (s32Ret) {
         AISDK_LOG_ERROR("AR_MPI_NPU_MallocCachedBuff {} s32Ret={}", output_name.c_str(), s32Ret);
@@ -207,8 +213,8 @@ int ARTOSYN_Session::MakeIfcInput(std::shared_ptr<ARTOSYN_AIModel> &aimodel) {
             stTensor.u32TensorStep, (float)stTensor.dScaleFactor, stTensor.u32Size, stTensor.u32Width,
             stTensor.s32ZeroPoint, stTensor.achLayoutType);
 
-        AR_NPU_IFC_PARAM_S stIFCParam = {0};
-        s32Ret = AR_MPI_NPU_GetIFCParamByName(aimodel->m_handle, stTensor.achName, &stIFCParam);
+        AR_NPU_IFC_PARAM_S stIFCParam[2];
+        s32Ret = AR_MPI_NPU_GetIFCParamByName(aimodel->m_handle, stTensor.achName, &stIFCParam[0]);
         AISDK_LOG_TRACE("AR_MPI_NPU_GetIFCParamByName s32Ret={}", s32Ret);
         if (s32Ret) {
             AISDK_LOG_ERROR("AR_MPI_NPU_GetIFCParamByName failure");
@@ -226,7 +232,7 @@ int ARTOSYN_Session::MakeIfcInput(std::shared_ptr<ARTOSYN_AIModel> &aimodel) {
             // 根据不同的soc，需要做不同的对齐要求
             AR_U16 u16Stride;
             if (aimodel->m_socversion == 1) {
-                u16Stride = stIFCParam.u32YStride;
+                u16Stride = stIFCParam[0].u32YStride;
             } else {
                 u16Stride = stTensor.u32Width;
             }
@@ -471,7 +477,7 @@ Status ARTOSYN_Session::Forword(ModelInfo &handle) {
     } else {
         // pstImg->
     }
-    s32Ret = AR_MPI_NPU_Forward((void *)handle.handle, pstImg, &m_stNPUInBuff, &m_stNPUOutBuff, AR_FALSE, AR_FALSE);
+    s32Ret = AR_MPI_NPU_Forward((void *)handle.handle, pstImg, &m_stNPUInBuff, &m_stNPUOutBuff, AR_TRUE, AR_FALSE);
     if (0 == s32Ret) {
         AR_MPI_NPU_InvalidCachedBuff(&m_stNPUOutBuff);
     }
