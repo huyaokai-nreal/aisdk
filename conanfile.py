@@ -3,6 +3,12 @@ import os
 class AISDK(ConanFile):
     python_requires = "project_base/1.0"
     python_requires_extend = "project_base.ProjectBase"
+    enable_xgraph_profiler = False
+    xgraph_version = "xgraph/main"
+    if os.getenv('ENABLE_XGRAPH_PROFILER') == 'ON':
+        enable_xgraph_profiler = True
+        xgraph_version = "xgraph/0.10.0.profiler"
+        
     def init(self):
         base = self.python_requires["project_base"].module.ProjectBase
         self.settings = base.settings
@@ -32,7 +38,7 @@ class AISDK(ConanFile):
             self.requires("framework/jenkins#835223d03ea5fdca60b7c57a1a759936897707f0")
         else:
             self.requires(super().override_require("framework/jenkins"), run=True)
-        self.requires("xgraph/main", transitive_libs=True)
+        self.requires(self.xgraph_version, transitive_libs=True)
         self.requires("abseil/20230125.3", transitive_libs=True)
         self.requires("protobuf/3.21.9", transitive_libs=True)
         self.requires("glog/0.6.0", transitive_libs=True)

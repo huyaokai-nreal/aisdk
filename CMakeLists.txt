@@ -80,6 +80,7 @@ option(ENABLE_LOG_LEVEL_RELEASE  "enable log level for release" ON)
 option(ENABLE_LOG_LEVEL_ALL "enable trace log level" OFF)
 
 # build algorithm
+option(ENABLE_XGRAPH_PROFILER "enable mediapipe graph framework profiler."  OFF)
 # 开启单帧在图的推理下耗时统计
 option(ENABLE_ALGORITHM_GRAPH_STREAM_EVAL_TIME "enable algorithm mediapipe graph stream eval time."  OFF)
 # 开启单帧在单模型的推理下耗时统计
@@ -99,6 +100,9 @@ if(ENBALE_M2P_DELAYED_TIME_PROFILER)
 endif()
 if(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
 add_definitions(-DENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
+endif()
+if(ENABLE_XGRAPH_PROFILER)
+add_definitions(-DENABLE_XGRAPH_PROFILER)
 endif()
 
 # build xengine nn
