@@ -95,7 +95,7 @@ class HandDataRecordState {
 
 class HandDataRecordCalculator : public xgraph::CalculatorBase {
    private:
-    DataDebugRecord recorder;
+    std::shared_ptr<DataDebugRecord> precorder;
     HandDataRecordState m_mgr;
     std::shared_ptr<base::BaseCameraModel> lcam_model_ = nullptr;
     std::shared_ptr<base::BaseCameraModel> rcam_model_ = nullptr;
@@ -131,7 +131,7 @@ class HandDataRecordCalculator : public xgraph::CalculatorBase {
                                                   std::shared_ptr<aisdk::base::BaseCameraModel>>>();
         lcam_model_ = cam_info.first;
         rcam_model_ = cam_info.second;
-        recorder.InitDebugConfig();
+        precorder = GetSharedDataDebugRecord(std::string("calculator+task"));
         return absl::OkStatus();
     }
 
@@ -144,20 +144,12 @@ class HandDataRecordCalculator : public xgraph::CalculatorBase {
         bool is_any_input_close = false;
         bool is_debug_close = false;
 
-#ifdef DATA_RECORD_METHOD
-        std::string method = DATA_RECORD_METHOD;
-        if (method == "Gesture") {
-        } else if (method == "UnityButton") {
-            int debug_state = recorder.CheckRealTimeDebugUnityButton(0);
-            is_record_start = (debug_state > 0) ? true : false;
-        } else if (method == "DebugConfig") {
-            int debug_state = recorder.CheckRealTimeDebugConfig(0);
-            is_record_start = (debug_state > 0) ? true : false;
-        }
-#endif
         // 输入streamhandle是多输入，并且不是同步的，是及时响应类型的。
         // 意味着有输入就需要响应，多输入同时完成的动作，需要自己判断。
-        if (is_record_start || recorder.CheckDeveloperDebug()) {
+        DataDebugRecord& recorder = *precorder;
+        recorder.CheckUserDebug(0);  // 触发
+        is_record_start = recorder.CheckDeveloperDebug();
+        if (is_record_start) {
             // 某个输入以及产生
             for (aisdk::xgraph::CollectionItemId id = cc->Inputs().BeginId(); id < cc->Inputs().EndId(); ++id) {
                 auto& coll = cc->Inputs().Get(id);

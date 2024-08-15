@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include "aisdk/algorithm/common/nrnet_define.h"
+#include "aisdk/algorithm/common/data_debug_record.h"
 #include "aisdk/algorithm/func/hand_filters.h"
 #include "base_xgraph.h"
 #include "perception/nr_perception_hand_tracking.h"
@@ -16,6 +17,8 @@ struct FrameTrackInfo {
 class HandTrackingXGraph : public BaseXGraph {
    private:
     std::unique_ptr<algorithm::HandFilters> m_post_filter;
+    std::shared_ptr<algorithm::DataDebugRecord> precorder;
+    uint64_t m_gsequence_predict_id = 0;
     // 不能随意修改此值，注意数组下标越界
     uint64_t handresult_output_groud_index = 0;
     uint64_t handresult_output_packet_index = 0;

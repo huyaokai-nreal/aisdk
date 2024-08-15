@@ -10,7 +10,6 @@
 #include <vector>
 
 #include "aisdk/algorithm/common/NR_GlobalPredictorService.h"
-#include "aisdk/algorithm/common/data_debug_record.h"
 #include "aisdk/algorithm/common/hand_define.h"
 #include "aisdk/algorithm/common/nrcore_define.h"
 #include "aisdk/algorithm/common/nrnet_define.h"
@@ -188,6 +187,7 @@ aisdk::algorithm::Status HandTrackingXGraph::Init(aisdk::xengine::DlSymFuncs& fu
         m_post_filter = std::make_unique<algorithm::HandFilters>("ella");
     }
     m_post_filter->init();
+    precorder = aisdk::algorithm::GetSharedDataDebugRecord(std::string("calculator+task"));
 
 #if defined(ENABLE_XGRAPH_PROFILER)
     std::string with_xgrap_profiler_config;
@@ -311,8 +311,10 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
     double query_time = static_cast<double>(hmd_time_nano) / 1e9;
     std::shared_ptr<StreamCache> outlist = GetOutputStreamCache(handresult_output_groud_index);
     if (outlist) {
+        Json::Value export_root;
         auto& hand_data_packet = outlist->m_output_packs[handresult_output_packet_index];
         auto& hand_data_internal = hand_data_packet.Get<algorithm::HandsData>();
+        auto graph_timestamp = (uint64_t)hand_data_packet.Timestamp().Value();
         const auto& latest_timestamp = hand_data_packet.Timestamp().Seconds();
 
         AISDK_LOG_TRACE("[PopResult] lhand begin");
@@ -444,10 +446,14 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
                 AISDK_LOG_TRACE("[PopResult Predict] {} hand end", i);
                 out_hand_array[i].image_timestamp_nanos = outlist->raw_timestamp;
             }
-        }
-
 #if defined(ENABLE_ALGORITHM_DATA_RECORD)
+            if (precorder->CheckDeveloperDebug()) {
+                precorder->DebugPredicted(out_hand_array[i], outlist->raw_timestamp, graph_timestamp, hmd_time_nano,
+                                          query_time, predicted_points, i, export_root, 0, m_gsequence_predict_id);
+            }
 #endif
+        }
+        m_gsequence_predict_id++;
         return aisdk::algorithm::Status::SUCCESS;
     }
 
@@ -491,7 +497,7 @@ algorithm::Status HandTrackingXGraph::PopExecInfo(uint64_t& timestamp, std::stri
         } else if (outlist->raw_timestamp > target_frame) {
             // 这里说明base_xgraph已经出现种种drop的行为。统一处理
             timestamp = target_frame;
-            aisdk::algorithm::DataDebugRecord::MakeBusyPipelineNodeInfoToJsonString(jsonstring);
+            precorder->MakeBusyPipelineNodeInfoToJsonString(jsonstring);
             // 使用完毕清除
             std::lock_guard<std::mutex> guard(m_track_frame_lock);
             m_debug_frame_infos.erase(target_frame);

@@ -51,6 +51,7 @@ endif()
 
 target_compile_options(${ALGORITHM_LIBRARY_NAME}
     PRIVATE -Wno-error
+    PRIVATE -DNRPLUGIN
 )
 
 

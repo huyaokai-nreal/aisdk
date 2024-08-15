@@ -4,6 +4,9 @@
 #include <absl/time/time.h>
 #include <sys/time.h>
 
+#include <memory>
+#include <string>
+
 #include "aisdk/algorithm/common/hand_define.h"
 #include "aisdk/base/file.h"
 
@@ -27,6 +30,7 @@ void DataDebugRecord::InitDebugConfig() {
         // 修改成实时录制
         std::string data_record_statusf = prof.local_data_record_rootpath + "record.status";
         aisdk::base::WriteToFile(data_record_statusf, std::string("record_init\n"), false);
+        pipeline_debug = false;
         AISDK_LOG_ERROR("Debug: record_init");
     }
 
@@ -59,7 +63,7 @@ void DataDebugRecord::InitDebugConfig() {
         enable_globalfilter_tojson = true;
         enable_rotation_tojson = true;
         enable_gesturereg_tojson = true;
-        enable_predicted_tojson = false;
+        enable_predicted_tojson = true;
         inference_json_save_file = true;
     }
 
@@ -79,11 +83,31 @@ void DataDebugRecord::InitDebugConfig() {
     }
 }
 
-int DataDebugRecord::CheckDeveloperDebug() {
-    if (export_pipeline_node_data_jsonstring || developer_test_all) {
-        return 1;
+bool DataDebugRecord::CheckDeveloperDebug() {
+    if (pipeline_debug &&
+        (export_pipeline_node_data_jsonstring || developer_test_all || local_pipeline_node_data_record)) {
+        return true;
     }
-    return 0;
+    return false;
+}
+
+bool DataDebugRecord::CheckUserDebug(uint64_t timestamp) {
+    bool is_record_start = false;
+    if (local_pipeline_node_data_record) {
+        std::lock_guard<std::mutex> guard(m_state_lock);
+#ifdef DATA_RECORD_METHOD
+        std::string method = DATA_RECORD_METHOD;
+        if (method == "Gesture") {
+        } else if (method == "UnityButton") {
+            int debug_state = CheckRealTimeDebugUnityButton(timestamp);
+            is_record_start = (debug_state > 0) ? true : false;
+        } else if (method == "DebugConfig") {
+            int debug_state = CheckRealTimeDebugConfig(timestamp);
+            is_record_start = (debug_state > 0) ? true : false;
+        }
+#endif
+    }
+    return is_record_start;
 }
 
 int DataDebugRecord::CheckRealTimeDebugUnityButton(uint64_t timestamp) {
@@ -1217,73 +1241,93 @@ void DataDebugRecord::DebugWholeInference(Recordcache* record, RecordExport* rec
     }
 }
 
-// void DataDebugRecord::PredictToJsonString(HandPredictData& cur_hand, uint64_t predicted_time_nanos,
-//                                           uint64_t target_timestamp, std::vector<cv::Vec3f>& predicted_hand_points,
-//                                           uint32_t step, Json::Value& export_root, uint64_t cur_equence_id,
-//                                           uint64_t predicted_equence_id) {
-//     uint32_t lrhand = step & 1;
+void DataDebugRecord::PredictToJsonString(const HandData& hands, uint64_t current_time_nanos,
+                                          uint64_t xgraph_frame_timestamp, uint64_t predicted_time_nanos,
+                                          uint64_t target_timestamp, std::vector<Vec3f_t>& predicted_hand_points,
+                                          uint32_t step, Json::Value& export_root, uint64_t cur_equence_id,
+                                          uint64_t predicted_equence_id) {
+    uint32_t lrhand = step & 1;
 
-//     Json::Value root1;
-//     Json::Value root3;
-//     for (int kpt_index = 0; kpt_index < EZXR_DEFINED_JOINTS; kpt_index++) {
-//         Eigen::Quaterniond quaternion(cur_hand.rotations_world[kpt_index]);
+    Json::Value root1;
+    Json::Value root3;
+    for (int kpt_index = 0; kpt_index < predicted_hand_points.size(); kpt_index++) {
+        auto& rotation = hands.hand_joint_data[kpt_index].hand_joint_pose.rotation;
 
-//         Json::Value root2;
-//         root2[0] = quaternion.x();
-//         root2[1] = quaternion.y();
-//         root2[2] = quaternion.z();
-//         root2[3] = quaternion.w();
-//         root1[kpt_index] = root2;
+        Json::Value root2;
+        root2[0] = rotation.qx;
+        root2[1] = rotation.qy;
+        root2[2] = rotation.qz;
+        root2[3] = rotation.qw;
+        root1[kpt_index] = root2;
 
-//         Json::Value root4;
-//         root4[0] = predicted_hand_points[kpt_index][0];
-//         root4[1] = predicted_hand_points[kpt_index][1];
-//         root4[2] = predicted_hand_points[kpt_index][2];
-//         root3[kpt_index] = root4;
-//     }
+        Json::Value root4;
+        root4[0] = predicted_hand_points[kpt_index][0];
+        root4[1] = predicted_hand_points[kpt_index][1];
+        root4[2] = predicted_hand_points[kpt_index][2];
+        root3[kpt_index] = root4;
+    }
 
-//     if (0 == lrhand) {
-//         export_root["predicted"]["lefthand"]["keypoints"] = root3;
-//         export_root["predicted"]["lefthand"]["orientation"] = root1;
-//         export_root["predicted"]["lefthand"]["gesture_result"] = cur_hand.gesture_type;
-//         export_root["predicted"]["lefthand"]["is_tracked"] = cur_hand.tracked;
-//         export_root["predicted"]["lefthand"]["target_timestamp"] = target_timestamp;
-//         export_root["leftright_hand_status"][0] = cur_hand.tracked;
-//     } else if (1 == lrhand) {
-//         export_root["predicted"]["righthand"]["keypoints"] = root3;
-//         export_root["predicted"]["righthand"]["orientation"] = root1;
-//         export_root["predicted"]["righthand"]["gesture_result"] = cur_hand.gesture_type;
-//         export_root["predicted"]["righthand"]["is_tracked"] = cur_hand.tracked;
-//         export_root["predicted"]["righthand"]["target_timestamp"] = target_timestamp;
-//         export_root["leftright_hand_status"][1] = cur_hand.tracked;
-//     }
+    if (0 == lrhand) {
+        export_root["predicted"]["lefthand"]["keypoints"] = root3;
+        export_root["predicted"]["lefthand"]["orientation"] = root1;
+        export_root["predicted"]["lefthand"]["gesture_result"] = (int)hands.gesture_type;
+        export_root["predicted"]["lefthand"]["is_tracked"] = hands.is_tracked;
+        export_root["predicted"]["lefthand"]["target_timestamp_second"] = target_timestamp;
+        export_root["leftright_hand_status"][0] = hands.is_tracked;
+    } else if (1 == lrhand) {
+        export_root["predicted"]["righthand"]["keypoints"] = root3;
+        export_root["predicted"]["righthand"]["orientation"] = root1;
+        export_root["predicted"]["righthand"]["gesture_result"] = (int)hands.gesture_type;
+        export_root["predicted"]["righthand"]["is_tracked"] = hands.is_tracked;
+        export_root["predicted"]["righthand"]["target_timestamp_second"] = target_timestamp;
+        export_root["leftright_hand_status"][1] = hands.is_tracked;
+    }
 
-//     std::string inference_token =
-//         std::string("/seq_") + NrUtils::string_sprintf("%010d", cur_equence_id) + "_inference.json";
-//     export_root["inference_token"] = inference_token;
-//     export_root["current_time_nanos"] = cur_hand.time;
-//     export_root["predicted_time_nanos"] = predicted_time_nanos;
-//     export_root["current_system_time"] = NrUtils::getTime();
+    // std::string inference_token =
+    //     std::string("/seq_") + aisdk::base::StringSprintf("%010d", cur_equence_id) + "_inference.json";
+    std::string inference_token("unkown");
+    export_root["inference_token"] = inference_token;
+    export_root["current_time_nanos"] = current_time_nanos;
+    export_root["predicted_time_nanos"] = predicted_time_nanos;
+    export_root["xgraph_frame_timestamp"] = xgraph_frame_timestamp;
+    export_root["current_system_time"] = absl::FormatTime("%Y-%m-%d %H:%M:%E3S", absl::Now(), absl::LocalTimeZone());
 
-//     if (1 == lrhand) {
-//         std::string json_string;
-//         Json::StyledWriter fwriter;
-//         json_string = fwriter.write(export_root);
-//         std::string json_name = predict_json_local_record_rootpath + "/seq_" +
-//                                 NrUtils::string_sprintf("%010d", predicted_equence_id) + "_predicted.json";
-//         NrUtils::WriteToFile(json_name, json_string);
-//     }
-// }
+    if (1 == lrhand) {
+        std::string json_string;
+        Json::StyledWriter fwriter;
+        json_string = fwriter.write(export_root);
+        std::string json_name = predict_json_local_record_rootpath + "/seq_" +
+                                aisdk::base::StringSprintf("%010d", predicted_equence_id) + "_predicted.json";
+        aisdk::base::WriteToFile(json_name, json_string, false);
+    }
+}
 
-// void DataDebugRecord::DebugPredicted(HandPredictData& cur_hand, uint64_t predicted_time_nanos,
-//                                      uint64_t target_timestamp, std::vector<cv::Vec3f>& predicted_hand_points,
-//                                      uint32_t step, Json::Value& export_root, uint64_t cur_equence_id,
-//                                      uint64_t predicted_equence_id) {
-//     if (enable_predicted_tojson) {
-//         PredictToJsonString(cur_hand, predicted_time_nanos, target_timestamp, predicted_hand_points, step,
-//         export_root,
-//                             cur_equence_id, predicted_equence_id);
-//     }
-// }
+void DataDebugRecord::DebugPredicted(const HandData& hands, uint64_t current_time_nanos,
+                                     uint64_t xgraph_frame_timestamp, uint64_t predicted_time_nanos,
+                                     uint64_t target_timestamp, std::vector<Vec3f_t>& predicted_hand_points,
+                                     uint32_t step, Json::Value& export_root, uint64_t cur_equence_id,
+                                     uint64_t predicted_equence_id) {
+    if (enable_predicted_tojson) {
+        PredictToJsonString(hands, current_time_nanos, xgraph_frame_timestamp, predicted_time_nanos, target_timestamp,
+                            predicted_hand_points, step, export_root, cur_equence_id, predicted_equence_id);
+    }
+}
+
+static std::mutex rd_manager_lock;
+static std::map<std::string, std::shared_ptr<DataDebugRecord>> rd_manager;
+std::shared_ptr<DataDebugRecord> GetSharedDataDebugRecord(std::string key) {
+    std::shared_ptr<DataDebugRecord> ret;
+    std::lock_guard<std::mutex> guard(rd_manager_lock);
+    if (rd_manager.find(key) == rd_manager.end()) {
+        auto rd = std::make_shared<DataDebugRecord>();
+        rd->InitDebugConfig();
+        rd_manager[key] = rd;
+        ret = rd;
+    } else {
+        ret = rd_manager[key];
+    }
+
+    return ret;
+}
 
 }  // namespace aisdk::algorithm

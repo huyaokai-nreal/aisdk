@@ -745,15 +745,15 @@ int HandTrackingSdk::StartSdk(std::map<std::string, std::string> &config_params)
     // memset(&m_profiling_option, 0, sizeof(ProfilingOption));
     m_profiling_option.struct_bytes = 0;
     m_profiling_option.aisdk_init_report = 1;
-    m_profiling_option.pipeline_debug = 0;
-    m_profiling_option.pipeline_node_time_statistics = 0;
+    m_profiling_option.pipeline_debug = 1;
+    // m_profiling_option.pipeline_node_time_statistics = 0;
     m_profiling_option.export_pipeline_exec_info_jsonstring = 0;
-    m_profiling_option.handtracking_pipeline_exec_enable_detect_boxtracker = 1;
-    m_profiling_option.handtracking_pipeline_exec_enable_detect_boxsmooth = 1;
-    m_profiling_option.handtracking_pipeline_exec_enable_sync_kfpredictor = 0;
-    m_profiling_option.handtracking_pipeline_exec_enable_sync_kfpredictor_timems = 0;
-    m_profiling_option.handtracking_pipeline_exec_enable_sync_world_seqfilter = 0;
-    m_profiling_option.developer_test_all = 0;
+    // m_profiling_option.handtracking_pipeline_exec_enable_detect_boxtracker = 1;
+    // m_profiling_option.handtracking_pipeline_exec_enable_detect_boxsmooth = 1;
+    // m_profiling_option.handtracking_pipeline_exec_enable_sync_kfpredictor = 0;
+    // m_profiling_option.handtracking_pipeline_exec_enable_sync_kfpredictor_timems = 0;
+    // m_profiling_option.handtracking_pipeline_exec_enable_sync_world_seqfilter = 0;
+    m_profiling_option.developer_test_all = 1;
 
     m_profiling_option.camera_model = m_camera_params.device1.camera_model;
     m_profiling_option.generate_method = 2;
