@@ -54,6 +54,8 @@ class SNPEWrapper {
     Snpe_RuntimeList_Handle_t m_runtimeList;
     Snpe_StringList_Handle_t m_set_outputLayers;
     Snpe_StringList_Handle_t m_set_outputTensors;
+    Snpe_IDiagLog_Handle_t m_idiaglog;
+    Snpe_Options_Handle_t m_idiagopt;
 
     std::map<std::string, std::vector<size_t>> m_inputShapes;
     std::map<std::string, std::vector<size_t>> m_outputShapes;

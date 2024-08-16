@@ -25,6 +25,8 @@
 
 #else
 
+#include "DiagLog/IDiagLog.h"
+#include "DiagLog/Options.h"
 #include "DlContainer/DlContainer.h"
 #include "DlSystem/DlEnums.h"
 #include "DlSystem/DlError.h"

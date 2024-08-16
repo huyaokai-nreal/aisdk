@@ -1,9 +1,15 @@
 #include "snpe_wrapper.h"
 
+#include <atomic>
+#include <cstdint>
 #include <iostream>
 
 #include "aisdk/base/log.h"
+#include "aisdk/base/profiling.h"
+
 using namespace std;
+
+static std::atomic<uint8_t> g_snpe_NetworkID(0);
 
 static size_t calcSizeFromDims(const size_t* dims, size_t rank, size_t elementSize) {
     if (rank == 0) return 0;
@@ -152,6 +158,14 @@ bool SNPEWrapper::init(const std::string& model_path, const std::string& runtime
         AISDK_LOG_TRACE("Snpe_SNPEBuilder_Build Signed dsp\n");
     }
 
+#if defined(ENABLE_XENGINE_TRACE_SNPE_PROFILER_DIAGLOG)
+    if (1) {
+        // dsp 只能用 SNPE_PROFILING_LEVEL_BASIC ???
+        snpe2_capi.Snpe_SNPEBuilder_SetProfilingLevel(snpeBuilderHandle,
+                                                      Snpe_ProfilingLevel_t::SNPE_PROFILING_LEVEL_BASIC);
+    }
+#endif
+
     m_snpe = snpe2_capi.Snpe_SNPEBuilder_Build(snpeBuilderHandle);
     if (nullptr == m_snpe) {
         const char* errStr = snpe2_capi.Snpe_ErrorCode_GetLastErrorString();
@@ -159,6 +173,23 @@ bool SNPEWrapper::init(const std::string& model_path, const std::string& runtime
         return false;
     }
 
+#if defined(ENABLE_XENGINE_TRACE_SNPE_PROFILER_DIAGLOG)
+    if (1) {
+        m_idiaglog = snpe2_capi.Snpe_SNPE_GetDiagLogInterface_Ref(m_snpe);
+        if (m_idiaglog) {
+            m_idiagopt = snpe2_capi.Snpe_IDiagLog_GetOptions(m_idiaglog);
+            if (m_idiagopt) {
+                auto& prof = aisdk::base::DebugProfiling::Get().GetOpt();
+                auto id = g_snpe_NetworkID.fetch_add(1);
+                std::string diaglogfilename = prof.local_data_record_rootpath + "/snpe.diaglog." + std::to_string(id);
+                snpe2_capi.Snpe_Options_SetLogFileName(m_idiagopt, diaglogfilename.c_str());
+                snpe2_capi.Snpe_IDiagLog_SetOptions(m_idiaglog, m_idiagopt);
+                snpe2_capi.Snpe_IDiagLog_Start(m_idiaglog);
+                AISDK_LOG_ERROR("Snpe_IDiagLog_Start log={}", diaglogfilename.c_str());
+            }
+        }
+    }
+#endif
     // get input tensor names of the network that need to be populated
     Snpe_StringList_Handle_t inputNamesHandle = snpe2_capi.Snpe_SNPE_GetInputTensorNames(m_snpe);
 
@@ -318,6 +349,14 @@ bool SNPEWrapper::init(const uint8_t* buffer, const size_t size, const std::stri
         AISDK_LOG_TRACE("Snpe_SNPEBuilder_Build Signed dsp\n");
     }
 
+#if defined(ENABLE_XENGINE_TRACE_SNPE_PROFILER_DIAGLOG)
+    if (1) {
+        // dsp 只能用 SNPE_PROFILING_LEVEL_BASIC ???
+        snpe2_capi.Snpe_SNPEBuilder_SetProfilingLevel(snpeBuilderHandle,
+                                                      Snpe_ProfilingLevel_t::SNPE_PROFILING_LEVEL_BASIC);
+    }
+#endif
+
     m_snpe = snpe2_capi.Snpe_SNPEBuilder_Build(snpeBuilderHandle);
     if (nullptr == m_snpe) {
         const char* errStr = snpe2_capi.Snpe_ErrorCode_GetLastErrorString();
@@ -325,6 +364,25 @@ bool SNPEWrapper::init(const uint8_t* buffer, const size_t size, const std::stri
         return false;
     }
     AISDK_LOG_TRACE("build success! ");
+
+#if defined(ENABLE_XENGINE_TRACE_SNPE_PROFILER_DIAGLOG)
+    if (1) {
+        m_idiaglog = snpe2_capi.Snpe_SNPE_GetDiagLogInterface_Ref(m_snpe);
+        if (m_idiaglog) {
+            m_idiagopt = snpe2_capi.Snpe_IDiagLog_GetOptions(m_idiaglog);
+            if (m_idiagopt) {
+                auto& prof = aisdk::base::DebugProfiling::Get().GetOpt();
+                auto id = g_snpe_NetworkID.fetch_add(1);
+                // std::string diaglogfilename = prof.local_data_record_rootpath + "snpe.diaglog." + std::to_string(id);
+                // snpe2_capi.Snpe_Options_SetLogFileName(m_idiagopt, diaglogfilename.c_str());
+                snpe2_capi.Snpe_Options_SetLogFileDirectory(m_idiagopt, prof.local_data_record_rootpath.c_str());
+                snpe2_capi.Snpe_IDiagLog_SetOptions(m_idiaglog, m_idiagopt);
+                snpe2_capi.Snpe_IDiagLog_Start(m_idiaglog);
+                AISDK_LOG_ERROR("Snpe_IDiagLog_Start log={}", diaglogfilename.c_str());
+            }
+        }
+    }
+#endif
 
     // get input tensor names of the network that need to be populated
     Snpe_StringList_Handle_t inputNamesHandle = snpe2_capi.Snpe_SNPE_GetInputTensorNames(m_snpe);
@@ -409,6 +467,12 @@ bool SNPEWrapper::init(const uint8_t* buffer, const size_t size, const std::stri
 }
 
 bool SNPEWrapper::release() {
+#if defined(ENABLE_XENGINE_TRACE_SNPE_PROFILER_DIAGLOG)
+    if (nullptr != m_idiaglog) {
+        snpe2_capi.Snpe_IDiagLog_Stop(m_idiaglog);
+    }
+#endif
+
     if (nullptr != m_runtimeList) snpe2_capi.Snpe_RuntimeList_Delete(m_runtimeList);
     for (auto& input : m_inputUserBuffers) {
         if (nullptr != input) snpe2_capi.Snpe_IUserBuffer_Delete(input);

@@ -65,6 +65,7 @@ typedef struct SnpeCInterface {
                                      Snpe_TensorShapeMap_Handle_t)
     REGISTER_C_INTERFACE_DECLARATION(Snpe_ErrorCode_t, Snpe_SNPEBuilder_SetPlatformConfig, Snpe_SNPEBuilder_Handle_t,
                                      Snpe_PlatformConfig_Handle_t)
+    REGISTER_C_INTERFACE_DECLARATION(Snpe_ErrorCode_t, Snpe_SNPEBuilder_SetProfilingLevel, Snpe_SNPEBuilder_Handle_t, Snpe_ProfilingLevel_t)
     REGISTER_C_INTERFACE_DECLARATION(Snpe_SNPE_Handle_t, Snpe_SNPEBuilder_Build, Snpe_SNPEBuilder_Handle_t)
     REGISTER_C_INTERFACE_DECLARATION(Snpe_ErrorCode_t, Snpe_SNPEBuilder_Delete, Snpe_SNPEBuilder_Handle_t)
     /* SNPE */
@@ -74,7 +75,8 @@ typedef struct SnpeCInterface {
     REGISTER_C_INTERFACE_DECLARATION(Snpe_StringList_Handle_t, Snpe_SNPE_GetOutputTensorNames, Snpe_SNPE_Handle_t)
     REGISTER_C_INTERFACE_DECLARATION(Snpe_ErrorCode_t, Snpe_SNPE_ExecuteUserBuffers, Snpe_SNPE_Handle_t,
                                      Snpe_UserBufferMap_Handle_t, Snpe_UserBufferMap_Handle_t)
-    REGISTER_C_INTERFACE_DECLARATION(Snpe_ErrorCode_t, Snpe_SNPE_Delete, Snpe_SNPE_Handle_t);
+    REGISTER_C_INTERFACE_DECLARATION(Snpe_ErrorCode_t, Snpe_SNPE_Delete, Snpe_SNPE_Handle_t)
+    REGISTER_C_INTERFACE_DECLARATION(Snpe_IDiagLog_Handle_t,Snpe_SNPE_GetDiagLogInterface_Ref,Snpe_SNPE_Handle_t)
     /* TensorShapeMap */
     REGISTER_C_INTERFACE_DECLARATION(Snpe_TensorShapeMap_Handle_t, Snpe_TensorShapeMap_Create)
     REGISTER_C_INTERFACE_DECLARATION(Snpe_ErrorCode_t, Snpe_TensorShapeMap_Add, Snpe_TensorShapeMap_Handle_t,
@@ -110,6 +112,18 @@ typedef struct SnpeCInterface {
     /* DlVersion */
     REGISTER_C_INTERFACE_DECLARATION(const char*, Snpe_DlVersion_ToString, Snpe_DlVersion_Handle_t)
     REGISTER_C_INTERFACE_DECLARATION(Snpe_ErrorCode_t, Snpe_DlVersion_Delete, Snpe_DlVersion_Handle_t)
+    /* IDiagLog */
+    REGISTER_C_INTERFACE_DECLARATION(Snpe_Options_Handle_t, Snpe_IDiagLog_GetOptions, Snpe_IDiagLog_Handle_t)
+    REGISTER_C_INTERFACE_DECLARATION(Snpe_ErrorCode_t, Snpe_IDiagLog_SetOptions, Snpe_IDiagLog_Handle_t, Snpe_Options_Handle_t)
+    REGISTER_C_INTERFACE_DECLARATION(Snpe_ErrorCode_t, Snpe_IDiagLog_Start, Snpe_IDiagLog_Handle_t)
+    REGISTER_C_INTERFACE_DECLARATION(Snpe_ErrorCode_t, Snpe_IDiagLog_Stop, Snpe_IDiagLog_Handle_t)
+    /* IDiagLog Options */
+    REGISTER_C_INTERFACE_DECLARATION(Snpe_Options_Handle_t, Snpe_Options_Create)
+    REGISTER_C_INTERFACE_DECLARATION(Snpe_ErrorCode_t, Snpe_Options_Delete, Snpe_Options_Handle_t)
+    REGISTER_C_INTERFACE_DECLARATION(const char*, Snpe_Options_GetLogFileName, Snpe_Options_Handle_t)
+    REGISTER_C_INTERFACE_DECLARATION(void, Snpe_Options_SetLogFileName, Snpe_Options_Handle_t, const char*)
+    REGISTER_C_INTERFACE_DECLARATION(void, Snpe_Options_SetLogFileDirectory, Snpe_Options_Handle_t, const char*)
+
 } SnpeCInterface;
 
 typedef struct SnpePlatformCInterface {

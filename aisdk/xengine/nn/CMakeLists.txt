@@ -14,7 +14,15 @@ if(ENABLE_XENGINE_SNPE_NN)
     if(SNPE_VERSION STREQUAL "snpe-2.17.0")
         target_compile_options(${XENGINE_LIBRARY_NAME} PRIVATE -DSNPE_VERSION=2170)
     endif()
-    
+
+    if(ENABLE_XENGINE_TRACE_SNPE_LOG)
+        target_compile_options(${XENGINE_LIBRARY_NAME} PRIVATE -DENABLE_XENGINE_TRACE_SNPE_LOG)
+    endif()
+
+    if(ENABLE_XENGINE_TRACE_SNPE_PROFILER_DIAGLOG)
+        target_compile_options(${XENGINE_LIBRARY_NAME} PRIVATE -DENABLE_XENGINE_TRACE_SNPE_PROFILER_DIAGLOG)
+    endif()
+
     set(pattern_snpe2 "snpe-2\.[0-9]+\.[0-9]+")
     string(REGEX MATCH "${pattern_snpe2}" match_snpe2 "${SNPE_VERSION}")
     message("match_snpe2=" ${match_snpe2})

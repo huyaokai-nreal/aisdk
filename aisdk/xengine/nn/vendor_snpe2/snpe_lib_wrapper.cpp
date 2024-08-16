@@ -47,12 +47,12 @@ int SNPELibWrapper::LoadSnpe2CInterface(const char* snpe_soname, struct SnpeCInt
         ConvertDlstruct(Snpe_SNPEBuilder_SetUseUserSuppliedBuffers),
         ConvertDlstruct(Snpe_SNPEBuilder_SetPerformanceProfile), ConvertDlstruct(Snpe_SNPEBuilder_SetInputDimensions),
         ConvertDlstruct(Snpe_SNPEBuilder_SetOutputLayers), ConvertDlstruct(Snpe_SNPEBuilder_SetOutputTensors),
-        ConvertDlstruct(Snpe_SNPEBuilder_SetPlatformConfig), ConvertDlstruct(Snpe_SNPEBuilder_Build),
-        ConvertDlstruct(Snpe_SNPEBuilder_Delete),
+        ConvertDlstruct(Snpe_SNPEBuilder_SetPlatformConfig), ConvertDlstruct(Snpe_SNPEBuilder_SetProfilingLevel),
+        ConvertDlstruct(Snpe_SNPEBuilder_Build), ConvertDlstruct(Snpe_SNPEBuilder_Delete),
         /* SNPE */
         ConvertDlstruct(Snpe_SNPE_GetInputTensorNames), ConvertDlstruct(Snpe_SNPE_GetInputOutputBufferAttributes),
         ConvertDlstruct(Snpe_SNPE_GetOutputTensorNames), ConvertDlstruct(Snpe_SNPE_ExecuteUserBuffers),
-        ConvertDlstruct(Snpe_SNPE_Delete),
+        ConvertDlstruct(Snpe_SNPE_Delete), ConvertDlstruct(Snpe_SNPE_GetDiagLogInterface_Ref),
         /* TensorShapeMap */
         ConvertDlstruct(Snpe_TensorShapeMap_Create), ConvertDlstruct(Snpe_TensorShapeMap_Add),
         /* TensorShape */
@@ -74,7 +74,14 @@ int SNPELibWrapper::LoadSnpe2CInterface(const char* snpe_soname, struct SnpeCInt
         ConvertDlstruct(Snpe_UserBufferEncodingFloat_Create), ConvertDlstruct(Snpe_UserBufferEncodingFloat_Delete),
         ConvertDlstruct(Snpe_IUserBuffer_Delete),
         /* DlVersion */
-        ConvertDlstruct(Snpe_DlVersion_ToString), ConvertDlstruct(Snpe_DlVersion_Delete)};
+        ConvertDlstruct(Snpe_DlVersion_ToString), ConvertDlstruct(Snpe_DlVersion_Delete),
+        /* IDiagLog */
+        ConvertDlstruct(Snpe_IDiagLog_GetOptions), ConvertDlstruct(Snpe_IDiagLog_SetOptions),
+        ConvertDlstruct(Snpe_IDiagLog_Start), ConvertDlstruct(Snpe_IDiagLog_Stop),
+        /* IDiagLog Options */
+        ConvertDlstruct(Snpe_Options_Create), ConvertDlstruct(Snpe_Options_Delete),
+        ConvertDlstruct(Snpe_Options_GetLogFileName), ConvertDlstruct(Snpe_Options_SetLogFileName),
+        ConvertDlstruct(Snpe_Options_SetLogFileDirectory)};
 
     // std::stringstream path;
     // std::string native_lib_path =

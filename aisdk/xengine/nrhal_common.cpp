@@ -369,6 +369,7 @@ void SignalHandler(int sig) {
 }
 
 #if SNPE_VERSION > 2000
+static bool SNPE_LOG_Initialize_Done = false;
 #include "aisdk/xengine/nn/vendor_snpe2/snpe_lib_wrapper.h"
 bool checkHexagonDSP(aisdk::xengine::PlatformEnv* env) {
     SnpeCInterface temp;
@@ -377,7 +378,15 @@ bool checkHexagonDSP(aisdk::xengine::PlatformEnv* env) {
         AISDK_LOG_TRACE("getProviderfailed!");
         return false;
     }
-    temp.Snpe_Util_InitializeLogging(Snpe_LogLevel_t::SNPE_LOG_LEVEL_ERROR);
+
+    if (!SNPE_LOG_Initialize_Done) {
+        temp.Snpe_Util_InitializeLogging(Snpe_LogLevel_t::SNPE_LOG_LEVEL_ERROR);
+#if defined(ENABLE_XENGINE_TRACE_SNPE_LOG)
+        temp.Snpe_Util_SetLogLevel(Snpe_LogLevel_t::SNPE_LOG_LEVEL_INFO);
+#endif
+        SNPE_LOG_Initialize_Done = true;
+    }
+
     bool res = temp.Snpe_Util_IsRuntimeAvailable(Snpe_Runtime_t::SNPE_RUNTIME_DSP);
     AISDK_LOG_TRACE("Snpe_Util_IsRuntimeAvailable: {}", res);
     if (!res) {
@@ -419,7 +428,15 @@ bool checkHexagonSignedPD(aisdk::xengine::PlatformEnv* env) {
         AISDK_LOG_TRACE("getProviderfailed!");
         return false;
     }
-    temp.Snpe_Util_InitializeLogging(Snpe_LogLevel_t::SNPE_LOG_LEVEL_ERROR);
+
+    if (!SNPE_LOG_Initialize_Done) {
+        temp.Snpe_Util_InitializeLogging(Snpe_LogLevel_t::SNPE_LOG_LEVEL_ERROR);
+#if defined(ENABLE_XENGINE_TRACE_SNPE_LOG)
+        temp.Snpe_Util_SetLogLevel(Snpe_LogLevel_t::SNPE_LOG_LEVEL_INFO);
+#endif
+        SNPE_LOG_Initialize_Done = true;
+    }
+
     bool res = temp.Snpe_Util_IsRuntimeAvailableCheckOption(
         Snpe_Runtime_t::SNPE_RUNTIME_DSP, Snpe_RuntimeCheckOption_t::SNPE_RUNTIME_CHECK_OPTION_NORMAL_CHECK);
     AISDK_LOG_TRACE("Snpe_Util_IsRuntimeAvailableCheckOption: {}", res);

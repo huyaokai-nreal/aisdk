@@ -112,6 +112,9 @@ if(NOT Xrlinux AND (CMAKE_SYSTEM_NAME STREQUAL "Android" OR CMAKE_SYSTEM_NAME ST
     option(ENABLE_XENGINE_SNPE_NN "enable snpe nn."  ON)
     set(SNPE_VERSION "snpe-2.17.0" CACHE STRING "set snpe version.")
     message(STATUS "SNPE_VERSION=" ${SNPE_VERSION})
+    # 启动snpe的Debug
+    option(ENABLE_XENGINE_TRACE_SNPE_LOG "enable trace snpe log."  OFF)
+    option(ENABLE_XENGINE_TRACE_SNPE_PROFILER_DIAGLOG "enable trace snpe profiler diaglog."  OFF)
     # 启动晓龙adsp/cdsp加速库
     option(ENABLE_HEXAGON_DSP_OP "enable hexagon dsp op."  OFF)
 endif()
