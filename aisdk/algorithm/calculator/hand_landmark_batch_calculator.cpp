@@ -161,8 +161,6 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
 #if defined(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
         TIMER_ONCE_WITH_TAG(HandLandmarkBatchCalculator::Process);
 #endif
-        AISDK_LOG_WARN("[HandLandmarkBatchCalculator] Process start");
-
         if (cc->Inputs().Tag("IMAGE_INPUT").IsEmpty() || cc->Inputs().Tag("BBOX_SMOOTHED_OUTPUT").IsEmpty()) {
             AISDK_LOG_TRACE(
                 "[HandLandmarkBatchCalculator] IMAGE_INPUT/BBOX_SMOOTHED_OUTPUT lost, this loop terminated here!");
