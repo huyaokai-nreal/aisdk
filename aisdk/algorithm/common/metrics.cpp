@@ -53,7 +53,7 @@ float get_bbox_distance(cv::Rect src, cv::Rect dst) {
 
 bool check_if_rect_valid(const DetectRect& rect, float max_width, float max_height, float bbox_in_image_ratio_th,
                          float min_bbox_area) {
-    float rect_size = std::max(rect.w, rect.h) * 1.5;
+    float rect_size = std::max(rect.w, rect.h);
     float cx = rect.x + rect.w / 2;
     float cy = rect.y + rect.h / 2;
     float new_x = cx - rect_size / 2;

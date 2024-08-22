@@ -113,18 +113,18 @@ void RTMTiny::PostProcess(Kpt2dResult &result) {
 
 absl::StatusOr<Kpt2dResult> RTMTiny::Inference(const std::vector<Image> &baseinput) {
     {
-        //TIMER_ONCE_WITH_TAG(RTMTiny::Preprocess);
+        // TIMER_ONCE_WITH_TAG(RTMTiny::Preprocess);
         PreProcess(baseinput);
     }
     Kpt2dResult baseresult;
     absl::Status ret;
     {
-        //TIMER_ONCE_WITH_TAG(RTMTiny::RunNet);
+        // TIMER_ONCE_WITH_TAG(RTMTiny::RunNet);
         ret = m_net->RunNet();
     }
     if (ret.ok()) {
         {
-            //TIMER_ONCE_WITH_TAG(RTMTiny::PoseProcess);
+            // TIMER_ONCE_WITH_TAG(RTMTiny::PoseProcess);
             PostProcess(baseresult);
         }
         return baseresult;
