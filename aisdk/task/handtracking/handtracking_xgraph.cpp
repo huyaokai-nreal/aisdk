@@ -58,25 +58,6 @@ static std::map<HandGesture, int> GestureMap = {
 HandTrackingXGraph::HandTrackingXGraph() {}
 HandTrackingXGraph::~HandTrackingXGraph() {}
 
-bool OpenXgraphProfiler(aisdk::xengine::PipelineConfig& config, std::string& with_xgrap_profiler_config) {
-    auto& prof = aisdk::base::DebugProfiling::Get().GetOpt();
-    std::string trace_log_path = prof.local_data_record_rootpath;
-    // clang-format off
-    std::string profiler_config1 = 
-        "\n"
-        "profiler_config {\n"
-        "  enable_profiler: false\n"
-        "  enable_stream_latency: false\n"
-        "  trace_enabled: false\n";
-    std::string profiler_config2 =     
-        std::string("  trace_log_path: \"") + trace_log_path +"\"\n"
-        "}\n";
-    // clang-format on
-    AISDK_LOG_WARN("OpenXgraphProfiler {} ", (profiler_config1 + profiler_config2).c_str());
-    with_xgrap_profiler_config = config.graph_config + profiler_config1 + profiler_config2;
-    return true;
-}
-
 bool AddDataRecordCalculater(aisdk::xengine::PipelineConfig& config, std::string& new_graph_config) {
     // clang-format off
     // 参考："aisdk/algorithm/calculator/hand_data_record_calculator.cpp"
@@ -188,14 +169,6 @@ aisdk::algorithm::Status HandTrackingXGraph::Init(aisdk::xengine::DlSymFuncs& fu
     }
     m_post_filter->init();
     precorder = aisdk::algorithm::GetSharedDataDebugRecord(std::string("calculator+task"));
-
-#if defined(ENABLE_XGRAPH_PROFILER)
-    std::string with_xgrap_profiler_config;
-    if (OpenXgraphProfiler(config, with_xgrap_profiler_config)) {
-        config.graph_config = with_xgrap_profiler_config;
-    }
-#endif
-
     bool add_record = false;
 #if defined(ENABLE_ALGORITHM_DATA_RECORD) && !defined(ENABLE_SEGMENT_JOINT_INFERENCE_MODE)
     std::string new_graph_config;

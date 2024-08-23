@@ -459,6 +459,16 @@ aisdk::algorithm::Status BaseXGraph::Init(aisdk::xengine::DlSymFuncs &funcs, ais
 
     xgraph::CalculatorGraphConfig graph_config =
         xgraph::ParseTextProtoOrDie<xgraph::CalculatorGraphConfig>(calculator_graph_config);
+#ifdef ENABLE_XGRAPH_PROFILER
+    auto ori_num_threads = graph_config.mutable_executor(0)
+                               ->mutable_options()
+                               ->MutableExtension(mediapipe::ThreadPoolExecutorOptions::ext)
+                               ->num_threads();
+    graph_config.mutable_executor(0)
+        ->mutable_options()
+        ->MutableExtension(mediapipe::ThreadPoolExecutorOptions::ext)
+        ->set_num_threads(ori_num_threads + 1);
+#endif
 
     m_calculator_graph = std::make_unique<xgraph::CalculatorGraph>();
 

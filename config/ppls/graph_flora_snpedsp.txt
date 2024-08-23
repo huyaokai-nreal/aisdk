@@ -1,20 +1,18 @@
-
+# 配置含义参考 https://github.com/nreal-alg-ai/xgraph/blob/main/mediapipe/framework/calculator.proto
 max_queue_size: 10
 input_stream: "IMAGE:image"
 input_stream: "HEADPOSE:head_pose"
 output_stream: "ALL_RESULTS:hand_result"
-
-input_stream_handler {
-  input_stream_handler: "FixedSizeInputStreamHandler"
-  options {
-    [mediapipe.FixedSizeInputStreamHandlerOptions.ext] {
-      trigger_queue_size: 2
-      target_queue_size: 1
-      fixed_min_size: false
-    }
-  }
-}
-
+#profiler_config {
+#    enable_profiler: true
+#    enable_stream_latency: true
+#    trace_log_path: "/sdcard/Android/data/com.xreal.evapro.nebula/files/profile_result_handtracking"
+#    trace_log_interval_usec: 1000
+#    trace_enabled: true
+#    trace_log_count: 10
+#    trace_log_capacity: 100000
+#    trace_log_interval_count: 1000
+#}
 executor {
   name: ""
   options {
@@ -35,6 +33,16 @@ node {
   output_stream: "DET_BBOX_OUTPUT:detection_output"
   output_stream: "IMAGE_OUTPUT:image_out"
   output_stream: "HEADPOSE_OUTPUT:head_pose_out"
+  input_stream_handler {
+    input_stream_handler: "FixedSizeInputStreamHandler"
+    options {
+      [mediapipe.FixedSizeInputStreamHandlerOptions.ext] {
+        trigger_queue_size: 2
+        target_queue_size: 1
+        fixed_min_size: false
+      }
+    }
+  }
   node_options: {
     [type.googleapis.com/aisdk.HandDetTrackCalculatorOptions] {
       model_name: "detect"

@@ -28,3 +28,7 @@ install(TARGETS ${XGRAPH_LIBRARY_NAME}
             RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
             ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 add_clang_format_target(${XGRAPH_LIBRARY_NAME})
+
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+add_subdirectory(reporter)
+endif()

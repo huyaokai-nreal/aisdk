@@ -1,13 +1,9 @@
 from conan import ConanFile
+from conan.tools.cmake import CMakeToolchain, CMakeDeps
 import os
 class AISDK(ConanFile):
     python_requires = "project_base/1.0"
     python_requires_extend = "project_base.ProjectBase"
-    enable_xgraph_profiler = False
-    xgraph_version = "xgraph/main"
-    if os.getenv('ENABLE_XGRAPH_PROFILER') == 'ON':
-        enable_xgraph_profiler = True
-        xgraph_version = "xgraph/0.10.0.profiler"
         
     def init(self):
         base = self.python_requires["project_base"].module.ProjectBase
@@ -23,6 +19,15 @@ class AISDK(ConanFile):
         update_model_cmd = "git submodule init && git submodule update"
         os.system(update_model_cmd)
         super().build()
+        
+
+    def generate(self):
+        tc = CMakeToolchain(self)
+        if os.getenv('ENABLE_XGRAPH_PROFILER') == 'ON':
+            tc.variables["ENABLE_XGRAPH_PROFILER"] = True
+        tc.generate()
+        deps = CMakeDeps(self)
+        deps.generate()
 
     def requirements(self):
         self.requires("fmt/9.1.0", transitive_headers=True, transitive_libs=True)
@@ -37,8 +42,15 @@ class AISDK(ConanFile):
         if self.settings.os == "Linux" and self.conf.get("user.os:distro") != "Xrlinux":
             self.requires("framework/jenkins#835223d03ea5fdca60b7c57a1a759936897707f0")
         else:
-            self.requires(super().override_require("framework/jenkins"), run=True)
-        self.requires(self.xgraph_version, transitive_libs=True)
+            #self.requires(super().override_require("framework/jenkins"), run=True)
+            self.requires(super().override_require("framework/jenkins#f86342896a5a5513b153e90ae1991e704dbd3070"), run=True)
+        xgraph_version = "xgraph/main"
+        enable_xgraph_profiler = False
+        if os.getenv('ENABLE_XGRAPH_PROFILER') == 'ON':
+            print("Enable xgraph profiler !!!!!!!!")
+            enable_xgraph_profiler = True
+            xgraph_version = "xgraph/0.10.0.profiler"
+        self.requires(xgraph_version, transitive_libs=True, options={"enable_profiler": enable_xgraph_profiler})
         self.requires("abseil/20230125.3", transitive_libs=True)
         self.requires("protobuf/3.21.9", transitive_libs=True)
         self.requires("glog/0.6.0", transitive_libs=True)
