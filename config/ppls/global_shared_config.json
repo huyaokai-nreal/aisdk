@@ -17,7 +17,7 @@
         ],
         "detect": {
             "model_config": {
-                "file_name": "models/det_tiny_240415.h2.s.B.ppq.snpe.quantized.dlc",
+                "file_name": "models/det_tiny_240827.h2.s.ppq.snpe.quantized.dlc",
                 "vendor": "snpe"
             },
             "session_config": {
@@ -70,7 +70,7 @@
         },
         "detect_dsp_flora_mono": {
             "model_config": {
-                "file_name": "models/det_tiny_240415.h2.s.B.ppq.snpe.quantized.dlc",
+                "file_name": "models/det_tiny_240827.h2.s.ppq.snpe.quantized.dlc",
                 "vendor": "snpe"
             },
             "session_config": {
