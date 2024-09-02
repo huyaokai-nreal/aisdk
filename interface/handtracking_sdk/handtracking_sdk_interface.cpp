@@ -378,11 +378,13 @@ bool HandTracking::GetApkStorePath() {
         jfieldID sharedUserIdField =
             jni_env->GetFieldID(jni_env->GetObjectClass(packageInfo), "sharedUserId", "Ljava/lang/String;");
         jstring sharedUserId = (jstring)jni_env->GetObjectField(packageInfo, sharedUserIdField);
-        const char* sharedUserIdString = jni_env->GetStringUTFChars(sharedUserId, 0);
-        if (sharedUserIdString) {
-            AISDK_LOG_TRACE("sharedUserIdString={}", sharedUserIdString);
-            std::string sharedUserId1(sharedUserIdString);
-            m_system_app = (sharedUserId1 == "android.uid.system");
+        if (sharedUserId) {
+            const char* sharedUserIdString = jni_env->GetStringUTFChars(sharedUserId, 0);
+            if (sharedUserIdString) {
+                AISDK_LOG_TRACE("sharedUserIdString={}", sharedUserIdString);
+                std::string sharedUserId1(sharedUserIdString);
+                m_system_app = (sharedUserId1 == "android.uid.system");
+            }
         }
         //////////////////////////////////////////
         // 在apk中通过接口获取 原生appjni_lib库的路径
