@@ -127,15 +127,19 @@ NRPluginResult HandTracking::GetHandData(NRPluginHandle handle, uint64_t hmd_tim
         return NR_PLUGIN_RESULT_FAILURE;
     }
     auto& pipeline = ins->GetPipeline();
-    aisdk::algorithm::Status status;
+    aisdk::algorithm::Status status = aisdk::algorithm::Status::FAILURE;
     if (ins->pipeline_work_scene == "handtracking_std_all_host") {
         std::shared_ptr<task::HandTrackingXGraph> impl =
             std::dynamic_pointer_cast<task::HandTrackingXGraph>(pipeline.Impl());
-        status = impl->PopResult(hmd_time_nanos, out_hand_num, out_hand_array);
+        if (impl) {
+            status = impl->PopResult(hmd_time_nanos, out_hand_num, out_hand_array);
+        }
     } else if (ins->pipeline_work_scene == "handtracking_segment_next_host") {
         std::shared_ptr<task::HandTrackingNextHostXGraph> impl =
             std::dynamic_pointer_cast<task::HandTrackingNextHostXGraph>(pipeline.Impl());
-        status = impl->PopResult(hmd_time_nanos, out_hand_num, out_hand_array);
+        if (impl) {
+            status = impl->PopResult(hmd_time_nanos, out_hand_num, out_hand_array);
+        }
     }
 
     if (status == aisdk::algorithm::Status::SUCCESS) {
