@@ -5,7 +5,6 @@
 #include <vector>
 
 #include "aisdk/base/camera_model.h"
-#include "aisdk/base/log.h"
 #include "aisdk/base/type.h"
 namespace aisdk::algorithm {
 
