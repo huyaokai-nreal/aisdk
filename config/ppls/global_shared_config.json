@@ -161,7 +161,7 @@
         },
         "3d_lift": {
             "model_config": {
-                "file_name": "models/hand_liftv2_stdv2_convrnn_240815_c070c0.mnn",
+                "file_name": "models/hand_liftv2_stdv2_convrnn_240926_d6a972.mnn",
                 "vendor": "mnn"
             },
             "session_config": {

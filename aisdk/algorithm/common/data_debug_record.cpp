@@ -1315,7 +1315,7 @@ void DataDebugRecord::DebugPredicted(const HandData& hands, uint64_t current_tim
 
 static std::mutex rd_manager_lock;
 static std::map<std::string, std::shared_ptr<DataDebugRecord>> rd_manager;
-std::shared_ptr<DataDebugRecord> GetSharedDataDebugRecord(std::string key) {
+std::shared_ptr<DataDebugRecord> GetSharedDataDebugRecord(const std::string& key) {
     std::shared_ptr<DataDebugRecord> ret;
     std::lock_guard<std::mutex> guard(rd_manager_lock);
     if (rd_manager.find(key) == rd_manager.end()) {
