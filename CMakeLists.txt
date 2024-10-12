@@ -222,8 +222,8 @@ list(GET file_content 2 DEFAULT_PIPELINE_TAR_KEY)
 message(STATUS "MODEL_KEY: ${DEFAULT_PIPELINE_TAR_KEY}")
 # 模型包include到头文件中
 configure_file (
-    "${CMAKE_CURRENT_SOURCE_DIR}/aisdk/xengine/model/models.h.in"
-    "${CMAKE_CURRENT_SOURCE_DIR}/aisdk/xengine/model/models.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/aisdk/xengine/util/models.h.in"
+    "${CMAKE_CURRENT_SOURCE_DIR}/aisdk/xengine/util/models.h"
 )
 
 

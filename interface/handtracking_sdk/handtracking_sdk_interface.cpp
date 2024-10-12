@@ -1,5 +1,8 @@
 #include "handtracking_sdk_interface.h"
 
+#include <absl/strings/match.h>
+
+#include <algorithm>
 #include <cstdint>
 #include <string>
 
@@ -929,7 +932,12 @@ bool Plugin::AnalysisTar() {
 
 std::vector<int> SelectPipeline(std::vector<aisdk::xengine::PipelineConfig>& pipelines,
                                 aisdk::xengine::PlatformStatus& plat, bool cam_is_horizontal) {
-    // 这里简单实现：多条满足条件的pipeline的优先级，以定义pipeline中的顺序作为优先级
+    const std::string prior_processor{"snpedsp"};
+    std::sort(pipelines.begin(), pipelines.end(), [prior_processor](const auto& a, const auto& b) {
+        bool a_contains = absl::StrContains(a.pipeline_name, prior_processor);
+        bool b_contains = absl::StrContains(b.pipeline_name, prior_processor);
+        return a_contains && !b_contains;
+    });
     std::vector<int> pipeline_policy;
     for (uint32_t i = 0; i < pipelines.size(); i++) {
         auto& config = pipelines[i];
@@ -1093,8 +1101,8 @@ NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
             for (uint32_t i = 0; i < pipeline_policy.size(); i++) {
                 uint32_t pipeline_index = pipeline_policy[i];
                 if (pipeline_index < tmp.size()) {
-                    AISDK_LOG_TRACE("Plugin::Initialize pipline.Init index={} pipline.name={:s}", pipeline_index,
-                                    tmp[pipeline_index].pipeline_name.c_str());
+                    AISDK_LOG_WARN("Plugin::Initialize pipline.Init index={} pipline.name={:s}", pipeline_index,
+                                   tmp[pipeline_index].pipeline_name.c_str());
                     auto& pipline = ins->GetPipeline();
                     // 需要指定具体的实现
                     aisdk::algorithm::Status status;
