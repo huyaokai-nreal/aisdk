@@ -12,7 +12,7 @@ target_compile_options(${XENGINE_LIBRARY_NAME}
     PRIVATE -Wno-error
 )
 add_subdirectory(cv)
-add_subdirectory(model)
+add_subdirectory(util)
 add_subdirectory(backend)
 add_subdirectory(nn)
 

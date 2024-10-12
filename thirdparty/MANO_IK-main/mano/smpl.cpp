@@ -8,8 +8,8 @@
 // https://software.intel.com/sites/landingpage/IntrinsicsGuide/#techs=SSE2
 // #include <omp.h>
 #include "models.h"
-#include "aisdk/xengine/model/incbin.h"
-#include "aisdk/xengine/model/aes.h"
+#include "aisdk/xengine/util/incbin.h"
+#include "aisdk/xengine/util/aes.h"
 
 #if defined(__ANDROID__)
 #include <android/log.h>
