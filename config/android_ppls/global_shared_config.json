@@ -101,7 +101,7 @@
         },
         "2d_rtmtinyb2": {
             "model_config": {
-                "file_name": "models/rtmtiny_dark_pcl_res26sw_128_bs2_240915_b9ba2b_int16.dlc",
+                "file_name": "models/rtmtiny_dark_pcl_res26sw_128_bs2_241015_06f8e0_int16.dlc",
                 "vendor": "snpe"
             },
             "session_config": {
