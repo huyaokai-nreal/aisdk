@@ -361,8 +361,8 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
                     predicted_points[k] = ontracked_points[i][k] + root_kf_predicted - root_meas;
                 }
                 predicted_points = post_filter_->process(i, predicted_points);
-                auto points_mano = constraint_hand_v2(predicted_points, (i == 0));
-                predicted_points = algorithm::convert_to_23points(points_mano);
+                // auto points_mano = constraint_hand_v2(predicted_points, (i == 0));
+                predicted_points = algorithm::convert_to_23points(predicted_points);
 #if defined(ENABLE_OPENXR_HANDJOINT_FORMAT)
                 algorithm::compute_xr_joint_rotation_v1(predicted_points, (i == 0), ontracked_rotations[i]);
 #else

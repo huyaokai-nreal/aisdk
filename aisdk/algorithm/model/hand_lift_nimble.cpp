@@ -30,8 +30,8 @@ absl::Status GMLPLiftNimble::Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xe
     m_leftcam_y.resize(kAlgoKeypointNum);
     m_rightcam_x.resize(kAlgoKeypointNum);
     m_rightcam_y.resize(kAlgoKeypointNum);
-    mem_left_hand.resize(86);
-    mem_right_hand.resize(86);
+    mem_left_hand.resize(105);
+    mem_right_hand.resize(105);
     return ret;
 }
 
@@ -95,20 +95,23 @@ void GMLPLiftNimble::PreProcess(const LiftNetInputs &inputs) {
     transfer_to_standard_stereo_input();
 
     auto buffer_x = temp;
-    auto buffer_y = temp + 43;
+    // auto buffer_y = temp + 43;
 
     for (int i = 0; i < kAlgoKeypointNum; i++) {
-        buffer_x[i * 2] = m_leftcam_x[i];
-        buffer_x[i * 2 + 1] = m_leftcam_y[i];
+        buffer_x[i * 5] = m_leftcam_x[i];
+        buffer_x[i * 5 + 1] = m_leftcam_y[i];
+        buffer_x[i * 5 + 2] = m_rightcam_x[i];
+        buffer_x[i * 5 + 3] = m_rightcam_y[i];
+        buffer_x[i * 5 + 4] = inputs.is_left;
     }
-    buffer_x[42] = inputs.is_left;
-    for (int i = 0; i < kAlgoKeypointNum; i++) {
-        buffer_y[i * 2] = m_rightcam_x[i];
-        buffer_y[i * 2 + 1] = m_rightcam_y[i];
-    }
-    buffer_y[42] = inputs.is_left;
+    // buffer_x[42] = inputs.is_left;
+    // for (int i = 0; i < kAlgoKeypointNum; i++) {
+    //     buffer_y[i * 2] = m_rightcam_x[i];
+    //     buffer_y[i * 2 + 1] = m_rightcam_y[i];
+    // }
+    // buffer_y[42] = inputs.is_left;
 
-    AISDK_LOG_TRACE("[GMLPLiftNimble] buffer_x[42]={}, buffer_y[42]={}", buffer_x[42], buffer_y[42]);
+    // AISDK_LOG_TRACE("[GMLPLiftNimble] buffer_x[42]={}, buffer_y[42]={}", buffer_x[42], buffer_y[42]);
 
     int index_mem = this->m_net->GetInputTensorIndex("mem_in");
     int mem_channels = itensor.m_tensors[index_mem].m_dims[0];
