@@ -8946,8 +8946,9 @@ int ESECT mdb_env_info(MDB_env *env, MDB_envinfo *arg) {
 static void mdb_default_cmp(MDB_txn *txn, MDB_dbi dbi) {
     uint16_t f = txn->mt_dbs[dbi].md_flags;
 
-    txn->mt_dbxs[dbi].md_cmp =
-        (f & MDB_REVERSEKEY) ? mdb_cmp_memnr : (f & MDB_INTEGERKEY) ? mdb_cmp_cint : mdb_cmp_memn;
+    txn->mt_dbxs[dbi].md_cmp = (f & MDB_REVERSEKEY)   ? mdb_cmp_memnr
+                               : (f & MDB_INTEGERKEY) ? mdb_cmp_cint
+                                                      : mdb_cmp_memn;
 
     txn->mt_dbxs[dbi].md_dcmp = !(f & MDB_DUPSORT)
                                     ? 0

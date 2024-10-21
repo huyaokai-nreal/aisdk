@@ -6,8 +6,8 @@
 #include <grpc/grpc.h>
 
 #include "common.h"
-#include "nreal.ai.tool.grpc.pb.h"
-#include "nreal.ai.tool.pb.h"
+#include "proto/nreal.ai.tool.grpc.pb.h"
+#include "proto/nreal.ai.tool.pb.h"
 #include "test_config.h"
 
 using grpc::Channel;

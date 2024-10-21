@@ -1,5 +1,5 @@
 #include <google/protobuf/util/json_util.h>
-#include <grpc++/ext/proto_server_reflection_plugin.h>
+//#include <grpc++/ext/proto_server_reflection_plugin.h>
 #include <grpc++/grpc++.h>
 #include <grpc++/server.h>
 #include <grpc++/server_builder.h>
@@ -18,11 +18,11 @@
 #include <set>
 #include <string>
 
-#include "fileio.h"
-#include "handTracking.h"
-#include "json.h"
-#include "nreal.ai.tool.grpc.pb.h"
-#include "nreal.ai.tool.pb.h"
+#include "aisdk/base/file.h"
+#include "hand_tracking.h"
+#include "json/json.h"
+#include "proto/nreal.ai.tool.grpc.pb.h"
+#include "proto/nreal.ai.tool.pb.h"
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -77,10 +77,10 @@ class AiServiceImpl final : public NrealAiTool::Engine::Service {
         }
 
         std::string save_dir = server_defaut_dir + request->sdk_name();
-        Mkdir(save_dir);
+        aisdk::base::CreateDir(save_dir);
         save_dir = save_dir + "/" + request->file_name();
 
-        if (0 == WriteToFile(save_dir, request->file_content())) {
+        if (0 == aisdk::base::WriteToFile(save_dir, request->file_content())) {
             response->set_ret_code(0);
             return Status::OK;
         } else {
@@ -291,7 +291,7 @@ class RpcServer {
 
    public:
     int Start(std::string server_address) {
-        grpc::reflection::InitProtoReflectionServerBuilderPlugin();
+        // grpc::reflection::InitProtoReflectionServerBuilderPlugin();
 
         grpc::ServerBuilder builder;
         builder.AddChannelArgument(GRPC_ARG_KEEPALIVE_PERMIT_WITHOUT_CALLS,
@@ -324,10 +324,10 @@ class RpcServer {
     }
 };
 
-void SignalHandler(int sig) { 
+void SignalHandler(int sig) {
     std::cout << "SignalHandler sig=" << sig << std::endl;
     QuitFlag = 1;
-    exit(255); 
+    exit(255);
 }
 
 int main(int argc, char** argv) {

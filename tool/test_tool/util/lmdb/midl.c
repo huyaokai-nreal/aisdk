@@ -241,11 +241,9 @@ void mdb_midl_sort(MDB_IDL ids) {
             j = ir;
             a = ids[l + 1];
             for (;;) {
-                do
-                    i++;
+                do i++;
                 while (ids[i] > a);
-                do
-                    j--;
+                do j--;
                 while (ids[j] < a);
                 if (j < i) break;
                 MIDL_SWAP(ids[i], ids[j]);
