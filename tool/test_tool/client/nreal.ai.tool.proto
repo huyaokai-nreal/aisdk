@@ -1,0 +1,142 @@
+syntax = "proto3";
+import "google/protobuf/empty.proto";
+
+package NrealAiTool;
+
+enum DataType {
+  UNKNOWN_DATATYPE = 0;
+  JPEG = 1;
+  BMP = 2;
+  PNG = 3;
+
+  GRAY_8UC1 = 10;
+  BGR_8UC3 = 11;
+  RGB_8UC3 = 12;
+}
+
+message StatusReply {
+  string system_status = 1;
+}
+
+message UploadRequest {
+  string sdk_name = 1;
+  bytes file_content = 2;
+  string file_name = 3;
+}
+
+message UploadReply {
+  int32 ret_code = 1;
+  string error_message = 2;
+}
+
+message ResetSdkReply {
+  int32 ret_code = 1;
+  string error_message = 2;
+}
+
+message StartSdkRequest {
+  string sdk_name = 1;
+  uint32 input_width = 2;
+  uint32 input_height = 3;
+  DataType input_datatype = 4;
+  uint32 stream_sampling_fps = 5;
+  uint32 simulation_sendframe_fps = 6;
+  uint32 simulation_getresult_fps = 7;
+  uint32 prediction_forward_ms = 8;
+  uint32 max_cache_fn = 9;
+  // 不同sdk,配置可能不同.
+  map<string, string> config_params = 20;
+}
+
+message StartSdkReply {
+  int32 ret_code = 1;
+  string error_message = 2;
+  uint64 session_id = 3;
+  // 不同sdk,对图片的输入要求不同
+  bool server_auto_cv = 4;
+}
+
+message StopSdkRequest {
+  string sdk_name = 1;
+  uint64 session_id = 2;
+}
+
+message StopSdkReply {
+  int32 ret_code = 1;
+  string error_message = 2;
+}
+
+message Headpose {
+  repeated float transform = 1;
+}
+
+message PipelineInferenceRequest {
+  uint64 session_id = 1;
+  bool is_eof = 2;
+
+  uint64 frame_id = 3;
+  DataType data_format = 4;
+  uint32 width = 5;
+  uint32 height = 6;
+  bytes left_camera_frame = 7;
+  bytes right_camera_frame = 8;
+  uint64 nano_time = 9;
+  Headpose head_pose = 10;
+  string token = 11;
+}
+
+message PipelineInferenceReply {
+  int32 ret_code = 1;
+  string error_message = 2;
+}
+
+message GetPipelineResultRequest {
+  uint64 session_id = 1;
+  uint64 frame_id = 2;
+}
+
+enum ResultType {
+  UNKNOWN_ResultType = 0;
+  HANDTRACKING_PROFILING_INFO = 1;
+  HANDTRACKING_PREDICTION_INFO = 2;
+}
+
+message GetPipelineResultReply {
+  int32 ret_code = 1;
+  string error_message = 2;
+  uint64 frame_id = 3;
+  string token = 4;
+  ResultType result_type = 5;
+  map<string, string> result_info = 6;
+}
+
+message SetServiceFeatureRequest {
+
+}
+
+message SetServiceFeatureReply {
+
+}
+
+message GetServiceActualInfoRequest {
+
+}
+
+message GetServiceActualInfoReply {
+  uint64 server_system_time = 1;
+  float cpu_used = 2;
+  float mem_used = 3;
+  uint32 pipeline_actual_fps = 4;
+}
+
+service Engine {
+  rpc Status (google.protobuf.Empty) returns (StatusReply) {}
+  rpc Upload (UploadRequest) returns (UploadReply) {}
+  rpc ResetSdk (google.protobuf.Empty) returns (ResetSdkReply) {}
+  rpc StartSdk (StartSdkRequest) returns (StartSdkReply) {}
+  rpc StopSdk (StopSdkRequest) returns (StopSdkReply) {}
+  rpc PipelineInference (PipelineInferenceRequest) returns (PipelineInferenceReply) {}
+  rpc GetPipelineResult (GetPipelineResultRequest) returns (GetPipelineResultReply) {}
+  rpc SetServiceFeature (SetServiceFeatureRequest) returns (SetServiceFeatureReply) {}
+  rpc GetServiceActualInfo (GetServiceActualInfoRequest) returns (GetServiceActualInfoReply) {}
+}
