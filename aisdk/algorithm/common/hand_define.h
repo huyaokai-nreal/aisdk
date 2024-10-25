@@ -27,6 +27,7 @@ struct SingleHandData {
     float score = 0;
     HandGesture gesture = HandGesture::Invalid;
     CamType source = CamType::UNKNOWN;
+    bool constrained {false};
 };
 
 }  // namespace aisdk::algorithm
