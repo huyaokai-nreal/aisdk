@@ -8,10 +8,8 @@
             "detect_cpu_flora",
             "detect_dsp_flora_mono",
             "2d_rtmtinyb2",
-            "2d_rsntiny",
             "2d_rsnnano",
             "2d_filter",
-            "3d_lift",
             "3d_lift_ella",
             "3d_liftnimble"
         ],
@@ -84,21 +82,6 @@
                 ]
             }
         },
-        "2d_rsntiny": {
-            "model_config": {
-                "file_name": "models/rsntiny_affine_25d_128_240312_a00441_int8.dlc",
-                "vendor": "snpe"
-            },
-            "session_config": {
-                "batch": 1,
-                "precision": "int8",
-                "thread_num": 1,
-                "runtime": "dsp",
-                "output_tensors": [
-                    "feat"
-                ]
-            }
-        },
         "2d_rtmtinyb2": {
             "model_config": {
                 "file_name": "models/rtmtiny_dark_pcl_res26sw_128_bs2_241015_06f8e0_int16.dlc",
@@ -150,18 +133,6 @@
         "3d_lift_ella": {
             "model_config": {
                 "file_name": "models/GMLP_20230417.mnn",
-                "vendor": "mnn"
-            },
-            "session_config": {
-                "batch": 1,
-                "precision": "float32",
-                "thread_num": 1,
-                "runtime": "cpu"
-            }
-        },
-        "3d_lift": {
-            "model_config": {
-                "file_name": "models/hand_liftv2_stdv2_convrnn_240926_d6a972.mnn",
                 "vendor": "mnn"
             },
             "session_config": {
