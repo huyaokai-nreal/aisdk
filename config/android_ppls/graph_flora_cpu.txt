@@ -86,11 +86,11 @@ node {
   name: "LiftNet_3D"
   calculator: "HandLiftCalculator"
   input_side_packet: "CAM_INFO_INPUT:cam_info"
-  input_stream: "LANDMARK_INPUT:kpt2d_filter"
+  input_stream: "LANDMARK_INPUT:kpt2d"
   output_stream: "LIFT_OUTPUT:kpt3d_bino"
   node_options: {
     [type.googleapis.com/aisdk.HandLiftCalculatorOptions] {
-      model_name: "3d_lift"
+      model_name: "3d_liftnimble"
     }
   }
 }
@@ -98,17 +98,19 @@ node {
 node {
   name: "BlockHardRules"
   calculator: "BlockHardRulesCalculator"
+  #input_stream: "kpt3d_mono"
   input_stream: "kpt3d_bino"
   output_stream: "BLOCK_OUT:kpt3d_blocked"
   node_options: {
     [type.googleapis.com/aisdk.BlockHardRulesCalculatorOptions] {
       max_root_depth: 1.0
       # score_th = 0.8 ? model_name == 3d_liftnimble else 0.85
-      score_th: 0.875
+      score_th: 0.775
       score_th_width: 0.05
     }
   }
 }
+
 
 
 node {
