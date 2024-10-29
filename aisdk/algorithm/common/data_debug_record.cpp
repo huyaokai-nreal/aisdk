@@ -9,6 +9,7 @@
 
 #include "aisdk/algorithm/common/hand_define.h"
 #include "aisdk/base/file.h"
+#include "aisdk/base/log.h"
 
 namespace aisdk::algorithm {
 
@@ -31,7 +32,7 @@ void DataDebugRecord::InitDebugConfig() {
         std::string data_record_statusf = prof.local_data_record_rootpath + "record.status";
         aisdk::base::WriteToFile(data_record_statusf, std::string("record_init\n"), false);
         pipeline_debug = false;
-        AISDK_LOG_ERROR("Debug: record_init");
+        AISDK_LOG_TRACE("Debug: record_init");
     }
 
     // 开发全量debug
@@ -1315,7 +1316,7 @@ void DataDebugRecord::DebugPredicted(const HandData& hands, uint64_t current_tim
 
 static std::mutex rd_manager_lock;
 static std::map<std::string, std::shared_ptr<DataDebugRecord>> rd_manager;
-std::shared_ptr<DataDebugRecord> GetSharedDataDebugRecord(std::string key) {
+std::shared_ptr<DataDebugRecord> GetSharedDataDebugRecord(const std::string& key) {
     std::shared_ptr<DataDebugRecord> ret;
     std::lock_guard<std::mutex> guard(rd_manager_lock);
     if (rd_manager.find(key) == rd_manager.end()) {

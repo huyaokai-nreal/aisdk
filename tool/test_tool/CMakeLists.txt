@@ -1,0 +1,13 @@
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_SOURCE_DIR}/interface/handtracking_sdk)
+find_package(gRPC REQUIRED)
+add_subdirectory(util)
+add_subdirectory(proto)
+if (CMAKE_SYSTEM_NAME MATCHES "Linux" AND CMAKE_SYSTEM_PROCESSOR MATCHES "x86")
+    message(STATUS "Running on x86 Linux")
+    add_subdirectory(client)
+else()
+    add_subdirectory(server)
+    message(STATUS "Not running on x86 Linux")
+endif()
+

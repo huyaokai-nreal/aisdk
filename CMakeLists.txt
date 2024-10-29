@@ -53,18 +53,14 @@ option(ENABLE_OPENXR_HANDJOINT_FORMAT "enable hand key_points in OpenXR format" 
 if(Xrlinux AND ENABLE_SEGMENT_JOINT_INFERENCE_MODE)
     # Xrlinux是Flora/Gina眼镜所对应的操作系统的标签，等同于Android/Darwin/Linux等
     # 分段联合模式下，眼镜业务的模型包
-    set(tar_ppls "gina_ppls")
+    set(tar_ppls "xrlinux_ppls")
     set(tar_model "hand_tracking_gina")
 elseif(Xrlinux AND NOT ENABLE_SEGMENT_JOINT_INFERENCE_MODE)
     # 暂不支持
     message(FATAL_ERROR "Xrlinux && !ENABLE_SEGMENT_JOINT_INFERENCE_MODE")
-elseif(NOT Xrlinux AND ENABLE_SEGMENT_JOINT_INFERENCE_MODE)
-    # 分段联合模式下，手机业务的模型包
-    set(tar_ppls "gina_joint_ppls")
-    set(tar_model "hand_tracking")
 else()
     # 默认模式下的模型包
-    set(tar_ppls "ppls")
+    set(tar_ppls "android_ppls")
     set(tar_model "hand_tracking")
 endif()
 
@@ -222,8 +218,8 @@ list(GET file_content 2 DEFAULT_PIPELINE_TAR_KEY)
 message(STATUS "MODEL_KEY: ${DEFAULT_PIPELINE_TAR_KEY}")
 # 模型包include到头文件中
 configure_file (
-    "${CMAKE_CURRENT_SOURCE_DIR}/aisdk/xengine/model/models.h.in"
-    "${CMAKE_CURRENT_SOURCE_DIR}/aisdk/xengine/model/models.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/aisdk/xengine/util/models.h.in"
+    "${CMAKE_CURRENT_SOURCE_DIR}/aisdk/xengine/util/models.h"
 )
 
 

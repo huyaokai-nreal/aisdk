@@ -315,8 +315,7 @@ void GMLPLiftNet3::PreProcess(const LiftNetInputs &inputs) {
 }
 
 void GMLPLiftNet3::PostProcess(const LiftNetInputs &inputs, LiftNetOutputs &outputs) {
-    int index_output = this->m_net->GetOutputTensorIndex("kpt");
-
+    int index_output = this->m_net->GetOutputTensorIndex("depth");
     char *mem = (char *)otensor.m_tensors[index_output].m_viraddr;
     float *_data = (float *)mem;
 

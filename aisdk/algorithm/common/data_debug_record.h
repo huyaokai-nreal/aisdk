@@ -105,7 +105,7 @@ class DataDebugRecord {
 };
 
 // 需要将1个Record，在多模块中共享
-std::shared_ptr<DataDebugRecord> GetSharedDataDebugRecord(std::string key);
+std::shared_ptr<DataDebugRecord> GetSharedDataDebugRecord(const std::string& key);
 
 }  // namespace aisdk::algorithm
 

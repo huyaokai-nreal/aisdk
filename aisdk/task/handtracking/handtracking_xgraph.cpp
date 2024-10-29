@@ -56,7 +56,6 @@ static std::map<HandGesture, int> GestureMap = {
     {HandGesture::Invalid, GESTURE_TYPE_UNKNOWN}};
 
 HandTrackingXGraph::HandTrackingXGraph() {}
-HandTrackingXGraph::~HandTrackingXGraph() {}
 
 bool AddDataRecordCalculater(aisdk::xengine::PipelineConfig& config, std::string& new_graph_config) {
     // clang-format off
@@ -73,27 +72,6 @@ bool AddDataRecordCalculater(aisdk::xengine::PipelineConfig& config, std::string
         "    [mediapipe.ThreadPoolExecutorOptions.ext] {\n"
         "      num_threads: 1\n"
         "    }\n"
-        "  }\n"
-        "}\n";
-    // 3d模块输出kpt3d
-    std::string new_bino_node_config1 =     
-        "node {\n"
-        "  name: \"HandDataRecord\"\n"
-        "  executor: \"handtracking_data_exector\"\n"
-        "  calculator: \"HandDataRecordCalculator\"\n"
-        "  input_stream: \"IMAGE_INPUT:image\"\n"
-        "  input_stream: \"HEADPOSE_INPUT:head_pose\"\n"
-        "  input_stream: \"DET_BBOX_OUTPUT:detection_output\"\n"
-        "  input_stream: \"LANDMARK_OUTPUT:kpt2d\"\n"
-        "  input_stream: \"LIFT_OUTPUT:kpt3d\"\n"
-        "  input_stream: \"BLOCK_OUT:kpt3d_blocked\"\n"
-        "  input_stream: \"CONVERTWORLD_OUT:kpt3d_world\"\n"
-        "  input_stream: \"GR_OUTPUT:gesture\"\n"
-        "  input_stream: \"ALL_RESULTS:hand_result\"\n"
-        "  input_side_packet: \"CAM_INFO_INPUT:cam_info\"\n"
-        "  output_stream: \"RECORD_RESULTS:record_result\"\n"
-        "  input_stream_handler {\n"
-        "    input_stream_handler: \"ImmediateInputStreamHandler\"\n"
         "  }\n"
         "}\n";
     // 3d模块输出kpt3d_bino
@@ -147,14 +125,7 @@ bool AddDataRecordCalculater(aisdk::xengine::PipelineConfig& config, std::string
             AISDK_LOG_WARN("[HandDataRecordCalculator] Process Enbale Bino2");
             new_graph_config = config.graph_config + new_exector_config + new_bino_node_config2;
             return true;
-        } else {
-            // 没测试过
-            return false;
         }
-
-        AISDK_LOG_WARN("[HandDataRecordCalculator] Process Enbale Bino1");
-        new_graph_config = config.graph_config + new_exector_config + new_bino_node_config1;
-        return true;
     }
 
     return false;
@@ -163,16 +134,15 @@ bool AddDataRecordCalculater(aisdk::xengine::PipelineConfig& config, std::string
 aisdk::algorithm::Status HandTrackingXGraph::Init(aisdk::xengine::DlSymFuncs& funcs,
                                                   aisdk::xengine::PipelineConfig& config, CameraParams& camera) {
     if (absl::StrContains(config.pipeline_name, "flora")) {
-        m_post_filter = std::make_unique<algorithm::HandFilters>("flora");
+        post_filter_ = std::make_unique<algorithm::HandFilters>("flora");
     } else {
-        m_post_filter = std::make_unique<algorithm::HandFilters>("ella");
+        post_filter_ = std::make_unique<algorithm::HandFilters>("ella");
     }
-    m_post_filter->init();
-    precorder = aisdk::algorithm::GetSharedDataDebugRecord(std::string("calculator+task"));
-    bool add_record = false;
+    post_filter_->init();
+    precorder_ = aisdk::algorithm::GetSharedDataDebugRecord(std::string("calculator+task"));
 #if defined(ENABLE_ALGORITHM_DATA_RECORD) && !defined(ENABLE_SEGMENT_JOINT_INFERENCE_MODE)
     std::string new_graph_config;
-    add_record = AddDataRecordCalculater(config, new_graph_config);
+    bool add_record = AddDataRecordCalculater(config, new_graph_config);
     if (add_record) {
         config.graph_config = new_graph_config;
     }
@@ -188,10 +158,10 @@ aisdk::algorithm::Status HandTrackingXGraph::Init(aisdk::xengine::DlSymFuncs& fu
             for (uint32_t order = 0; order < outnames.size(); order++) {
                 if (outnames[order] == "record_result") {
                     order_sync_bitmaps[order] = (1ULL << order);
-                    order_groud_index[order] = recordresult_output_groud_index;
+                    order_groud_index[order] = recordresult_output_groud_index_;
                 } else {
                     default_sync_bitmaps |= (1ULL << order);
-                    order_groud_index[order] = handresult_output_groud_index;
+                    order_groud_index[order] = handresult_output_groud_index_;
                 }
             }
 
@@ -201,31 +171,31 @@ aisdk::algorithm::Status HandTrackingXGraph::Init(aisdk::xengine::DlSymFuncs& fu
                 }
 
                 if (outnames[order] == "hand_result") {
-                    handresult_output_packet_index = order;
+                    handresult_output_packet_index_ = order;
                 } else if (outnames[order] == "record_result") {
-                    recordresult_output_packet_index = order;
+                    recordresult_output_packet_index_ = order;
                 }
             }
 
             SetMultipleOutputSync(order_sync_bitmaps, order_groud_index);
 
             std::vector<StreamCacheCleanStrategy> groud_output_cache_clean_policy(2);
-            groud_output_cache_clean_policy[handresult_output_groud_index].clean_policy =
+            groud_output_cache_clean_policy[handresult_output_groud_index_].clean_policy =
                 FIFOStrategy::FIFO_FULL_LOOP_COVER;
-            groud_output_cache_clean_policy[handresult_output_groud_index].max_depth = 3;
+            groud_output_cache_clean_policy[handresult_output_groud_index_].max_depth = 3;
 
             auto& prof = aisdk::base::DebugProfiling::Get().GetOpt();
             if (prof.export_pipeline_exec_info_jsonstring) {
                 // 此情况是要求对导出的结果：保帧保序
-                groud_output_cache_clean_policy[recordresult_output_groud_index].clean_policy =
+                groud_output_cache_clean_policy[recordresult_output_groud_index_].clean_policy =
                     FIFOStrategy::FIFO_FULL_BLOCK;
-                groud_output_cache_clean_policy[recordresult_output_groud_index].max_depth =
+                groud_output_cache_clean_policy[recordresult_output_groud_index_].max_depth =
                     BASEXGRAPH_MAX_GLOBALCACHEDEPTH;
             } else {
                 // 其他录制模式，只关系录制存储，不关心导出结果给上层服务的情况。
-                groud_output_cache_clean_policy[recordresult_output_groud_index].clean_policy =
+                groud_output_cache_clean_policy[recordresult_output_groud_index_].clean_policy =
                     FIFOStrategy::FIFO_FULL_LOOP_COVER;
-                groud_output_cache_clean_policy[recordresult_output_groud_index].max_depth = 3;
+                groud_output_cache_clean_policy[recordresult_output_groud_index_].max_depth = 3;
             }
             SetMultipleOutputCleanStrategy(groud_output_cache_clean_policy);
         }
@@ -282,10 +252,10 @@ aisdk::algorithm::Status HandTrackingXGraph::PushData(uint64_t timestamp,
 aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, uint32_t* hand_num,
                                                        HandData* out_hand_array) {
     double query_time = static_cast<double>(hmd_time_nano) / 1e9;
-    std::shared_ptr<StreamCache> outlist = GetOutputStreamCache(handresult_output_groud_index);
+    std::shared_ptr<StreamCache> outlist = GetOutputStreamCache(handresult_output_groud_index_);
     if (outlist) {
         Json::Value export_root;
-        auto& hand_data_packet = outlist->m_output_packs[handresult_output_packet_index];
+        auto& hand_data_packet = outlist->m_output_packs[handresult_output_packet_index_];
         auto& hand_data_internal = hand_data_packet.Get<algorithm::HandsData>();
         auto graph_timestamp = (uint64_t)hand_data_packet.Timestamp().Value();
         const auto& latest_timestamp = hand_data_packet.Timestamp().Seconds();
@@ -370,7 +340,7 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
                         }
                         root_kf_predicted = predictor_lhand.track_only_pred(query_time, true, true);
                     } else {
-                        m_post_filter->reset(0);
+                        post_filter_->reset(0);
                     }
 
                 } else {
@@ -380,7 +350,7 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
                         }
                         root_kf_predicted = predictor_rhand.track_only_pred(query_time, true, true);
                     } else {
-                        m_post_filter->reset(1);
+                        post_filter_->reset(1);
                     }
                 }
                 AISDK_LOG_TRACE("predict root is {}, {}, {}", root_kf_predicted[0], root_kf_predicted[1],
@@ -390,9 +360,14 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
                 for (int k = 0; k < aisdk::algorithm::k3DAlgoStdKeypointNum; k++) {
                     predicted_points[k] = ontracked_points[i][k] + root_kf_predicted - root_meas;
                 }
-                predicted_points = m_post_filter->process(i, predicted_points);
-                auto points_mano = constraint_hand_v2(predicted_points, (i == 0));
-                predicted_points = algorithm::convert_to_23points(points_mano);
+                predicted_points = post_filter_->process(i, predicted_points);
+                if ((!hand_data_internal.left_hand.constrained && i == 0) ||
+                    (!hand_data_internal.right_hand.constrained && i == 1)) {
+                    auto points_mano = constraint_hand_v2(predicted_points, (i == 0));
+                    predicted_points = algorithm::convert_to_23points(points_mano);
+                } else {
+                    predicted_points = algorithm::convert_to_23points(predicted_points);
+                }
 #if defined(ENABLE_OPENXR_HANDJOINT_FORMAT)
                 algorithm::compute_xr_joint_rotation_v1(predicted_points, (i == 0), ontracked_rotations[i]);
 #else
@@ -420,13 +395,13 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
                 out_hand_array[i].image_timestamp_nanos = outlist->raw_timestamp;
             }
 #if defined(ENABLE_ALGORITHM_DATA_RECORD)
-            if (precorder->CheckDeveloperDebug()) {
-                precorder->DebugPredicted(out_hand_array[i], outlist->raw_timestamp, graph_timestamp, hmd_time_nano,
-                                          query_time, predicted_points, i, export_root, 0, m_gsequence_predict_id);
+            if (precorder_->CheckDeveloperDebug()) {
+                precorder_->DebugPredicted(out_hand_array[i], outlist->raw_timestamp, graph_timestamp, hmd_time_nano,
+                                           query_time, predicted_points, i, export_root, 0, gsequence_predict_id_);
             }
 #endif
         }
-        m_gsequence_predict_id++;
+        gsequence_predict_id_++;
         return aisdk::algorithm::Status::SUCCESS;
     }
 
@@ -440,12 +415,12 @@ algorithm::Status HandTrackingXGraph::PopExecInfo(uint64_t& timestamp, std::stri
         return aisdk::algorithm::Status::FAILURE;
     }
 
-    std::shared_ptr<StreamCache> outlist = GetOutputStreamCache(recordresult_output_groud_index, true);
+    std::shared_ptr<StreamCache> outlist = GetOutputStreamCache(recordresult_output_groud_index_, true);
     if (outlist) {
         uint64_t target_frame = 0;
         {
-            std::lock_guard<std::mutex> guard(m_track_frame_lock);
-            target_frame = m_debug_frame_infos.begin()->first;
+            std::lock_guard<std::mutex> guard(m_track_frame_lock_);
+            target_frame = m_debug_frame_infos_.begin()->first;
         }
         AISDK_LOG_ERROR("PopExecInfo target_frame={} get_raw_timestamp={}", target_frame, outlist->raw_timestamp);
         // PopExecInfo期望结果是保帧保序的。
@@ -455,7 +430,7 @@ algorithm::Status HandTrackingXGraph::PopExecInfo(uint64_t& timestamp, std::stri
             AISDK_LOG_ERROR("PopExecInfo raw_timestamp < target_frame segment11 !!!!!!!!!");
             return aisdk::algorithm::Status::FAILURE;
         } else if (outlist->raw_timestamp == target_frame) {
-            auto& record_data_packet = outlist->m_output_packs[recordresult_output_packet_index];
+            auto& record_data_packet = outlist->m_output_packs[recordresult_output_packet_index_];
             auto& record_data_internal = record_data_packet.Get<algorithm::RecordExport>();
             auto graph_timestamp = (uint64_t)record_data_packet.Timestamp().Value();
             AISDK_LOG_TRACE("HandTrackingXGraph::PopExecInfo raw_timestamp={} graph_stream_stamp={} ok!!!!",
@@ -464,16 +439,16 @@ algorithm::Status HandTrackingXGraph::PopExecInfo(uint64_t& timestamp, std::stri
             jsonstring = record_data_internal.export_jsonstring;
 
             // 使用完毕清除
-            GetOutputStreamCache(recordresult_output_groud_index, false);
-            std::lock_guard<std::mutex> guard(m_track_frame_lock);
-            m_debug_frame_infos.erase(target_frame);
+            GetOutputStreamCache(recordresult_output_groud_index_, false);
+            std::lock_guard<std::mutex> guard(m_track_frame_lock_);
+            m_debug_frame_infos_.erase(target_frame);
         } else if (outlist->raw_timestamp > target_frame) {
             // 这里说明base_xgraph已经出现种种drop的行为。统一处理
             timestamp = target_frame;
-            precorder->MakeBusyPipelineNodeInfoToJsonString(jsonstring);
+            precorder_->MakeBusyPipelineNodeInfoToJsonString(jsonstring);
             // 使用完毕清除
-            std::lock_guard<std::mutex> guard(m_track_frame_lock);
-            m_debug_frame_infos.erase(target_frame);
+            std::lock_guard<std::mutex> guard(m_track_frame_lock_);
+            m_debug_frame_infos_.erase(target_frame);
         }
         AISDK_LOG_TRACE("PopExecInfo timestamp={} jsonstring={}", timestamp, jsonstring.c_str());
         return aisdk::algorithm::Status::SUCCESS;
@@ -489,13 +464,13 @@ void HandTrackingXGraph::SetTrackFrameState(uint64_t timestamp, FrameState state
     }
     AISDK_LOG_TRACE("SetTrackFrameState timestamp={} ", timestamp);
     // 登记需要保帧保序的帧列表。
-    std::lock_guard<std::mutex> guard(m_track_frame_lock);
-    auto iter = m_debug_frame_infos.find(timestamp);
-    if (iter == m_debug_frame_infos.end()) {
+    std::lock_guard<std::mutex> guard(m_track_frame_lock_);
+    auto iter = m_debug_frame_infos_.find(timestamp);
+    if (iter == m_debug_frame_infos_.end()) {
         FrameTrackInfo info;
         info.frame_timestamp = timestamp;
         info.frame_state = state;
-        m_debug_frame_infos.insert(std::make_pair(timestamp, info));
+        m_debug_frame_infos_.insert(std::make_pair(timestamp, info));
     } else {
         iter->second.frame_state = state;
     }

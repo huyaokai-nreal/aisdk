@@ -5,7 +5,9 @@
 namespace aisdk::algorithm {
 
 void LowPassFilter::setAlpha(double alpha) {
-    if (alpha <= 0.0 || alpha > 1.0) throw std::range_error("alpha should be in (0.0., 1.0]");
+    if (alpha <= 0.0 || alpha > 1.0) {
+        throw std::range_error("alpha should be in (0.0., 1.0]");
+    }
     a = alpha;
 }
 
@@ -17,9 +19,9 @@ LowPassFilter::LowPassFilter(double alpha, double initval) {
 
 double LowPassFilter::filter(double value) {
     double result;
-    if (initialized)
+    if (initialized) {
         result = a * value + (1.0 - a) * s;
-    else {
+    } else {
         result = value;
         initialized = true;
     }
@@ -48,7 +50,9 @@ void OneEuroFilter::reset() {
 }
 double OneEuroFilter::filter(double value, TimeStamp timestamp) {
     // update the sampling frequency based on timestamps
-    if (lasttime_ != UndefinedTime && timestamp != UndefinedTime) freq_ = 1.0 / (timestamp - lasttime_);
+    if (lasttime_ != UndefinedTime && timestamp != UndefinedTime) {
+        freq_ = 1.0 / (timestamp - lasttime_);
+    }
     lasttime_ = timestamp;
     // estimate the current variation per second
     double dvalue = x_->hasLastRawValue() ? (value - x_->lastRawValue()) * freq_ : 0.0;  // FIXME: 0.0 or value?

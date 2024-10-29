@@ -1,5 +1,8 @@
 #include "handtracking_sdk_interface.h"
 
+#include <absl/strings/match.h>
+
+#include <algorithm>
 #include <cstdint>
 #include <string>
 
@@ -122,7 +125,7 @@ NRPluginResult HandTracking::GetHandData(NRPluginHandle handle, uint64_t hmd_tim
         return NR_PLUGIN_RESULT_FAILURE;
     }
     auto* ins = Plugin::GetInstance();
-    if (false == ins->isInit()) {
+    if (!ins->isInit()) {
         AISDK_LOG_WARN("HandTracking: init Failure");
         return NR_PLUGIN_RESULT_FAILURE;
     }
@@ -143,19 +146,17 @@ NRPluginResult HandTracking::GetHandData(NRPluginHandle handle, uint64_t hmd_tim
     }
 
     if (status == aisdk::algorithm::Status::SUCCESS) {
-        return NR_PLUGIN_RESULT_SUCCESS;
         AISDK_LOG_TRACE("HandTracking: pop result success!");
-    } else {
-        *out_hand_num = 0;
-        // AISDK_LOG_TRACE("HandTracking: pop result failed!");
+        return NR_PLUGIN_RESULT_SUCCESS;
     }
-
+    *out_hand_num = 0;
+    AISDK_LOG_TRACE("HandTracking: pop result failed!");
     return NR_PLUGIN_RESULT_FAILURE;
 }
 
 void HandTracking::SendGlassPredictionData() {
     auto* ins = Plugin::GetInstance();
-    if (false == ins->isInit()) {
+    if (!ins->isInit()) {
         AISDK_LOG_WARN("HandTracking: init Failure");
         return;
     }
@@ -180,7 +181,7 @@ void HandTracking::SendGlassPredictionData() {
 int HandTracking::GetHandTrackingMidExecInfo(ProfilingInfo* info) {
     (void)info;
     auto* ins = Plugin::GetInstance();
-    if (false == ins->isInit()) {
+    if (!ins->isInit()) {
         AISDK_LOG_WARN("HandTracking: init Failure");
         return -1;
     }
@@ -451,7 +452,7 @@ bool HandTracking::GetApkStorePath() {
         auto& prof = aisdk::base::DebugProfiling::Get().GetOpt();
         prof.local_data_record_rootpath = apk_copydir;
         std::string data_record_configf = apk_copydir + "record_configs.json";
-        if (aisdk::base::IsFileExist(data_record_configf.c_str())) {
+        if (aisdk::base::IsFileExist(data_record_configf)) {
             prof.local_pipeline_node_data_record = true;
             aisdk::base::ReadFromFile(data_record_configf, prof.local_data_record_jsonconfig);
         }
@@ -545,12 +546,6 @@ void Hmd::GetCamerasInformation() {
     m_cam_param.m_params.clear();
     std::vector<float> cam_resolution = {(float)resolution_[0].width, (float)resolution_[0].height};
     m_cam_param.m_params["cam_resolution"] = std::move(cam_resolution);
-    if (resolution_[0].width > resolution_[0].height) {
-        cam_is_horizontal = true;
-    } else {
-        cam_is_horizontal = false;
-    }
-
     AISDK_LOG_TRACE("GetComponentResolution LEFT: w: {}, h: {}", resolution_[0].width, resolution_[0].height);
     AISDK_LOG_TRACE("GetComponentIntrinsic LEFT: fc: {}, {}; cc: {}, {}", intrinsic_mat_[0].column0.x,
                     intrinsic_mat_[0].column1.y, intrinsic_mat_[0].column2.x, intrinsic_mat_[0].column2.y);
@@ -828,7 +823,7 @@ bool Plugin::Init(NRPluginHandle handle, NRInterfaces* interfaces) {
         AISDK_LOG_TRACE("Plugin::Initialize get handle: {}", handle);
 
         bool ret = m_ins->m_handtracking.GetApkStorePath();
-        if (false == ret) {
+        if (!ret) {
             AISDK_LOG_TRACE("Plugin::Initialize GetApkStorePath error!!!");
             return false;
         }
@@ -909,7 +904,7 @@ bool Plugin::AnalysisTar() {
     std::string external_modeltar_path = apk_copydir + tar_name + ".tar";
     if (ins->m_load_external_modeltar) {
         AISDK_LOG_TRACE("AnalysisTar::TarFile = {:s}", external_modeltar_path.c_str());
-        if (aisdk::base::IsFileExist(external_modeltar_path.c_str())) {
+        if (aisdk::base::IsFileExist(external_modeltar_path)) {
             m_tar_handle = ins->m_handtracking.m_funcs.m_createanalysistar();
             is_ok = m_tar_handle->TarFile(external_modeltar_path.c_str());
             AISDK_LOG_TRACE("AnalysisTar::TarFile = {:s} is_ok={}", external_modeltar_path.c_str(), is_ok);
@@ -918,7 +913,7 @@ bool Plugin::AnalysisTar() {
 #endif
 
     // 默认情况下
-    if (false == is_ok) {
+    if (!is_ok) {
         m_tar_handle = ins->m_handtracking.m_funcs.m_createanalysistar();
         is_ok = m_tar_handle->TarMem(tar_name.c_str());
         AISDK_LOG_TRACE("AnalysisTar::TarMem = {:s} is_ok={}", tar_name.c_str(), is_ok);
@@ -928,28 +923,33 @@ bool Plugin::AnalysisTar() {
 }
 
 std::vector<int> SelectPipeline(std::vector<aisdk::xengine::PipelineConfig>& pipelines,
-                                aisdk::xengine::PlatformStatus& plat, bool cam_is_horizontal) {
-    // 这里简单实现：多条满足条件的pipeline的优先级，以定义pipeline中的顺序作为优先级
+                                aisdk::xengine::PlatformStatus& plat, NRDeviceType device_type) {
+    const std::string prior_processor{"snpedsp"};
+    std::sort(pipelines.begin(), pipelines.end(), [prior_processor](const auto& a, const auto& b) {
+        bool a_contains = absl::StrContains(a.pipeline_name, prior_processor);
+        bool b_contains = absl::StrContains(b.pipeline_name, prior_processor);
+        return a_contains && !b_contains;
+    });
     std::vector<int> pipeline_policy;
     for (uint32_t i = 0; i < pipelines.size(); i++) {
         auto& config = pipelines[i];
-        if (cam_is_horizontal && config.related_feature.bind_sensor_orientation == "horizontal") {
+        if (device_type == NR_DEVICE_TYPE_LIGHT && config.related_feature.bind_glass == "ella") {
             if (plat.is_snpe_support && config.related_feature.bind_runtime == "snpedsp") {
                 pipeline_policy.push_back(i);
                 continue;
             }
 
-            if (false == plat.is_mobile_evapro && config.related_feature.bind_runtime == "cpu") {
+            if (!plat.is_mobile_evapro && config.related_feature.bind_runtime == "cpu") {
                 pipeline_policy.push_back(i);
                 continue;
             }
-        } else if (false == cam_is_horizontal && config.related_feature.bind_sensor_orientation == "vertical") {
+        } else if (device_type == NR_DEVICE_TYPE_FLORA && config.related_feature.bind_glass == "flora") {
             if (plat.is_snpe_support && config.related_feature.bind_runtime == "snpedsp") {
                 pipeline_policy.push_back(i);
                 continue;
             }
 
-            if (false == plat.is_mobile_evapro && config.related_feature.bind_runtime == "cpu") {
+            if (!plat.is_mobile_evapro && config.related_feature.bind_runtime == "cpu") {
                 pipeline_policy.push_back(i);
                 continue;
             }
@@ -960,7 +960,7 @@ std::vector<int> SelectPipeline(std::vector<aisdk::xengine::PipelineConfig>& pip
 }
 
 NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
-    const std::string git_version = AISK_GIT_VERSION;
+    const std::string git_version = AISDK_GIT_VERSION;
     AISDK_LOG_WARN("HandTracking: git_version={:s}", git_version.c_str());
 
     if (handle != Plugin::GetInstance()->GetHandle()) {
@@ -1087,14 +1087,14 @@ NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
                 (int)plat->is_snpe_support, (int)plat->is_hexagon_dsp, (int)plat->is_hexagon_signedPD_dsp, (int)plat->is_hexagon_unsignedPD_dsp,
                 (int)plat->is_mobile_evapro);
             // clang-format on
-            std::vector<int> pipeline_policy = SelectPipeline(tmp, *plat, ins->m_hmd.cam_is_horizontal);
+            std::vector<int> pipeline_policy = SelectPipeline(tmp, *plat, device_type);
             AISDK_LOG_WARN("HandTracking: pipeline_policy size={}", pipeline_policy.size());
 
             for (uint32_t i = 0; i < pipeline_policy.size(); i++) {
                 uint32_t pipeline_index = pipeline_policy[i];
                 if (pipeline_index < tmp.size()) {
-                    AISDK_LOG_TRACE("Plugin::Initialize pipline.Init index={} pipline.name={:s}", pipeline_index,
-                                    tmp[pipeline_index].pipeline_name.c_str());
+                    AISDK_LOG_WARN("Plugin::Initialize pipline.Init index={} pipline.name={:s}", pipeline_index,
+                                   tmp[pipeline_index].pipeline_name.c_str());
                     auto& pipline = ins->GetPipeline();
                     // 需要指定具体的实现
                     aisdk::algorithm::Status status;
@@ -1114,10 +1114,9 @@ NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
                         ins->pipeline_name = tmp[pipeline_index].pipeline_name;
                         AISDK_LOG_WARN("HandTracking: Initialized!");
                         return NR_PLUGIN_RESULT_SUCCESS;
-                    } else {
-                        AISDK_LOG_ERROR("HandTracking: init failed since NrCore::Status: {}!",
-                                        static_cast<int>(status));
                     }
+                    AISDK_LOG_ERROR("HandTracking: init failed since NrCore::Status: {}!", static_cast<int>(status));
+
                 } else {
                     AISDK_LOG_TRACE("Plugin::Initialize error: pipeline_index={} < tmp.size={}", pipeline_index,
                                     tmp.size());
@@ -1136,7 +1135,7 @@ NRPluginResult Plugin::Start(NRPluginHandle handle) {
     }
     AISDK_LOG_WARN("HandTracking: Start");
     auto ins = Plugin::GetInstance();
-    if (false == ins->isInit()) {
+    if (!ins->isInit()) {
         AISDK_LOG_WARN("HandTracking: init Failure");
         return NR_PLUGIN_RESULT_FAILURE;
     }
@@ -1166,7 +1165,7 @@ NRPluginResult Plugin::Pause(NRPluginHandle handle) {
     }
     AISDK_LOG_WARN("HandTracking: Pause");
     auto ins = Plugin::GetInstance();
-    if (false == ins->isInit()) {
+    if (!ins->isInit()) {
         AISDK_LOG_WARN("HandTracking: init Failure");
         return NR_PLUGIN_RESULT_FAILURE;
     }
@@ -1184,7 +1183,7 @@ NRPluginResult Plugin::Resume(NRPluginHandle handle) {
     }
     AISDK_LOG_WARN("HandTracking: Resume");
     auto ins = Plugin::GetInstance();
-    if (false == ins->isInit()) {
+    if (!ins->isInit()) {
         AISDK_LOG_WARN("HandTracking: init Failure");
         return NR_PLUGIN_RESULT_FAILURE;
     }
@@ -1206,7 +1205,7 @@ NRPluginResult Plugin::Stop(NRPluginHandle handle) {
     }
     AISDK_LOG_WARN("HandTracking: Stop");
     auto ins = Plugin::GetInstance();
-    if (false == ins->isInit()) {
+    if (!ins->isInit()) {
         AISDK_LOG_WARN("HandTracking: init Failure");
         return NR_PLUGIN_RESULT_FAILURE;
     }

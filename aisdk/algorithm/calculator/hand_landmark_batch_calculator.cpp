@@ -75,9 +75,9 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
             bbox_expand_ratio_ = options.bbox_expand_ratio();
         }
         if (model_name_ == "2d_rtmtinyb2") {
-            AISDK_LOG_WARN("[HandLandmarkBatchCalculator] start init rtmtinyb2");
+            AISDK_LOG_TRACE("[HandLandmarkBatchCalculator] start init rtmtinyb2");
             netalgo = XGraphServiceUtils::CreateNetAlgoBase<RTMTiny>((void*)0x202310, model_name_);
-            AISDK_LOG_WARN("[HandLandmarkBatchCalculator] finish init rtmtinyb2");
+            AISDK_LOG_TRACE("[HandLandmarkBatchCalculator] finish init rtmtinyb2");
         } else {
             return absl::AbortedError(fmt::format("can not init model with {}", model_name_));
         }

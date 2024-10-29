@@ -77,18 +77,10 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
         if (options.bbox_expand_ratio() > 0) {
             bbox_expand_ratio_ = options.bbox_expand_ratio();
         }
-        if (model_name_ == "2d_rsntiny") {
-            netalgo = XGraphServiceUtils::CreateNetAlgoBase<RSNTiny>((void*)0x202310, model_name_);
-        } else if (model_name_ == "2d_rtmtiny") {
+        if (model_name_ == "2d_rtmtiny") {
             AISDK_LOG_TRACE("[HandLandmarkCalculator] start init rtmtiny");
             netalgo = XGraphServiceUtils::CreateNetAlgoBase<RTMTiny>((void*)0x202310, model_name_);
             AISDK_LOG_TRACE("[HandLandmarkCalculator] finish init rtmtiny");
-            if (nullptr == netalgo) {
-                // 2d_rtmtiny: int16量化  2d_rsntiny: int8量化
-                // 晓龙870以下芯片，仅支持int8
-                AISDK_LOG_WARN("[HandLandmarkCalculator] failed to load rtmtiny, load rsntiny for int8")
-                netalgo = XGraphServiceUtils::CreateNetAlgoBase<RSNTiny>((void*)0x202310, std::string("2d_rsntiny"));
-            }
         } else if (model_name_ == "2d_rsnnano") {
             AISDK_LOG_TRACE("[HandLandmarkCalculator] start init rsnnano");
             netalgo = XGraphServiceUtils::CreateNetAlgoBase<RSNNano>((void*)0x202310, model_name_);

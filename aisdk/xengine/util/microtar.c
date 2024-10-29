@@ -306,6 +306,33 @@ int mtar_next(mtar_t *tar) {
     return mtar_seek(tar, tar->pos + n);
 }
 
+int mtar_get_filtered_filenames(mtar_t *tar, VectorString *filename_list, const char *suffix) {
+    int err;
+    mtar_header_t header;
+    err = mtar_rewind(tar);
+
+    vector_string_init(filename_list);
+
+    while ((err = mtar_read_header(tar, &header)) == MTAR_ESUCCESS) {
+        if (suffix != NULL) {
+            char *dot = strrchr(header.name, '.');
+            if (dot && strcmp(dot, suffix) == 0) {
+                vector_string_push(filename_list, header.name);
+            }
+        } else {
+            vector_string_push(filename_list, header.name);
+        }
+        mtar_next(tar);
+    }
+
+    if (err != MTAR_ENULLRECORD) {
+        vector_string_free(filename_list);
+        return err;
+    }
+
+    return MTAR_ESUCCESS;
+}
+
 int mtar_find(mtar_t *tar, const char *name, mtar_header_t *h) {
     int err;
     mtar_header_t header;

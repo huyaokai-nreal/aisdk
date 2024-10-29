@@ -102,6 +102,7 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
                 output_buffer_->left_hand.kpt3d = lift_outputs->res3d;
                 if (model_name_ == "3d_liftnimble") {
                     output_buffer_->left_hand.score = lift_outputs->kpt3d_score;
+                    output_buffer_->left_hand.constrained = true;
                 } else {
                     output_buffer_->left_hand.score =
                         compute_score_with_reprojection(output_buffer_->left_hand.kpt3d, kpt2d.lhand_lcam_kpt,
@@ -126,6 +127,7 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
                 output_buffer_->right_hand.kpt3d = lift_outputs->res3d;
                 if (model_name_ == "3d_liftnimble") {
                     output_buffer_->right_hand.score = lift_outputs->kpt3d_score;
+                    output_buffer_->right_hand.constrained = true;
                 } else {
                     output_buffer_->right_hand.score =
                         compute_score_with_reprojection(output_buffer_->right_hand.kpt3d, kpt2d.rhand_lcam_kpt,

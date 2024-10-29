@@ -131,10 +131,10 @@ class HandFeatureUpdator {
 
    private:
     float curl_th_width = 10;
-    float curl_thumb_open_th = 140;
+    float curl_thumb_open_th = 145;
     float curl_thumb_closed_th = 130;
-    float curl_other_open_th = 148;
-    float curl_other_closed_th = 70;
+    float curl_other_open_th = 130;
+    float curl_other_closed_th = 80;
 
     float flexion_th_width = 8;
     float flexion_thumb_open_th = 150;
@@ -150,7 +150,7 @@ class HandFeatureUpdator {
     std::unique_ptr<HandFeature> cur_hand_feature;
   public:
      // in 1 cm, out 2 cm for lift3d
-    float opposition_closed_th = 0.015; 
+    float opposition_closed_th = 0.018; 
     float opposition_open_th = 0.1;     
     float opposition_th_width = 0.01;    
      // in 2 cm, out 3 cm for liftnimble
@@ -158,7 +158,7 @@ class HandFeatureUpdator {
     //float opposition_open_th = 0.1;     
     //float opposition_th_width = 0.01;    
     // pinch relax th, in 1.5cm, out 3 cm
-    float opposition_relax_closed_th = 0.0225;  
+    float opposition_relax_closed_th = 0.025;  
     float opposition_relax_th_width = 0.015;     
     // moving pinch th, in 1 cm, out 3 cm
     float opposition_move_closed_th = 0.02; 
@@ -166,7 +166,7 @@ class HandFeatureUpdator {
 };
 
 constexpr float pinch_v_th = -0.015; //m/s
-constexpr float pinch_min_th = 0.008;
+constexpr float pinch_min_th = 0.010;
 class GestureMatchRule {
    private:
    public:

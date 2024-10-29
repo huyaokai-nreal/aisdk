@@ -1,9 +1,9 @@
-#include <absl/status/status.h>
 #include <stdlib.h>
 
 #include <memory>
 #include <string>
 
+#include "absl/strings/match.h"
 #include "aes.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/profiling.h"
@@ -12,8 +12,6 @@
 #include "md5.h"
 #include "microtar.h"
 #include "models_load.h"
-
-#define MAX_PIPELINE_NUMS_INTAR (12)
 
 namespace aisdk::xengine {
 
@@ -368,7 +366,6 @@ void AnalysisTar::ReleaseCache() {
 
 AnalysisTar::AnalysisTar() {}
 AnalysisTar::~AnalysisTar() { ReleaseCache(); }
-
 bool AnalysisTar::Analysis(unsigned char *tar_mem, uint32_t tar_len) {
     // 清空历史缓存的
     ReleaseCache();
@@ -385,57 +382,52 @@ bool AnalysisTar::Analysis(unsigned char *tar_mem, uint32_t tar_len) {
         return false;
     }
 
-    if (1) {
-        // 查找固定的名称
-        std::string tar_global_shared_config = "global_shared_config.json";
-        // 读取config.json并解析
-        if (MTAR_ESUCCESS == mtar_find(&tar, tar_global_shared_config.c_str(), &h)) {
-            void *p = nullptr;
-            // 这里引用tar内存即可
-            mtar_mem_read_data(&tar, &p, h.size);
-            if (p) {
-                if (aisdk::base::DebugProfiling::Get().GetOpt().aisdk_init_report) {
-                    AISDK_LOG_TRACE("[Analysis] tar_pipelinename={}", tar_global_shared_config.c_str());
-                    std::string tmp((char *)p, h.size);
-                    AISDK_LOG_TRACE("\n\n{}\n\n", tmp.c_str());
-                }
-                Json::Value global_shared_config_json;
-                Json::Reader reader;
-                if (!reader.parse((char *)p, (char *)p + h.size, global_shared_config_json)) {
-                    AISDK_LOG_ERROR("[Analysis] global_shared_config.json is not normal json file");
-                    mtar_close(&tar);
-                    return false;
-                } else {
-                    auto &global_shared_config = *m_global_shared_config;
-                    if (GenerateGlobalSharedConfig(global_shared_config_json, tar, global_shared_config)) {
-                    } else {
-                        // 中间生成报错，清除中间资源
-                        CleanGlobalSharedConfig(global_shared_config);
-                        AISDK_LOG_ERROR("[Analysis] GenerateGlobalSharedConfig failure");
-                        mtar_close(&tar);
-                        return false;
-                    }
-                }
-            } else {
-                AISDK_LOG_ERROR("[AnalysisTar] tar_mem of global_shared_config.json is bad");
+    // 查找固定的名称
+    std::string tar_global_shared_config = "global_shared_config.json";
+    // 读取config.json并解析
+    if (MTAR_ESUCCESS == mtar_find(&tar, tar_global_shared_config.c_str(), &h)) {
+        void *p = nullptr;
+        // 这里引用tar内存即可
+        mtar_mem_read_data(&tar, &p, h.size);
+        if (p) {
+            if (aisdk::base::DebugProfiling::Get().GetOpt().aisdk_init_report) {
+                AISDK_LOG_TRACE("[Analysis] tar_pipelinename={}", tar_global_shared_config.c_str());
+                std::string tmp((char *)p, h.size);
+                AISDK_LOG_TRACE("\n\n{}\n\n", tmp.c_str());
+            }
+            Json::Value global_shared_config_json;
+            Json::Reader reader;
+            if (!reader.parse((char *)p, (char *)p + h.size, global_shared_config_json)) {
+                AISDK_LOG_ERROR("[Analysis] global_shared_config.json is not normal json file");
                 mtar_close(&tar);
                 return false;
+            } else {
+                auto &global_shared_config = *m_global_shared_config;
+                if (GenerateGlobalSharedConfig(global_shared_config_json, tar, global_shared_config)) {
+                } else {
+                    // 中间生成报错，清除中间资源
+                    CleanGlobalSharedConfig(global_shared_config);
+                    AISDK_LOG_ERROR("[Analysis] GenerateGlobalSharedConfig failure");
+                    mtar_close(&tar);
+                    return false;
+                }
             }
         } else {
-            AISDK_LOG_ERROR("[AnalysisTar] global_shared_config.json is not find");
+            AISDK_LOG_ERROR("[AnalysisTar] tar_mem of global_shared_config.json is bad");
             mtar_close(&tar);
             return false;
         }
+    } else {
+        AISDK_LOG_ERROR("[AnalysisTar] global_shared_config.json is not find");
+        mtar_close(&tar);
+        return false;
     }
 
-    // 目前我们支持1个tar包最多4条pipeline
-    std::vector<std::string> hand_graphs = {"graph_ella_snpedsp.txt", "graph_ella_cpu.txt", "graph_flora_snpedsp.txt",
-                                            "graph_flora_cpu.txt"};
-    for (uint32_t i = 0; i < hand_graphs.size(); i++) {
-        // 查找固定的名称
-        std::string tar_hand_graph = hand_graphs[i];
-        // 读取config.json并解析
-        if (MTAR_ESUCCESS == mtar_find(&tar, tar_hand_graph.c_str(), &h)) {
+    VectorString filename_list;
+    mtar_get_filtered_filenames(&tar, &filename_list, ".txt");
+    for (size_t i = 0; i < filename_list.size; i++) {
+        char *tar_hand_graph = filename_list.data[i];
+        if (MTAR_ESUCCESS == mtar_find(&tar, tar_hand_graph, &h)) {
             void *p = nullptr;
             // 这里引用tar内存即可
             mtar_mem_read_data(&tar, &p, h.size);
@@ -447,29 +439,27 @@ bool AnalysisTar::Analysis(unsigned char *tar_mem, uint32_t tar_len) {
                 pipelineconifg.global_shared_config = m_global_shared_config;
                 // 检查单双面的逻辑可能会变化!!!
                 pipelineconifg.related_feature.bind_mono_bino =
-                    (tar_hand_graph.find("mono") != std::string::npos) ? "mono_bino" : "bino";
+                    (absl::StrContains(tar_hand_graph, "mono")) ? "mono_bino" : "bino";
                 pipelineconifg.related_feature.bind_glass =
-                    (tar_hand_graph.find("ella") != std::string::npos) ? "ella" : "flora";
+                    (absl::StrContains(tar_hand_graph, "ella")) ? "ella" : "flora";
                 pipelineconifg.related_feature.bind_sensor_orientation =
-                    (tar_hand_graph.find("ella") != std::string::npos) ? "horizontal" : "vertical";
+                    (absl::StrContains(tar_hand_graph, "ella")) ? "horizontal" : "vertical";
                 pipelineconifg.related_feature.bind_runtime =
-                    (tar_hand_graph.find("snpedsp") != std::string::npos) ? "snpedsp" : "cpu";
+                    (absl::StrContains(tar_hand_graph, "snpedsp")) ? "snpedsp" : "cpu";
 
                 if (aisdk::base::DebugProfiling::Get().GetOpt().aisdk_init_report) {
-                    AISDK_LOG_TRACE("[Analysis] tar_hand_graph={}", tar_hand_graph.c_str());
+                    AISDK_LOG_TRACE("[Analysis] tar_hand_graph={}", tar_hand_graph);
                     AISDK_LOG_TRACE("\n\n{}\n\n", pipelineconifg.graph_config.c_str());
                 }
                 configs.emplace_back(std::move(pipelineconifg));
             } else {
-                AISDK_LOG_ERROR("[Analysis] tar_mem of {} is bad", tar_hand_graph.c_str());
+                AISDK_LOG_ERROR("[Analysis] tar_mem of {} is bad", tar_hand_graph);
                 mtar_close(&tar);
                 return false;
             }
-        } else {
-            AISDK_LOG_WARN("[Analysis] tar_hand_graph={} is not find", tar_hand_graph.c_str());
         }
     }
-
+    vector_string_free(&filename_list);
     /* Close archive */
     mtar_close(&tar);
     return true;

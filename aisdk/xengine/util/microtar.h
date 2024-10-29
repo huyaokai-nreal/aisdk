@@ -14,6 +14,7 @@ extern "C" {
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "vec_string.h"
 
 #define MTAR_VERSION "0.1.0"
 
@@ -81,7 +82,7 @@ int mtar_read_header(mtar_t *tar, mtar_header_t *h);
 int mtar_read_data(mtar_t *tar, void *ptr, unsigned size);
 // 自己按需添加的函数
 int mtar_mem_read_data(mtar_t *tar, void **ptr, unsigned size);
-
+int mtar_get_filtered_filenames(mtar_t *tar, VectorString *filename_list, const char *suffix);
 int mtar_write_header(mtar_t *tar, const mtar_header_t *h);
 int mtar_write_file_header(mtar_t *tar, const char *name, unsigned size);
 int mtar_write_dir_header(mtar_t *tar, const char *name);
