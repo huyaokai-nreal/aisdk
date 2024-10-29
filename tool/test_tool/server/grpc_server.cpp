@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <atomic>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
@@ -25,14 +26,12 @@
 #include "proto/nreal.ai.tool.pb.h"
 
 using grpc::Server;
-using grpc::ServerBuilder;
-using grpc::ServerContext;
 using grpc::Status;
 
 static std::string server_proto_version = "NrealAiTool 20230119.A02";
 static std::string server_defaut_dir = "./";
 static std::set<std::string> support_sdk = {"handTracking"};
-static int QuitFlag = 0;
+static std::atomic_int QuitFlag = 0;
 
 void protoToJson(const google::protobuf::Message& proto) {
     std::string json;
@@ -40,19 +39,17 @@ void protoToJson(const google::protobuf::Message& proto) {
     std::cout << json << std::endl;
 }
 
-class AiServiceImpl final : public NrealAiTool::Engine::Service {
+class AIServiceImpl final : public NrealAiTool::Engine::Service {
    public:
-    AiServiceImpl() = default;
-    virtual ~AiServiceImpl() {
+    AIServiceImpl() = default;
+    virtual ~AIServiceImpl() {
         if (m_handTracking_sdk_impl) {
             m_handTracking_sdk_impl = nullptr;
             DestroyHandTrackingInstance();
         }
     }
-
-   public:
     grpc::Status Status(grpc::ServerContext* context, const google::protobuf::Empty* request,
-                        NrealAiTool::StatusReply* response) {
+                        NrealAiTool::StatusReply* response) override {
         std::cout << "grpc server [Status] request" << std::endl;
 
         response->mutable_system_status()->append(server_proto_version);
@@ -66,7 +63,7 @@ class AiServiceImpl final : public NrealAiTool::Engine::Service {
     }
 
     grpc::Status Upload(grpc::ServerContext* context, const NrealAiTool::UploadRequest* request,
-                        NrealAiTool::UploadReply* response) {
+                        NrealAiTool::UploadReply* response) override {
         std::cout << "grpc server [Upload] request" << std::endl;
 
         if (0 == request->sdk_name().length() || 0 == request->file_name().length() ||
@@ -83,15 +80,15 @@ class AiServiceImpl final : public NrealAiTool::Engine::Service {
         if (0 == aisdk::base::WriteToFile(save_dir, request->file_content())) {
             response->set_ret_code(0);
             return Status::OK;
-        } else {
-            response->set_ret_code(-3);
-            response->mutable_error_message()->append("open file_name error");
-            return Status::OK;
-        }
+        }              
+        response->set_ret_code(-3);
+        response->mutable_error_message()->append("open file_name error");
+        return Status::OK;
+       
     }
 
     grpc::Status ResetSdk(grpc::ServerContext* context, const google::protobuf::Empty* request,
-                          NrealAiTool::ResetSdkReply* response) {
+                          NrealAiTool::ResetSdkReply* response) override {
         std::cout << "grpc server [ResetSdk] request" << std::endl;
 
         std::lock_guard<std::mutex> guard(m_lock);
@@ -113,7 +110,7 @@ class AiServiceImpl final : public NrealAiTool::Engine::Service {
     }
 
     grpc::Status StartSdk(grpc::ServerContext* context, const NrealAiTool::StartSdkRequest* request,
-                          NrealAiTool::StartSdkReply* response) {
+                          NrealAiTool::StartSdkReply* response) override {
         std::cout << "grpc server [StartSdk] request" << std::endl;
 
         if (request->sdk_name() == "handTracking") {
@@ -162,7 +159,7 @@ class AiServiceImpl final : public NrealAiTool::Engine::Service {
     }
 
     grpc::Status StopSdk(grpc::ServerContext* context, const NrealAiTool::StopSdkRequest* request,
-                         NrealAiTool::StopSdkReply* response) {
+                         NrealAiTool::StopSdkReply* response) override {
         std::cout << "grpc server [StopSdk] request" << std::endl;
 
         std::lock_guard<std::mutex> guard(m_lock);
@@ -186,7 +183,7 @@ class AiServiceImpl final : public NrealAiTool::Engine::Service {
     }
 
     grpc::Status PipelineInference(grpc::ServerContext* context, const NrealAiTool::PipelineInferenceRequest* request,
-                                   NrealAiTool::PipelineInferenceReply* response) {
+                                   NrealAiTool::PipelineInferenceReply* response) override {
         if (m_handTracking_sdk_sessionid != request->session_id() ||
             (false == request->is_eof() &&
              (0 == request->left_camera_frame().length() || 0 == request->right_camera_frame().length()))) {
@@ -231,7 +228,7 @@ class AiServiceImpl final : public NrealAiTool::Engine::Service {
     }
 
     grpc::Status GetPipelineResult(grpc::ServerContext* context, const NrealAiTool::GetPipelineResultRequest* request,
-                                   NrealAiTool::GetPipelineResultReply* response) {
+                                   NrealAiTool::GetPipelineResultReply* response) override {
         if (m_handTracking_sdk_sessionid != request->session_id()) {
             response->set_ret_code(-1);
             response->mutable_error_message()->append("GetPipelineResult param check error");
@@ -263,34 +260,30 @@ class AiServiceImpl final : public NrealAiTool::Engine::Service {
     }
 
     grpc::Status SetServiceFeature(grpc::ServerContext* context, const NrealAiTool::SetServiceFeatureRequest* request,
-                                   NrealAiTool::SetServiceFeatureReply* response) {
+                                   NrealAiTool::SetServiceFeatureReply* response) override {
         std::cout << "grpc server [SetServiceFeature] request" << std::endl;
         return Status::OK;
     }
 
     grpc::Status GetServiceActualInfo(grpc::ServerContext* context,
                                       const NrealAiTool::GetServiceActualInfoRequest* request,
-                                      NrealAiTool::GetServiceActualInfoReply* response) {
+                                      NrealAiTool::GetServiceActualInfoReply* response) override {
         std::cout << "grpc server [GetServiceActualInfo] request" << std::endl;
         return Status::OK;
     }
 
-   public:
+   private:
     std::mutex m_lock;
     uint64_t m_handTracking_sdk_sessionid = 0;
     std::shared_ptr<HandTrackingSdk> m_handTracking_sdk_impl = nullptr;
 };
 
 class RpcServer {
-   public:
-    RpcServer() = default;
-    ~RpcServer() = default;
-
-    AiServiceImpl m_ai_service;
+   private:
+    AIServiceImpl m_ai_service;
     std::unique_ptr<grpc::Server> m_grpc;
-
    public:
-    int Start(std::string server_address) {
+    int Start(const std::string& server_address) {
         // grpc::reflection::InitProtoReflectionServerBuilderPlugin();
 
         grpc::ServerBuilder builder;
@@ -316,7 +309,7 @@ class RpcServer {
         return 0;
     }
 
-    int Stop() {
+    int Stop() const {
         m_grpc->Shutdown();
         m_grpc->Wait();
         std::cout << "grpc server Stoped" << std::endl;
@@ -341,7 +334,8 @@ int main(int argc, char** argv) {
     rpcservice->Start("0.0.0.0:50051");
     while (1) {
         sleep(1);
-        if (QuitFlag) break;
+        if (QuitFlag) { break;
+}
     }
     rpcservice->Stop();
     rpcservice = nullptr;
