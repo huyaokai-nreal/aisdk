@@ -8,6 +8,7 @@
             "detect_cpu_flora",
             "detect_dsp_flora_mono",
             "2d_rtmtinyb2",
+            "2d_rtmtiny",
             "2d_rsnnano",
             "2d_filter",
             "3d_lift_ella",
@@ -80,6 +81,23 @@
                 "output_tensors": [
                     "output_box",
                     "output_cls"
+                ]
+            }
+        },
+        "2d_rtmtiny": {
+            "model_config": {
+                "file_name": "models/rtmtiny_dark_pcl_res26sw_128_bs1_241015_337c3d_int16.dlc",
+                "vendor": "snpe"
+            },
+            "session_config": {
+                "batch": 1,
+                "precision": "int16",
+                "thread_num": 1,
+                "runtime": "dsp",
+                "output_tensors": [
+                    "feat_x",
+                    "feat_y",
+                    "feat_z"
                 ]
             }
         },
