@@ -32,7 +32,7 @@ class HandTrackingXGraph : public BaseXGraph {
    public:
     HandTrackingXGraph();
 
-    virtual aisdk::algorithm::Status Init(aisdk::xengine::DlSymFuncs& funcs, aisdk::xengine::PipelineConfig& config,
+    aisdk::algorithm::Status Init(aisdk::xengine::DlSymFuncs& funcs, aisdk::xengine::PipelineConfig& config,
                                           CameraParams& camera) override;
     // 接口参数自定义
     algorithm::Status PushData(uint64_t timestamp, std::vector<algorithm::Image>& in_image, NRTransform headpose);
