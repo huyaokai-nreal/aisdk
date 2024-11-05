@@ -384,6 +384,38 @@ format_pinhole_camera_model(const aisdk::algorithm::CamInfo &cam_info) {
 
     return std::make_pair(lcam_model, rcam_model);
 }
+std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>, std::shared_ptr<aisdk::base::BaseCameraModel>>
+format_opencv_fisheye_camera_model(const aisdk::algorithm::CamInfo &cam_info) {
+    // lcam
+    aisdk::base::CameraIntrinsics intrinsics_lcam{
+        cam_info.lcam_intrinsics.at<float>(0, 0), cam_info.lcam_intrinsics.at<float>(1, 1),
+        cam_info.lcam_intrinsics.at<float>(0, 2), cam_info.lcam_intrinsics.at<float>(1, 2)};
+    aisdk::base::OpenCVFisheyeCameraDistortion distortion_lcam{
+        cam_info.lcam_dist_coeffs.at<float>(0, 0),
+        cam_info.lcam_dist_coeffs.at<float>(0, 1),
+        cam_info.lcam_dist_coeffs.at<float>(0, 2),
+        cam_info.lcam_dist_coeffs.at<float>(0, 3),
+    };
+    auto lcam_model = std::make_shared<aisdk::base::OpenCVFisheyeCameraModel>(
+        intrinsics_lcam, distortion_lcam, Eigen::Isometry3f::Identity(),
+        static_cast<aisdk::base::CameraType>(cam_info.camera_type), cam_info.video_width, cam_info.video_height);
+
+    // rcam
+    aisdk::base::CameraIntrinsics intrinsics_rcam{
+        cam_info.rcam_intrinsics.at<float>(0, 0), cam_info.rcam_intrinsics.at<float>(1, 1),
+        cam_info.rcam_intrinsics.at<float>(0, 2), cam_info.rcam_intrinsics.at<float>(1, 2)};
+    aisdk::base::OpenCVFisheyeCameraDistortion distortion_rcam{
+        cam_info.rcam_dist_coeffs.at<float>(0, 0),
+        cam_info.rcam_dist_coeffs.at<float>(0, 1),
+        cam_info.rcam_dist_coeffs.at<float>(0, 2),
+        cam_info.rcam_dist_coeffs.at<float>(0, 3),
+    };
+    auto rcam_model = std::make_shared<aisdk::base::OpenCVFisheyeCameraModel>(
+        intrinsics_rcam, distortion_rcam, cam_info.cvL_T_cvR,
+        static_cast<aisdk::base::CameraType>(cam_info.camera_type), cam_info.video_width, cam_info.video_height);
+
+    return std::make_pair(lcam_model, rcam_model);
+}
 
 std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>, std::shared_ptr<aisdk::base::BaseCameraModel>>
 format_fisheye624_camera_model(const aisdk::algorithm::CamInfo &cam_info) {
@@ -427,6 +459,9 @@ ConvertCameraModel(const aisdk::algorithm::CamInfo &cam_info) {
     if (cam_info.camera_type == 1) {  // ella pinhole
         AISDK_LOG_TRACE("BaseXGraph::Init use ella pinhole camera model");
         camera_model = format_pinhole_camera_model(cam_info);
+    } else if (cam_info.camera_type == 2) {
+        AISDK_LOG_TRACE("BaseXGraph::Init use flora fisheye camera model");
+        camera_model = format_opencv_fisheye_camera_model(cam_info);
     } else if (cam_info.camera_type == 3) {  // flora fisheye624
         AISDK_LOG_TRACE("BaseXGraph::Init use flora fisheye624 camera model");
         camera_model = format_fisheye624_camera_model(cam_info);
@@ -439,12 +474,7 @@ ConvertCameraModel(const aisdk::algorithm::CamInfo &cam_info) {
 aisdk::algorithm::Status BaseXGraph::Init(aisdk::xengine::DlSymFuncs &funcs, aisdk::xengine::PipelineConfig &config,
                                           CameraParams &camera) {
     auto camera_info = ConvertCameraInfo(camera);
-    if (camera_info.camera_type == 2) {
-        // flora fisheye600
-        return aisdk::algorithm::Status::FAILURE;
-    }
     auto camera_model = ConvertCameraModel(camera_info);
-
     std::map<std::string, xgraph::Packet> side_packets;
     side_packets["cam_info"] = xgraph::MakePacket<
         std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>, std::shared_ptr<aisdk::base::BaseCameraModel>>>(
