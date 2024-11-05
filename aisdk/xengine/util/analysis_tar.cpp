@@ -1,7 +1,10 @@
+#include <absl/strings/str_split.h>
 #include <stdlib.h>
 
 #include <memory>
 #include <string>
+#include <unordered_map>
+#include <vector>
 
 #include "absl/strings/match.h"
 #include "aes.h"
@@ -425,6 +428,8 @@ bool AnalysisTar::Analysis(unsigned char *tar_mem, uint32_t tar_len) {
 
     VectorString filename_list;
     mtar_get_filtered_filenames(&tar, &filename_list, ".txt");
+    std::unordered_map<std::string, std::string> kGlassesSensorOrientationMap{
+        {"flora", "vertical"}, {"ella", "horizontal"}, {"gina", "horizontal"}};
     for (size_t i = 0; i < filename_list.size; i++) {
         char *tar_hand_graph = filename_list.data[i];
         if (MTAR_ESUCCESS == mtar_find(&tar, tar_hand_graph, &h)) {
@@ -437,16 +442,14 @@ bool AnalysisTar::Analysis(unsigned char *tar_mem, uint32_t tar_len) {
                 pipelineconifg.framework_type = aisdk::xengine::FrameworkType::XGRAPH;
                 pipelineconifg.graph_config = std::string((const char *)p, h.size);
                 pipelineconifg.global_shared_config = m_global_shared_config;
-                // 检查单双面的逻辑可能会变化!!!
+                std::vector<std::string> graph_info = absl::StrSplit(tar_hand_graph, '.');
+                std::vector<std::string> graph_info_list = absl::StrSplit(graph_info[0], '_');
                 pipelineconifg.related_feature.bind_mono_bino =
                     (absl::StrContains(tar_hand_graph, "mono")) ? "mono_bino" : "bino";
-                pipelineconifg.related_feature.bind_glass =
-                    (absl::StrContains(tar_hand_graph, "ella")) ? "ella" : "flora";
+                pipelineconifg.related_feature.bind_glass = graph_info_list[1];
                 pipelineconifg.related_feature.bind_sensor_orientation =
-                    (absl::StrContains(tar_hand_graph, "ella")) ? "horizontal" : "vertical";
-                pipelineconifg.related_feature.bind_runtime =
-                    (absl::StrContains(tar_hand_graph, "snpedsp")) ? "snpedsp" : "cpu";
-
+                    kGlassesSensorOrientationMap[graph_info_list[1]];
+                pipelineconifg.related_feature.bind_runtime = graph_info_list[2];
                 if (aisdk::base::DebugProfiling::Get().GetOpt().aisdk_init_report) {
                     AISDK_LOG_TRACE("[Analysis] tar_hand_graph={}", tar_hand_graph);
                     AISDK_LOG_TRACE("\n\n{}\n\n", pipelineconifg.graph_config.c_str());
