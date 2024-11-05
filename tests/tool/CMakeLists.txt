@@ -1,0 +1,5 @@
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_SOURCE_DIR}/interface/handtracking_sdk)
+list(APPEND TEST_DEP_LIBS base doctest::doctest tool_util)
+set(src_list ${PROJECT_SOURCE_DIR}/tool/test_tool/server/hand_tracking.cpp)
+ADD_TEST_CASE(${CMAKE_CURRENT_SOURCE_DIR}/test_handtracking.cpp src_list TEST_DEP_LIBS)

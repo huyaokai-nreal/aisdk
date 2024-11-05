@@ -20,7 +20,7 @@ function(ADD_TEST_CASE TEST_SRC SRC_LIST LIB)
                           RUNTIME_OUTPUT_DIRECTORY_RELEASE ${PROJECT_BINARY_DIR}/test
                           RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL ${PROJECT_BINARY_DIR}/test
                           RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${PROJECT_BINARY_DIR}/test)
-    target_compile_options(${TEST_EXECUTABLE_NAME} PRIVATE -Wno-error)
+    target_compile_options(${TEST_EXECUTABLE_NAME} PRIVATE -Wno-error -DNRPLUGIN)
 
     # Add test
     add_test(${TEST_MODULE_NAME} ${PROJECT_BINARY_DIR}/test/${TEST_EXECUTABLE_NAME})

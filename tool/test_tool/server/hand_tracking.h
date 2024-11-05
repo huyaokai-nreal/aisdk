@@ -228,8 +228,6 @@ class HandTrackingSdk : public StreamDataContrlAgent {
     int StopSdk();
     int SendStream(std::shared_ptr<StreamData>& data);
     int RecvResult(uint64_t frame_id, std::shared_ptr<StreamResult>& result);
-
-   private:
     int CameraParamsParse(std::string& json_string);
     int ProfilingParamsParse(std::string& json_string);
 };
