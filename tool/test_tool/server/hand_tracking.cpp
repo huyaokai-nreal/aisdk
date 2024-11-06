@@ -14,10 +14,10 @@
 #include "interface/handtracking_sdk/common/nr_plugin_generic.h"
 #include "interface/handtracking_sdk/common/nr_plugin_hmd.h"
 #include "interface/handtracking_sdk/common/nr_plugin_types_ext.inl"
-#include "interface/handtracking_sdk/perception/nr_perception_common.h"
 #include "interface/handtracking_sdk/perception/nr_perception_hand_tracking.h"
 #include "interface/handtracking_sdk/public/nr_plugin_lifecycle.h"
 #include "json/json.h"
+#include "perception/nr_plugin_tracking_common.h"
 
 HandTrackingInterface g_nr_handtracking_interface;
 NRGenericInterface g_generic_interface;
@@ -819,30 +819,30 @@ void SendWorkNotifyData() {
     NRGrayscaleCameraFrameData tmp;
     auto& data = g_readying_get_data.stream;
     tmp.camera_count = 2;
-    tmp.data = data->left_right_frame.data();
+    tmp.data = (uint8_t*)data->left_right_frame.data();
 
     tmp.cameras[0].offset = 0;
-    tmp.cameras[0].hmd_time_nanos = data->nano_time;
+    tmp.cameras[0].exposure_start_time_system = data->nano_time;
     if (g_camera_params_type == 1) {
         tmp.cameras[0].width = g_camera_params.device1.resolution[0];
         tmp.cameras[0].height = g_camera_params.device1.resolution[1];
-        tmp.cameras[0].step = g_camera_params.device1.resolution[0];
+        tmp.cameras[0].stride = g_camera_params.device1.resolution[0];
     } else if (g_camera_params_type == 2) {
         tmp.cameras[0].width = g_camera_params_2.cam0.resolution[0];
         tmp.cameras[0].height = g_camera_params_2.cam0.resolution[1];
-        tmp.cameras[0].step = g_camera_params_2.cam0.resolution[0];
+        tmp.cameras[0].stride = g_camera_params_2.cam0.resolution[0];
     }
 
     tmp.cameras[1].offset = data->left_right_frame.size() / 2;
-    tmp.cameras[1].hmd_time_nanos = data->nano_time;
+    tmp.cameras[1].exposure_start_time_system = data->nano_time;
     if (g_camera_params_type == 1) {
         tmp.cameras[1].width = g_camera_params.device2.resolution[0];
         tmp.cameras[1].height = g_camera_params.device2.resolution[1];
-        tmp.cameras[1].step = g_camera_params.device2.resolution[0];
+        tmp.cameras[1].stride = g_camera_params.device2.resolution[0];
     } else if (g_camera_params_type == 2) {
         tmp.cameras[1].width = g_camera_params_2.cam1.resolution[0];
         tmp.cameras[1].height = g_camera_params_2.cam1.resolution[1];
-        tmp.cameras[1].step = g_camera_params_2.cam1.resolution[0];
+        tmp.cameras[1].stride = g_camera_params_2.cam1.resolution[0];
     }
 
     // sdk内部可能会失败，但是NotifyData无返回值，导致有些数据等待处理超时
