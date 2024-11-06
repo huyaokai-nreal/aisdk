@@ -8,3 +8,7 @@ add_clang_format_target(grpc_server_android)
 set_target_properties(grpc_server_android PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
 )
+target_include_directories(grpc_server_android PRIVATE ${PROJECT_SOURCE_DIR}/interface/handtracking_sdk/channel)
+target_include_directories(grpc_server_android PRIVATE ${PROJECT_SOURCE_DIR}/interface/handtracking_sdk/common)
+target_include_directories(grpc_server_android PRIVATE ${PROJECT_SOURCE_DIR}/interface/handtracking_sdk/perception)
+target_include_directories(grpc_server_android PRIVATE ${PROJECT_SOURCE_DIR}/interface/handtracking_sdk/public)
