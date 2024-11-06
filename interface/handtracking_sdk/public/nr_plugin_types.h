@@ -3,6 +3,8 @@
 
 // Use int32_t for ABI compatibility.
 #if __cplusplus >= 201100 || defined(_WIN32)
+#define NR_PLUGIN_ENUM8(__TYPE__) enum __TYPE__ : int8_t
+#define NR_PLUGIN_ENUM16(__TYPE__) enum __TYPE__ : int16_t
 #define NR_PLUGIN_ENUM32(__TYPE__) enum __TYPE__ : int32_t
 #define NR_PLUGIN_ENUM64(__TYPE__) enum __TYPE__ : int64_t
 #define NR_PLUGIN_ENUM(__TYPE__) NR_PLUGIN_ENUM32(__TYPE__)
@@ -12,15 +14,18 @@
 
 #if defined(NRSDK) || defined(NRPLUGIN)
 
-#include "common/nr_plugin_result.inl"
-#include "common/nr_plugin_types.inl"
-#include "common/nr_plugin_types_ext.inl"
+#include "nr_plugin_result.inl"
+#include "nr_plugin_types.inl"
+#include "nr_plugin_types_ext.inl"
 
 #else
 
 NR_PLUGIN_ENUM(NRPluginResult){
     NR_PLUGIN_RESULT_SUCCESS = 0,
     NR_PLUGIN_RESULT_FAILURE = 1,
+	NR_PLUGIN_RESULT_INVALID_ARGUMENT = 2,
+	NR_PLUGIN_RESULT_NOT_ENOUGH_MEMORY = 3,
+	NR_PLUGIN_RESULT_UNSUPPORTED = 4,
 
     // In addition to the error code above, developers can use their own error
     // code. User defined error code start from

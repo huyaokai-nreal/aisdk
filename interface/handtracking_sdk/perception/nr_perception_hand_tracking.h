@@ -1,8 +1,8 @@
 #pragma once
-#include "nr_perception_common.h"
-#include "public/nr_plugin_interface.h"
-#include "public/nr_plugin_lifecycle.h"
-#include "public/nr_plugin_types.h"
+#include "nr_plugin_tracking_common.h"
+#include "nr_plugin_interface.h"
+#include "nr_plugin_lifecycle.h"
+#include "nr_plugin_types.h"
 // clang-format off
 
 /// @brief The type of gesture recognized
@@ -41,7 +41,7 @@ NR_PLUGIN_ENUM(HandJointType){
     HAND_JOINT_TYPE_THUMB_PROXIMAL                     = 3,
     HAND_JOINT_TYPE_THUMB_DISTAL                       = 4,
     HAND_JOINT_TYPE_THUMB_TIP                          = 5,
-    HAND_JOINT_TYPE_INDEX_FINGER_METACARPAL            = 6, 
+    HAND_JOINT_TYPE_INDEX_FINGER_METACARPAL            = 6,
     HAND_JOINT_TYPE_INDEX_FINGER_PROXIMAL              = 7,
     HAND_JOINT_TYPE_INDEX_FINGER_INTERMEDIATE          = 8,
     HAND_JOINT_TYPE_INDEX_FINGER_DISTAL                = 9,
@@ -232,20 +232,20 @@ typedef struct HandTrackingProvider {
     ///
     /// @param out_available_gesture_type_mask: The mask of getsture type
     ///        relative to NRGestureTypeMask
-    NRPluginResult(NR_INTERFACE_API *GetAvailableGestureType)(NRPluginHandle handle,
-                                                              uint64_t *out_available_gesture_type_mask);
+    NRPluginResult(NR_INTERFACE_API *GetAvailableGestureType)(
+        NRPluginHandle handle, uint64_t *out_available_gesture_type_mask);
     /// @brief Get available hand joint
     ///
     /// @param out_available_hand_joint_mask: The mask of hand joint
     ///        relative to NRHandJointTypeMask
-    NRPluginResult(NR_INTERFACE_API *GetAvailableHandJoint)(NRPluginHandle handle,
-                                                            uint64_t *out_available_hand_joint_mask);
+    NRPluginResult(NR_INTERFACE_API *GetAvailableHandJoint)(
+        NRPluginHandle handle, uint64_t *out_available_hand_joint_mask);
     /// @brief Get supported functions
     ///
     /// @param out_supported_function_mask: The mask of supported functions
     ///        relative to NRHandSupportFunctionMask
-    NRPluginResult(NR_INTERFACE_API *GetSupportedFunctions)(NRPluginHandle handle,
-                                                            uint64_t *out_supported_function_mask);
+    NRPluginResult(NR_INTERFACE_API *GetSupportedFunctions)(
+        NRPluginHandle handle, uint64_t *out_supported_function_mask);
     /// @brief Get hand data by HMD timestamp
     ///
     /// @param hmd_time_nanos: nano time to aquire hand data
@@ -253,11 +253,14 @@ typedef struct HandTrackingProvider {
     /// @param out_hand_num: hand count in out_hand_array
     ///
     // hand poses corresponds to world(imu) perception system
-    NRPluginResult(NR_INTERFACE_API *GetHandData)(NRPluginHandle handle, uint64_t hmd_time_nanos,
-                                                  HandData *out_hand_array, uint32_t *out_hand_num);
+    NRPluginResult(NR_INTERFACE_API *GetHandData)(NRPluginHandle handle,
+                                                  uint64_t hmd_time_nanos,
+                                                  HandData *out_hand_array,
+                                                  uint32_t *out_hand_num);
 
-    void(NR_INTERFACE_API *NotifyData)(NRPluginHandle handle, NRChannelDataType channel_data_type, const void *data,
-                                       uint32_t data_size);
+    void(NR_INTERFACE_API *NotifyData)(NRPluginHandle handle,
+                                       NRChannelDataType channel_data_type,
+                                       const void *data, uint32_t data_size);
 } HandTrackingProvider;
 
 NR_DECLARE_INTERFACE(HandTrackingInterface) {
@@ -269,10 +272,12 @@ NR_DECLARE_INTERFACE(HandTrackingInterface) {
     /// @param handle: The hand of hand plugin,created by sdk when lifecycle create called
     /// @param provider: The custom provider provided by plugin
     /// @param provider_size: The size of provider
-    NRPluginResult(NR_INTERFACE_API * RegisterProvider)(NRPluginHandle handle, const HandTrackingProvider *provider,
-                                                        uint32_t provider_size);
-    NRPluginResult(NR_INTERFACE_API * GetDevicePose)(NRPluginHandle handle, DevicePose * device_pose,
-                                                     uint64_t hmd_time_nanos);
+    NRPluginResult(NR_INTERFACE_API * RegisterProvider)(
+        NRPluginHandle handle, const HandTrackingProvider *provider,
+        uint32_t provider_size);
+    NRPluginResult(NR_INTERFACE_API * GetDevicePose)(
+        NRPluginHandle handle, DevicePose * device_pose, uint64_t hmd_time_nanos);
 };
 
-NR_REGISTER_INTERFACE_GUID(0xAF1BDCC757114F18ULL, 0xA9BDBA967E7A4E5EULL, HandTrackingInterface)
+NR_REGISTER_INTERFACE_GUID(0xAF1BDCC757114F18ULL, 0xA9BDBA967E7A4E5EULL,
+                           HandTrackingInterface)
