@@ -1,7 +1,7 @@
 #pragma once
 
-#include "public/nr_plugin_interface.h"
-#include "public/nr_plugin_types.h"
+#include "nr_plugin_interface.h"
+#include "nr_plugin_types.h"
 NR_DECLARE_INTERFACE(NRGenericInterface) {
     NRPluginResult(NR_INTERFACE_API *GetSDKVersion)(
         NRVersion * version
@@ -72,6 +72,17 @@ NR_DECLARE_INTERFACE(NRGenericInterface) {
     NRPluginResult(NR_INTERFACE_API *GetPluginDebugConfig)(
         const char ** data,
         uint32_t * data_size
+    );
+    NRPluginResult(NR_INTERFACE_API *GetWorkingMode)(
+        NRPluginHandle handle,
+        NRWorkingMode * working_mode
+    );
+    NRPluginResult(NR_INTERFACE_API *GetDisplayInfo)(
+        NRPluginHandle handle,
+        NRDisplayInfo * out_display_info
+    );
+    NRPluginResult(NR_INTERFACE_API *GetDeviceConnectMode)(
+        NRDeviceConnectMode * connect_mode
     );
 };
 
