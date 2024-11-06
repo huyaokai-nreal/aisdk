@@ -571,7 +571,7 @@ void Hmd::GetCamerasInformation() {
         _r_kc = {distortion_params_[1].fisheye_k1, distortion_params_[1].fisheye_k2, distortion_params_[1].fisheye_k3,
                  distortion_params_[1].fisheye_k4};
         // m_camera_model = 2;
-    } else if (distortion_params_[0].camera_model == NRCameraModel::NR_CAMERA_MODEL_FISHEYE624) {
+    } else if (distortion_params_[0].camera_model == NRCameraModel::NR_CAMERA_MODEL_FISHEYE_RTTP) {
         AISDK_LOG_TRACE(
             "GetComponentDistortion Fisheye624 LEFT: {}, {}, {}, {}, {}, {} / {}, {} /  {}, {}, {}, {}",
             distortion_params_[0].fisheye_k1, distortion_params_[0].fisheye_k2, distortion_params_[0].fisheye_k3,
@@ -677,7 +677,7 @@ NRPluginResult HandTracking::ParseAllCameraData(const NRGrayscaleCameraFrameData
     DevicePose headpose_proto;
     NRPluginResult errorcode = NR_PLUGIN_RESULT_SUCCESS;
     static uint64_t last_time_nanos = 0;
-    uint64_t current_time_nanos = data->cameras[0].hmd_time_nanos;
+    uint64_t current_time_nanos = data->cameras[0].exposure_start_time_system;
     AISDK_LOG_TRACE("get image time: {}", current_time_nanos);
     AISDK_LOG_TRACE("elapsed_time: {}", (current_time_nanos - last_time_nanos) / 1e9f);
     last_time_nanos = current_time_nanos;
@@ -710,11 +710,11 @@ NRPluginResult HandTracking::ParseAllCameraData(const NRGrayscaleCameraFrameData
                        reinterpret_cast<uint8_t*>(rightmem->addr));
 
     for (int cam_id = 0; cam_id < 2; cam_id++) {
-        nano_time_[cam_id] = data->cameras[cam_id].hmd_time_nanos;
+        nano_time_[cam_id] = data->cameras[cam_id].exposure_start_time_system;
         const uint8_t* image_buffer = ((uint8_t*)data->data) + data->cameras[cam_id].offset;
         for (uint32_t row = 0; row < data->cameras[cam_id].height; row++) {
             memcpy(static_cast<void*>(image[cam_id].data + data->cameras[cam_id].width * row),
-                   image_buffer + data->cameras[cam_id].step * row, data->cameras[cam_id].width);
+                   image_buffer + data->cameras[cam_id].stride * row, data->cameras[cam_id].width);
         }
     }
 #ifdef ENBALE_M2P_DELAYED_TIME_PROFILER

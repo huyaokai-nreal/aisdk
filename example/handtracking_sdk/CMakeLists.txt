@@ -7,6 +7,11 @@ ${CMAKE_CURRENT_SOURCE_DIR}/demo_deploy_handTracking.cpp
 
 # add target include. not fix exteral xxx.h 
 target_include_directories(${HANDTRACKING_SDK_DEMO_NAME} PRIVATE "../../interface/handtracking_sdk")
+target_include_directories(${HANDTRACKING_SDK_DEMO_NAME} PRIVATE "../../interface/handtracking_sdk/channel")
+target_include_directories(${HANDTRACKING_SDK_DEMO_NAME} PRIVATE "../../interface/handtracking_sdk/common")
+target_include_directories(${HANDTRACKING_SDK_DEMO_NAME} PRIVATE "../../interface/handtracking_sdk/perception")
+target_include_directories(${HANDTRACKING_SDK_DEMO_NAME} PRIVATE "../../interface/handtracking_sdk/public")
+
 
 target_compile_options(${HANDTRACKING_SDK_DEMO_NAME} PRIVATE -DNRPLUGIN)
 

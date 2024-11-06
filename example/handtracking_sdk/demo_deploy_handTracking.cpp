@@ -11,8 +11,8 @@
 #include "common/nr_plugin_hmd.h"
 #include "common/nr_plugin_types_ext.inl"
 #include "json/json.h"
-#include "perception/nr_perception_common.h"
 #include "perception/nr_perception_hand_tracking.h"
+#include "perception/nr_plugin_tracking_common.h"
 #include "public/nr_plugin_lifecycle.h"
 
 HandTrackingInterface g_nr_handtracking_interface;
@@ -794,19 +794,19 @@ int HandTrackingSdk::SendStream(std::shared_ptr<StreamData> &data) {
     // << std::endl;
     NRGrayscaleCameraFrameData tmp;
     tmp.camera_count = 2;
-    tmp.data = data->left_right_frame.data();
+    tmp.data = (uint8_t *)data->left_right_frame.data();
 
     tmp.cameras[0].offset = 0;
-    tmp.cameras[0].hmd_time_nanos = data->nano_time;
+    tmp.cameras[0].exposure_start_time_system = data->nano_time;
     tmp.cameras[0].width = g_camera_params.device1.resolution[0];
     tmp.cameras[0].height = g_camera_params.device1.resolution[1];
-    tmp.cameras[0].step = g_camera_params.device1.resolution[0];
+    tmp.cameras[0].stride = g_camera_params.device1.resolution[0];
 
     tmp.cameras[1].offset = data->left_right_frame.size() / 2;
-    tmp.cameras[1].hmd_time_nanos = data->nano_time;
+    tmp.cameras[1].exposure_start_time_system = data->nano_time;
     tmp.cameras[1].width = g_camera_params.device2.resolution[0];
     tmp.cameras[1].height = g_camera_params.device2.resolution[1];
-    tmp.cameras[1].step = g_camera_params.device2.resolution[0];
+    tmp.cameras[1].stride = g_camera_params.device2.resolution[0];
 
     g_provider.NotifyData(256, NR_CHANNEL_DATA_TYPE_GLASSES_GRAYSCALE_CAMERA, (const void *)&tmp,
                           sizeof(NRGrayscaleCameraFrameData));

@@ -6,6 +6,10 @@ ${CMAKE_CURRENT_SOURCE_DIR}/handtracking_sdk_interface.cpp
 
 # add target include. not fix exteral xxx.h
 target_include_directories(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PRIVATE "./")
+target_include_directories(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PRIVATE "./channel")
+target_include_directories(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PRIVATE "./common")
+target_include_directories(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PRIVATE "./public")
+target_include_directories(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PRIVATE "./perception")
 
 target_compile_options(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PRIVATE
 -DHANDTRACKING_SHARED_LIBS

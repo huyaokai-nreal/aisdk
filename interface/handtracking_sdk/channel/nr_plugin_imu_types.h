@@ -18,26 +18,36 @@ NR_PLUGIN_ENUM(NRImuDataMask) {
 };
 
 
+NR_PLUGIN_ENUM8(NRImuID) {
+    NR_IMU_ID_0 = 0x0001,
+    NR_IMU_ID_1 = 0x0002,
+    NR_IMU_ID_2 = 0x0004,
+    NR_IMU_ID_3 = 0x0008,
+};
+
+
 #pragma pack(1)
 typedef struct NRImuData {
     union {
         struct {
-            uint64_t hmd_time_nanos;
-            uint64_t hmd_hw_time_nanos;
-            uint64_t hmd_sensor_time_nanos;
+            uint64_t hmd_time_nanos_system;
+            uint64_t hmd_time_nanos_device;
+            uint64_t hmd_time_nanos_sensor;
             union {
                 struct {
-                    uint64_t gyro_valid : 1;
-                    uint64_t accel_valid : 1;
-                    uint64_t mag_valid : 1;
-                    uint64_t temperature_valid : 1;
+                    uint32_t gyro_valid : 1;
+                    uint32_t accel_valid : 1;
+                    uint32_t mag_valid : 1;
+                    uint32_t temperature_valid : 1;
                 };
-                int32_t data_mask;
+            int32_t data_mask;
             };
             NRVector3f gyro;
             NRVector3f accel;
             NRVector3f mag;
             float temperature;
+            int8_t imu_id;
+            uint32_t frame_id;
         };
         uint8_t padding[128];
     };

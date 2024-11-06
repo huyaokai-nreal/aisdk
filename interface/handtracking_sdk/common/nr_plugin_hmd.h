@@ -1,7 +1,15 @@
 #pragma once
 
-#include "public/nr_plugin_interface.h"
-#include "nr_plugin_hmd_types.h"
+#include "nr_plugin_interface.h"
+#include "nr_plugin_types.h"
+typedef struct NRHMDProvider {
+    NRPluginResult(NR_INTERFACE_API *OnComponentRefreshRateChange)(
+        NRPluginHandle handle,
+        NRComponent component,
+        uint32_t refresh_rate
+    );
+} NRHMDProvider;
+
 NR_DECLARE_INTERFACE(NRHMDInterface) {
     NRPluginResult(NR_INTERFACE_API *GetComponentFov)(
         NRPluginHandle handle,
@@ -43,6 +51,29 @@ NR_DECLARE_INTERFACE(NRHMDInterface) {
         NRPluginHandle handle,
         NRComponent component,
         NRFov4f * out_fov_overfill
+    );
+    NRPluginResult(NR_INTERFACE_API *RegisterProvider)(
+        NRPluginHandle handle,
+        const NRHMDProvider * provider,
+        uint32_t provider_size
+    );
+    NRPluginResult(NR_INTERFACE_API *GetDisplay2D3DMode)(
+        NRPluginHandle handle,
+        NRDisplay2D3DMode * display_2D3D_mode
+    );
+    NRPluginResult(NR_INTERFACE_API *SetComponentResolution)(
+        NRPluginHandle handle,
+        NRComponent component,
+        const NRSize2i * resolution
+    );
+    NRPluginResult(NR_INTERFACE_API *SetComponentRefreshRate)(
+        NRPluginHandle handle,
+        NRComponent component,
+        uint32_t refresh_rate
+    );
+    NRPluginResult(NR_INTERFACE_API *SetDisplay2D3DMode)(
+        NRPluginHandle handle,
+        NRDisplay2D3DMode display_2D3D_mode
     );
 };
 
