@@ -4,17 +4,6 @@ input_stream: "IMAGE:image"
 input_stream: "HEADPOSE:head_pose"
 output_stream: "ALL_RESULTS:hand_result"
 
-input_stream_handler {
-  input_stream_handler: "FixedSizeInputStreamHandler"
-  options {
-    [mediapipe.FixedSizeInputStreamHandlerOptions.ext] {
-      trigger_queue_size: 2
-      target_queue_size: 1
-      fixed_min_size: false
-    }
-  }
-}
-
 executor {
   name: ""
   options {
@@ -35,6 +24,16 @@ node {
   output_stream: "DET_BBOX_OUTPUT:detection_output"
   output_stream: "IMAGE_OUTPUT:image_out"
   output_stream: "HEADPOSE_OUTPUT:head_pose_out"
+  input_stream_handler {
+    input_stream_handler: "FixedSizeInputStreamHandler"
+    options {
+      [mediapipe.FixedSizeInputStreamHandlerOptions.ext] {
+        trigger_queue_size: 2
+        target_queue_size: 1
+        fixed_min_size: false
+      }
+    }
+  }
   node_options: {
     [type.googleapis.com/aisdk.HandDetTrackCalculatorOptions] {
       model_name: "detect_cpu_flora"
@@ -76,12 +75,12 @@ node {
     }
   }
 }
-node {
-  name: "LandmarkFilter"
-  calculator: "LandmarkFilterCalculator"
-  input_stream: "LANDMARK_INPUT:kpt2d"
-  output_stream: "LANDMARK_OUTPUT:kpt2d_filter"
-}
+#node {
+#  name: "LandmarkFilter"
+#  calculator: "LandmarkFilterCalculator"
+#  input_stream: "LANDMARK_INPUT:kpt2d"
+#  output_stream: "LANDMARK_OUTPUT:kpt2d_filter"
+#}
 node {
   name: "LiftNet_3D"
   calculator: "HandLiftCalculator"

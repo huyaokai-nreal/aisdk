@@ -121,11 +121,8 @@ bool AddDataRecordCalculater(aisdk::xengine::PipelineConfig& config, std::string
 
     // 目前仅支持双目
     if (config.related_feature.bind_mono_bino == "bino") {
-        if (config.pipeline_name == "graph_flora_snpedsp.txt") {
-            AISDK_LOG_WARN("[HandDataRecordCalculator] Process Enbale Bino2");
-            new_graph_config = config.graph_config + new_exector_config + new_bino_node_config2;
-            return true;
-        }
+        new_graph_config = config.graph_config + new_exector_config + new_bino_node_config2;
+        return true;
     }
 
     return false;
@@ -209,6 +206,7 @@ aisdk::algorithm::Status HandTrackingXGraph::PushData(uint64_t timestamp,
                                                       NRTransform headpose) {
     // we use microseconds in xgraph pipeline
     int64_t timestamp_micro = static_cast<int64_t>(timestamp / 1000);
+
     auto image_packet = xgraph::MakePacket<std::vector<aisdk::algorithm::Image>>(std::move(in_image));
     auto headpose_packet = xgraph::MakePacket<algorithm::HeadPoseInternal>(headpose);
 
@@ -244,9 +242,8 @@ aisdk::algorithm::Status HandTrackingXGraph::PushData(uint64_t timestamp,
     // m_increase_timestep++;
     if (push_failure) {
         return aisdk::algorithm::Status::FAILURE;
-    } else {
-        return aisdk::algorithm::Status::SUCCESS;
     }
+    return aisdk::algorithm::Status::SUCCESS;
 }
 
 aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, uint32_t* hand_num,
