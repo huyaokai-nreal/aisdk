@@ -5,12 +5,12 @@
 #include "nr_plugin_types.inc"
 
 #else
+
 typedef unsigned long long NRPluginHandle;
 
 typedef unsigned long long NRHandle;
 
 typedef unsigned long long NRDefinitionHandle;
-
 
 #pragma pack(1)
 typedef struct NRVersion {

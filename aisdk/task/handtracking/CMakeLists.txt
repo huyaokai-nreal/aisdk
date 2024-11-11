@@ -21,6 +21,11 @@ if(NOT Xrlinux AND ENABLE_OPENXR_HANDJOINT_FORMAT)
 endif()    
 target_link_libraries(handtracking PRIVATE base algorithm opencv::opencv)
 target_include_directories(handtracking PRIVATE ${PROJECT_SOURCE_DIR}/interface/handtracking_sdk)
+target_include_directories(handtracking PRIVATE ${PROJECT_SOURCE_DIR}/interface/handtracking_sdk/channel)
+target_include_directories(handtracking PRIVATE ${PROJECT_SOURCE_DIR}/interface/handtracking_sdk/common)
+target_include_directories(handtracking PRIVATE ${PROJECT_SOURCE_DIR}/interface/handtracking_sdk/perception)
+target_include_directories(handtracking PRIVATE ${PROJECT_SOURCE_DIR}/interface/handtracking_sdk/public)
+
 install(TARGETS handtracking
             LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
             RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
