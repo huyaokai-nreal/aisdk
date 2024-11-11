@@ -968,9 +968,6 @@ std::vector<int> SelectPipeline(std::vector<aisdk::xengine::PipelineConfig>& pip
 }
 
 NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
-    const std::string git_version = AISDK_GIT_VERSION;
-    AISDK_LOG_WARN("HandTracking: git_version={:s}", git_version.c_str());
-
     if (handle != Plugin::GetInstance()->GetHandle()) {
         AISDK_LOG_ERROR("HandTracking::Initialize failed: get wrong handle!");
         return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
@@ -1267,6 +1264,9 @@ extern "C" void NR_INTERFACE_EXPORT NR_INTERFACE_API NRPluginCreate(NRPluginHand
 extern "C" void NRPluginCreate_HANDTRACKING(NRPluginHandle handle, NRInterfaces* interfaces) {
 #endif
     AISDK_LOG_WARN("NRPluginCreate");
+    const std::string git_version = AISDK_GIT_VERSION;
+    AISDK_LOG_WARN("HandTracking: git_version={:s}", git_version.c_str());
+
 #if !defined(_WIN32)
     Dl_info dl_info;
     if (dladdr((void*)NRPluginCreate, &dl_info)) {
