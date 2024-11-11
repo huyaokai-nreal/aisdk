@@ -360,12 +360,20 @@ bool HandTracking::GetApkStorePath() {
         jfieldID fld_nativeLibraryDir =
             jni_env->GetFieldID(cls_ApplicationInfo, "nativeLibraryDir", "Ljava/lang/String;");
         jstring jstr_dir = (jstring)jni_env->GetObjectField(obj_ApplicationInfo, fld_nativeLibraryDir);
+        if (!jstr_dir) {
+            AISDK_LOG_ERROR("jni get nativeLibraryDir failed");
+            return false;
+        }
         const char* nativeString = jni_env->GetStringUTFChars(jstr_dir, 0);
         mNativeLibDir = nativeString;
 
         // 在apk中通过接口获取 原生app package_name
         jfieldID packageNamefieldID = jni_env->GetFieldID(cls_ApplicationInfo, "packageName", "Ljava/lang/String;");
         jstring packageName = (jstring)jni_env->GetObjectField(obj_ApplicationInfo, packageNamefieldID);
+        if (!packageName) {
+            AISDK_LOG_ERROR("jni get packageName failed");
+            return false;
+        }
         mAppPackageName = std::string(jni_env->GetStringUTFChars(packageName, 0));
         AISDK_LOG_TRACE("packageName={}", mAppPackageName.c_str());
         // 在apk中通过接口获取 app的名称，以及是否system_app属性
