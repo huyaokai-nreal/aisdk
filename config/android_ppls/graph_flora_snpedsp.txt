@@ -46,16 +46,10 @@ node {
   node_options: {
     [type.googleapis.com/aisdk.HandDetTrackCalculatorOptions] {
       model_name: "detect"
-      enable_track: false
+      enable_track: true
     }
   }
 }
-#node {
-#  name: "DetBoxSmoothing"
-#  calculator: "DetectBoxSmoothingCalculator"
-#  input_stream: "BBOX_INPUT:detection_output"
-#  output_stream: "BBOX_SMOOTHED_OUTPUT:detection_smoothed_output"
-#}
 node {
   name: "MonoBinoSwitch"
   calculator: "MonoBinoSwitchCalculator"
@@ -64,14 +58,20 @@ node {
   node_options: {
     [type.googleapis.com/aisdk.MonoBinoSwitchCalculatorOptions] {
  #BINO, MONO, SWITCH
-      mode: "MONO" 
+      mode: "SWITCH" 
     }
   }
 }
 node {
+  name: "DetBoxSmoothing"
+  calculator: "DetectBoxSmoothingCalculator"
+  input_stream: "BBOX_INPUT:detection_valid"
+  output_stream: "BBOX_SMOOTHED_OUTPUT:detection_smoothed_output"
+}
+node {
   name: "HandLandmark_2D"
-  calculator: "HandLandmarkCalculator"
-  input_stream: "BBOX_SMOOTHED_OUTPUT:detection_valid"
+  calculator: "HandLandmarkBatchCalculator"
+  input_stream: "BBOX_SMOOTHED_OUTPUT:detection_smoothed_output"
   input_stream: "IMAGE_INPUT:image_out"
   input_side_packet: "CAM_INFO_INPUT:cam_info"
   output_stream: "LANDMARK_OUTPUT:kpt2d"
@@ -80,7 +80,7 @@ node {
       input_height: 128
       input_width: 128
       bbox_expand_ratio: 1.5
-      model_name: "2d_rtmtiny"
+      model_name: "2d_rtmtinyb2"
     }
   }
 }
@@ -99,24 +99,24 @@ node {
   output_stream: "KPT3D_OUTPUT:kpt3d_mono"
 }
 
-#node {
-#  name: "LiftNet_3D"
-#  calculator: "HandLiftCalculator"
-#  input_side_packet: "CAM_INFO_INPUT:cam_info"
-#  input_stream: "LANDMARK_INPUT:kpt2d"
-#  output_stream: "LIFT_OUTPUT:kpt3d_bino"
-#  node_options: {
-#    [type.googleapis.com/aisdk.HandLiftCalculatorOptions] {
-#      model_name: "3d_liftnimble"
-#    }
-#  }
-#}
+node {
+  name: "LiftNet_3D"
+  calculator: "HandLiftCalculator"
+  input_side_packet: "CAM_INFO_INPUT:cam_info"
+  input_stream: "LANDMARK_INPUT:kpt2d"
+  output_stream: "LIFT_OUTPUT:kpt3d_bino"
+  node_options: {
+    [type.googleapis.com/aisdk.HandLiftCalculatorOptions] {
+      model_name: "3d_liftnimble"
+    }
+  }
+}
 
 node {
   name: "BlockHardRules"
   calculator: "BlockHardRulesCalculator"
   input_stream: "kpt3d_mono"
-  #input_stream: "kpt3d_bino"
+  input_stream: "kpt3d_bino"
   output_stream: "BLOCK_OUT:kpt3d_blocked"
   node_options: {
     [type.googleapis.com/aisdk.BlockHardRulesCalculatorOptions] {

@@ -10,6 +10,7 @@
 #include "aisdk/algorithm/calculator/hand_landmark_calculator.pb.h"
 #include "aisdk/algorithm/common/bbox.h"
 #include "aisdk/algorithm/common/nrnet_define.h"
+#include "aisdk/algorithm/func/perspective_crop.h"
 #include "aisdk/algorithm/func/warpaffine.h"
 #include "aisdk/algorithm/internal_structs/det_struct_internal.h"
 #include "aisdk/algorithm/internal_structs/kpt2d_struct_internal.h"
@@ -19,6 +20,7 @@
 #include "aisdk/base/log.h"
 #include "aisdk/base/time.h"
 #include "aisdk/base/type.h"
+#include "aisdk/xengine/cv/xr_cv.h"
 #include "aisdk/xgraph/xgraph.h"
 #include "xgraph_service_utils.h"
 
@@ -48,6 +50,7 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
     float bbox_expand_ratio_ = 1.3;
     std::shared_ptr<base::BaseCameraModel> lcam_model_ = nullptr;
     std::shared_ptr<base::BaseCameraModel> rcam_model_ = nullptr;
+    enum class CropMethod { WarpAffine, PCL };
 
    public:
     static absl::Status GetContract(xgraph::CalculatorContract* cc) {
@@ -104,6 +107,38 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
         bbox_cs[2] = max_shape;
         bbox_cs[3] = max_shape;
         return bbox_cs;
+    }
+    absl::Status ProcessSingleHand(const Image& image_data, const DetectRect& bbox, bool left_hand,
+                                   base::BaseCameraModel* origin_camera, std::vector<Vec2f_t>& kpt,
+                                   std::vector<float>& rdepth,
+                                   std::shared_ptr<base::PerspectiveCameraModel>& virutal_camera, bool det_flag) {
+        cv::Mat crop_image;
+        float bbox_scale = bbox_expand_ratio_;
+        Vec4f_t rect = GetCropBboxShape(bbox, bbox_scale);
+        virutal_camera = GetVirtualCameraFromBox(origin_camera, rect, {input_width_, input_height_});
+#if ((defined(ANDROID) || defined(__ANDROID__)) && defined(__aarch64__))
+        crop_image = xengine::perspective_crop_image(lcam_model_.get(), virutal_camera.get(), input_width_,
+                                                     input_height_, image_data.m_mat);
+#endif
+        if (left_hand) {
+            cv::flip(crop_image, crop_image, 1);
+        }
+        auto rsn_result = netalgo->Inference({crop_image, crop_image});
+        if (!rsn_result.ok()) {
+            return rsn_result.status();
+        }
+        if (left_hand) {
+            std::transform(rsn_result->kpts[0].begin(), rsn_result->kpts[0].end(), kpt.begin(), [&](const auto& kpt) {
+                return Vec2f_t{input_width_ - 1 - kpt[0], kpt[1]};
+            });
+        } else {
+            kpt = rsn_result->kpts[0];
+        }
+        if (!rsn_result->rdepths.empty()) {
+            std::copy(rsn_result->rdepths[0].begin(), rsn_result->rdepths[0].end(), rdepth.begin());
+        }
+
+        return absl::OkStatus();
     }
     absl::Status ProcessBatchHand(const std::vector<Image>& image_data, const std::vector<DetectRect>& bboxes,
                                   bool left_hand, std::vector<Vec2f_t>& kpt_lcam, std::vector<Vec2f_t>& kpt_rcam,
@@ -186,6 +221,24 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
             if (result.ok()) {
                 output_buffer_->rhand_lcam_valid = true;
                 output_buffer_->rhand_rcam_valid = true;
+            }
+        }
+        if (bbox_data.lhand_lcam_valid && !bbox_data.lhand_rcam_valid) {
+            auto result = ProcessSingleHand(image_data[0], bbox_data.lhand_lcam_rect, true, lcam_model_.get(),
+                                            output_buffer_->lhand_lcam_kpt, output_buffer_->lhand_lcam_rdepth,
+                                            output_buffer_->lhand_lcam_virtual_camera, bbox_data.det_flag);
+            if (result.ok()) {
+                output_buffer_->lhand_lcam_valid = true;
+                output_buffer_->lhand_rcam_valid = false;
+            }
+        }
+        if (bbox_data.rhand_rcam_valid && !bbox_data.rhand_lcam_valid) {
+            auto result = ProcessSingleHand(image_data[1], bbox_data.rhand_rcam_rect, false, rcam_model_.get(),
+                                            output_buffer_->rhand_rcam_kpt, output_buffer_->rhand_rcam_rdepth,
+                                            output_buffer_->rhand_rcam_virtual_camera, bbox_data.det_flag);
+            if (result.ok()) {
+                output_buffer_->rhand_rcam_valid = true;
+                output_buffer_->rhand_lcam_valid = false;
             }
         }
         if (output_buffer_->lhand_lcam_valid || output_buffer_->lhand_rcam_valid || output_buffer_->rhand_lcam_valid ||
