@@ -11,9 +11,9 @@ double mysecond() {
     i = gettimeofday(&tv, &tz);
     return ((double)tv.tv_sec + (double)tv.tv_usec * 1.e-6) * 1000;
 }
-cv::Mat perspective_crop_image(const base::Fisheye624CameraModel* src_camera,
-                               const base::PerspectiveCameraModel* dst_camera, int dst_width, int dst_height,
-                               const cv::Mat& src_image, int interpolation, bool depth_check) {
+cv::Mat perspective_crop_image(const base::BaseCameraModel* src_camera, const base::PerspectiveCameraModel* dst_camera,
+                               int dst_width, int dst_height, const cv::Mat& src_image, int interpolation,
+                               bool depth_check) {
     // // double start0 = mysecond();
     // std::vector<Eigen::Vector2f> dst_win_pts;
     // for (int y = 0; y < dst_height; ++y) {
@@ -84,7 +84,7 @@ cv::Mat perspective_crop_image(const base::Fisheye624CameraModel* src_camera,
 
     // float kc[16] ={0.023569,	0.021583,	-0.025508,
     // 0.005611,	1.000000,	1.000000,	1.000000,	1.000000,	1.000000,	1.000000,	1.000000,	1.000000};
-    const auto kc_mat = src_camera->get_distortion_model().getDistortionParams();
+    const auto kc_mat = src_camera->get_distortion_params();
     // cv::Mat kc_mat = src_camera.get_distortion_matrix_cv();
     float* kc = (float*)kc_mat.data();
     // printf("kc %f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", kc[0], kc[1], kc[2],kc[3],
@@ -93,10 +93,12 @@ cv::Mat perspective_crop_image(const base::Fisheye624CameraModel* src_camera,
     float32x4_t kc0 = {kc[0], kc[1], kc[2], kc[3]};
     // float32x4_t kc4 = {1, 1, 1, 1};
     // float32x4_t kc8 = {1, 1, 1, 1};
-    // float32x4_t kc4 = {kc[4], kc[5], kc[6],kc[7]};
-    // float32x4_t kc8 = {kc[8], kc[9], kc[10],kc[11]};
     float32x4_t kc4 = {0, 0, 0, 0};
     float32x4_t kc8 = {0, 0, 0, 0};
+    if (src_camera->camera_type_ == base::CameraType::FISHEYE624) {
+        kc4 = {kc[4], kc[5], kc[6], kc[7]};
+        kc8 = {kc[8], kc[9], kc[10], kc[11]};
+    }
     float32x4_t depthcheck = vdupq_n_f32(-1);
     float32x4_t th_radial;
 
