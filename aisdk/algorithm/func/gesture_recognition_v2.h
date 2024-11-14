@@ -143,7 +143,7 @@ class HandFeatureUpdator {
     float flexion_other_closed_th = 110;
 
     float abduction_th_width = 2;
-    float abduction_thumb_open_th = 42;
+    float abduction_thumb_open_th = 35;
     float abduction_thumb_closed_th = 20;
     float abduction_other_open_th = 12;
     float abduction_other_closed_th = 10;
@@ -183,7 +183,7 @@ class GestureMatchRule {
         auto [thumb_curl, index_curl, middle_curl, ring_curl, pinky_curl] = hand_feature.curl_features();
         return index_curl == FingureState::CLOSED && middle_curl == FingureState::CLOSED &&
                ring_curl == FingureState::CLOSED && pinky_curl == FingureState::CLOSED &&
-               thumb_curl != FingureState::OPEN;
+               thumb_curl == FingureState::CLOSED;
     }
 
     static bool OpenHand(const HandFeature &hand_feature, const HandRawFeature &raw_feature) {
@@ -244,8 +244,7 @@ class GestureMatchRule {
         auto [thumb_flexion, _, __, ___, ____] = hand_feature.flexion_features();
         auto [thumb_abduction, _p, __p, ___p, ____p] = hand_feature.abduction_features();
         return index_curl == FingureState::CLOSED && middle_curl == FingureState::CLOSED &&
-               ring_curl == FingureState::CLOSED && pinky_curl == FingureState::CLOSED &&
-               thumb_abduction == FingureState::OPEN && thumb_curl != FingureState::CLOSED && (raw_feature.is_thumb_up);
+               ring_curl == FingureState::CLOSED && pinky_curl == FingureState::CLOSED && thumb_abduction==FingureState::OPEN && (raw_feature.is_thumb_up);
     }
 };
 
