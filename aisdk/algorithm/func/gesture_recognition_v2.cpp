@@ -250,7 +250,8 @@ std::pair<HandRawFeature, HandFeature> GestureRecognitionV2::extract_hand_featur
     raw_features.abduction_angles = abduction_angles;
     raw_features.opposition_distances = opposition_distances;
     raw_features.hand_angle = hand_angle;
-    raw_features.is_thumb_up = (keypoints3d[0][4](1) - keypoints3d[0][2](1)) < 0.F;
+    raw_features.is_thumb_up = ((keypoints3d[0][3](1) - keypoints3d[0][2](1)) < -0.01F) &&
+                               ((keypoints3d[0][4](1) - keypoints3d[0][3](1)) < -0.01F);
     raw_features.pinch_distance = opposition_distances[0];
     if (is_tracked) {
         raw_features.pinch_velocity = get_pinch_velocity(keypoints3d);
