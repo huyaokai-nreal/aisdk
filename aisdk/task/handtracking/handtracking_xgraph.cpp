@@ -333,7 +333,7 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
                 if (i == 0) {
                     if (predictor_lhand.get_tracking_status()) {
                         if (hand_data_internal.left_hand.source == algorithm::CamType::MONO) {
-                            query_time = latest_timestamp;
+                            query_time = latest_timestamp + (query_time - latest_timestamp) * 0.25;
                         }
                         root_kf_predicted = predictor_lhand.track_only_pred(query_time, true, true);
                     } else {
@@ -343,7 +343,7 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
                 } else {
                     if (predictor_rhand.get_tracking_status()) {
                         if (hand_data_internal.right_hand.source == algorithm::CamType::MONO) {
-                            query_time = latest_timestamp;
+                            query_time = latest_timestamp + (query_time - latest_timestamp) * 0.25;
                         }
                         root_kf_predicted = predictor_rhand.track_only_pred(query_time, true, true);
                     } else {
