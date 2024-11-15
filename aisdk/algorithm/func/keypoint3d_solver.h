@@ -61,7 +61,7 @@ class Keypoint3DSolver {
         Eigen::Matrix<float, 25, 3> last_kpt3d_;
         float last_kpt3d_weight_;
     };
-    float converage_cost_th_ = 2e-3;
+    float converage_cost_th_ = 1e-3;
     Eigen::Matrix<float, 20, 1> template_bones_;
 };
 
