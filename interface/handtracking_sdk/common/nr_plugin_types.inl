@@ -1,16 +1,16 @@
 #pragma once
 
-#ifdef NRSDK
+#ifdef NRAPP
 
 #include "nr_plugin_types.inc"
 
 #else
-
 typedef unsigned long long NRPluginHandle;
 
 typedef unsigned long long NRHandle;
 
 typedef unsigned long long NRDefinitionHandle;
+
 
 #pragma pack(1)
 typedef struct NRVersion {
@@ -100,4 +100,4 @@ typedef struct NRExtents {
 
 #pragma pack()
 
-#endif // NRSDK
+#endif // NRAPP

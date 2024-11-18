@@ -10,5 +10,5 @@ set_target_properties(grpc_server_android PROPERTIES
 )
 target_include_directories(grpc_server_android PRIVATE ${PROJECT_SOURCE_DIR}/interface/handtracking_sdk/channel)
 target_include_directories(grpc_server_android PRIVATE ${PROJECT_SOURCE_DIR}/interface/handtracking_sdk/common)
-target_include_directories(grpc_server_android PRIVATE ${PROJECT_SOURCE_DIR}/interface/handtracking_sdk/perception)
+target_include_directories(grpc_server_android PRIVATE ${PROJECT_SOURCE_DIR}/interface/handtracking_sdk/plugin)
 target_include_directories(grpc_server_android PRIVATE ${PROJECT_SOURCE_DIR}/interface/handtracking_sdk/public)

@@ -14,10 +14,10 @@
 #include "interface/handtracking_sdk/common/nr_plugin_generic.h"
 #include "interface/handtracking_sdk/common/nr_plugin_hmd.h"
 #include "interface/handtracking_sdk/common/nr_plugin_types_ext.inl"
-#include "interface/handtracking_sdk/perception/nr_perception_hand_tracking.h"
+#include "interface/handtracking_sdk/plugin/nr_perception_hand_tracking.h"
 #include "interface/handtracking_sdk/public/nr_plugin_lifecycle.h"
 #include "json/json.h"
-#include "perception/nr_plugin_tracking_common.h"
+#include "plugin/nr_plugin_tracking_common.h"
 
 HandTrackingInterface g_nr_handtracking_interface;
 NRGenericInterface g_generic_interface;
