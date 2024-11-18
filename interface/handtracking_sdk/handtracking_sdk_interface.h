@@ -5,7 +5,7 @@
 #include "channel/nr_plugin_grayscale_camera_types.h"
 #include "common/nr_plugin_generic.h"
 #include "common/nr_plugin_hmd.h"
-#include "perception/nr_perception_hand_tracking.h"
+#include "plugin/nr_perception_hand_tracking.h"
 #include "public/nr_plugin_lifecycle.h"
 #include "public/nr_plugin_types.h"
 #include "public/nr_plugin_message.h"

@@ -11,8 +11,8 @@
 #include "common/nr_plugin_hmd.h"
 #include "common/nr_plugin_types_ext.inl"
 #include "json/json.h"
-#include "perception/nr_perception_hand_tracking.h"
-#include "perception/nr_plugin_tracking_common.h"
+#include "plugin/nr_perception_hand_tracking.h"
+#include "plugin/nr_plugin_tracking_common.h"
 #include "public/nr_plugin_lifecycle.h"
 
 HandTrackingInterface g_nr_handtracking_interface;

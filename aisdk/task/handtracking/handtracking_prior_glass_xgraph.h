@@ -3,7 +3,7 @@
 #include "aisdk/algorithm/common/nrnet_define.h"
 #include "aisdk/algorithm/func/hand_filters.h"
 #include "base_xgraph.h"
-#include "perception/nr_perception_hand_tracking.h"
+#include "plugin/nr_perception_hand_tracking.h"
 
 namespace aisdk::task {
 
