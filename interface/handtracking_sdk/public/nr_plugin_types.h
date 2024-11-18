@@ -12,7 +12,7 @@
 #error "C++ versions less than C++11 are not supported."
 #endif
 
-#if defined(NRSDK) || defined(NRPLUGIN)
+#if defined(NRAPP) || defined(NRPLUGIN)
 
 #include "nr_plugin_result.inl"
 #include "nr_plugin_types.inl"
@@ -37,7 +37,7 @@ typedef unsigned long long NRPluginHandle;
 typedef unsigned long long NRHandle;
 typedef unsigned long long NRDefinitionHandle;
 
-/// @brief The version information of NRSDK
+/// @brief The version information of NRAPP
 typedef struct NRVersion {
     int32_t major;
     int32_t minor;
@@ -112,4 +112,4 @@ typedef struct NRExtents {
     NRVector3f extents;
 } NRExtents;
 
-#endif  // NRSDK
+#endif  // NRAPP

@@ -2,7 +2,7 @@
 
 #include "nr_plugin_types.h"
 
-#ifdef NRSDK
+#ifdef NRAPP
 
 #include "nr_plugin_rgb_camera_types.inc"
 
@@ -39,4 +39,4 @@ typedef struct NRRgbCameraFrameData {
 
 #pragma pack()
 
-#endif // NRSDK
+#endif // NRAPP

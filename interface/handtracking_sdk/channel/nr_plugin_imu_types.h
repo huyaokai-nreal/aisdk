@@ -2,7 +2,7 @@
 
 #include "nr_plugin_types.h"
 
-#ifdef NRSDK
+#ifdef NRAPP
 
 #include "nr_plugin_imu_types.inc"
 
@@ -56,4 +56,4 @@ typedef struct NRImuData {
 
 #pragma pack()
 
-#endif // NRSDK
+#endif // NRAPP

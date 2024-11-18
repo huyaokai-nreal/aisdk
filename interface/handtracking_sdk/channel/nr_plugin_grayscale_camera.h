@@ -2,21 +2,25 @@
 
 #include "nr_plugin_lifecycle.h"
 #include "nr_plugin_grayscale_camera_types.h"
+#include "nr_plugin_glasses_types.h"
 typedef struct NRGrayscaleCameraProvider {
 } NRGrayscaleCameraProvider;
 
 NR_DECLARE_INTERFACE(NRGrayscaleCameraInterface) {
+
     NRPluginResult(NR_INTERFACE_API *RegisterLifecycleProvider)(
         const char * plugin_id,
         const char * plugin_version,
         const NRPluginLifecycleProvider * provider,
         uint32_t provider_size
     );
+
     NRPluginResult(NR_INTERFACE_API *RegisterProvider)(
         NRPluginHandle handle,
         const NRGrayscaleCameraProvider * provider,
         uint32_t provider_size
     );
+
     NRPluginResult(NR_INTERFACE_API *NotifyData)(
         NRPluginHandle handle,
         NRChannelDataType channel_data_type,

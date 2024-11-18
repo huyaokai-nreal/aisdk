@@ -9,7 +9,7 @@ ${CMAKE_CURRENT_SOURCE_DIR}/demo_deploy_handTracking.cpp
 target_include_directories(${HANDTRACKING_SDK_DEMO_NAME} PRIVATE "../../interface/handtracking_sdk")
 target_include_directories(${HANDTRACKING_SDK_DEMO_NAME} PRIVATE "../../interface/handtracking_sdk/channel")
 target_include_directories(${HANDTRACKING_SDK_DEMO_NAME} PRIVATE "../../interface/handtracking_sdk/common")
-target_include_directories(${HANDTRACKING_SDK_DEMO_NAME} PRIVATE "../../interface/handtracking_sdk/perception")
+target_include_directories(${HANDTRACKING_SDK_DEMO_NAME} PRIVATE "../../interface/handtracking_sdk/plugin")
 target_include_directories(${HANDTRACKING_SDK_DEMO_NAME} PRIVATE "../../interface/handtracking_sdk/public")
 
 

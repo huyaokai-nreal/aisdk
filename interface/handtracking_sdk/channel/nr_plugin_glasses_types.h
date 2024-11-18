@@ -1,0 +1,336 @@
+#pragma once
+
+#include "nr_plugin_types.h"
+
+#ifdef NRAPP
+
+#include "nr_plugin_glasses_types.inc"
+
+#else
+
+NR_PLUGIN_ENUM32(NRAudioAlgorithmType) {
+    NR_AUDIO_ALGORITHM_TYPE_NO_PICKUP = 1,
+    NR_AUDIO_ALGORITHM_TYPE_NEAR_FIELD_VOICE_PICKUP = 3,
+    NR_AUDIO_ALGORITHM_TYPE_FAR_FIELD_VOICE_PICKUP = 4,
+    NR_AUDIO_ALGORITHM_TYPE_NEAR_FAR_FIELD_VOICE_PICKUP = 5,
+};
+
+
+NR_PLUGIN_ENUM32(NRAudioChannelIn) {
+    NR_AUDIO_CHANNEL_UNKNOWN = 0,
+    NR_AUDIO_CHANNEL_IN_MONO = 0x01,
+    NR_AUDIO_CHANNEL_IN_STEORO = 0x02,
+};
+
+
+NR_PLUGIN_ENUM8(NRAudioFormat) {
+    NR_AUDIO_FORMAT_UNKNOWN = 0,
+    NR_AUDIO_FORMAT_PCM_16BIT = 1,
+    NR_AUDIO_FORMAT_PCM_32BIT = 2,
+    NR_AUDIO_FORMAT_PCM_FLOAT = 3,
+};
+
+
+NR_PLUGIN_ENUM32(NRAudioMode) {
+    NR_AUDIO_MODE_UAC = 0,
+    NR_AUDIO_MODE_DP = 1,
+};
+
+
+NR_PLUGIN_ENUM32(NRAudioPlayType) {
+    NR_AUDIO_PLAY_TYPE_DEFAULT = 0,
+    NR_AUDIO_PLAY_TYPE_USE_VOLUME = 1,
+};
+
+
+NR_PLUGIN_ENUM8(NRAudioSampleRate) {
+    NR_AUDIO_SAMPLE_RATE_UNKNOWN = 0,
+    NR_AUDIO_SAMPLE_RATE_44100 = 1,
+    NR_AUDIO_SAMPLE_RATE_48000 = 2,
+    NR_AUDIO_SAMPLE_RATE_96000 = 3,
+};
+
+
+NR_PLUGIN_ENUM32(NRAudioUsage) {
+    NR_AUDIO_USAGE_LEFT = 0,
+    NR_AUDIO_USAGE_RIGHT,
+};
+
+
+NR_PLUGIN_ENUM32(NRDpDataTransmitMode) {
+    NR_DP_DATA_TRANSMIT_MODE_NORMAL = 0,
+    NR_DP_DATA_TRANSMIT_MODE_DIRECT = 1,
+};
+
+
+NR_PLUGIN_ENUM32(NRDpWorkingMode) {
+    NR_DP_WORKING_MODE_NORMAL = 0,
+    NR_DP_WORKING_MODE_POWER_SAVE = 1,
+};
+
+
+NR_PLUGIN_ENUM32(NRDpWorkingState) {
+    NR_DP_WORKING_STATE_UNKNOWN = 0,
+    NR_DP_WORKING_STATE_OK = 1,
+    NR_DP_WORKING_STATE_ERROR = 2,
+    NR_DP_WORKING_STATE_INIT = 3,
+    NR_DP_WORKING_STATE_START_SWITCH = 4,
+};
+
+
+NR_PLUGIN_ENUM32(NRKeyState) {
+    NR_KEY_STATE_UNKNOWN = 0,
+    NR_KEY_STATE_BUTTON_DOWN = 1,
+    NR_KEY_STATE_BUTTON_UP = 2,
+};
+
+
+NR_PLUGIN_ENUM32(NRKeyType) {
+    NR_KEY_TYPE_UNKNOWN = 0,
+    NR_KEY_TYPE_SELECT = 1,
+    NR_KEY_TYPE_INCREASE = 2,
+    NR_KEY_TYPE_DECREASE = 3,
+    NR_KEY_TYPE_MENU = 4,
+    NR_KEY_TYPE_ALL = 1000,
+};
+
+
+NR_PLUGIN_ENUM32(NRLedID) {
+    NR_LED_ID_UNKNOWN = -1,
+    NR_LED_ID_0 = 0,
+    NR_LED_ID_1 = 1,
+    NR_LED_ID_2 = 2,
+    NR_LED_ID_3 = 3,
+};
+
+
+NR_PLUGIN_ENUM32(NRMiscDeviceType) {
+    NR_MISC_DEVICE_TYPE_UNKNOWN = 0,
+    NR_MISC_DEVICE_TYPE_XREAL_ONE = 10,
+    NR_MISC_DEVICE_TYPE_XREAL_ONE_PRO_M = 11,
+    NR_MISC_DEVICE_TYPE_XREAL_ONE_PRO_L = 12,
+};
+
+
+NR_PLUGIN_ENUM32(NRMiscHostType) {
+    NR_MISC_HOST_TYPE_UNKNOWN = 0,
+    NR_MISC_HOST_TYPE_XREAL_HUB_WITH_SWITCH = 1,
+};
+
+
+NR_PLUGIN_ENUM32(NRMiscSchedPolicy) {
+    NR_MISC_SCHED_POLICY_NORMAL = 0,
+    NR_MISC_SCHED_POLICY_FIFO = 1,
+    NR_MISC_SCHED_POLICY_RR = 2,
+};
+
+
+NR_PLUGIN_ENUM32(NRMiscSystemUpgradeState) {
+    NR_MISC_SYSTEM_UPGRADE_STATE_NOT_RUNNING = 0,
+    NR_MISC_SYSTEM_UPGRADE_STATE_RUNNING = 1,
+    NR_MISC_SYSTEM_UPGRADE_STATE_START = 2,
+    NR_MISC_SYSTEM_UPGRADE_STATE_END = 3,
+};
+
+
+NR_PLUGIN_ENUM32(NRPowerCpuFrequencyMode) {
+    NR_POWER_CPU_FREQUENCY_MODE_UNKNOWN = 0,
+    NR_POWER_CPU_FREQUENCY_MODE_NORMAL = 1,
+    NR_POWER_CPU_FREQUENCY_MODE_PERFORMANCE = 2,
+};
+
+
+NR_PLUGIN_ENUM32(NRProximityWearingState) {
+    NR_PROXIMITY_WEARING_STATE_UNKNOWN = 0,
+    NR_PROXIMITY_WEARING_STATE_WEARING = 1,
+    NR_PROXIMITY_WEARING_STATE_NO_WEARING = 2,
+};
+
+
+NR_PLUGIN_ENUM32(NRRgbCameraPluginState) {
+    NR_RGB_CAMERA_PLUGIN_STATE_UNKNOWN = 0,
+    NR_RGB_CAMERA_PLUGIN_STATE_PLUGIN = 1,
+    NR_RGB_CAMERA_PLUGIN_STATE_PLUGOUT = 2,
+};
+
+
+NR_PLUGIN_ENUM32(NRStorageMode) {
+    NR_STORAGE_MODE_NONE = 0,
+    NR_STORAGE_MODE_MTP = 1,
+    NR_STORAGE_MODE_UMS = 2,
+};
+
+
+NR_PLUGIN_ENUM32(NRTemperatureID) {
+    NR_TEMPERATURE_ID_NONE = -1,
+    NR_TEMPERATURE_ID_0 = 0,
+    NR_TEMPERATURE_ID_1 = 1,
+    NR_TEMPERATURE_ID_2 = 2,
+    NR_TEMPERATURE_ID_3 = 3,
+};
+
+
+NR_PLUGIN_ENUM32(NRAction) {
+    NR_ACTION_UNKNOWN = 0,
+    NR_ACTION_CLICK = 1,
+    NR_ACTION_DOUBLE_CLICK = 2,
+    NR_ACTION_LONG_PRESS = 3,
+    NR_ACTION_OPEN_SCREEN = 4,
+    NR_ACTION_CLOSE_SCREEN = 5,
+    NR_ACTION_INCREASE_BRIGHTNESS = 6,
+    NR_ACTION_DECREASE_BRIGHTNESS = 7,
+    NR_ACTION_INCREASE_VOLUME = 8,
+    NR_ACTION_DECREASE_VOLUME = 9,
+    NR_ACTION_SWITCH_TO_MONO = 10,
+    NR_ACTION_SWITCH_TO_STEREO = 11,
+    NR_ACTION_NEXT_EC_LEVEL = 12,
+    NR_ACTION_SWITCH_TO_DP_VOICE = 13,
+    NR_ACTION_SWITCH_TO_UAC_VOICE = 14,
+    NR_ACTION_RESERVED0 = 15,
+    NR_ACTION_RESERVED1 = 16,
+    NR_ACTION_RESERVED2 = 17,
+    NR_ACTION_RESERVED3 = 18,
+    NR_ACTION_RESERVED4 = 19,
+    NR_ACTION_SWITCH_SLEEP_TIME_LEVEL = 30,
+    NR_ACTION_SWITCH_DISPLAY_COLOR_CALIBRATION = 31,
+    NR_ACTION_STARTUP_STATE = 32,
+    NR_ACTION_TRIGGER_SWITCH_SPACE_MODE = 33,
+    NR_ACTION_TRIGGER_RECENTER = 34,
+    NR_ACTION_TRIGGER_OSD_MAIN_MENU = 35,
+    NR_ACTION_TRIGGER_TAKE_PHOTO = 36,
+    NR_ACTION_TRIGGER_TAKE_VIDEO = 37,
+    NR_ACTION_RESERVED5 = 1000,
+    NR_ACTION_DISCONNECT = 2000,
+    NR_ACTION_FORCE_QUIT = 2001,
+};
+
+
+NR_PLUGIN_ENUM32(NRDisplayColorCalibrationType) {
+    NR_DISPLAY_COLOR_CALIBRATION_TYPE_NONE = 0,
+    NR_DISPLAY_COLOR_CALIBRATION_TYPE_CALIBRATION = 1,
+};
+
+
+NR_PLUGIN_ENUM32(NRDisplayScreenEnableMethod) {
+    NR_DISPLAY_SCREEN_ENABLE_METHOD_DIRECT = 0,
+    NR_DISPLAY_SCREEN_ENABLE_METHOD_STEP_BY_STEP = 1,
+};
+
+
+NR_PLUGIN_ENUM32(NRDpInputMode) {
+    NR_DP_INPUT_MODE_MONO = 0,
+    NR_DP_INPUT_MODE_STEREO = 1,
+};
+
+
+NR_PLUGIN_ENUM32(NRGlassesStartupState) {
+    NR_GLASSES_STARTUP_STATE_PROCESSING = 0,
+    NR_GLASSES_STARTUP_STATE_END = 1,
+};
+
+
+NR_PLUGIN_ENUM64(NRGlassesSupportedDevices) {
+    NR_GLASSES_SUPPORTED_DEVICES_IMU_1 = 0x0001,
+    NR_GLASSES_SUPPORTED_DEVICES_GRAYCAMERA_1 = 0x0002,
+    NR_GLASSES_SUPPORTED_DEVICES_GRAYCAMERA_2 = 0x0004,
+    NR_GLASSES_SUPPORTED_DEVICES_GRAYCAMERA_3 = 0x0008,
+    NR_GLASSES_SUPPORTED_DEVICES_GRAYCAMERA_4 = 0x0010,
+    NR_GLASSES_SUPPORTED_DEVICES_RGBCAMERA_1 = 0x0020,
+    NR_GLASSES_SUPPORTED_DEVICES_RGBCAMERA_2 = 0x0040,
+    NR_GLASSES_SUPPORTED_DEVICES_RGBCAMERA_3 = 0x0080,
+    NR_GLASSES_SUPPORTED_DEVICES_RGBCAMERA_4 = 0x0100,
+    NR_GLASSES_SUPPORTED_DEVICES_MAGNETIC = 0x0200,
+    NR_GLASSES_SUPPORTED_DEVICES_AMBIENT_LIGHT = 0x0400,
+    NR_GLASSES_SUPPORTED_DEVICES_IMU_2 = 0x0800,
+    NR_GLASSES_SUPPORTED_DEVICES_IMU_3 = 0x1000,
+    NR_GLASSES_SUPPORTED_DEVICES_IMU_4 = 0x2000,
+};
+
+
+NR_PLUGIN_ENUM32(NRPowerSaveState) {
+    NR_POWER_SAVE_STATE_ENTER = 1,
+};
+
+
+NR_PLUGIN_ENUM32(NRTemperatureState) {
+    NR_TEMPERATURE_STATE_NORMAL = 0,
+    NR_TEMPERATURE_STATE_OVER = 1,
+    NR_TEMPERATURE_STATE_HIGH = 2,
+};
+
+
+#pragma pack(1)
+typedef struct NRAudioInData {
+    union {
+        struct {
+            const char * data_data;
+            uint32_t data_size;
+            uint64_t timestamp;
+            NRAudioSampleRate sample_rate;
+            NRAudioFormat format;
+            NRAudioChannelIn channel;
+        };
+        uint8_t padding[48];
+    };
+
+} NRAudioInData;
+
+typedef struct NRKeyStateData {
+    union {
+        struct {
+            NRKeyType key_type;
+            NRKeyState key_state;
+            uint64_t hmd_time_nanos_device;
+        };
+        uint8_t padding[64];
+    };
+
+} NRKeyStateData;
+
+typedef struct NRTemperatureData {
+    union {
+        struct {
+            NRTemperatureID id;
+            float value;
+        };
+        uint8_t padding[32];
+    };
+
+} NRTemperatureData;
+
+typedef struct NRActionData {
+    union {
+        struct {
+            NRAction action;
+            uint32_t action_param;
+            uint32_t action_param2;
+            uint64_t hmd_time_nanos_device;
+        };
+        uint8_t padding[64];
+    };
+
+} NRActionData;
+
+typedef struct NREventReportData {
+    union {
+        struct {
+            uint32_t category_id;
+            uint32_t event_id;
+            uint32_t time_offset;
+            uint32_t info;
+            uint32_t info2;
+            const char * description_data;
+            uint32_t description_size;
+        };
+        uint8_t padding[96];
+    };
+
+} NREventReportData;
+
+#pragma pack()
+
+typedef void (*NRAudioPlayCallback)(
+        void * user_data
+);
+
+#endif // NRAPP
