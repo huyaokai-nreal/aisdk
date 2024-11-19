@@ -89,6 +89,11 @@ if(ENABLE_ALGORITHM_DATA_RECORD)
     # add_definitions(-DDATA_RECORD_METHOD="UnityButton")
     add_definitions(-DDATA_RECORD_METHOD="DebugConfig")
 endif()
+# 导出中间数据
+option(ENABLE_EXPORT_DATA_RECORD "enable export algorithm data record as json file"  OFF)
+if(ENABLE_EXPORT_DATA_RECORD)
+    add_definitions(-DENABLE_EXPORT_DATA_RECORD)
+endif()
 # 开启M2P延时测试
 option(ENBALE_M2P_DELAYED_TIME_PROFILER "enable gesture M2P delayed time profiler" OFF)
 if(ENBALE_M2P_DELAYED_TIME_PROFILER)

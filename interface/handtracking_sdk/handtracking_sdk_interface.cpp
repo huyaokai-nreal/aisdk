@@ -970,7 +970,7 @@ NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
     AISDK_LOG_INFO("HandTracking::Initialize");
     // bool ret = false;
     auto ins = Plugin::GetInstance();
-#ifdef ENABLE_ALGORITHM_DATA_RECORD
+#ifdef ENABLE_EXPORT_DATA_RECORD
     aisdk::base::DebugProfiling::Get().GetOpt().export_pipeline_exec_info_jsonstring = true;
 #endif
 

@@ -85,6 +85,7 @@ bool AddDataRecordCalculater(aisdk::xengine::PipelineConfig& config, std::string
         "  input_stream: \"DET_BBOX_OUTPUT:detection_output\"\n"
         "  input_stream: \"LANDMARK_OUTPUT:kpt2d\"\n"
         "  input_stream: \"LIFT_OUTPUT:kpt3d_bino\"\n"
+        "  input_stream: \"KPT3D_OUTPUT:kpt3d_mono\"\n"
         "  input_stream: \"BLOCK_OUT:kpt3d_blocked\"\n"
         "  input_stream: \"CONVERTWORLD_OUT:kpt3d_world\"\n"
         "  input_stream: \"GR_OUTPUT:gesture\"\n"

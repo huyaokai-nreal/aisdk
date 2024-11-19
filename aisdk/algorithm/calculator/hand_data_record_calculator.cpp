@@ -113,6 +113,7 @@ class HandDataRecordCalculator : public xgraph::CalculatorBase {
         cc->Inputs().Tag("DET_BBOX_OUTPUT").Set<DetOutputInternal>();
         cc->Inputs().Tag("LANDMARK_OUTPUT").Set<Kpt2dInternal>();
         cc->Inputs().Tag("LIFT_OUTPUT").Set<HandsData>();
+        cc->Inputs().Tag("KPT3D_OUTPUT").Set<HandsData>();
         cc->Inputs().Tag("BLOCK_OUT").Set<HandsData>();
         cc->Inputs().Tag("CONVERTWORLD_OUT").Set<HandsData>();
         cc->Inputs().Tag("GR_OUTPUT").Set<HandGestureInternal>();
@@ -214,7 +215,7 @@ class HandDataRecordCalculator : public xgraph::CalculatorBase {
                             cache->rhand_valid = kpt2d_data.rhand_rcam_valid;
                             recorder.DebugRsn(cache, kpt2d_data);
                         }
-                    } else if (coll.Name() == "kpt3d" || coll.Name() == "kpt3d_bino") {
+                    } else if (coll.Name() == "kpt3d" || coll.Name() == "kpt3d_bino" || coll.Name() == "kpt3d_mono") {
                         Recordcache* cache = m_mgr.FindCache(time_id, false);
                         if (cache) {
                             const auto& kpt3d_data = package.Get<HandsData>();
