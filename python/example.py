@@ -19,7 +19,7 @@ print(predict_kpt)
 filter = OneEuroFilter(60, 1.0, 0.0, 1.0)
 hand_filter = HandFilters("flora")
 hand_filter.init()
-hand_filter.set_filter_param(palm_param=filter_params, finger_param=filter_params)
+hand_filter.set_filter_param(palm_params=filter_params, index_finger_params=filter_params, other_finger_params=filter_params)
 raw_kpt_list = [[1,1,1]] * 23 
 kpt_result = hand_filter.process(0, raw_kpt_list)
 print("result")

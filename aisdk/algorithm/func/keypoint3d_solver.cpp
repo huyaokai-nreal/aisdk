@@ -14,7 +14,7 @@ namespace aisdk::algorithm {
 absl::StatusOr<Eigen::Matrix<float, 21, 3>> Keypoint3DSolver::SolveKeypoints(
     const Eigen::Matrix<float, 21, 3>& kpt25d, float hand_scale, const Eigen::Matrix<float, 21, 3>& last_kpt3d,
     float last_kpt3d_weight, const base::CameraIntrinsics& camera_k, bool flip_x_axis, bool source_change) const {
-    AISDK_LOG_WARN("get handscale {}", hand_scale);
+    AISDK_LOG_TRACE("get handscale {}", hand_scale);
     Eigen::Matrix<float, 20, 1> user_bones = template_bones_.array() * hand_scale;
     Eigen::Matrix<float, 25, 3> norm_kpt3d = Eigen::Matrix<float, 25, 3>::Ones();
     Eigen::Matrix<float, 25, 3> format_kpt3d = Eigen::Matrix<float, 25, 3>::Zero();

@@ -18,6 +18,7 @@ const std::set<int> kPalmKeypointIndexSet {0,1,5,9,13,17,22,23,24,25};
 #else
 const std::set<int> kPalmKeypointIndexSet {0, 1, 5, 9, 13, 17, 22};
 #endif
+const std::set<int> kIndexFingerIndexSet {6,7,8};
 enum class HandGesture { Invalid = 0, Pinch, Click, Grab, ThumbUp, OpenHand, Victory, Call, Home, MaxNum };
 const std::vector<std::string> HandGestureNames{"Invalid",  "Pinch", "Click", "Grab", "ThumbUp", "OpenHand", "Victory", "Call", "Home"};
 struct SingleHandData {
