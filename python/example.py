@@ -14,7 +14,7 @@ filter_params.dcutoff = [1.0, 1.0, 1.0]
 tracker.set_smooth_filter(filter_params)
 tracker.init() 
 tracker.start_tracking(0, start_pt)
-predict_kpt = tracker.track_only_pred(0.1, False)
+predict_kpt = tracker.track_only_pred(0.1, False, False)
 print(predict_kpt)
 filter = OneEuroFilter(60, 1.0, 0.0, 1.0)
 hand_filter = HandFilters("flora")

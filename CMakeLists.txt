@@ -245,7 +245,7 @@ message(STATUS "enable build examples")
 add_subdirectory(example)
 endif()
 
-if(BUILD_PYTHON)
+if(BUILD_PYTHON AND  CMAKE_SYSTEM_NAME STREQUAL "Linux")
 message(STATUS "enable build python wrapper")
 add_subdirectory(python/aisdk)
 endif()
