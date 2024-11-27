@@ -150,8 +150,8 @@ void GMLPLiftNimble::PostProcess(const LiftNetInputs &inputs, LiftNetOutputs &ou
         -0.07071068, 0., -0.07071068, -0.07071068;
     Eigen::Isometry3f global_hand_pose = get_transform_with_svd(svd_src_pt, svd_pt);
     Eigen::Matrix3f global_rotation = global_hand_pose.rotation();
-    Eigen::Vector3f global_translation = global_hand_pose.translation();
-    global_translation.noalias() = rot_left_.inverse() * global_translation;
+    Eigen::Vector3f global_translation_ = global_hand_pose.translation();
+    Eigen::Vector3f global_translation = rot_left_.inverse() * global_translation_;
     global_rotation.noalias() = rot_left_.inverse() * global_rotation;
 
     // right to left
