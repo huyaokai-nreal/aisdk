@@ -356,8 +356,8 @@ aisdk::algorithm::CamInfo ConvertCameraInfo(aisdk::algorithm::CameraParams cam_i
     return input_cam_info;
 }
 
-std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>, std::shared_ptr<aisdk::base::BaseCameraModel>>
-format_pinhole_camera_model(const aisdk::algorithm::CamInfo &cam_info) {
+std::vector<std::shared_ptr<aisdk::base::BaseCameraModel>> format_pinhole_camera_model(
+    const aisdk::algorithm::CamInfo &cam_info) {
     // lcam
     aisdk::base::CameraIntrinsics intrinsics_lcam{
         cam_info.lcam_intrinsics.at<float>(0, 0), cam_info.lcam_intrinsics.at<float>(1, 1),
@@ -382,10 +382,10 @@ format_pinhole_camera_model(const aisdk::algorithm::CamInfo &cam_info) {
         intrinsics_rcam, distortion_rcam, cam_info.cvL_T_cvR,
         static_cast<aisdk::base::CameraType>(cam_info.camera_type), cam_info.video_width, cam_info.video_height);
 
-    return std::make_pair(lcam_model, rcam_model);
+    return {lcam_model, rcam_model};
 }
-std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>, std::shared_ptr<aisdk::base::BaseCameraModel>>
-format_opencv_fisheye_camera_model(const aisdk::algorithm::CamInfo &cam_info) {
+std::vector<std::shared_ptr<aisdk::base::BaseCameraModel>> format_opencv_fisheye_camera_model(
+    const aisdk::algorithm::CamInfo &cam_info) {
     // lcam
     aisdk::base::CameraIntrinsics intrinsics_lcam{
         cam_info.lcam_intrinsics.at<float>(0, 0), cam_info.lcam_intrinsics.at<float>(1, 1),
@@ -414,11 +414,11 @@ format_opencv_fisheye_camera_model(const aisdk::algorithm::CamInfo &cam_info) {
         intrinsics_rcam, distortion_rcam, cam_info.cvL_T_cvR,
         static_cast<aisdk::base::CameraType>(cam_info.camera_type), cam_info.video_width, cam_info.video_height);
 
-    return std::make_pair(lcam_model, rcam_model);
+    return {lcam_model, rcam_model};
 }
 
-std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>, std::shared_ptr<aisdk::base::BaseCameraModel>>
-format_fisheye624_camera_model(const aisdk::algorithm::CamInfo &cam_info) {
+std::vector<std::shared_ptr<aisdk::base::BaseCameraModel>> format_fisheye624_camera_model(
+    const aisdk::algorithm::CamInfo &cam_info) {
     // lcam
     aisdk::base::CameraIntrinsics intrinsics_lcam{
         cam_info.lcam_intrinsics.at<float>(0, 0), cam_info.lcam_intrinsics.at<float>(1, 1),
@@ -449,13 +449,12 @@ format_fisheye624_camera_model(const aisdk::algorithm::CamInfo &cam_info) {
         intrinsics_rcam, distortion_rcam, cam_info.cvL_T_cvR,
         static_cast<aisdk::base::CameraType>(cam_info.camera_type), cam_info.video_width, cam_info.video_height);
 
-    return std::make_pair(lcam_model, rcam_model);
+    return {lcam_model, rcam_model};
 }
 
-std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>, std::shared_ptr<aisdk::base::BaseCameraModel>>
-ConvertCameraModel(const aisdk::algorithm::CamInfo &cam_info) {
-    std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>, std::shared_ptr<aisdk::base::BaseCameraModel>>
-        camera_model;
+std::vector<std::shared_ptr<aisdk::base::BaseCameraModel>> ConvertCameraModel(
+    const aisdk::algorithm::CamInfo &cam_info) {
+    std::vector<std::shared_ptr<aisdk::base::BaseCameraModel>> camera_model;
     if (cam_info.camera_type == 1) {  // ella pinhole
         AISDK_LOG_TRACE("BaseXGraph::Init use ella pinhole camera model");
         camera_model = format_pinhole_camera_model(cam_info);
@@ -476,9 +475,8 @@ aisdk::algorithm::Status BaseXGraph::Init(aisdk::xengine::DlSymFuncs &funcs, ais
     auto camera_info = ConvertCameraInfo(camera);
     auto camera_model = ConvertCameraModel(camera_info);
     std::map<std::string, xgraph::Packet> side_packets;
-    side_packets["cam_info"] = xgraph::MakePacket<
-        std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>, std::shared_ptr<aisdk::base::BaseCameraModel>>>(
-        camera_model);
+    side_packets["cam_info"] =
+        xgraph::MakePacket<std::vector<std::shared_ptr<aisdk::base::BaseCameraModel>>>(camera_model);
 
     TriggerGloalGraphCalculatorsConstruct();
     AISDK_LOG_TRACE("XGraph::Trigger calculator construct");

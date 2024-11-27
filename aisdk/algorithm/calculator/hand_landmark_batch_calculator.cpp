@@ -60,10 +60,7 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
 
         cc->Inputs().Tag("IMAGE_INPUT").Set<std::vector<Image>>();
         cc->Inputs().Tag("BBOX_SMOOTHED_OUTPUT").Set<DetOutputInternal>();
-        cc->InputSidePackets()
-            .Tag("CAM_INFO_INPUT")
-            .Set<std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>,
-                           std::shared_ptr<aisdk::base::BaseCameraModel>>>();
+        cc->InputSidePackets().Tag("CAM_INFO_INPUT").Set<std::vector<std::shared_ptr<aisdk::base::BaseCameraModel>>>();
         cc->Outputs().Tag("LANDMARK_OUTPUT").Set<Kpt2dInternal>();
 
         AISDK_LOG_TRACE("[HandLandmarkBatchCalculator] GetContract complete");
@@ -94,10 +91,9 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
         }
         const auto& cam_info = cc->InputSidePackets()
                                    .Tag("CAM_INFO_INPUT")
-                                   .Get<std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>,
-                                                  std::shared_ptr<aisdk::base::BaseCameraModel>>>();
-        lcam_model_ = cam_info.first;
-        rcam_model_ = cam_info.second;
+                                   .Get<std::vector<std::shared_ptr<aisdk::base::BaseCameraModel>>>();
+        lcam_model_ = cam_info.at(0);
+        rcam_model_ = cam_info.at(1);
         AISDK_LOG_TRACE("[HandLandmarkBatchCalculator] Open complete");
         return absl::OkStatus();
     }
