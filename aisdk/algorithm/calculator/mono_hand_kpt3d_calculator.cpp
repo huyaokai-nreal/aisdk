@@ -28,10 +28,7 @@ class MonoHandKpt3DCalculator : public xgraph::CalculatorBase {
    public:
     static absl::Status GetContract(xgraph::CalculatorContract* cc) {
         AISDK_LOG_TRACE("[MonoHandKpt3DCalculator] GetContract start");
-        cc->InputSidePackets()
-            .Tag("CAM_INFO_INPUT")
-            .Set<std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>,
-                           std::shared_ptr<aisdk::base::BaseCameraModel>>>();
+        cc->InputSidePackets().Tag("CAM_INFO_INPUT").Set<std::vector<std::shared_ptr<aisdk::base::BaseCameraModel>>>();
         cc->Inputs().Tag("LANDMARK_INPUT").Set<Kpt2dInternal>();
         cc->Inputs().Tag("HEADPOSE").Set<HeadPoseInternal>();
         cc->Outputs().Tag("KPT3D_OUTPUT").Set<HandsData>();
@@ -44,10 +41,9 @@ class MonoHandKpt3DCalculator : public xgraph::CalculatorBase {
         solver_ = std::make_unique<Keypoint3DSolver>();
         const auto& cam_info = cc->InputSidePackets()
                                    .Tag("CAM_INFO_INPUT")
-                                   .Get<std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>,
-                                                  std::shared_ptr<aisdk::base::BaseCameraModel>>>();
-        lcam_model_ = cam_info.first;
-        rcam_model_ = cam_info.second;
+                                   .Get<std::vector<std::shared_ptr<aisdk::base::BaseCameraModel>>>();
+        lcam_model_ = cam_info.at(0);
+        rcam_model_ = cam_info.at(1);
         AISDK_LOG_TRACE("[MonoHandKpt3DCalculator] Open complete");
         return absl::OkStatus();
     }

@@ -1,5 +1,6 @@
 #include <cstdint>
 #include <utility>
+#include <vector>
 
 #include "aisdk/algorithm/common/data_debug_record.h"
 #include "aisdk/algorithm/internal_structs/data_record_struct_internal.h"
@@ -104,10 +105,7 @@ class HandDataRecordCalculator : public xgraph::CalculatorBase {
     static absl::Status GetContract(xgraph::CalculatorContract* cc) {
         AISDK_LOG_TRACE("[HandDataRecordCalculator] GetContract start");
 
-        cc->InputSidePackets()
-            .Tag("CAM_INFO_INPUT")
-            .Set<std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>,
-                           std::shared_ptr<aisdk::base::BaseCameraModel>>>();
+        cc->InputSidePackets().Tag("CAM_INFO_INPUT").Set<std::vector<std::shared_ptr<aisdk::base::BaseCameraModel>>>();
         cc->Inputs().Tag("IMAGE_INPUT").Set<std::vector<Image>>();
         cc->Inputs().Tag("HEADPOSE_INPUT").Set<HeadPoseInternal>();
         cc->Inputs().Tag("DET_BBOX_OUTPUT").Set<DetOutputInternal>();
@@ -128,10 +126,9 @@ class HandDataRecordCalculator : public xgraph::CalculatorBase {
         AISDK_LOG_TRACE("[HandDataRecordCalculator] Open complete.");
         const auto& cam_info = cc->InputSidePackets()
                                    .Tag("CAM_INFO_INPUT")
-                                   .Get<std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>,
-                                                  std::shared_ptr<aisdk::base::BaseCameraModel>>>();
-        lcam_model_ = cam_info.first;
-        rcam_model_ = cam_info.second;
+                                   .Get<std::vector<std::shared_ptr<aisdk::base::BaseCameraModel>>>();
+        lcam_model_ = cam_info.at(0);
+        rcam_model_ = cam_info.at(1);
         precorder = GetSharedDataDebugRecord(std::string("calculator+task"));
         return absl::OkStatus();
     }

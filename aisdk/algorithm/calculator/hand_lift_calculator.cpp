@@ -39,10 +39,7 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
    public:
     static absl::Status GetContract(xgraph::CalculatorContract* cc) {
         AISDK_LOG_TRACE("[LiftCalculator] GetContract start");
-        cc->InputSidePackets()
-            .Tag("CAM_INFO_INPUT")
-            .Set<std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>,
-                           std::shared_ptr<aisdk::base::BaseCameraModel>>>();
+        cc->InputSidePackets().Tag("CAM_INFO_INPUT").Set<std::vector<std::shared_ptr<aisdk::base::BaseCameraModel>>>();
         cc->Inputs().Tag("LANDMARK_INPUT").Set<Kpt2dInternal>();
         cc->Outputs().Tag("LIFT_OUTPUT").Set<HandsData>();
         AISDK_LOG_TRACE("[LiftCalculator] GetContract complete");
@@ -71,10 +68,9 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
 
         const auto& cam_info = cc->InputSidePackets()
                                    .Tag("CAM_INFO_INPUT")
-                                   .Get<std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>,
-                                                  std::shared_ptr<aisdk::base::BaseCameraModel>>>();
-        lcam_model_ = cam_info.first;
-        rcam_model_ = cam_info.second;
+                                   .Get<std::vector<std::shared_ptr<aisdk::base::BaseCameraModel>>>();
+        lcam_model_ = cam_info.at(0);
+        rcam_model_ = cam_info.at(1);
         auto result = netalgo->SetCameraInfo(lcam_model_, rcam_model_);
         AISDK_LOG_TRACE("[LiftCalculator] Open complete");
         return result;

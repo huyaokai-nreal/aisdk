@@ -50,10 +50,7 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
         AISDK_LOG_TRACE("[HandDetTrackCalculator] GetContract start");
 
         // Declaration of input and output, according to definitons.
-        cc->InputSidePackets()
-            .Tag("CAM_INFO_INPUT")
-            .Set<std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>,
-                           std::shared_ptr<aisdk::base::BaseCameraModel>>>();
+        cc->InputSidePackets().Tag("CAM_INFO_INPUT").Set<std::vector<std::shared_ptr<aisdk::base::BaseCameraModel>>>();
 
         cc->Inputs().Tag("IMAGE_INPUT").Set<std::vector<Image>>();
         cc->Inputs().Tag("HEADPOSE").Set<HeadPoseInternal>();
@@ -91,10 +88,9 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
 
         const auto &cam_info = cc->InputSidePackets()
                                    .Tag("CAM_INFO_INPUT")
-                                   .Get<std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>,
-                                                  std::shared_ptr<aisdk::base::BaseCameraModel>>>();
-        lcam_model_ = cam_info.first;
-        rcam_model_ = cam_info.second;
+                                   .Get<std::vector<std::shared_ptr<aisdk::base::BaseCameraModel>>>();
+        lcam_model_ = cam_info.at(0);
+        rcam_model_ = cam_info.at(1);
         video_width_ = lcam_model_->video_width_;
         video_height_ = lcam_model_->video_height_;
 
