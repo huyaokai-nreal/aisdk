@@ -6,9 +6,11 @@
 #include <cstdint>
 #include <string>
 
+#include "aisdk/algorithm/common/nrnet_define.h"
 #include "aisdk/base/file.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/profiling.h"
+#include "common/nr_plugin_types_ext.inl"
 #if (defined(ANDROID) || defined(__ANDROID__))
 #include <jni.h>
 #endif
@@ -545,11 +547,13 @@ void Hmd::GetCamerasInformation() {
     auto handle = Plugin::GetInstance()->GetHandle();
 
     m_interface->GetComponentResolution(handle, NR_COMPONENT_GRAYSCALE_CAMERA_LEFT, &resolution_[0]);
-    m_interface->GetComponentResolution(handle, NR_COMPONENT_GRAYSCALE_CAMERA_RIGHT, &resolution_[1]);
     m_interface->GetComponentIntrinsic(handle, NR_COMPONENT_GRAYSCALE_CAMERA_LEFT, &intrinsic_mat_[0]);
-    m_interface->GetComponentIntrinsic(handle, NR_COMPONENT_GRAYSCALE_CAMERA_RIGHT, &intrinsic_mat_[1]);
     m_interface->GetComponentDistortion(handle, NR_COMPONENT_GRAYSCALE_CAMERA_LEFT, &distortion_params_[0]);
-    m_interface->GetComponentDistortion(handle, NR_COMPONENT_GRAYSCALE_CAMERA_RIGHT, &distortion_params_[1]);
+    if (m_nr_cameras == 2) {
+        m_interface->GetComponentResolution(handle, NR_COMPONENT_GRAYSCALE_CAMERA_RIGHT, &resolution_[1]);
+        m_interface->GetComponentIntrinsic(handle, NR_COMPONENT_GRAYSCALE_CAMERA_RIGHT, &intrinsic_mat_[1]);
+        m_interface->GetComponentDistortion(handle, NR_COMPONENT_GRAYSCALE_CAMERA_RIGHT, &distortion_params_[1]);
+    }
 
     m_cam_param.m_params.clear();
     std::vector<float> cam_resolution = {(float)resolution_[0].width, (float)resolution_[0].height};
@@ -567,18 +571,22 @@ void Hmd::GetCamerasInformation() {
                         distortion_params_[0].radial_p2, distortion_params_[0].radial_k3);
         _l_kc = {distortion_params_[0].radial_k1, distortion_params_[0].radial_k2, distortion_params_[0].radial_p1,
                  distortion_params_[0].radial_p2, distortion_params_[0].radial_k3};
-        _r_kc = {distortion_params_[1].radial_k1, distortion_params_[1].radial_k2, distortion_params_[1].radial_p1,
-                 distortion_params_[1].radial_p2, distortion_params_[1].radial_k3};
-        // m_camera_model = 1;
+        if (m_nr_cameras == 2) {
+            _r_kc = {distortion_params_[1].radial_k1, distortion_params_[1].radial_k2, distortion_params_[1].radial_p1,
+                     distortion_params_[1].radial_p2, distortion_params_[1].radial_k3};
+        }
+        m_camera_model = 1;
     } else if (distortion_params_[0].camera_model == NRCameraModel::NR_CAMERA_MODEL_FISHEYE) {
         AISDK_LOG_TRACE("GetComponentDistortion Fisheye LEFT: {}, {}, {}, {}", distortion_params_[0].fisheye_k1,
                         distortion_params_[0].fisheye_k2, distortion_params_[0].fisheye_k3,
                         distortion_params_[0].fisheye_k4);
         _l_kc = {distortion_params_[0].fisheye_k1, distortion_params_[0].fisheye_k2, distortion_params_[0].fisheye_k3,
                  distortion_params_[0].fisheye_k4};
-        _r_kc = {distortion_params_[1].fisheye_k1, distortion_params_[1].fisheye_k2, distortion_params_[1].fisheye_k3,
-                 distortion_params_[1].fisheye_k4};
-        // m_camera_model = 2;
+        if (m_nr_cameras == 2) {
+            _r_kc = {distortion_params_[1].fisheye_k1, distortion_params_[1].fisheye_k2,
+                     distortion_params_[1].fisheye_k3, distortion_params_[1].fisheye_k4};
+        }
+        m_camera_model = 2;
     } else if (distortion_params_[0].camera_model == NRCameraModel::NR_CAMERA_MODEL_FISHEYE_RTTP) {
         AISDK_LOG_TRACE(
             "GetComponentDistortion Fisheye624 LEFT: {}, {}, {}, {}, {}, {} / {}, {} /  {}, {}, {}, {}",
@@ -590,40 +598,25 @@ void Hmd::GetCamerasInformation() {
                  distortion_params_[0].fisheye_k4, distortion_params_[0].fisheye_k5, distortion_params_[0].fisheye_k6,
                  distortion_params_[0].fisheye_p1, distortion_params_[0].fisheye_p2, distortion_params_[0].fisheye_s1,
                  distortion_params_[0].fisheye_s2, distortion_params_[0].fisheye_s3, distortion_params_[0].fisheye_s4};
-        _r_kc = {distortion_params_[1].fisheye_k1, distortion_params_[1].fisheye_k2, distortion_params_[1].fisheye_k3,
-                 distortion_params_[1].fisheye_k4, distortion_params_[1].fisheye_k5, distortion_params_[1].fisheye_k6,
-                 distortion_params_[1].fisheye_p1, distortion_params_[1].fisheye_p2, distortion_params_[1].fisheye_s1,
-                 distortion_params_[1].fisheye_s2, distortion_params_[1].fisheye_s3, distortion_params_[1].fisheye_s4};
+        if (m_nr_cameras == 2) {
+            _r_kc = {
+                distortion_params_[1].fisheye_k1, distortion_params_[1].fisheye_k2, distortion_params_[1].fisheye_k3,
+                distortion_params_[1].fisheye_k4, distortion_params_[1].fisheye_k5, distortion_params_[1].fisheye_k6,
+                distortion_params_[1].fisheye_p1, distortion_params_[1].fisheye_p2, distortion_params_[1].fisheye_s1,
+                distortion_params_[1].fisheye_s2, distortion_params_[1].fisheye_s3, distortion_params_[1].fisheye_s4};
+        }
         // 这里确定相机模式
         m_camera_model = 3;
     }
 
-    std::vector<float> _l_fc = {intrinsic_mat_[0].column0.x, intrinsic_mat_[0].column1.y};
-    std::vector<float> _l_cc = {intrinsic_mat_[0].column2.x, intrinsic_mat_[0].column2.y};
-
-    std::vector<float> _r_fc = {intrinsic_mat_[1].column0.x, intrinsic_mat_[1].column1.y};
-    std::vector<float> _r_cc = {intrinsic_mat_[1].column2.x, intrinsic_mat_[1].column2.y};
-
-    m_cam_param.m_params["cam_l_fc"] = std::move(_l_fc);
-    m_cam_param.m_params["cam_l_cc"] = std::move(_l_cc);
+    m_cam_param.m_params["cam_l_fc"] = {intrinsic_mat_[0].column0.x, intrinsic_mat_[0].column1.y};
+    m_cam_param.m_params["cam_l_cc"] = {intrinsic_mat_[0].column2.x, intrinsic_mat_[0].column2.y};
     m_cam_param.m_params["cam_l_kc"] = std::move(_l_kc);
-    m_cam_param.m_params["cam_r_fc"] = std::move(_r_fc);
-    m_cam_param.m_params["cam_r_cc"] = std::move(_r_cc);
-    m_cam_param.m_params["cam_r_kc"] = std::move(_r_kc);
-
-    m_interface->GetComponentExtrinsic(handle, NR_COMPONENT_GRAYSCALE_CAMERA_LEFT, NR_COMPONENT_GRAYSCALE_CAMERA_RIGHT,
-                                       &extrinsics_lr);
-
-    m_cam_param.m_params["glL_R_glR"] = {extrinsics_lr.rotation.qw, extrinsics_lr.rotation.qx,
-                                         extrinsics_lr.rotation.qy, extrinsics_lr.rotation.qz};
-
-    m_cam_param.m_params["glL_t_glR"] = {extrinsics_lr.position.x, extrinsics_lr.position.y, extrinsics_lr.position.z};
-
-    AISDK_LOG_TRACE("glL_R_glR q: {}, {}, {}, {}", extrinsics_lr.rotation.qw, extrinsics_lr.rotation.qx,
-                    extrinsics_lr.rotation.qy, extrinsics_lr.rotation.qz);
-
-    AISDK_LOG_TRACE("glL_R_glR p: {}, {}, {}", extrinsics_lr.position.x, extrinsics_lr.position.y,
-                    extrinsics_lr.position.z);
+    if (m_nr_cameras == 2) {
+        m_cam_param.m_params["cam_r_fc"] = {intrinsic_mat_[1].column0.x, intrinsic_mat_[1].column1.y};
+        m_cam_param.m_params["cam_r_cc"] = {intrinsic_mat_[1].column2.x, intrinsic_mat_[1].column2.y};
+        m_cam_param.m_params["cam_r_kc"] = std::move(_r_kc);
+    }
 
     m_interface->GetComponentExtrinsic(handle, NR_COMPONENT_HEAD, NR_COMPONENT_GRAYSCALE_CAMERA_LEFT, &extrinsics_lh);
 
@@ -637,9 +630,29 @@ void Hmd::GetCamerasInformation() {
 
     AISDK_LOG_TRACE("glH_t_glL p: {}, {}, {}", extrinsics_lh.position.x, extrinsics_lh.position.y,
                     extrinsics_lh.position.z);
+    m_cam_param.m_params["glL_R_glR"] = {1, 0, 0, 0};
+
+    m_cam_param.m_params["glL_t_glR"] = {0, 0, 0};
+
+    if (m_nr_cameras == 2) {
+        m_interface->GetComponentExtrinsic(handle, NR_COMPONENT_GRAYSCALE_CAMERA_LEFT,
+                                           NR_COMPONENT_GRAYSCALE_CAMERA_RIGHT, &extrinsics_lr);
+        m_cam_param.m_params["glL_R_glR"] = {extrinsics_lr.rotation.qw, extrinsics_lr.rotation.qx,
+                                             extrinsics_lr.rotation.qy, extrinsics_lr.rotation.qz};
+
+        m_cam_param.m_params["glL_t_glR"] = {extrinsics_lr.position.x, extrinsics_lr.position.y,
+                                             extrinsics_lr.position.z};
+    }
+
+    AISDK_LOG_TRACE("glL_R_glR q: {}, {}, {}, {}", extrinsics_lr.rotation.qw, extrinsics_lr.rotation.qx,
+                    extrinsics_lr.rotation.qy, extrinsics_lr.rotation.qz);
+
+    AISDK_LOG_TRACE("glL_R_glR p: {}, {}, {}", extrinsics_lr.position.x, extrinsics_lr.position.y,
+                    extrinsics_lr.position.z);
 
     m_cam_param.m_params["camera_model"] = {(float)m_camera_model};
     m_cam_param.m_params["generate_method"] = {(float)m_generate_method};
+    m_cam_param.m_nr_cameras = m_nr_cameras;
 }
 
 NRPluginResult DeviceMessage::NotifyDeviceMessage(NRPluginHandle handle, const void* data, uint32_t data_size) {
@@ -680,6 +693,7 @@ NRPluginResult DeviceMessage::NotifyDeviceMessage(NRPluginHandle handle, const v
 NRPluginResult HandTracking::ParseAllCameraData(const NRGrayscaleCameraFrameData* data) {
     // uint32_t camera_raw_data_size[4];
     // const uint8_t* camera_raw_data_[2];
+    AISDK_LOG_TRACE("start parse camera data, camera num is {}", data->camera_count);
     uint64_t nano_time_[2];
     NRTransform head_pose;
     DevicePose headpose_proto;
@@ -691,62 +705,44 @@ NRPluginResult HandTracking::ParseAllCameraData(const NRGrayscaleCameraFrameData
     last_time_nanos = current_time_nanos;
 
     // We only use cam0 and cam1 now (coresponding to leftcam and rightcam on Light/Air Pro)
-    std::vector<cv::Mat> image(2);
+    std::vector<aisdk::algorithm::Image> images;
     auto ins = Plugin::GetInstance();
     auto& pipeline = ins->GetPipeline();
-    std::shared_ptr<aisdk::base::XrMem> leftmem =
-        ins->m_picbuf->RequestMemBlob(data->cameras[0].width * data->cameras[0].height);
-
-    std::shared_ptr<aisdk::base::XrMem> rightmem =
-        ins->m_picbuf->RequestMemBlob(data->cameras[1].width * data->cameras[1].height);
-
-    if (!leftmem || !rightmem) {
-        AISDK_LOG_ERROR("HandTracking::ParseAllCameraData RequestMemBlob error");
+    for (int cam_id = 0; cam_id < ins->m_hmd.m_nr_cameras; cam_id++) {
+        std::shared_ptr<aisdk::base::XrMem> img_mem =
+            ins->m_picbuf->RequestMemBlob(data->cameras[cam_id].width * data->cameras[cam_id].height);
+        if (!img_mem) {
+            AISDK_LOG_ERROR("HandTracking::ParseAllCameraData RequestMemBlob error");
 #if defined(ENABLE_ALGORITHM_DATA_RECORD) && !defined(ENABLE_SEGMENT_JOINT_INFERENCE_MODE)
-        if (ins->pipeline_work_scene == "handtracking_std_all_host") {
-            std::shared_ptr<task::HandTrackingXGraph> impl =
-                std::dynamic_pointer_cast<task::HandTrackingXGraph>(pipeline.Impl());
-            impl->SetTrackFrameState(current_time_nanos, aisdk::task::FrameState::MEM_FULL_DROP);
-        }
+            if (ins->pipeline_work_scene == "handtracking_std_all_host") {
+                std::shared_ptr<task::HandTrackingXGraph> impl =
+                    std::dynamic_pointer_cast<task::HandTrackingXGraph>(pipeline.Impl());
+                impl->SetTrackFrameState(current_time_nanos, aisdk::task::FrameState::MEM_FULL_DROP);
+            }
 #endif
-        return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
-    }
-
-    image[0] = cv::Mat(cv::Size(data->cameras[0].width, data->cameras[0].height), CV_8UC1,
-                       reinterpret_cast<uint8_t*>(leftmem->addr));
-    image[1] = cv::Mat(cv::Size(data->cameras[1].width, data->cameras[1].height), CV_8UC1,
-                       reinterpret_cast<uint8_t*>(rightmem->addr));
-
-    for (int cam_id = 0; cam_id < 2; cam_id++) {
+            return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
+        }
+        cv::Mat image = cv::Mat(cv::Size(data->cameras[cam_id].width, data->cameras[cam_id].height), CV_8UC1,
+                                reinterpret_cast<uint8_t*>(img_mem->addr));
         nano_time_[cam_id] = data->cameras[cam_id].exposure_start_time_system;
         const uint8_t* image_buffer = ((uint8_t*)data->data) + data->cameras[cam_id].offset;
         for (uint32_t row = 0; row < data->cameras[cam_id].height; row++) {
-            memcpy(static_cast<void*>(image[cam_id].data + data->cameras[cam_id].width * row),
+            memcpy(static_cast<void*>(image.data + data->cameras[cam_id].width * row),
                    image_buffer + data->cameras[cam_id].stride * row, data->cameras[cam_id].width);
         }
+        aisdk::algorithm::Image image_data(image, img_mem);
+        AISDK_LOG_TRACE("ParseAllCameraData input  {} cam size: h={}, w={}", cam_id, image_data.m_mat.rows,
+                        image_data.m_mat.cols);
+        images.push_back(image_data);
     }
+
 #ifdef ENBALE_M2P_DELAYED_TIME_PROFILER
     AISDK_LOG_WARN("[HandTrackingProfiler] image_ts: {}, HandAlgoGetImage: {}", last_time_nanos,
                    aisdk::base::getTime2());
 #endif
-    aisdk::algorithm::Image d1(image[0], leftmem);
-    aisdk::algorithm::Image d2(image[1], rightmem);
-    d1.raw_time_nanos = nano_time_[0];
-    d2.raw_time_nanos = nano_time_[0];
-
-    AISDK_LOG_TRACE("ParseAllCameraData input rcam size: h={}, w={}", d1.m_mat.rows, d1.m_mat.cols);
-    AISDK_LOG_TRACE("ParseAllCameraData input rcam size: h={}, w={}", d2.m_mat.rows, d2.m_mat.cols);
-
     // left or right timestamp should be the same
     errorcode = ins->m_handtracking.m_interface->GetDevicePose(ins->GetHandle(), &headpose_proto, nano_time_[0]);
     head_pose = headpose_proto.transform;
-
-    std::vector<aisdk::algorithm::Image> images;
-    images.emplace_back(std::move(d1));
-    if (!ins->m_handtracking.is_mono) {
-        images.emplace_back(std::move(d2));
-    }
-
     if (ins->pipeline_work_scene == "handtracking_std_all_host") {
         std::shared_ptr<task::HandTrackingXGraph> impl =
             std::dynamic_pointer_cast<task::HandTrackingXGraph>(pipeline.Impl());
@@ -771,7 +767,7 @@ NRPluginResult HandTracking::ParseAllCameraData(const NRGrayscaleCameraFrameData
 
 void HandTracking::NotifyData(NRPluginHandle handle, NRChannelDataType channel_data_type, const void* data,
                               uint32_t data_size) {
-    // AISDK_LOG_TRACE("NotifyData in HandTracking: Start!!!!!!!!!!!");
+    AISDK_LOG_TRACE("NotifyData in HandTracking: data type {}", int(channel_data_type));
     if (handle != Plugin::GetInstance()->GetHandle()) {
         AISDK_LOG_ERROR("NotifyData handle error!");
         return;
@@ -941,6 +937,8 @@ std::vector<int> SelectPipeline(std::vector<aisdk::xengine::PipelineConfig>& pip
     std::vector<int> pipeline_policy;
     for (uint32_t i = 0; i < pipelines.size(); i++) {
         auto& config = pipelines[i];
+        AISDK_LOG_TRACE("pipeline {} bind glasses {} platform {}", i, config.related_feature.bind_glass,
+                        config.related_feature.bind_runtime);
         if (device_type == NR_DEVICE_TYPE_LIGHT && config.related_feature.bind_glass == "ella") {
             if (plat.is_snpe_support && config.related_feature.bind_runtime == "snpedsp") {
                 pipeline_policy.push_back(i);
@@ -958,6 +956,12 @@ std::vector<int> SelectPipeline(std::vector<aisdk::xengine::PipelineConfig>& pip
             }
 
             if (!plat.is_mobile_evapro && config.related_feature.bind_runtime == "cpu") {
+                pipeline_policy.push_back(i);
+                continue;
+            }
+        } else if (config.related_feature.bind_glass == "gina" && config.related_feature.bind_runtime == "snpedsp") {
+            if (device_type == NR_DEVICE_TYPE_GINA_FLORA || device_type == NR_DEVICE_TYPE_GINA_L ||
+                device_type == NR_DEVICE_TYPE_GINA_M) {
                 pipeline_policy.push_back(i);
                 continue;
             }
@@ -980,8 +984,6 @@ NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
 #endif
 
     auto plugin_handle = Plugin::GetInstance()->GetHandle();
-    // 输入图像缓存
-    ins->m_picbuf = std::make_unique<aisdk::base::FixedMembuffer>(std::string("grayscale_pic"), 640 * 480 * 10);
 
     // 注册NRHandTrackingProvider接口函数
     HandTrackingProvider provider = {
@@ -1037,10 +1039,17 @@ NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
 
     if (device_type == NRDeviceType::NR_DEVICE_TYPE_LIGHT) {
         ins->m_hmd.m_camera_model = 1;
-        AISDK_LOG_TRACE("HandTracking: Get Device Type: Light!");
+        ins->m_hmd.m_nr_cameras = 2;
     } else if (device_type == NRDeviceType::NR_DEVICE_TYPE_FLORA) {
-        ins->m_hmd.m_camera_model = 2;
-        AISDK_LOG_TRACE("HandTracking: Get Device Type: Flora!");
+        ins->m_hmd.m_camera_model = 3;
+        ins->m_hmd.m_nr_cameras = 2;
+    } else if (device_type == NRDeviceType::NR_DEVICE_TYPE_GINA_FLORA ||
+               device_type == NRDeviceType::NR_DEVICE_TYPE_GINA_L ||
+               device_type == NRDeviceType::NR_DEVICE_TYPE_GINA_M) {
+        ins->m_hmd.m_camera_model = 1;
+        ins->m_hmd.m_nr_cameras = 1;
+        AISDK_LOG_TRACE("HandTracking: Get Device Type: Gina!");
+
     } else {
         AISDK_LOG_ERROR("HandTracking:  Get Invalid Device Type code {}", device_type);
         return NR_PLUGIN_RESULT_FAILURE;
@@ -1058,6 +1067,11 @@ NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
 
     // 获取camera参数
     ins->m_hmd.GetCamerasInformation();
+    // 输入图像缓存
+    auto image_width = ins->m_hmd.m_cam_param.m_params["cam_resolution"][0];
+    auto image_height = ins->m_hmd.m_cam_param.m_params["cam_resolution"][1];
+    ins->m_picbuf =
+        std::make_unique<aisdk::base::FixedMembuffer>(std::string("grayscale_pic"), image_height * image_width * 10);
 
     // 算法库中设置调试选项
     auto& profcnf = aisdk::base::DebugProfiling::Get().GetOpt();
@@ -1079,9 +1093,9 @@ NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
     bool is_ok = ins->AnalysisTar();
     if (is_ok) {
         // 多条pipeline的项目，这里需要指定pipeline的运行策略
-        std::vector<aisdk::xengine::PipelineConfig> tmp = ins->m_tar_handle->GetPipelineConfig();
-        AISDK_LOG_WARN("HandTracking: pipeline size={}", tmp.size());
-        if (tmp.size() > 0) {
+        std::vector<aisdk::xengine::PipelineConfig> pipeline_configs = ins->m_tar_handle->GetPipelineConfig();
+        AISDK_LOG_WARN("HandTracking: pipeline size={}", pipeline_configs.size());
+        if (pipeline_configs.size() > 0) {
             aisdk::xengine::PlatformEnv platenv;
             platenv.is_system_app = ins->m_handtracking.m_system_app;
             platenv.is_untrusted_app = !platenv.is_system_app;
@@ -1095,39 +1109,42 @@ NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
                 (int)plat->is_snpe_support, (int)plat->is_hexagon_dsp, (int)plat->is_hexagon_signedPD_dsp, (int)plat->is_hexagon_unsignedPD_dsp,
                 (int)plat->is_mobile_evapro);
             // clang-format on
-            std::vector<int> pipeline_policy = SelectPipeline(tmp, *plat, device_type);
-            AISDK_LOG_WARN("HandTracking: pipeline_policy size={}", pipeline_policy.size());
+            std::vector<int> valid_pipeline_idx_list = SelectPipeline(pipeline_configs, *plat, device_type);
+            AISDK_LOG_WARN("HandTracking: pipeline_policy size={}", valid_pipeline_idx_list.size());
 
-            for (uint32_t i = 0; i < pipeline_policy.size(); i++) {
-                uint32_t pipeline_index = pipeline_policy[i];
-                if (pipeline_index < tmp.size()) {
+            for (uint32_t i = 0; i < valid_pipeline_idx_list.size(); i++) {
+                uint32_t pipeline_index = valid_pipeline_idx_list[i];
+                if (pipeline_index < pipeline_configs.size()) {
                     AISDK_LOG_WARN("Plugin::Initialize pipline.Init index={} pipline.name={:s}", pipeline_index,
-                                   tmp[pipeline_index].pipeline_name.c_str());
+                                   pipeline_configs[pipeline_index].pipeline_name.c_str());
+                    AISDK_LOG_TRACE("start init pipeline");
                     auto& pipline = ins->GetPipeline();
                     // 需要指定具体的实现
                     aisdk::algorithm::Status status;
                     if (ins->pipeline_work_scene == "handtracking_std_all_host") {
-                        status = pipline.Init<task::HandTrackingXGraph>(ins->m_handtracking.m_funcs,
-                                                                        tmp[pipeline_index], ins->m_hmd.m_cam_param);
+                        AISDK_LOG_TRACE("start init hand track pipeline");
+                        status = pipline.Init<task::HandTrackingXGraph>(
+                            ins->m_handtracking.m_funcs, pipeline_configs[pipeline_index], ins->m_hmd.m_cam_param);
+                        AISDK_LOG_TRACE("finish init hand track pipeline");
                     } else if (ins->pipeline_work_scene == "handtracking_segment_prior_glass") {
                         status = pipline.Init<task::HandTrackingPriorGlassXGraph>(
-                            ins->m_handtracking.m_funcs, tmp[pipeline_index], ins->m_hmd.m_cam_param);
+                            ins->m_handtracking.m_funcs, pipeline_configs[pipeline_index], ins->m_hmd.m_cam_param);
                     } else if (ins->pipeline_work_scene == "handtracking_segment_next_host") {
                         status = pipline.Init<task::HandTrackingNextHostXGraph>(
-                            ins->m_handtracking.m_funcs, tmp[pipeline_index], ins->m_hmd.m_cam_param);
+                            ins->m_handtracking.m_funcs, pipeline_configs[pipeline_index], ins->m_hmd.m_cam_param);
                     }
 
                     if (status == aisdk::algorithm::Status::SUCCESS) {
                         ins->m_is_init = true;
-                        ins->pipeline_name = tmp[pipeline_index].pipeline_name;
+                        ins->pipeline_name = pipeline_configs[pipeline_index].pipeline_name;
                         AISDK_LOG_WARN("HandTracking: Initialized!");
                         return NR_PLUGIN_RESULT_SUCCESS;
                     }
                     AISDK_LOG_ERROR("HandTracking: init failed since NrCore::Status: {}!", static_cast<int>(status));
 
                 } else {
-                    AISDK_LOG_TRACE("Plugin::Initialize error: pipeline_index={} < tmp.size={}", pipeline_index,
-                                    tmp.size());
+                    AISDK_LOG_TRACE("Plugin::Initialize error: pipeline_index={} < pipeline_confgis.size={}",
+                                    pipeline_index, pipeline_configs.size());
                 }
             }
         }

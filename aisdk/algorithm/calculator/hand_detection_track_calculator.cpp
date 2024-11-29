@@ -1,5 +1,10 @@
+#include <fmt/format.h>
+
 #include <cstdint>
 #include <memory>
+#include <opencv2/core/types.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/opencv.hpp>
 
 #include "aisdk/algorithm/calculator/hand_detection_track_calculator.pb.h"
 #include "aisdk/algorithm/common/NR_GlobalPredictorService.h"
@@ -36,7 +41,7 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
     std::shared_ptr<aisdk::base::BaseCameraModel> rcam_model_ = nullptr;
 
     std::string model_name_;
-
+    bool is_mono_ = true;
     uint32_t video_width_;
     uint32_t video_height_;
     float min_bbox_area_th_ = 10 * 10;
@@ -90,7 +95,10 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
                                    .Tag("CAM_INFO_INPUT")
                                    .Get<std::vector<std::shared_ptr<aisdk::base::BaseCameraModel>>>();
         lcam_model_ = cam_info.at(0);
-        rcam_model_ = cam_info.at(1);
+        if (cam_info.size() == 2) {
+            rcam_model_ = cam_info.at(1);
+            is_mono_ = false;
+        }
         video_width_ = lcam_model_->video_width_;
         video_height_ = lcam_model_->video_height_;
 
@@ -111,9 +119,6 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
 
         const auto &timestamp = cc->InputTimestamp().Seconds();
         auto lastframe_kpt3d = GlobalPredictorService::getInstance().get_last_kpt3d_world();
-
-        bool is_mono = image_data.size() ==
-                       1;  // TIPS: 等后面真正是单目流的时候, 在Open里面直接根据CAM_INFO_INPUT判断当前是双目流还是单目流
 
         std::unique_ptr<DetOutputInternal> output_buffer_ = absl::make_unique<DetOutputInternal>();
         output_buffer_->clear();
@@ -149,8 +154,8 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
                     output_buffer_->lhand_lcam_rect = proj_bbox_lcam_lhand;
                 }
                 // 单目流, track不会出右目的框
-                if (!is_mono && check_if_rect_valid(proj_bbox_rcam_lhand, video_width_, video_height_,
-                                                    valid_bbox_in_image_ratio_, min_bbox_area_th_)) {
+                if (!is_mono_ && check_if_rect_valid(proj_bbox_rcam_lhand, video_width_, video_height_,
+                                                     valid_bbox_in_image_ratio_, min_bbox_area_th_)) {
                     output_buffer_->lhand_rcam_valid = true;
                     output_buffer_->lhand_rcam_rect = proj_bbox_rcam_lhand;
                 }
@@ -177,8 +182,8 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
                     output_buffer_->rhand_lcam_rect = proj_bbox_lcam_rhand;
                 }
                 // 单目流, track不会出右目的框
-                if (!is_mono && check_if_rect_valid(proj_bbox_rcam_rhand, video_width_, video_height_,
-                                                    valid_bbox_in_image_ratio_, min_bbox_area_th_)) {
+                if (!is_mono_ && check_if_rect_valid(proj_bbox_rcam_rhand, video_width_, video_height_,
+                                                     valid_bbox_in_image_ratio_, min_bbox_area_th_)) {
                     output_buffer_->rhand_rcam_valid = true;
                     output_buffer_->rhand_rcam_rect = proj_bbox_rcam_rhand;
                 }
@@ -211,9 +216,15 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
                 if (check_if_rect_valid(result.lhand_lcam_rect, video_width_, video_height_, valid_bbox_in_image_ratio_,
                                         min_bbox_area_th_)) {
                     result.lhand_lcam_valid = true;
+                    cv::Mat image;
+                    cv::cvtColor(image_data[0].m_mat, image, cv::COLOR_GRAY2BGR);
+                    cv::rectangle(image, result.lhand_lcam_rect.to_cv_rect(), {0, 255, 0});
+                    cv::imwrite(fmt::format("/sdcard/Android/data/com.DefaultCompany.HandTracking/files/{}.jpg",
+                                            int(timestamp * 1e9)),
+                                image);
                 }
             }
-            if (!is_mono && result.images_lhand_rects[1].size() > 0) {
+            if (!is_mono_ && result.images_lhand_rects[1].size() > 0) {
                 result.lhand_rcam_rect = result.images_lhand_rects[1][0];
                 if (check_if_rect_valid(result.lhand_rcam_rect, video_width_, video_height_, valid_bbox_in_image_ratio_,
                                         min_bbox_area_th_)) {
@@ -228,7 +239,7 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
                     result.rhand_lcam_valid = true;
                 }
             }
-            if (!is_mono && result.images_rhand_rects[1].size() > 0) {
+            if (!is_mono_ && result.images_rhand_rects[1].size() > 0) {
                 result.rhand_rcam_rect = result.images_rhand_rects[1][0];
                 if (check_if_rect_valid(result.rhand_rcam_rect, video_width_, video_height_, valid_bbox_in_image_ratio_,
                                         min_bbox_area_th_)) {

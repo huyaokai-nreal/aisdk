@@ -71,9 +71,9 @@ option(ENABLE_CLANG_TIDY_CHECK       "Analyze code with clang-tidy."            
 
 # log
 # release模式，消除Warning和Error级别以下的log打印的函数调用消耗
-option(ENABLE_LOG_LEVEL_RELEASE  "enable log level for release" ON)
+option(ENABLE_LOG_LEVEL_RELEASE  "enable log level for release" OFF)
 # 非release模式，详细的输出全部trace日志
-option(ENABLE_LOG_LEVEL_ALL "enable trace log level" OFF)
+option(ENABLE_LOG_LEVEL_ALL "enable trace log level" ON)
 
 # build algorithm
 option(ENABLE_XGRAPH_PROFILER "enable mediapipe graph framework profiler."  OFF)

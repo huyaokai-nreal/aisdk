@@ -12,6 +12,52 @@ double mysecond() {
     i = gettimeofday(&tv, &tz);
     return ((double)tv.tv_sec + (double)tv.tv_usec * 1.e-6) * 1000;
 }
+cv::Mat perspective_crop_image_raw(base::BaseCameraModel* src_camera, base::PerspectiveCameraModel* dst_camera,
+                                   int dst_width, int dst_height, const cv::Mat& src_image, int interpolation,
+                                   bool depth_check) {
+    // double start0 = mysecond();
+    std::vector<Eigen::Vector2f> dst_win_pts;
+    for (int y = 0; y < dst_height; ++y) {
+        for (int x = 0; x < dst_width; ++x) {
+            dst_win_pts.emplace_back(x, y);
+        }
+    }
+    // double start1 = mysecond();
+    auto dst_eye_pts = dst_camera->window_to_eye(dst_win_pts);
+    // double start2 = mysecond();
+    auto world_pts = dst_camera->eye_to_world(dst_eye_pts);
+    // double start3 = mysecond();
+    auto src_eye_pts = src_camera->world_to_eye(world_pts);
+    // double start4 = mysecond();
+    auto src_win_pts = src_camera->eye_to_window(src_eye_pts);
+    // double start5 = mysecond();
+
+    if (depth_check) {
+        for (size_t i = 0; i < src_eye_pts.size(); ++i) {
+            if (src_eye_pts[i].z() < 0) {
+                src_win_pts[i] = Eigen::Vector2f(-1, -1);
+            }
+        }
+    }
+    cv::Mat map_x0(dst_height, dst_width, CV_32F);
+    cv::Mat map_y0(dst_height, dst_width, CV_32F);
+
+    for (int y = 0; y < dst_height; ++y) {
+        for (int x = 0; x < dst_width; ++x) {
+            size_t idx = y * dst_width + x;
+            map_x0.at<float>(y, x) = src_win_pts[idx].x();
+            map_y0.at<float>(y, x) = src_win_pts[idx].y();
+        }
+    }
+
+    // // double start6 = mysecond();
+
+    cv::Mat result;
+    cv::remap(src_image, result, map_x0, map_y0, interpolation);
+    return result;
+    // // double start7 = mysecond();
+    // double start0 = mysecond();
+}
 cv::Mat perspective_crop_image(const base::BaseCameraModel* src_camera, const base::PerspectiveCameraModel* dst_camera,
                                int dst_width, int dst_height, const cv::Mat& src_image, int interpolation,
                                bool depth_check) {

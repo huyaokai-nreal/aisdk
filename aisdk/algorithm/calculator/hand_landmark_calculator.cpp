@@ -93,7 +93,9 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
                                    .Tag("CAM_INFO_INPUT")
                                    .Get<std::vector<std::shared_ptr<aisdk::base::BaseCameraModel>>>();
         lcam_model_ = cam_info.at(0);
-        rcam_model_ = cam_info.at(1);
+        if (cam_info.size() == 2) {
+            rcam_model_ = cam_info.at(1);
+        }
         AISDK_LOG_TRACE("[HandLandmarkCalculator] Open complete");
         return absl::OkStatus();
     }
