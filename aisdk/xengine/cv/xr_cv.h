@@ -21,6 +21,9 @@ cv::Mat perspective_crop_image(const base::BaseCameraModel* src_camera,
                                const base::PerspectiveCameraModel *dst_camera, int dst_width, int dst_height,
                                const cv::Mat &src_image, int interpolation = cv::INTER_LINEAR, bool depth_check = true);
 #endif
+cv::Mat perspective_crop_image_raw(base::BaseCameraModel* src_camera,
+                               base::PerspectiveCameraModel *dst_camera, int dst_width, int dst_height,
+                               const cv::Mat &src_image, int interpolation = cv::INTER_LINEAR, bool depth_check = true);
 typedef union Cv32suf {
     int i;
     unsigned u;

@@ -93,7 +93,9 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
                                    .Tag("CAM_INFO_INPUT")
                                    .Get<std::vector<std::shared_ptr<aisdk::base::BaseCameraModel>>>();
         lcam_model_ = cam_info.at(0);
-        rcam_model_ = cam_info.at(1);
+        if (cam_info.size() == 2) {
+            rcam_model_ = cam_info.at(1);
+        }
         AISDK_LOG_TRACE("[HandLandmarkBatchCalculator] Open complete");
         return absl::OkStatus();
     }
@@ -114,10 +116,15 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
         cv::Mat crop_image;
         float bbox_scale = bbox_expand_ratio_;
         Vec4f_t rect = GetCropBboxShape(bbox, bbox_scale);
+        auto K = origin_camera->get_camera_intrinsics();
+        auto kc = origin_camera->get_distortion_params();
+        AISDK_LOG_TRACE("camera fx {} fy {} cx {} cy {}, k1 {} k2 {}, p1 {} p2 {} k3 {}", K.fx_, K.fy_, K.cx_, K.cy_,
+                        kc[0], kc[1], kc[2], kc[3], kc[4]);
         virutal_camera = GetVirtualCameraFromBox(origin_camera, rect, {input_width_, input_height_});
 #if ((defined(ANDROID) || defined(__ANDROID__)) && defined(__aarch64__))
-        crop_image = xengine::perspective_crop_image(lcam_model_.get(), virutal_camera.get(), input_width_,
-                                                     input_height_, image_data.m_mat);
+        crop_image = xengine::perspective_crop_image_raw(lcam_model_.get(), virutal_camera.get(), input_width_,
+                                                         input_height_, image_data.m_mat);
+        cv::imwrite("/sdcard/Android/data/com.DefaultCompany.HandTracking/files/hand_crop.jpg", crop_image);
 #endif
         if (left_hand) {
             cv::flip(crop_image, crop_image, 1);
@@ -280,7 +287,7 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
                 output_buffer_->lhand_rcam_valid = false;
             }
         }
-        if (bbox_data.rhand_rcam_valid && !bbox_data.rhand_lcam_valid) {
+        if (bbox_data.rhand_lcam_valid && !bbox_data.rhand_rcam_valid) {
             auto result = ProcessSingleHand(image_data[1], bbox_data.rhand_rcam_rect, false, rcam_model_.get(),
                                             output_buffer_->rhand_rcam_kpt, output_buffer_->rhand_rcam_rdepth,
                                             output_buffer_->rhand_rcam_virtual_camera, bbox_data.det_flag);

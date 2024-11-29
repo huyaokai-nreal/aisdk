@@ -1,5 +1,6 @@
 #pragma once
 
+#include <opencv2/core/types.hpp>
 #include <opencv2/opencv.hpp>
 #include <vector>
 
@@ -28,7 +29,8 @@ struct CamInfo {
     // GL系1: nrsdk_api for real_camera
     // opencv系 2: nreal_studio/slam_raw_config for test 
     int generate_method;
-
+    bool lcam_valid = false;
+    bool rcam_valid = false;
     uint32_t video_width;
     uint32_t video_height;
 };
@@ -43,6 +45,9 @@ struct DetectRect {
     float right_confidence;
     bool is_left;
     bool nms_suppressed;
+    cv::Rect to_cv_rect() const{
+        return cv::Rect{int(x), int(y), int(w), int(h)};
+    }
 };
 
 struct Image {

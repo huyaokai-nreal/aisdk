@@ -445,7 +445,7 @@ bool AnalysisTar::Analysis(unsigned char *tar_mem, uint32_t tar_len) {
                 std::vector<std::string> graph_info = absl::StrSplit(tar_hand_graph, '.');
                 std::vector<std::string> graph_info_list = absl::StrSplit(graph_info[0], '_');
                 pipelineconifg.related_feature.bind_mono_bino =
-                    (absl::StrContains(tar_hand_graph, "mono")) ? "mono_bino" : "bino";
+                    (absl::StrContains(tar_hand_graph, "mono")) ? "mono" : "bino";
                 pipelineconifg.related_feature.bind_glass = graph_info_list[1];
                 pipelineconifg.related_feature.bind_sensor_orientation =
                     kGlassesSensorOrientationMap[graph_info_list[1]];
