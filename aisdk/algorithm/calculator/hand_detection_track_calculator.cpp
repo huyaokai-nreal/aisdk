@@ -118,7 +118,7 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
         const auto &headpose_data = cc->Inputs().Tag("HEADPOSE").Get<HeadPoseInternal>();
 
         const auto &timestamp = cc->InputTimestamp().Seconds();
-        auto lastframe_kpt3d = GlobalPredictorService::getInstance().get_last_kpt3d_world();
+        auto lastframe_kpt2d = GlobalPredictorService::getInstance().get_last_kpt2d_pixel();
 
         std::unique_ptr<DetOutputInternal> output_buffer_ = absl::make_unique<DetOutputInternal>();
         output_buffer_->clear();
@@ -130,65 +130,92 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
             det_tracker_step_ = 0;
             output_buffer_->det_flag = false;
         }
-        auto &predictor_lhand = GlobalPredictorService::getInstance().get_predictor_lhand_bbox();
-        auto &predictor_rhand = GlobalPredictorService::getInstance().get_predictor_rhand_bbox();
+        auto &predictor_lhand_lcam = GlobalPredictorService::getInstance().get_predictor_lhand_lcam_bbox();
+        auto &predictor_rhand_lcam = GlobalPredictorService::getInstance().get_predictor_rhand_lcam_bbox();
+        auto &predictor_lhand_rcam = GlobalPredictorService::getInstance().get_predictor_lhand_rcam_bbox();
+        auto &predictor_rhand_rcam = GlobalPredictorService::getInstance().get_predictor_rhand_rcam_bbox();
+
         if ((det_tracker_step_ != 0) && enable_track &&
-            (predictor_rhand.get_tracking_status() || predictor_lhand.get_tracking_status())) {
-            if (lastframe_kpt3d.lhand_valid) {
-                DetectRect proj_bbox_lcam_lhand, proj_bbox_rcam_lhand;
-                std::vector<Vec3f_t> lhand_predict_frame = lastframe_kpt3d.left_hand.kpt3d;
-                Vec3f_t root_kf_predicted;
-                Vec3f_t root_meas = lhand_predict_frame[kKeypointRootId];
+            (predictor_lhand_lcam.get_tracking_status() || predictor_rhand_lcam.get_tracking_status() ||
+             predictor_lhand_rcam.get_tracking_status() || predictor_rhand_rcam.get_tracking_status())) {
+            AISDK_LOG_TRACE("[HandDetTrackCalculator] 2D Tracker Starting");
+            if (lastframe_kpt2d.lhand_lcam_valid) {
+                DetectRect proj_bbox_lhand_lcam;
+                std::vector<Vec2f_t> lhand_lcam_kpt = lastframe_kpt2d.lhand_lcam_kpt;
+                Vec2f_t root_kf_predicted;
+                Vec2f_t root_meas = lhand_lcam_kpt[kKeypoint2dRootId];
 
-                root_kf_predicted = predictor_lhand.track_only_pred(timestamp, false, true);
+                root_kf_predicted = predictor_lhand_lcam.track_only_pred(timestamp, true);
 
-                for (int k = 0; k < lhand_predict_frame.size(); k++) {
-                    lhand_predict_frame[k] = lhand_predict_frame[k] + root_kf_predicted - root_meas;
+                for (int k = 0; k < lhand_lcam_kpt.size(); k++) {
+                    lhand_lcam_kpt[k] = lhand_lcam_kpt[k] + root_kf_predicted - root_meas;
                 }
 
-                reproj_bbox_with_new_headpose(lcam_model_, rcam_model_, headpose_data.transform, lhand_predict_frame,
-                                              proj_bbox_lcam_lhand, proj_bbox_rcam_lhand);
-                if (check_if_rect_valid(proj_bbox_lcam_lhand, video_width_, video_height_, valid_bbox_in_image_ratio_,
+                proj_bbox_lhand_lcam = kpts_to_bbox(lhand_lcam_kpt);
+                if (check_if_rect_valid(proj_bbox_lhand_lcam, video_width_, video_height_, valid_bbox_in_image_ratio_,
                                         min_bbox_area_th_)) {
                     output_buffer_->lhand_lcam_valid = true;
-                    output_buffer_->lhand_lcam_rect = proj_bbox_lcam_lhand;
-                }
-                // 单目流, track不会出右目的框
-                if (!is_mono_ && check_if_rect_valid(proj_bbox_rcam_lhand, video_width_, video_height_,
-                                                     valid_bbox_in_image_ratio_, min_bbox_area_th_)) {
-                    output_buffer_->lhand_rcam_valid = true;
-                    output_buffer_->lhand_rcam_rect = proj_bbox_rcam_lhand;
+                    output_buffer_->lhand_lcam_rect = proj_bbox_lhand_lcam;
                 }
             }
+            if (lastframe_kpt2d.rhand_lcam_valid) {
+                DetectRect proj_bbox_rhand_lcam;
+                std::vector<Vec2f_t> rhand_lcam_kpt = lastframe_kpt2d.rhand_lcam_kpt;
+                Vec2f_t root_kf_predicted;
+                Vec2f_t root_meas = rhand_lcam_kpt[kKeypoint2dRootId];
 
-            if (lastframe_kpt3d.rhand_valid) {
-                DetectRect proj_bbox_lcam_rhand, proj_bbox_rcam_rhand;
-                std::vector<Vec3f_t> rhand_predict_frame = lastframe_kpt3d.right_hand.kpt3d;
-                Vec3f_t root_kf_predicted;
-                Vec3f_t root_meas = rhand_predict_frame[kKeypointRootId];
+                root_kf_predicted = predictor_rhand_lcam.track_only_pred(timestamp, true);
 
-                root_kf_predicted = predictor_rhand.track_only_pred(timestamp, false, true);
-
-                for (int k = 0; k < rhand_predict_frame.size(); k++) {
-                    rhand_predict_frame[k] = rhand_predict_frame[k] + root_kf_predicted - root_meas;
+                for (int k = 0; k < rhand_lcam_kpt.size(); k++) {
+                    rhand_lcam_kpt[k] = rhand_lcam_kpt[k] + root_kf_predicted - root_meas;
                 }
-
-                reproj_bbox_with_new_headpose(lcam_model_, rcam_model_, headpose_data.transform, rhand_predict_frame,
-                                              proj_bbox_lcam_rhand, proj_bbox_rcam_rhand);
-
-                if (check_if_rect_valid(proj_bbox_lcam_rhand, video_width_, video_height_, valid_bbox_in_image_ratio_,
+                proj_bbox_rhand_lcam = kpts_to_bbox(rhand_lcam_kpt);
+                if (check_if_rect_valid(proj_bbox_rhand_lcam, video_width_, video_height_, valid_bbox_in_image_ratio_,
                                         min_bbox_area_th_)) {
                     output_buffer_->rhand_lcam_valid = true;
-                    output_buffer_->rhand_lcam_rect = proj_bbox_lcam_rhand;
+                    output_buffer_->rhand_lcam_rect = proj_bbox_rhand_lcam;
                 }
                 // 单目流, track不会出右目的框
-                if (!is_mono_ && check_if_rect_valid(proj_bbox_rcam_rhand, video_width_, video_height_,
-                                                     valid_bbox_in_image_ratio_, min_bbox_area_th_)) {
-                    output_buffer_->rhand_rcam_valid = true;
-                    output_buffer_->rhand_rcam_rect = proj_bbox_rcam_rhand;
+            }
+            if (lastframe_kpt2d.lhand_rcam_valid) {
+                DetectRect proj_bbox_lhand_rcam;
+                std::vector<Vec2f_t> lhand_rcam_kpt = lastframe_kpt2d.lhand_rcam_kpt;
+                Vec2f_t root_kf_predicted;
+                Vec2f_t root_meas = lhand_rcam_kpt[kKeypoint2dRootId];
+
+                root_kf_predicted = predictor_lhand_rcam.track_only_pred(timestamp, true);
+
+                for (int k = 0; k < lhand_rcam_kpt.size(); k++) {
+                    lhand_rcam_kpt[k] = lhand_rcam_kpt[k] + root_kf_predicted - root_meas;
+                }
+
+                proj_bbox_lhand_rcam = kpts_to_bbox(lhand_rcam_kpt);
+                if (check_if_rect_valid(proj_bbox_lhand_rcam, video_width_, video_height_, valid_bbox_in_image_ratio_,
+                                        min_bbox_area_th_)) {
+                    output_buffer_->lhand_rcam_valid = true;
+                    output_buffer_->lhand_rcam_rect = proj_bbox_lhand_rcam;
                 }
             }
+            if (lastframe_kpt2d.rhand_rcam_valid) {
+                DetectRect proj_bbox_rhand_rcam;
+                std::vector<Vec2f_t> rhand_rcam_kpt = lastframe_kpt2d.rhand_rcam_kpt;
+                Vec2f_t root_kf_predicted;
+                Vec2f_t root_meas = rhand_rcam_kpt[kKeypoint2dRootId];
 
+                root_kf_predicted = predictor_rhand_rcam.track_only_pred(timestamp, true);
+
+                for (int k = 0; k < rhand_rcam_kpt.size(); k++) {
+                    rhand_rcam_kpt[k] = rhand_rcam_kpt[k] + root_kf_predicted - root_meas;
+                }
+
+                proj_bbox_rhand_rcam = kpts_to_bbox(rhand_rcam_kpt);
+
+                if (check_if_rect_valid(proj_bbox_rhand_rcam, video_width_, video_height_, valid_bbox_in_image_ratio_,
+                                        min_bbox_area_th_)) {
+                    output_buffer_->rhand_rcam_valid = true;
+                    output_buffer_->rhand_rcam_rect = proj_bbox_rhand_rcam;
+                }
+            }
             if (output_buffer_->lhand_lcam_valid || output_buffer_->lhand_rcam_valid ||
                 output_buffer_->rhand_lcam_valid || output_buffer_->rhand_rcam_valid) {
                 output_buffer_->det_flag = false;
@@ -240,7 +267,6 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
                     result.rhand_rcam_valid = true;
                 }
             }
-
             det_tracker_step_ = 1;
         }
 
@@ -252,13 +278,21 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
             AISDK_LOG_TRACE("[HandDetTrackCalculator] At least single hand valid, pass");
         } else {
             // update lastframe kpt3d
-            lastframe_kpt3d.lhand_valid = false;
-            lastframe_kpt3d.rhand_valid = false;
-            auto &predictor_lhand = GlobalPredictorService::getInstance().get_predictor_lhand_bbox();
-            predictor_lhand.stop_tracking();
-            auto &predictor_rhand = GlobalPredictorService::getInstance().get_predictor_rhand_bbox();
-            predictor_rhand.stop_tracking();
-            // #if defined(ENABLE_ALGORITHM_DATA_RECORD) && !defined(ENABLE_SEGMENT_JOINT_INFERENCE_MODE)
+            AISDK_LOG_ERROR("No valid hand, stop tracking");
+            lastframe_kpt2d.lhand_lcam_valid = false;
+            lastframe_kpt2d.rhand_lcam_valid = false;
+            lastframe_kpt2d.lhand_rcam_valid = false;
+            lastframe_kpt2d.rhand_rcam_valid = false;
+            auto &predictor_lhand_lcam = GlobalPredictorService::getInstance().get_predictor_lhand_lcam_bbox();
+            predictor_lhand_lcam.stop_tracking();
+            auto &predictor_rhand_lcam = GlobalPredictorService::getInstance().get_predictor_rhand_lcam_bbox();
+            predictor_rhand_lcam.stop_tracking();
+            auto &predictor_lhand_rcam = GlobalPredictorService::getInstance().get_predictor_lhand_rcam_bbox();
+            predictor_lhand_rcam.stop_tracking();
+            auto &predictor_rhand_rcam = GlobalPredictorService::getInstance().get_predictor_rhand_rcam_bbox();
+            predictor_rhand_rcam.stop_tracking();
+
+#if defined(ENABLE_ALGORITHM_DATA_RECORD) && !defined(ENABLE_SEGMENT_JOINT_INFERENCE_MODE)
             cc->Outputs().Tag("DET_BBOX_OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
             cc->Outputs().Tag("IMAGE_OUTPUT").AddPacket(cc->Inputs().Tag("IMAGE_INPUT").Value());
             cc->Outputs().Tag("HEADPOSE_OUTPUT").AddPacket(cc->Inputs().Tag("HEADPOSE").Value());

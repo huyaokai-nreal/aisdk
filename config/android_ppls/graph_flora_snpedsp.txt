@@ -150,6 +150,7 @@ node {
   name: "HandFilter"
   calculator: "HandFilterCalculator"
   input_stream: "INPUT:kpt3d_world"
+  input_stream: "GR_KPT2D_INPUT:kpt2d"
   output_stream: "OUTPUT:kpt3d_filtered"
   node_options: {
     [type.googleapis.com/aisdk.HandFilterCalculatorOptions] {

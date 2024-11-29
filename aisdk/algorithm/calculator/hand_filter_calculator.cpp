@@ -30,6 +30,7 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
     static absl::Status GetContract(xgraph::CalculatorContract* cc) {
         AISDK_LOG_TRACE("[HandFilterCalculator] GetContract start.");
         cc->Inputs().Tag("INPUT").Set<HandsData>();
+        cc->Inputs().Tag("GR_KPT2D_INPUT").Set<Kpt2dInternal>();
         cc->Outputs().Tag("OUTPUT").Set<HandsData>();
         AISDK_LOG_TRACE("[HandFilterCalculator] GetContract complete.");
         return absl::OkStatus();
@@ -43,10 +44,14 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
         auto& predictor_rhand = GlobalPredictorService::getInstance().get_predictor_rhand();
         predictor_lhand.set_glasses_type(glasses_type_);
         predictor_rhand.set_glasses_type(glasses_type_);
-        auto& predictor_lhand_bbox = GlobalPredictorService::getInstance().get_predictor_lhand_bbox();
-        auto& predictor_rhand_bbox = GlobalPredictorService::getInstance().get_predictor_rhand_bbox();
-        predictor_lhand_bbox.set_glasses_type(glasses_type_);
-        predictor_rhand_bbox.set_glasses_type(glasses_type_);
+        auto& predictor_lhand_lcam_bbox = GlobalPredictorService::getInstance().get_predictor_lhand_lcam_bbox();
+        auto& predictor_rhand_lcam_bbox = GlobalPredictorService::getInstance().get_predictor_rhand_lcam_bbox();
+        auto& predictor_lhand_rcam_bbox = GlobalPredictorService::getInstance().get_predictor_lhand_rcam_bbox();
+        auto& predictor_rhand_rcam_bbox = GlobalPredictorService::getInstance().get_predictor_rhand_rcam_bbox();
+        predictor_lhand_lcam_bbox.set_glasses_type(glasses_type_);
+        predictor_rhand_lcam_bbox.set_glasses_type(glasses_type_);
+        predictor_lhand_rcam_bbox.set_glasses_type(glasses_type_);
+        predictor_rhand_rcam_bbox.set_glasses_type(glasses_type_);
         AISDK_LOG_TRACE("[HandFilterCalculator] Open complete.");
         return absl::OkStatus();
     }
@@ -57,18 +62,23 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
 #endif
         AISDK_LOG_TRACE("[HandFilterCalculator] Process start.");
         const auto& kpt3d_world = cc->Inputs().Tag("INPUT").Get<HandsData>();
+        const auto& kpt2d_data = cc->Inputs().Tag("GR_KPT2D_INPUT").Get<Kpt2dInternal>();
         const auto& timestamp = cc->InputTimestamp().Seconds();
         std::unique_ptr<HandsData> output_buffer_ = absl::make_unique<HandsData>();
         *output_buffer_ = kpt3d_world;
         auto& predictor_lhand = GlobalPredictorService::getInstance().get_predictor_lhand();
         auto& predictor_rhand = GlobalPredictorService::getInstance().get_predictor_rhand();
-        auto& predictor_lhand_bbox = GlobalPredictorService::getInstance().get_predictor_lhand_bbox();
-        auto& predictor_rhand_bbox = GlobalPredictorService::getInstance().get_predictor_rhand_bbox();
+        auto& predictor_lhand_lcam_bbox = GlobalPredictorService::getInstance().get_predictor_lhand_lcam_bbox();
+        auto& predictor_rhand_lcam_bbox = GlobalPredictorService::getInstance().get_predictor_rhand_lcam_bbox();
+        auto& predictor_lhand_rcam_bbox = GlobalPredictorService::getInstance().get_predictor_lhand_rcam_bbox();
+        auto& predictor_rhand_rcam_bbox = GlobalPredictorService::getInstance().get_predictor_rhand_rcam_bbox();
         const auto kpt3d_world_pre = GlobalPredictorService::getInstance().get_last_kpt3d_world();
+        const auto kpt2d_data_pre = GlobalPredictorService::getInstance().get_last_kpt2d_pixel();
+
+        GlobalPredictorService::getInstance().set_last_kpt2d_pixel(kpt2d_data);  // 当前帧使用完kpt2d以后才设置
 
         if (!kpt3d_world.lhand_valid) {
             predictor_lhand.stop_tracking();
-            predictor_lhand_bbox.stop_tracking();
             output_buffer_->lhand_valid = false;
         } else {
             output_buffer_->left_hand.kpt3d = kpt3d_world.left_hand.kpt3d;
@@ -76,8 +86,6 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
             if (!predictor_lhand.get_tracking_status()) {
                 predictor_lhand.start_tracking(timestamp,
                                                {output_buffer_->left_hand.kpt3d[kKeypointRootId], {0., 0., 0.}});
-                predictor_lhand_bbox.start_tracking(timestamp,
-                                                    {output_buffer_->left_hand.kpt3d[kKeypointRootId], {0., 0., 0.}});
             } else {
                 if (kpt3d_world_pre.lhand_valid) {
                     auto measure_v = (output_buffer_->left_hand.kpt3d[kKeypointRootId] -
@@ -86,15 +94,12 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
                     output_buffer_->left_hand.root_v = measure_v;
                     predictor_lhand.track_with_correct(timestamp,
                                                        {output_buffer_->left_hand.kpt3d[kKeypointRootId], measure_v});
-                    predictor_lhand_bbox.track_with_correct(
-                        timestamp, {output_buffer_->left_hand.kpt3d[kKeypointRootId], measure_v});
                 }
             }
         }
 
         if (!kpt3d_world.rhand_valid) {
             predictor_rhand.stop_tracking();
-            predictor_rhand_bbox.stop_tracking();
             output_buffer_->rhand_valid = false;
         } else {
             output_buffer_->right_hand.kpt3d = kpt3d_world.right_hand.kpt3d;
@@ -102,21 +107,85 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
             if (!predictor_rhand.get_tracking_status()) {
                 predictor_rhand.start_tracking(timestamp,
                                                {output_buffer_->right_hand.kpt3d[kKeypointRootId], {0., 0., 0.}});
-                predictor_rhand_bbox.start_tracking(timestamp,
-                                                    {output_buffer_->right_hand.kpt3d[kKeypointRootId], {0., 0., 0.}});
             } else {
                 if (kpt3d_world_pre.rhand_valid) {
                     auto measure_v = (output_buffer_->right_hand.kpt3d[kKeypointRootId] -
                                       kpt3d_world_pre.right_hand.kpt3d[kKeypointRootId]) /
                                      (timestamp - last_timestamp_);
-                    output_buffer_->right_hand.root_v = measure_v;
                     predictor_rhand.track_with_correct(timestamp,
                                                        {output_buffer_->right_hand.kpt3d[kKeypointRootId], measure_v});
-                    predictor_rhand_bbox.track_with_correct(
-                        timestamp, {output_buffer_->right_hand.kpt3d[kKeypointRootId], measure_v});
                 }
             }
         }
+        // lhand_lcam
+        if (!kpt2d_data.lhand_lcam_valid || !kpt3d_world.lhand_valid) {
+            predictor_lhand_lcam_bbox.stop_tracking();
+        } else {
+            if (!predictor_lhand_lcam_bbox.get_tracking_status()) {
+                predictor_lhand_lcam_bbox.start_tracking(timestamp,
+                                                         {kpt2d_data.lhand_lcam_kpt[kKeypoint2dRootId], {0, 0}});
+            } else {
+                if (kpt2d_data_pre.lhand_lcam_valid) {
+                    auto measure_v = (kpt2d_data.lhand_lcam_kpt[kKeypoint2dRootId] -
+                                      kpt2d_data_pre.lhand_lcam_kpt[kKeypoint2dRootId]) /
+                                     (timestamp - last_timestamp_);
+                    predictor_lhand_lcam_bbox.track_with_correct(
+                        timestamp, {kpt2d_data.lhand_lcam_kpt[kKeypoint2dRootId], measure_v});
+                }
+            }
+        }
+        // rhand_lcam
+        if (!kpt2d_data.rhand_lcam_valid || !kpt3d_world.rhand_valid) {
+            predictor_rhand_lcam_bbox.stop_tracking();
+        } else {
+            if (!predictor_rhand_lcam_bbox.get_tracking_status()) {
+                predictor_rhand_lcam_bbox.start_tracking(timestamp,
+                                                         {kpt2d_data.rhand_lcam_kpt[kKeypoint2dRootId], {0, 0}});
+            } else {
+                if (kpt2d_data_pre.rhand_lcam_valid) {
+                    auto measure_v = (kpt2d_data.rhand_lcam_kpt[kKeypoint2dRootId] -
+                                      kpt2d_data_pre.rhand_lcam_kpt[kKeypoint2dRootId]) /
+                                     (timestamp - last_timestamp_);
+                    predictor_rhand_lcam_bbox.track_with_correct(
+                        timestamp, {kpt2d_data.rhand_lcam_kpt[kKeypoint2dRootId], measure_v});
+                }
+            }
+        }
+        // lhand_rcam
+        if (!kpt2d_data.lhand_rcam_valid || !kpt3d_world.lhand_valid) {
+            predictor_lhand_rcam_bbox.stop_tracking();
+        } else {
+            if (!predictor_lhand_rcam_bbox.get_tracking_status()) {
+                predictor_lhand_rcam_bbox.start_tracking(timestamp,
+                                                         {kpt2d_data.lhand_rcam_kpt[kKeypoint2dRootId], {0, 0}});
+            } else {
+                if (kpt2d_data_pre.lhand_rcam_valid) {
+                    auto measure_v = (kpt2d_data.lhand_rcam_kpt[kKeypoint2dRootId] -
+                                      kpt2d_data_pre.lhand_rcam_kpt[kKeypoint2dRootId]) /
+                                     (timestamp - last_timestamp_);
+                    predictor_lhand_rcam_bbox.track_with_correct(
+                        timestamp, {kpt2d_data.lhand_rcam_kpt[kKeypoint2dRootId], measure_v});
+                }
+            }
+        }
+        // rhand_rcam
+        if (!kpt2d_data.rhand_rcam_valid || !kpt3d_world.rhand_valid) {
+            predictor_rhand_rcam_bbox.stop_tracking();
+        } else {
+            if (!predictor_rhand_rcam_bbox.get_tracking_status()) {
+                predictor_rhand_rcam_bbox.start_tracking(timestamp,
+                                                         {kpt2d_data.rhand_rcam_kpt[kKeypoint2dRootId], {0, 0}});
+            } else {
+                if (kpt2d_data_pre.rhand_rcam_valid) {
+                    auto measure_v = (kpt2d_data.rhand_rcam_kpt[kKeypoint2dRootId] -
+                                      kpt2d_data_pre.rhand_rcam_kpt[kKeypoint2dRootId]) /
+                                     (timestamp - last_timestamp_);
+                    predictor_rhand_rcam_bbox.track_with_correct(
+                        timestamp, {kpt2d_data.rhand_rcam_kpt[kKeypoint2dRootId], measure_v});
+                }
+            }
+        }
+
         cc->Outputs().Tag("OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
         last_timestamp_ = timestamp;
         AISDK_LOG_TRACE("[HandFilterCalculator] Process complete.");

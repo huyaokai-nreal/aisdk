@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "aisdk/algorithm/calculator/hand_landmark_calculator.pb.h"
+#include "aisdk/algorithm/common/NR_GlobalPredictorService.h"
 #include "aisdk/algorithm/common/bbox.h"
 #include "aisdk/algorithm/common/nrnet_define.h"
 #include "aisdk/algorithm/func/perspective_crop.h"
