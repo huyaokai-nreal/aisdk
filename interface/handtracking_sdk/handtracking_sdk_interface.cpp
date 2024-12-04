@@ -15,6 +15,7 @@
 #include <jni.h>
 #endif
 #include <json/json.h>
+#include <libyuv/planar_functions.h>
 
 #include <Eigen/Dense>
 #include <opencv2/opencv.hpp>
@@ -726,10 +727,8 @@ NRPluginResult HandTracking::ParseAllCameraData(const NRGrayscaleCameraFrameData
                                 reinterpret_cast<uint8_t*>(img_mem->addr));
         nano_time_[cam_id] = data->cameras[cam_id].exposure_start_time_system;
         const uint8_t* image_buffer = ((uint8_t*)data->data) + data->cameras[cam_id].offset;
-        for (uint32_t row = 0; row < data->cameras[cam_id].height; row++) {
-            memcpy(static_cast<void*>(image.data + data->cameras[cam_id].width * row),
-                   image_buffer + data->cameras[cam_id].stride * row, data->cameras[cam_id].width);
-        }
+        libyuv::CopyPlane(image_buffer, data->cameras[cam_id].stride, image.data, data->cameras[cam_id].width,
+                          data->cameras[cam_id].width, data->cameras[cam_id].height);
         aisdk::algorithm::Image image_data(image, img_mem);
         AISDK_LOG_TRACE("ParseAllCameraData input  {} cam size: h={}, w={}", cam_id, image_data.m_mat.rows,
                         image_data.m_mat.cols);
