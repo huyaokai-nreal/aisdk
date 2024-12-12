@@ -23,6 +23,8 @@ enum class HandGesture { Invalid = 0, Pinch, Click, Grab, ThumbUp, OpenHand, Vic
 const std::vector<std::string> HandGestureNames{"Invalid",  "Pinch", "Click", "Grab", "ThumbUp", "OpenHand", "Victory", "Call", "Home"};
 struct SingleHandData {
     std::vector<Vec3f_t> kpt3d;
+    std::vector<Vec2f_t> kpt2d_lcam;
+    std::vector<Vec2f_t> kpt2d_rcam;
     std::vector<Eigen::Matrix3f> rotation;
     Vec3f_t root_v{0, 0, 0};
     float score = 0;
