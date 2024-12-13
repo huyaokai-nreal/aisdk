@@ -154,11 +154,11 @@ class Plugin {
     ~Plugin();
     static Plugin* m_ins;
 
-    bool m_is_init = false;
+    std::atomic_bool m_is_init = false;
     std::unique_ptr<task::Pipeline> m_pipeline;
     NRPluginHandle m_handle;
 
-    bool m_is_start = false;
+    std::atomic_bool m_is_start = false;
     NRDeviceType m_act_device_type;
 
    public:

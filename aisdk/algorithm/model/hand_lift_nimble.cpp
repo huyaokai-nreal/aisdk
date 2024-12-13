@@ -138,6 +138,7 @@ void GMLPLiftNimble::PreProcess(const LiftNetInputs &inputs) {
             mem_hand[i] = 0;
         }
     }
+    AISDK_LOG_TRACE("[GMLPLiftNimble] PreProcess success, mem_size: {}", mem_size);
 }
 
 void GMLPLiftNimble::PostProcess(const LiftNetInputs &inputs, LiftNetOutputs &outputs) {
@@ -194,18 +195,26 @@ void GMLPLiftNimble::PostProcess(const LiftNetInputs &inputs, LiftNetOutputs &ou
     int mem_size = mem_height * mem_width * mem_channels;
     float *mem_hand = (float *)otensor.m_tensors[index_mem].m_viraddr;
 
-    if (inputs.is_left != 0.) {
-        for (int i = 0; i < mem_size; i++) {
-            mem_left_hand[i] = mem_hand[i];
+    if (mem_size > 0 && mem_size <= mem_right_hand.size()) {
+        if (inputs.is_left != 0.) {
+            for (int i = 0; i < mem_size; i++) {
+                // AISDK_LOG_INFO("mem_left_hand[{}]: {}, mem_size: {}, mem_hand: {}", i, mem_hand[i], mem_size,
+                //               fmt::ptr(mem_hand));
+                mem_left_hand[i] = mem_hand[i];
+            }
+            last_left_time = inputs.timestamp;
+        } else {
+            for (int i = 0; i < mem_size; i++) {
+                // AISDK_LOG_INFO("mem_right_hand[{}]: {}, mem_size: {}, mem_hand: {}", i, mem_hand[i], mem_size,
+                //                fmt::ptr(mem_hand));
+                mem_right_hand[i] = mem_hand[i];
+            }
+            last_right_time = inputs.timestamp;
         }
-        last_left_time = inputs.timestamp;
     } else {
-        for (int i = 0; i < mem_size; i++) {
-            mem_right_hand[i] = mem_hand[i];
-        }
-        last_right_time = inputs.timestamp;
+        AISDK_LOG_WARN("[GMLPLiftNimble] PostProcess mem_size error, mem_size: {}", mem_size);
     }
-    AISDK_LOG_TRACE("[GMLPLiftNimble] run GMLPLiftNimble infer mem success");
+    AISDK_LOG_TRACE("[GMLPLiftNimble] run GMLPLiftNimble infer mem success, mem_size: {}", mem_size);
 }
 
 absl::StatusOr<LiftNetOutputs> GMLPLiftNimble::Inference(const LiftNetInputs &inputs) {

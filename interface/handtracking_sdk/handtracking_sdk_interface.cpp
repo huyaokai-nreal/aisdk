@@ -784,6 +784,8 @@ void HandTracking::NotifyData(NRPluginHandle handle, NRChannelDataType channel_d
             }
             if (Plugin::GetInstance()->isStart()) {
                 ParseAllCameraData((const NRGrayscaleCameraFrameData*)data);
+            } else {
+                AISDK_LOG_WARN("NotifyData Failed: Plugin is not start!");
             }
             break;
         default:
