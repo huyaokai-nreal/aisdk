@@ -974,7 +974,7 @@ NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
         AISDK_LOG_ERROR("HandTracking::Initialize failed: get wrong handle!");
         return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
     }
-    AISDK_LOG_INFO("HandTracking::Initialize");
+    AISDK_LOG_WARN("HandTracking: Initializing");
     // bool ret = false;
     auto ins = Plugin::GetInstance();
 
