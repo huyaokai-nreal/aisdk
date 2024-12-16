@@ -118,13 +118,10 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
         Vec4f_t rect = GetCropBboxShape(bbox, bbox_scale);
         auto K = origin_camera->get_camera_intrinsics();
         auto kc = origin_camera->get_distortion_params();
-        AISDK_LOG_TRACE("camera fx {} fy {} cx {} cy {}, k1 {} k2 {}, p1 {} p2 {} k3 {}", K.fx_, K.fy_, K.cx_, K.cy_,
-                        kc[0], kc[1], kc[2], kc[3], kc[4]);
         virutal_camera = GetVirtualCameraFromBox(origin_camera, rect, {input_width_, input_height_});
 #if ((defined(ANDROID) || defined(__ANDROID__)) && defined(__aarch64__))
         crop_image = xengine::perspective_crop_image_raw(lcam_model_.get(), virutal_camera.get(), input_width_,
                                                          input_height_, image_data.m_mat);
-        cv::imwrite("/sdcard/Android/data/com.DefaultCompany.HandTracking/files/hand_crop.jpg", crop_image);
 #endif
         if (left_hand) {
             cv::flip(crop_image, crop_image, 1);

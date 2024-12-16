@@ -216,12 +216,6 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
                 if (check_if_rect_valid(result.lhand_lcam_rect, video_width_, video_height_, valid_bbox_in_image_ratio_,
                                         min_bbox_area_th_)) {
                     result.lhand_lcam_valid = true;
-                    cv::Mat image;
-                    cv::cvtColor(image_data[0].m_mat, image, cv::COLOR_GRAY2BGR);
-                    cv::rectangle(image, result.lhand_lcam_rect.to_cv_rect(), {0, 255, 0});
-                    cv::imwrite(fmt::format("/sdcard/Android/data/com.DefaultCompany.HandTracking/files/{}.jpg",
-                                            int(timestamp * 1e9)),
-                                image);
                 }
             }
             if (!is_mono_ && result.images_lhand_rects[1].size() > 0) {
