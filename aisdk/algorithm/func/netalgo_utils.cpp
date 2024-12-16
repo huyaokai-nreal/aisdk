@@ -107,13 +107,13 @@ std::tuple<Eigen::Matrix3d, Eigen::Matrix3d, float> get_rotations_for_standard_s
 }
 
 std::vector<Vec3f_t> convert_to_23points(const std::vector<Vec3f_t>& input) {
-    std::vector<Vec3f_t> result(23);
+    std::vector<Vec3f_t> result(26);
     // input size should be 21
     for (int i = 0; i < input.size(); i++) {
         result[i] = input[i];
     }
     result[21] = 0.5 * (input[0] + input[9]);
-    result[22] = 0.5 * (0.5 * (input[0] - input[9]) + 0.5 * (input[0] - input[17])) + input[17];
+    // result[22] = 0.5 * (0.5 * (input[0] - input[9]) + 0.5 * (input[0] - input[17])) + input[17];
     return result;
 }
 
@@ -151,9 +151,11 @@ std::vector<Vec3f_t> convert_to_26points(const std::vector<Vec3f_t>& input) {
         result[i] = input[i];
     }
     result[21] = 0.5 * (input[0] + input[9]);
-    result[22] = 0.5 * (0.5 * (input[0] - input[9]) + 0.5 * (input[0] - input[17])) + input[17];
 
-    get_metacarpal_xr_joints_v1(result);
+    auto root_joint = result[0];
+    auto middle_vec = (root_joint - result[9]).normalized();
+    root_joint = result[9] + 1.2 * (result[0] - result[9]).norm() * middle_vec;
+    result[0] = root_joint;
     return result;
 }
 
