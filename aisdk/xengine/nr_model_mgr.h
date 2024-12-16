@@ -49,7 +49,7 @@ using LogicAlgoNodeTupleConfig = std::tuple<aisdk::xengine::LogicAlgoConfig>;
 
 struct PipelineRelatedFeature {
     std::string bind_mono_bino;           // "mono" / "bino" / "mono_bino"
-    std::string bind_glass;               // "ella / flora"
+    std::string bind_glass;               // ella / flora / gina
     std::string bind_sensor_orientation;  // "horizontal / vertical"
     std::string bind_runtime;             // "snpe_dsp / cpu"
 };

@@ -6,6 +6,7 @@ class Distortion {
    public:
     virtual std::vector<Eigen::Vector2f> distort(const std::vector<Eigen::Vector2f>& point_2d) = 0;
     virtual std::vector<Eigen::Vector2f> undistort(const std::vector<Eigen::Vector2f>& point_2d) = 0;
+    virtual std::vector<float> getDistortionParams() const { return {}; }
     virtual ~Distortion() = default;
 };
 
@@ -23,7 +24,7 @@ class OpenCVPinholeCameraDistortion : public Distortion {
     OpenCVPinholeCameraDistortion() = delete;
     std::vector<Eigen::Vector2f> distort(const std::vector<Eigen::Vector2f>& point_2d) override;
     std::vector<Eigen::Vector2f> undistort(const std::vector<Eigen::Vector2f>& point_2d) override;
-    std::vector<float> getDistortionParams() const { return {k1_, k2_, p1_, p2_, k3_}; }
+    std::vector<float> getDistortionParams() const override { return {k1_, k2_, p1_, p2_, k3_}; }
 
    private:
     float k1_;
@@ -40,7 +41,7 @@ class OpenCVFisheyeCameraDistortion : public Distortion{
     std::vector<Eigen::Vector2f> distort(const std::vector<Eigen::Vector2f>& point_2d) override;
     std::vector<Eigen::Vector2f> undistort(const std::vector<Eigen::Vector2f>& point_2d) override;
 
-    std::vector<float> getDistortionParams() const { return {k1_, k2_, k3_, k4_}; }
+    std::vector<float> getDistortionParams() const override { return {k1_, k2_, k3_, k4_}; }
 
    private:
     float k1_;
@@ -57,7 +58,7 @@ class Fisheye624CameraDistortion: public Distortion {
     Fisheye624CameraDistortion() = delete;
     std::vector<Eigen::Vector2f> distort(const std::vector<Eigen::Vector2f>& point_2d) override;
     std::vector<Eigen::Vector2f> undistort(const std::vector<Eigen::Vector2f>& point_2d) override;
-    std::vector<float> getDistortionParams() { return {k1_, k2_, k3_, k4_, k5_, k6_, p1_, p2_, s1_, s2_, s3_, s4_}; }
+    std::vector<float> getDistortionParams() const override { return {k1_, k2_, k3_, k4_, k5_, k6_, p1_, p2_, s1_, s2_, s3_, s4_}; }
 
    private:
     float k1_;

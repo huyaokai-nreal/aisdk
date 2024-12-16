@@ -18,10 +18,13 @@ const std::set<int> kPalmKeypointIndexSet {0,1,5,9,13,17,22,23,24,25};
 #else
 const std::set<int> kPalmKeypointIndexSet {0, 1, 5, 9, 13, 17, 22};
 #endif
+const std::set<int> kIndexFingerIndexSet {6,7,8};
 enum class HandGesture { Invalid = 0, Pinch, Click, Grab, ThumbUp, OpenHand, Victory, Call, Home, MaxNum };
 const std::vector<std::string> HandGestureNames{"Invalid",  "Pinch", "Click", "Grab", "ThumbUp", "OpenHand", "Victory", "Call", "Home"};
 struct SingleHandData {
     std::vector<Vec3f_t> kpt3d;
+    std::vector<Vec2f_t> kpt2d_lcam;
+    std::vector<Vec2f_t> kpt2d_rcam;
     std::vector<Eigen::Matrix3f> rotation;
     Vec3f_t root_v{0, 0, 0};
     float score = 0;

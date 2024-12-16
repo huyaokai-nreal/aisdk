@@ -22,6 +22,7 @@ enum class CamType {
 
 struct CameraParams {
     std::map<std::string, std::vector<float>> m_params;
+    int m_nr_cameras = 1;
 };
 
 }  // namespace aisdk::algorithm

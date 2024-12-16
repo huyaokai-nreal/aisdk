@@ -66,12 +66,6 @@ class DetectBoxSmoothingCalculator : public xgraph::CalculatorBase {
             m_seq_lcam_rhand->reset();
             m_seq_rcam_rhand->reset();
         }
-        if (kpt3d_world_pre.lhand_valid && kpt3d_world_pre.left_hand.source == CamType::MONO) {
-            m_seq_rcam_lhand.reset();
-        }
-        if (kpt3d_world_pre.rhand_valid && kpt3d_world_pre.right_hand.source == CamType::MONO) {
-            m_seq_lcam_rhand.reset();
-        }
         if (input_data.lhand_lcam_valid) {
             AISDK_LOG_TRACE("[DetectBoxSmoothingCalculator] Do smoothing on lhand lcam bboxes");
             float p_score = 1.0f;

@@ -597,8 +597,11 @@ void HandDetectNetv2::PostProcess(DetOutputInternal &result) {
                     cls_idx_left = 2 * cls_h * cls_w + idx_i * cls_w + idx_j;
                     cls_idx_right = 3 * cls_h * cls_w + idx_i * cls_w + idx_j;
                 }
-                float score = cls_data[cls_idx_score];
-                bool is_left = cls_data[cls_idx_left] * score > cls_data[cls_idx_right] * score;
+                float obj_score = cls_data[cls_idx_score];
+                float left_score = cls_data[cls_idx_left] * obj_score;
+                float right_score = cls_data[cls_idx_right] * obj_score;
+                bool is_left = left_score > right_score;
+                float score = is_left ? left_score : right_score;
                 if (score > score_threshold) {
                     float _coord[box_c];
                     if (otensor_format == aisdk::xengine::TensorFormat::HWC) {
