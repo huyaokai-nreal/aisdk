@@ -15,6 +15,12 @@ struct HandsData {
 struct LiftNetInputs {
     std::vector<Vec2f_t> input_kpt_lcam;  // 单手 左目
     std::vector<Vec2f_t> input_kpt_rcam;  // 单手 右目
+    std::vector<float> m_leftcam_x;  // 单手 左目 x
+    std::vector<float> m_leftcam_y;  // 单手 左目 y
+    std::vector<float> m_leftcam_z;  // 单手 左目 z
+    std::vector<float> m_rightcam_x;  // 单手 右目 x
+    std::vector<float> m_rightcam_y;  // 单手 右目 y
+    std::vector<float> m_rightcam_z;  // 单手 右目 z
     double timestamp;
     float is_left;
 };

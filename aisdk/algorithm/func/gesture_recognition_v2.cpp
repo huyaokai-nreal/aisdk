@@ -25,6 +25,25 @@ float vector3d_angle(const Eigen::Vector3f &x, const Eigen::Vector3f &y) {
     return angle_value;
 }
 
+float vector3d_angle_thumb(const Eigen::Vector3f &x, const Eigen::Vector3f &y, const Eigen::Vector3f &x_,
+                           const Eigen::Vector3f &y_) {
+    float module_x = x.norm();
+    float module_y = y.norm();
+    float dot_value = x.dot(y);
+    float cos_theta = dot_value / (module_x * module_y);
+    float angle_radian = std::acos(cos_theta);
+    float angle_value = angle_radian * 180.0F / M_PI;  // M_PI is defined in <cmath>
+
+    Eigen::Vector3f cross_product = x.cross(y);
+    Eigen::Vector3f cross_product_ = x_.cross(y_);
+    float dot_ref = cross_product.dot(cross_product_);
+    if (dot_ref < 0) {
+        angle_value = -angle_value;
+    }
+
+    return angle_value;
+}
+
 std::vector<Eigen::Vector3f> calculate_fingure_angles(const std::vector<std::vector<Eigen::Vector3f>> &points) {
     assert(points.size() == 5 && "There should be 5 fingers");
     for (const auto &finger : points) {
@@ -36,7 +55,13 @@ std::vector<Eigen::Vector3f> calculate_fingure_angles(const std::vector<std::vec
     for (size_t i = 0; i < 5; ++i) {
         angles[i][0] = vector3d_angle(points[i][1] - points[i][0], points[i][2] - points[i][1]);
         angles[i][1] = vector3d_angle(points[i][2] - points[i][1], points[i][3] - points[i][2]);
-        angles[i][2] = vector3d_angle(points[i][3] - points[i][2], points[i][4] - points[i][3]);
+        if (i == 0) {
+            //考虑拇指指尖外翻情况
+            angles[i][2] = vector3d_angle_thumb(points[i][3] - points[i][2], points[i][4] - points[i][3],
+                                                points[i][1] - points[i][0], points[2][1] - points[2][0]);
+        } else {
+            angles[i][2] = vector3d_angle(points[i][3] - points[i][2], points[i][4] - points[i][3]);
+        }
     }
 
     return angles;

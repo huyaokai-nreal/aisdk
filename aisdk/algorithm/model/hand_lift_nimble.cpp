@@ -28,8 +28,10 @@ absl::Status GMLPLiftNimble::Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xe
     otensor_format = checkshapeformat(model.vendor_type, otensor.m_tensors[0].m_rank);
     m_leftcam_x.resize(kAlgoKeypointNum);
     m_leftcam_y.resize(kAlgoKeypointNum);
+    m_leftcam_z.resize(kAlgoKeypointNum);
     m_rightcam_x.resize(kAlgoKeypointNum);
     m_rightcam_y.resize(kAlgoKeypointNum);
+    m_rightcam_z.resize(kAlgoKeypointNum);
     mem_left_hand.resize(105);
     mem_right_hand.resize(105);
     return ret;
@@ -42,13 +44,19 @@ void GMLPLiftNimble::transfer_to_standard_stereo_input() {
     for (size_t i = 0; i < kAlgoKeypointNum; i++) {
         left_kpt_homo(i, 0) = m_leftcam_x[i];
         left_kpt_homo(i, 1) = m_leftcam_y[i];
+        left_kpt_homo(i, 2) = m_leftcam_z[i];
         right_kpt_homo(i, 0) = m_rightcam_x[i];
         right_kpt_homo(i, 1) = m_rightcam_y[i];
+        right_kpt_homo(i, 2) = m_rightcam_z[i];
     }
-    left_kpt_homo.noalias() = (rot_left_ * left_kpt_homo.transpose()).transpose();
-    right_kpt_homo.noalias() = (rot_right_ * right_kpt_homo.transpose()).transpose();
-    left_kpt_homo = left_kpt_homo.array().colwise() / left_kpt_homo.array().col(2);
-    right_kpt_homo = right_kpt_homo.array().colwise() / right_kpt_homo.array().col(2);
+    if (!left_kpt_homo.isZero()) {
+        left_kpt_homo.noalias() = (rot_left_ * left_kpt_homo.transpose()).transpose();
+        left_kpt_homo = left_kpt_homo.array().colwise() / left_kpt_homo.array().col(2);
+    }
+    if (!right_kpt_homo.isZero()) {
+        right_kpt_homo.noalias() = (rot_right_ * right_kpt_homo.transpose()).transpose();
+        right_kpt_homo = right_kpt_homo.array().colwise() / right_kpt_homo.array().col(2);
+    }
     for (size_t i = 0; i < kAlgoKeypointNum; i++) {
         m_leftcam_x[i] = left_kpt_homo(i, 0);
         m_leftcam_y[i] = left_kpt_homo(i, 1);
@@ -83,14 +91,12 @@ void GMLPLiftNimble::PreProcess(const LiftNetInputs &inputs) {
 
     float *temp = (float *)mem;
 
-    auto l_K = left_camera_->get_camera_intrinsics();
-    auto r_K = right_camera_->get_camera_intrinsics();
-    for (int idx = 0; idx < kAlgoKeypointNum; idx++) {
-        m_leftcam_x[idx] = (inputs.input_kpt_lcam[idx][0] - l_K.cx_) / l_K.fx_;
-        m_leftcam_y[idx] = (inputs.input_kpt_lcam[idx][1] - l_K.cy_) / l_K.fy_;
-        m_rightcam_x[idx] = (inputs.input_kpt_rcam[idx][0] - r_K.cx_) / r_K.fx_;
-        m_rightcam_y[idx] = (inputs.input_kpt_rcam[idx][1] - r_K.cy_) / r_K.fy_;
-    }
+    m_leftcam_x = inputs.m_leftcam_x;
+    m_leftcam_y = inputs.m_leftcam_y;
+    m_leftcam_z = inputs.m_leftcam_z;
+    m_rightcam_x = inputs.m_rightcam_x;
+    m_rightcam_y = inputs.m_rightcam_y;
+    m_rightcam_z = inputs.m_rightcam_z;
 
     transfer_to_standard_stereo_input();
 

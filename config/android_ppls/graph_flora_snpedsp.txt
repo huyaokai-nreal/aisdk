@@ -58,7 +58,7 @@ node {
   node_options: {
     [type.googleapis.com/aisdk.MonoBinoSwitchCalculatorOptions] {
  #BINO, MONO, SWITCH
-      mode: "SWITCH" 
+      mode: "BINO" 
     }
   }
 }
@@ -81,6 +81,7 @@ node {
       input_width: 128
       bbox_expand_ratio: 1.5
       model_name: "2d_rtmtinyb2"
+      pcl_able: true
     }
   }
 }

@@ -1,6 +1,7 @@
 #include <absl/status/status.h>
 #include <opencv2/core/hal/interface.h>
 
+#include <Eigen/Dense>
 #include <algorithm>
 #include <cstdint>
 #include <memory>
@@ -47,6 +48,7 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
     int32_t input_width_;
     int32_t input_height_;
     std::string model_name_;
+    bool pcl_able_;
     float bbox_expand_ratio_ = 1.3;
     std::shared_ptr<base::BaseCameraModel> lcam_model_ = nullptr;
     std::shared_ptr<base::BaseCameraModel> rcam_model_ = nullptr;
@@ -71,6 +73,7 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
         input_height_ = options.input_height();
         input_width_ = options.input_width();
         model_name_ = options.model_name();
+        pcl_able_ = options.pcl_able();
         if (options.bbox_expand_ratio() > 0) {
             bbox_expand_ratio_ = options.bbox_expand_ratio();
         }
@@ -104,7 +107,7 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
         auto max_shape = std::max(bbox_cs[2], bbox_cs[3]);
         bbox_cs[2] = max_shape;
         bbox_cs[3] = max_shape;
-        return bbox_cs;
+        return bbox_cs;  // center.x center.y + 扩为方形框的边长
     }
     absl::Status ProcessSingleHand(const Image& image_data, const DetectRect& bbox, bool left_hand,
                                    base::BaseCameraModel* origin_camera, std::vector<Vec2f_t>& kpt,
@@ -115,13 +118,10 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
         Vec4f_t rect = GetCropBboxShape(bbox, bbox_scale);
         auto K = origin_camera->get_camera_intrinsics();
         auto kc = origin_camera->get_distortion_params();
-        AISDK_LOG_TRACE("camera fx {} fy {} cx {} cy {}, k1 {} k2 {}, p1 {} p2 {} k3 {}", K.fx_, K.fy_, K.cx_, K.cy_,
-                        kc[0], kc[1], kc[2], kc[3], kc[4]);
         virutal_camera = GetVirtualCameraFromBox(origin_camera, rect, {input_width_, input_height_});
 #if ((defined(ANDROID) || defined(__ANDROID__)) && defined(__aarch64__))
         crop_image = xengine::perspective_crop_image_raw(lcam_model_.get(), virutal_camera.get(), input_width_,
                                                          input_height_, image_data.m_mat);
-        cv::imwrite("/sdcard/Android/data/com.DefaultCompany.HandTracking/files/hand_crop.jpg", crop_image);
 #endif
         if (left_hand) {
             cv::flip(crop_image, crop_image, 1);
@@ -131,9 +131,8 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
             return rsn_result.status();
         }
         if (left_hand) {
-            std::transform(rsn_result->kpts[0].begin(), rsn_result->kpts[0].end(), kpt.begin(), [&](const auto& kpt) {
-                return Vec2f_t{input_width_ - 1 - kpt[0], kpt[1]};
-            });
+            std::transform(rsn_result->kpts[0].begin(), rsn_result->kpts[0].end(), kpt.begin(),
+                           [&](const auto& kpt) { return Vec2f_t{input_width_ - 1 - kpt[0], kpt[1]}; });
         } else {
             kpt = rsn_result->kpts[0];
         }
@@ -144,48 +143,85 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
         return absl::OkStatus();
     }
     absl::Status ProcessBatchHand(const std::vector<Image>& image_data, const std::vector<DetectRect>& bboxes,
-                                  bool left_hand, std::vector<Vec2f_t>& kpt_lcam, std::vector<Vec2f_t>& kpt_rcam,
-                                  std::vector<float>& rdepth_lcam, std::vector<float>& rdepth_rcam) {
+                                  bool left_hand, CropMethod crop_method, base::BaseCameraModel* lcam_model,
+                                  base::BaseCameraModel* rcam_model, std::vector<Vec2f_t>& kpt_lcam,
+                                  std::vector<Vec2f_t>& kpt_rcam, std::vector<float>& rdepth_lcam,
+                                  std::vector<float>& rdepth_rcam,
+                                  std::shared_ptr<base::PerspectiveCameraModel>& lvirutal_camera,
+                                  std::shared_ptr<base::PerspectiveCameraModel>& rvirutal_camera) {
         float bbox_scale = bbox_expand_ratio_;
         std::vector<Image> crop_images(2);
         std::vector<Vec4f_t> rects(2);
         for (int i = 0; i < 2; i++) {
             const auto& bbox = bboxes[i];
             rects[i] = GetCropBboxShape(bbox, bbox_scale);
-            cv::Mat crop_image = generate_roi_image(image_data[i].m_mat, rects[i], input_width_, input_height_);
+            cv::Mat crop_image;
+            if (crop_method == CropMethod::WarpAffine) {
+                crop_image = generate_roi_image(image_data[i].m_mat, rects[i], input_width_, input_height_);
+            } else {
+                if (i == 0) {
+                    lvirutal_camera = GetVirtualCameraFromBox(lcam_model, rects[0], {input_width_, input_height_});
+#if ((defined(ANDROID) || defined(__ANDROID__)) && defined(__aarch64__))
+                    crop_image = xengine::perspective_crop_image(lcam_model_.get(), lvirutal_camera.get(), input_width_,
+                                                                 input_height_, image_data[0].m_mat);
+#endif
+                } else {
+                    rvirutal_camera = GetVirtualCameraFromBox(rcam_model, rects[1], {input_width_, input_height_});
+#if ((defined(ANDROID) || defined(__ANDROID__)) && defined(__aarch64__))
+                    crop_image = xengine::perspective_crop_image(rcam_model_.get(), rvirutal_camera.get(), input_width_,
+                                                                 input_height_, image_data[1].m_mat);
+#endif
+                }
+            }
             if (left_hand) {
                 cv::flip(crop_image, crop_image, 1);
             }
             crop_images[i] = crop_image;
         }
         auto rsn_result = netalgo->Inference(crop_images);
+        AISDK_LOG_TRACE("[LiftCalculator] kpt2d output : {} {} {} {}", rsn_result->kpts[0][0][0],
+                        rsn_result->kpts[0][0][1], rsn_result->kpts[1][0][0], rsn_result->kpts[1][0][1])
         if (!rsn_result.ok()) {
             return rsn_result.status();
         }
         if (left_hand) {
-            std::transform(
-                rsn_result->kpts[0].begin(), rsn_result->kpts[0].end(), kpt_lcam.begin(), [&](const auto& kpt) {
-                    return Vec2f_t{
-                        (input_width_ - 1 - kpt[0]) * rects[0][2] / input_width_ + rects[0][0] - rects[0][2] * 0.5,
-                        (kpt[1]) * rects[0][3] / input_height_ + rects[0][1] - rects[0][3] * 0.5};
-                });
-            std::transform(
-                rsn_result->kpts[1].begin(), rsn_result->kpts[1].end(), kpt_rcam.begin(), [&](const auto& kpt) {
-                    return Vec2f_t{
-                        (input_width_ - 1 - kpt[0]) * rects[1][2] / input_width_ + rects[1][0] - rects[1][2] * 0.5,
-                        (kpt[1]) * rects[1][3] / input_height_ + rects[1][1] - rects[1][3] * 0.5};
-                });
+            if (crop_method == CropMethod::WarpAffine) {
+                std::transform(
+                    rsn_result->kpts[0].begin(), rsn_result->kpts[0].end(), kpt_lcam.begin(), [&](const auto& kpt) {
+                        return Vec2f_t{
+                            (input_width_ - 1 - kpt[0]) * rects[0][2] / input_width_ + rects[0][0] - rects[0][2] * 0.5,
+                            (kpt[1]) * rects[0][3] / input_height_ + rects[0][1] - rects[0][3] * 0.5};
+                    });
+                std::transform(
+                    rsn_result->kpts[1].begin(), rsn_result->kpts[1].end(), kpt_rcam.begin(), [&](const auto& kpt) {
+                        return Vec2f_t{
+                            (input_width_ - 1 - kpt[0]) * rects[1][2] / input_width_ + rects[1][0] - rects[1][2] * 0.5,
+                            (kpt[1]) * rects[1][3] / input_height_ + rects[1][1] - rects[1][3] * 0.5};
+                    });
+            } else {
+                std::transform(rsn_result->kpts[0].begin(), rsn_result->kpts[0].end(), kpt_lcam.begin(),
+                               [&](const auto& kpt) { return Vec2f_t{input_width_ - 1 - kpt[0], kpt[1]}; });
+                std::transform(rsn_result->kpts[1].begin(), rsn_result->kpts[1].end(), kpt_rcam.begin(),
+                               [&](const auto& kpt) { return Vec2f_t{input_width_ - 1 - kpt[0], kpt[1]}; });
+            }
         } else {
-            std::transform(rsn_result->kpts[0].begin(), rsn_result->kpts[0].end(), kpt_lcam.begin(),
-                           [&](const auto& kpt) {
-                               return Vec2f_t{kpt[0] * rects[0][2] / input_width_ + rects[0][0] - rects[0][2] * 0.5,
-                                              (kpt[1]) * rects[0][3] / input_height_ + rects[0][1] - rects[0][3] * 0.5};
-                           });
-            std::transform(rsn_result->kpts[1].begin(), rsn_result->kpts[1].end(), kpt_rcam.begin(),
-                           [&](const auto& kpt) {
-                               return Vec2f_t{kpt[0] * rects[1][2] / input_width_ + rects[1][0] - rects[1][2] * 0.5,
-                                              (kpt[1]) * rects[1][3] / input_height_ + rects[1][1] - rects[1][3] * 0.5};
-                           });
+            if (crop_method == CropMethod::WarpAffine) {
+                std::transform(
+                    rsn_result->kpts[0].begin(), rsn_result->kpts[0].end(), kpt_lcam.begin(), [&](const auto& kpt) {
+                        return Vec2f_t{kpt[0] * rects[0][2] / input_width_ + rects[0][0] - rects[0][2] * 0.5,
+                                       (kpt[1]) * rects[0][3] / input_height_ + rects[0][1] - rects[0][3] * 0.5};
+                    });
+                std::transform(
+                    rsn_result->kpts[1].begin(), rsn_result->kpts[1].end(), kpt_rcam.begin(), [&](const auto& kpt) {
+                        return Vec2f_t{kpt[0] * rects[1][2] / input_width_ + rects[1][0] - rects[1][2] * 0.5,
+                                       (kpt[1]) * rects[1][3] / input_height_ + rects[1][1] - rects[1][3] * 0.5};
+                    });
+            } else {
+                std::transform(rsn_result->kpts[0].begin(), rsn_result->kpts[0].end(), kpt_lcam.begin(),
+                               [&](const auto& kpt) { return Vec2f_t{kpt[0], kpt[1]}; });
+                std::transform(rsn_result->kpts[1].begin(), rsn_result->kpts[1].end(), kpt_rcam.begin(),
+                               [&](const auto& kpt) { return Vec2f_t{kpt[0], kpt[1]}; });
+            }
         }
         if (!rsn_result->rdepths.empty()) {
             std::copy(rsn_result->rdepths[0].begin(), rsn_result->rdepths[0].end(), rdepth_lcam.begin());
@@ -207,20 +243,28 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
         const auto& image_data = cc->Inputs().Tag("IMAGE_INPUT").Get<std::vector<Image>>();
         const auto& bbox_data = cc->Inputs().Tag("BBOX_SMOOTHED_OUTPUT").Get<DetOutputInternal>();
         std::unique_ptr<Kpt2dInternal> output_buffer_ = absl::make_unique<Kpt2dInternal>();
+        CropMethod crop_method = CropMethod::WarpAffine;
+        if (pcl_able_) {
+            crop_method = CropMethod::PCL;
+        }
         //  left hand
         if (bbox_data.lhand_lcam_valid && bbox_data.lhand_rcam_valid) {
-            auto result = ProcessBatchHand(image_data, {bbox_data.lhand_lcam_rect, bbox_data.lhand_rcam_rect}, true,
-                                           output_buffer_->lhand_lcam_kpt, output_buffer_->lhand_rcam_kpt,
-                                           output_buffer_->lhand_lcam_rdepth, output_buffer_->lhand_rcam_rdepth);
+            auto result = ProcessBatchHand(
+                image_data, {bbox_data.lhand_lcam_rect, bbox_data.lhand_rcam_rect}, true, crop_method,
+                lcam_model_.get(), rcam_model_.get(), output_buffer_->lhand_lcam_kpt, output_buffer_->lhand_rcam_kpt,
+                output_buffer_->lhand_lcam_rdepth, output_buffer_->lhand_rcam_rdepth,
+                output_buffer_->lhand_lcam_virtual_camera, output_buffer_->lhand_rcam_virtual_camera);
             if (result.ok()) {
                 output_buffer_->lhand_lcam_valid = true;
                 output_buffer_->lhand_rcam_valid = true;
             }
         }
         if (bbox_data.rhand_lcam_valid && bbox_data.rhand_rcam_valid) {
-            auto result = ProcessBatchHand(image_data, {bbox_data.rhand_lcam_rect, bbox_data.rhand_rcam_rect}, false,
-                                           output_buffer_->rhand_lcam_kpt, output_buffer_->rhand_rcam_kpt,
-                                           output_buffer_->rhand_lcam_rdepth, output_buffer_->rhand_rcam_rdepth);
+            auto result = ProcessBatchHand(
+                image_data, {bbox_data.rhand_lcam_rect, bbox_data.rhand_rcam_rect}, false, crop_method,
+                lcam_model_.get(), rcam_model_.get(), output_buffer_->rhand_lcam_kpt, output_buffer_->rhand_rcam_kpt,
+                output_buffer_->rhand_lcam_rdepth, output_buffer_->rhand_rcam_rdepth,
+                output_buffer_->rhand_lcam_virtual_camera, output_buffer_->rhand_rcam_virtual_camera);
             if (result.ok()) {
                 output_buffer_->rhand_lcam_valid = true;
                 output_buffer_->rhand_rcam_valid = true;
