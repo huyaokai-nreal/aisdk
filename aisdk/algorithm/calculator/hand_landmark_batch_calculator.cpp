@@ -162,12 +162,16 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
             } else {
                 if (i == 0) {
                     lvirutal_camera = GetVirtualCameraFromBox(lcam_model, rects[0], {input_width_, input_height_});
+#if ((defined(ANDROID) || defined(__ANDROID__)) && defined(__aarch64__))
                     crop_image = xengine::perspective_crop_image(lcam_model_.get(), lvirutal_camera.get(), input_width_,
                                                                  input_height_, image_data[0].m_mat);
+#endif
                 } else {
                     rvirutal_camera = GetVirtualCameraFromBox(rcam_model, rects[1], {input_width_, input_height_});
+#if ((defined(ANDROID) || defined(__ANDROID__)) && defined(__aarch64__))
                     crop_image = xengine::perspective_crop_image(rcam_model_.get(), rvirutal_camera.get(), input_width_,
                                                                  input_height_, image_data[1].m_mat);
+#endif
                 }
             }
             if (left_hand) {
