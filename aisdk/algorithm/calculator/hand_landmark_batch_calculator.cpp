@@ -131,8 +131,9 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
             return rsn_result.status();
         }
         if (left_hand) {
-            std::transform(rsn_result->kpts[0].begin(), rsn_result->kpts[0].end(), kpt.begin(),
-                           [&](const auto& kpt) { return Vec2f_t{input_width_ - 1 - kpt[0], kpt[1]}; });
+            std::transform(rsn_result->kpts[0].begin(), rsn_result->kpts[0].end(), kpt.begin(), [&](const auto& kpt) {
+                return Vec2f_t{input_width_ - 1 - kpt[0], kpt[1]};
+            });
         } else {
             kpt = rsn_result->kpts[0];
         }
@@ -200,9 +201,13 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
                     });
             } else {
                 std::transform(rsn_result->kpts[0].begin(), rsn_result->kpts[0].end(), kpt_lcam.begin(),
-                               [&](const auto& kpt) { return Vec2f_t{input_width_ - 1 - kpt[0], kpt[1]}; });
+                               [&](const auto& kpt) {
+                                   return Vec2f_t{input_width_ - 1 - kpt[0], kpt[1]};
+                               });
                 std::transform(rsn_result->kpts[1].begin(), rsn_result->kpts[1].end(), kpt_rcam.begin(),
-                               [&](const auto& kpt) { return Vec2f_t{input_width_ - 1 - kpt[0], kpt[1]}; });
+                               [&](const auto& kpt) {
+                                   return Vec2f_t{input_width_ - 1 - kpt[0], kpt[1]};
+                               });
             }
         } else {
             if (crop_method == CropMethod::WarpAffine) {
@@ -218,9 +223,13 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
                     });
             } else {
                 std::transform(rsn_result->kpts[0].begin(), rsn_result->kpts[0].end(), kpt_lcam.begin(),
-                               [&](const auto& kpt) { return Vec2f_t{kpt[0], kpt[1]}; });
+                               [&](const auto& kpt) {
+                                   return Vec2f_t{kpt[0], kpt[1]};
+                               });
                 std::transform(rsn_result->kpts[1].begin(), rsn_result->kpts[1].end(), kpt_rcam.begin(),
-                               [&](const auto& kpt) { return Vec2f_t{kpt[0], kpt[1]}; });
+                               [&](const auto& kpt) {
+                                   return Vec2f_t{kpt[0], kpt[1]};
+                               });
             }
         }
         if (!rsn_result->rdepths.empty()) {
