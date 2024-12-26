@@ -146,7 +146,7 @@ class HandFeatureUpdator {
     float abduction_th_width = 2;
     float abduction_thumb_open_th = 35;
     float abduction_thumb_closed_th = 20;
-    float abduction_other_open_th = 12;
+    float abduction_other_open_th = 13;
     float abduction_other_closed_th = 10;
     std::unique_ptr<HandFeature> cur_hand_feature;
   public:

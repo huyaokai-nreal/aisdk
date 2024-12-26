@@ -244,17 +244,16 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
                         compute_score_with_reprojection(output_buffer_->right_hand.kpt3d, kpt2d.rhand_lcam_kpt,
                                                         kpt2d.rhand_rcam_kpt, lcam_model_, rcam_model_);
                 }
-                AISDK_LOG_TRACE("[LiftCalculator] aaaaaaaa");
 
                 // virtualcam 2d convert oricam 2d
-                if (kpt2d.lhand_lcam_virtual_camera != nullptr && kpt2d.lhand_rcam_virtual_camera != nullptr) {
+                if (kpt2d.rhand_lcam_virtual_camera != nullptr && kpt2d.rhand_rcam_virtual_camera != nullptr) {
                     output_buffer_->right_hand.kpt2d_lcam =
                         lcam_model_->world_to_window(output_buffer_->right_hand.kpt3d);
                     output_buffer_->right_hand.kpt2d_rcam =
                         rcam_model_->world_to_window(output_buffer_->right_hand.kpt3d);
                 } else {
-                    output_buffer_->right_hand.kpt2d_lcam = kpt2d.lhand_lcam_kpt;
-                    output_buffer_->right_hand.kpt2d_rcam = kpt2d.lhand_rcam_kpt;
+                    output_buffer_->right_hand.kpt2d_lcam = kpt2d.rhand_lcam_kpt;
+                    output_buffer_->right_hand.kpt2d_rcam = kpt2d.rhand_rcam_kpt;
                 }
                 AISDK_LOG_TRACE("[LiftCalculator] right hand score is {}", output_buffer_->right_hand.score);
             } else {

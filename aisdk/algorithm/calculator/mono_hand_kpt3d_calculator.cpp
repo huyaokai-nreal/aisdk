@@ -117,6 +117,16 @@ class MonoHandKpt3DCalculator : public xgraph::CalculatorBase {
                     AISDK_LOG_TRACE("[MonoHandKpt3DSolver]: left hand change from bino root depth {} to mono depth {}",
                                     kpt3d_cam_pre[0][2], output_buffer_->left_hand.kpt3d[0][2]);
                 }
+                // virtualcam 2d convert oricam 2d
+                if (kpt2d.lhand_lcam_virtual_camera != nullptr) {
+                    std::vector<Eigen::Vector3f> kpt_norm_eye =
+                        kpt2d.lhand_lcam_virtual_camera->window_to_eye(kpt2d.lhand_lcam_kpt);
+                    std::vector<Eigen::Vector3f> kpt_norm_world =
+                        kpt2d.lhand_lcam_virtual_camera->eye_to_world(kpt_norm_eye);
+                    output_buffer_->left_hand.kpt2d_lcam = lcam_model_->eye_to_window(kpt_norm_world);
+                } else {
+                    output_buffer_->left_hand.kpt2d_lcam = kpt2d.lhand_lcam_kpt;
+                }
             } else {
                 AISDK_LOG_TRACE("[MonoHandKpt3DSolver] Falied to solve left hand on left image: {}", status.message());
             }
@@ -150,6 +160,16 @@ class MonoHandKpt3DCalculator : public xgraph::CalculatorBase {
                                                                                kpt3d_world_pre.right_hand.kpt3d);
                     AISDK_LOG_TRACE("[MonoHandKpt3DSolver]: right hand change from bino root depth {} to mono depth {}",
                                     kpt3d_cam_pre[0][2], output_buffer_->right_hand.kpt3d[0][2]);
+                }
+                // virtualcam 2d convert oricam 2d
+                if (kpt2d.rhand_rcam_virtual_camera != nullptr) {
+                    std::vector<Eigen::Vector3f> kpt_norm_eye =
+                        kpt2d.rhand_rcam_virtual_camera->window_to_eye(kpt2d.rhand_rcam_kpt);
+                    std::vector<Eigen::Vector3f> kpt_norm_world =
+                        kpt2d.rhand_rcam_virtual_camera->eye_to_world(kpt_norm_eye);
+                    output_buffer_->right_hand.kpt2d_rcam = rcam_model_->eye_to_window(kpt_norm_world);
+                } else {
+                    output_buffer_->right_hand.kpt2d_rcam = kpt2d.rhand_rcam_kpt;
                 }
             } else {
                 AISDK_LOG_TRACE("[MonoHandKpt3DSolver] Falied to solve right  hand on right image: {}",

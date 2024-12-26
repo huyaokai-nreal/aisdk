@@ -26,7 +26,7 @@ int KFPredictor2d::init() {
 }
 void KFPredictor2d::reset_kalman_fileter() {
     // A: Transition State Matrix
-    //     x  y  vx vy ax      ay      
+    //     x  y  vx vy ax      ay
     // x [ 1  0  dT 0  0.5dT^2 0       ]
     // y [ 0  1  0  dT  0       0.5dT^2 ]
     // vx[ 0  0  1  0  dt       0      ] -

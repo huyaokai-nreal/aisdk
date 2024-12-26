@@ -123,14 +123,14 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
         } else {
             if (!predictor_lhand_lcam_bbox.get_tracking_status()) {
                 predictor_lhand_lcam_bbox.start_tracking(timestamp,
-                                                         {kpt2d_data.lhand_lcam_kpt[kKeypoint2dRootId], {0, 0}});
+                                                         {kpt3d_world.left_hand.kpt2d_lcam[kKeypoint2dRootId], {0, 0}});
             } else {
                 if (kpt2d_data_pre.lhand_lcam_valid) {
-                    auto measure_v = (kpt2d_data.lhand_lcam_kpt[kKeypoint2dRootId] -
-                                      kpt2d_data_pre.lhand_lcam_kpt[kKeypoint2dRootId]) /
+                    auto measure_v = (kpt3d_world.left_hand.kpt2d_lcam[kKeypoint2dRootId] -
+                                      kpt3d_world_pre.left_hand.kpt2d_lcam[kKeypoint2dRootId]) /
                                      (timestamp - last_timestamp_);
                     predictor_lhand_lcam_bbox.track_with_correct(
-                        timestamp, {kpt2d_data.lhand_lcam_kpt[kKeypoint2dRootId], measure_v});
+                        timestamp, {kpt3d_world.left_hand.kpt2d_lcam[kKeypoint2dRootId], measure_v});
                 }
             }
         }
@@ -139,15 +139,15 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
             predictor_rhand_lcam_bbox.stop_tracking();
         } else {
             if (!predictor_rhand_lcam_bbox.get_tracking_status()) {
-                predictor_rhand_lcam_bbox.start_tracking(timestamp,
-                                                         {kpt2d_data.rhand_lcam_kpt[kKeypoint2dRootId], {0, 0}});
+                predictor_rhand_lcam_bbox.start_tracking(
+                    timestamp, {kpt3d_world.right_hand.kpt2d_lcam[kKeypoint2dRootId], {0, 0}});
             } else {
                 if (kpt2d_data_pre.rhand_lcam_valid) {
-                    auto measure_v = (kpt2d_data.rhand_lcam_kpt[kKeypoint2dRootId] -
-                                      kpt2d_data_pre.rhand_lcam_kpt[kKeypoint2dRootId]) /
+                    auto measure_v = (kpt3d_world.right_hand.kpt2d_lcam[kKeypoint2dRootId] -
+                                      kpt3d_world_pre.right_hand.kpt2d_lcam[kKeypoint2dRootId]) /
                                      (timestamp - last_timestamp_);
                     predictor_rhand_lcam_bbox.track_with_correct(
-                        timestamp, {kpt2d_data.rhand_lcam_kpt[kKeypoint2dRootId], measure_v});
+                        timestamp, {kpt3d_world.right_hand.kpt2d_lcam[kKeypoint2dRootId], measure_v});
                 }
             }
         }
@@ -157,14 +157,14 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
         } else {
             if (!predictor_lhand_rcam_bbox.get_tracking_status()) {
                 predictor_lhand_rcam_bbox.start_tracking(timestamp,
-                                                         {kpt2d_data.lhand_rcam_kpt[kKeypoint2dRootId], {0, 0}});
+                                                         {kpt3d_world.left_hand.kpt2d_rcam[kKeypoint2dRootId], {0, 0}});
             } else {
                 if (kpt2d_data_pre.lhand_rcam_valid) {
-                    auto measure_v = (kpt2d_data.lhand_rcam_kpt[kKeypoint2dRootId] -
-                                      kpt2d_data_pre.lhand_rcam_kpt[kKeypoint2dRootId]) /
+                    auto measure_v = (kpt3d_world.left_hand.kpt2d_rcam[kKeypoint2dRootId] -
+                                      kpt3d_world_pre.left_hand.kpt2d_rcam[kKeypoint2dRootId]) /
                                      (timestamp - last_timestamp_);
                     predictor_lhand_rcam_bbox.track_with_correct(
-                        timestamp, {kpt2d_data.lhand_rcam_kpt[kKeypoint2dRootId], measure_v});
+                        timestamp, {kpt3d_world.left_hand.kpt2d_rcam[kKeypoint2dRootId], measure_v});
                 }
             }
         }
@@ -173,15 +173,15 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
             predictor_rhand_rcam_bbox.stop_tracking();
         } else {
             if (!predictor_rhand_rcam_bbox.get_tracking_status()) {
-                predictor_rhand_rcam_bbox.start_tracking(timestamp,
-                                                         {kpt2d_data.rhand_rcam_kpt[kKeypoint2dRootId], {0, 0}});
+                predictor_rhand_rcam_bbox.start_tracking(
+                    timestamp, {kpt3d_world.right_hand.kpt2d_rcam[kKeypoint2dRootId], {0, 0}});
             } else {
                 if (kpt2d_data_pre.rhand_rcam_valid) {
-                    auto measure_v = (kpt2d_data.rhand_rcam_kpt[kKeypoint2dRootId] -
-                                      kpt2d_data_pre.rhand_rcam_kpt[kKeypoint2dRootId]) /
+                    auto measure_v = (kpt3d_world.right_hand.kpt2d_rcam[kKeypoint2dRootId] -
+                                      kpt3d_world_pre.right_hand.kpt2d_rcam[kKeypoint2dRootId]) /
                                      (timestamp - last_timestamp_);
                     predictor_rhand_rcam_bbox.track_with_correct(
-                        timestamp, {kpt2d_data.rhand_rcam_kpt[kKeypoint2dRootId], measure_v});
+                        timestamp, {kpt3d_world.right_hand.kpt2d_rcam[kKeypoint2dRootId], measure_v});
                 }
             }
         }
