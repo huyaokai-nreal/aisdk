@@ -24,11 +24,11 @@ bool HandFilters::init() {
 
         // 手指
         other_finger_params.mincutoff = {0.4, 0.4, 0.2};
-        other_finger_params.beta = {25.0, 25.0, 10.0};
+        other_finger_params.beta = {28.0, 28.0, 18.0};
         other_finger_params.dcutoff = {2.0, 2.0, 1.0};
         // 食指的滤波参数， 要稳定一些
         index_finger_params.mincutoff = {0.2, 0.2, 0.1};
-        index_finger_params.beta = {20, 20, 10};
+        index_finger_params.beta = {22, 22, 15};
         index_finger_params.dcutoff = {2.0, 2.0, 1.0};
     } else if (glasses_type_ == "ella") {
         //  手掌
