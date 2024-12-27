@@ -176,7 +176,7 @@ class GestureMatchRule {
             hand_feature.opposition_features();
         return index_curl == FingureState::OPEN && middle_curl == FingureState::CLOSED &&
                ring_curl == FingureState::CLOSED && pinky_curl == FingureState::CLOSED &&
-               index_opposition != FingureState::CLOSED;
+               index_opposition != FingureState::CLOSED && thumb_curl == FingureState::CLOSED;
     }
 
     static bool Grab(const HandFeature &hand_feature, const HandRawFeature &raw_feature) {
