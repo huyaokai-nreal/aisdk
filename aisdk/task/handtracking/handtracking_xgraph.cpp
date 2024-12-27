@@ -342,6 +342,8 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
                     auto points_mano = constraint_hand_v2(predicted_points, (i == 0));
                     predicted_points = algorithm::convert_to_23points(points_mano);
                 } else {
+                    constraint_hand_plane(predicted_points);
+                    constraint_thumb(predicted_points);
                     predicted_points = algorithm::convert_to_23points(predicted_points);
                 }
 #if defined(ENABLE_OPENXR_HANDJOINT_FORMAT)

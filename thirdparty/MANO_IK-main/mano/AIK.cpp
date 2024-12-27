@@ -585,3 +585,63 @@ std::vector<Eigen::Vector3f> constraint_hand_v2(std::vector<Eigen::Vector3f> pre
 
 	return j3d_recon;
 }
+
+void constraint_thumb(std::vector<Eigen::Vector3f> &points) {
+
+    Eigen::Vector3f x = points[3] - points[2];
+    Eigen::Vector3f y = points[4] - points[3];
+    Eigen::Vector3f x_ = points[1] - points[0];
+    Eigen::Vector3f y_ = points[9] - points[0];
+
+    
+    float module_x = x.norm();
+    float module_y = y.norm();
+    float dot_value = x.dot(y);
+    float cos_theta = dot_value / (module_x * module_y);
+    float angle_radian = std::acos(cos_theta);
+    float angle_value = angle_radian * 180.0F / M_PI;  // M_PI is defined in <cmath>
+
+    Eigen::Vector3f cross_product = x.cross(y);
+    Eigen::Vector3f cross_product_ = x_.cross(y_);
+    float dot_ref = cross_product.dot(cross_product_);
+    if (dot_ref < 0){
+        Eigen::Vector3f direction = x.normalized();
+        Eigen::Vector3f new_position = points[3] + direction * module_y;
+        points[4] = new_position;
+    }
+}
+
+
+void constraint_hand_plane(std::vector<Eigen::Vector3f>& points) {
+    std::vector<std::vector<int>> point_indices = {
+        {5, 6, 7, 8},
+        {9, 10, 11, 12},
+        {13, 14, 15, 16},
+        {17, 18, 19, 20}
+    };
+
+	for (const auto& point_index : point_indices) {
+
+		// 获取 A, B, C 点
+		Eigen::Vector3f A = points[point_index[0]];
+		Eigen::Vector3f B = points[point_index[3]];
+		Eigen::Vector3f C = (points[point_index[1]] + points[point_index[2]]) / 2;
+
+		// 计算平面法向量
+		Eigen::Vector3f AB = B - A;
+		Eigen::Vector3f AC = C - A;
+		Eigen::Vector3f normal = AB.cross(AC);  // AB 和 AC 的叉积即为平面的法向量
+
+		// 计算第一个点到平面的投影
+		Eigen::Vector3f AP = points[point_index[1]] - A;
+		float distance = AP.dot(normal) / normal.norm();  // 点到平面的距离
+		Eigen::Vector3f projection_1 = points[point_index[1]] - distance * normal.normalized();  // 投影点
+		points[point_index[1]] = projection_1;
+
+		// 计算第二个点到平面的投影
+		AP = points[point_index[2]] - A;
+		distance = AP.dot(normal) / normal.norm();  // 点到平面的距离
+		Eigen::Vector3f projection_2 = points[point_index[2]] - distance * normal.normalized();  // 投影点
+		points[point_index[2]] = projection_2;
+	}
+}
