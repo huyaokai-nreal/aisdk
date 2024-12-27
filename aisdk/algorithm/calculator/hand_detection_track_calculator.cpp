@@ -291,6 +291,10 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
             predictor_lhand_rcam.stop_tracking();
             auto &predictor_rhand_rcam = GlobalPredictorService::getInstance().get_predictor_rhand_rcam_bbox();
             predictor_rhand_rcam.stop_tracking();
+            auto &predictor_lhand = GlobalPredictorService::getInstance().get_predictor_lhand();
+            predictor_lhand.stop_tracking();
+            auto &predictor_rhand = GlobalPredictorService::getInstance().get_predictor_rhand();
+            predictor_rhand.stop_tracking();
 
 #if defined(ENABLE_ALGORITHM_DATA_RECORD) && !defined(ENABLE_SEGMENT_JOINT_INFERENCE_MODE)
             cc->Outputs().Tag("DET_BBOX_OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
