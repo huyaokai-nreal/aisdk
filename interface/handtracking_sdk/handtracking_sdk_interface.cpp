@@ -33,6 +33,9 @@
 #define USE_EXTRA_PUSH_LIB
 #endif
 
+// trace log打印，增加记录aisdk模块向外部输出的手势数据（和外部对接排查问题经常使用）。一般状态下置为0。
+#define ENABLE_LOG_RECORD_OUTPUT_HAND_INFO 0
+
 namespace aisdk::interface {
 
 #if (defined(ANDROID) || defined(__ANDROID__))
@@ -150,6 +153,29 @@ NRPluginResult HandTracking::GetHandData(NRPluginHandle handle, uint64_t hmd_tim
 
     if (status == aisdk::algorithm::Status::SUCCESS) {
         AISDK_LOG_TRACE("HandTracking: pop result success!");
+
+#if ENABLE_LOG_RECORD_OUTPUT_HAND_INFO
+        AISDK_LOG_TRACE("output_data_record begin");
+
+        //记录左手输出信息
+        for (int j = 0; j < 26; j++) {
+            NRVector3f position = out_hand_array[0].hand_joint_data[j].hand_joint_pose.position;
+            NRQuatf rotation = out_hand_array[0].hand_joint_data[j].hand_joint_pose.rotation;
+            AISDK_LOG_TRACE("output_data_record left_hand index_{} position: {}, {}, {} rotation: {}, {}, {}, {}", j,
+                            position.x, position.y, position.z, rotation.qw, rotation.qx, rotation.qy, rotation.qz);
+        }
+
+        //记录右手输出信息
+        for (int j = 0; j < 26; j++) {
+            NRVector3f position = out_hand_array[1].hand_joint_data[j].hand_joint_pose.position;
+            NRQuatf rotation = out_hand_array[1].hand_joint_data[j].hand_joint_pose.rotation;
+            AISDK_LOG_TRACE("output_data_record right_hand index_{} position: {}, {}, {} rotation: {}, {}, {}, {}", j,
+                            position.x, position.y, position.z, rotation.qw, rotation.qx, rotation.qy, rotation.qz);
+        }
+
+        AISDK_LOG_TRACE("output_data_record end");
+#endif  // ENABLE_LOG_RECORD_OUTPUT_HAND_INFO
+
         return NR_PLUGIN_RESULT_SUCCESS;
     }
     *out_hand_num = 0;
