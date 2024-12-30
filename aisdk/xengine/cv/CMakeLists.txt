@@ -6,6 +6,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Android")
     ${CMAKE_CURRENT_SOURCE_DIR}/perspective_crop_image.cpp
     )
 
+    target_compile_options(${XENGINE_LIBRARY_NAME} PRIVATE -march=armv8.2-a+fp16+dotprod)
+
     if(ENABLE_HEXAGON_DSP_OP)
         add_subdirectory(hexagon_dsp)
     endif()
