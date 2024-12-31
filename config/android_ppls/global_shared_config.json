@@ -85,7 +85,7 @@
         },
         "2d_rtmtinyb2": {
             "model_config": {
-                "file_name": "models/rtmtiny_res26sw_kpt_1225_ddd205_quantized.dlc",
+                "file_name": "models/rtmtiny_res26sw_kpt_1230_393030_quantized.dlc",
                 "vendor": "snpe"
             },
             "session_config": {
@@ -145,7 +145,7 @@
         },
         "3d_liftnimble": {
             "model_config": {
-                "file_name": "models/liftnimble_1226_seq_3ee62d.mnn",
+                "file_name": "models/liftnimble_1220_seq_3edfad.mnn",
                 "vendor": "mnn"
             },
             "session_config": {
