@@ -607,7 +607,7 @@ void constraint_thumb(std::vector<Eigen::Vector3f> &points) {
     if (dot_ref < 0){
         Eigen::Vector3f direction = x.normalized();
         Eigen::Vector3f new_position = points[3] + direction * module_y;
-        points[4] = new_position;
+        points[4] = (new_position+points[4])/2;
     }
 }
 
