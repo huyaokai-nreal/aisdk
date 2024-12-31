@@ -159,10 +159,10 @@ class HandFeatureUpdator {
     //float opposition_th_width = 0.01;    
     // pinch relax th, in 1.5cm, out 3 cm
     float opposition_relax_closed_th = 0.025;  
-    float opposition_relax_th_width = 0.015;     
+    float opposition_relax_th_width = 0.010;     
     // moving pinch th, in 1 cm, out 3 cm
     float opposition_move_closed_th = 0.02; 
-    float opposition_move_th_width = 0.02; 
+    float opposition_move_th_width = 0.016; 
 };
 
 constexpr float pinch_v_th = -0.015; //m/s

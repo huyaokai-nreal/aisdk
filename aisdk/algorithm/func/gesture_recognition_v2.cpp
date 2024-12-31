@@ -158,13 +158,13 @@ void HandFeatureUpdator::update_opposition_feature(const std::vector<float> &dis
     auto feature_list = cur_hand_feature->opposition_features();
     float opposition_closed_th = this->opposition_closed_th;
     float opposition_th_width = this->opposition_th_width;
-    if (relax_th_flag) {
-        opposition_closed_th = this->opposition_relax_closed_th;
-        opposition_th_width = this->opposition_relax_th_width;
-    }
     if (move_flag) {
         opposition_closed_th = this->opposition_move_closed_th;
         opposition_th_width = this->opposition_move_th_width;
+    }
+    if (relax_th_flag) {
+        opposition_closed_th = this->opposition_relax_closed_th;
+        opposition_th_width = this->opposition_relax_th_width;
     }
     AISDK_LOG_TRACE("HandTracking: pinch distance is {}", distances[0]);
     AISDK_LOG_TRACE("pinch th flag relax {}, move flag {}", relax_th_flag, move_flag);
@@ -231,7 +231,8 @@ bool GestureRecognitionV2::is_face_to_head(const std::vector<std::vector<Eigen::
         palm_norm_vec = GetPlaneNormalVectorFrom3Points(root_pt_3d, index_pt_3d, ring_pt_3d);
     }
     float angle_to_face = from_two_vectors(palm_norm_vec, {0, 0, -1});
-    return angle_to_face < 60;
+    float angle_to_up = from_two_vectors(palm_norm_vec, {0, -1, 0});
+    return angle_to_face < 60 || angle_to_up < 70;
 }
 bool GestureRecognitionV2::is_ok_pinch(const std::vector<std::vector<Eigen::Vector3f>> &keypoints3d) {
     Eigen::Vector3f thumb_direction = (keypoints3d[0][4] - keypoints3d[0][3]).normalized();
