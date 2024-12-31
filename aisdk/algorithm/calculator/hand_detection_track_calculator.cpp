@@ -119,6 +119,7 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
 
         const auto &timestamp = cc->InputTimestamp().Seconds();
         auto lastframe_kpt2d = GlobalPredictorService::getInstance().get_last_kpt2d_pixel();
+        auto lastframe_kpt3d = GlobalPredictorService::getInstance().get_last_kpt3d_world();
 
         std::unique_ptr<DetOutputInternal> output_buffer_ = absl::make_unique<DetOutputInternal>();
         output_buffer_->clear();
@@ -139,9 +140,9 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
             (predictor_lhand_lcam.get_tracking_status() || predictor_rhand_lcam.get_tracking_status() ||
              predictor_lhand_rcam.get_tracking_status() || predictor_rhand_rcam.get_tracking_status())) {
             AISDK_LOG_TRACE("[HandDetTrackCalculator] 2D Tracker Starting");
-            if (lastframe_kpt2d.lhand_lcam_valid) {
+            if (lastframe_kpt2d.lhand_lcam_valid && lastframe_kpt3d.lhand_valid) {
                 DetectRect proj_bbox_lhand_lcam;
-                std::vector<Vec2f_t> lhand_lcam_kpt = lastframe_kpt2d.lhand_lcam_kpt;
+                std::vector<Vec2f_t> lhand_lcam_kpt = lastframe_kpt3d.left_hand.kpt2d_lcam;
                 Vec2f_t root_kf_predicted;
                 Vec2f_t root_meas = lhand_lcam_kpt[kKeypoint2dRootId];
 
@@ -158,9 +159,9 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
                     output_buffer_->lhand_lcam_rect = proj_bbox_lhand_lcam;
                 }
             }
-            if (lastframe_kpt2d.rhand_lcam_valid) {
+            if (lastframe_kpt2d.rhand_lcam_valid && lastframe_kpt3d.rhand_valid) {
                 DetectRect proj_bbox_rhand_lcam;
-                std::vector<Vec2f_t> rhand_lcam_kpt = lastframe_kpt2d.rhand_lcam_kpt;
+                std::vector<Vec2f_t> rhand_lcam_kpt = lastframe_kpt3d.right_hand.kpt2d_lcam;
                 Vec2f_t root_kf_predicted;
                 Vec2f_t root_meas = rhand_lcam_kpt[kKeypoint2dRootId];
 
@@ -177,9 +178,9 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
                 }
                 // 单目流, track不会出右目的框
             }
-            if (lastframe_kpt2d.lhand_rcam_valid) {
+            if (lastframe_kpt2d.lhand_rcam_valid && lastframe_kpt3d.lhand_valid) {
                 DetectRect proj_bbox_lhand_rcam;
-                std::vector<Vec2f_t> lhand_rcam_kpt = lastframe_kpt2d.lhand_rcam_kpt;
+                std::vector<Vec2f_t> lhand_rcam_kpt = lastframe_kpt3d.left_hand.kpt2d_rcam;
                 Vec2f_t root_kf_predicted;
                 Vec2f_t root_meas = lhand_rcam_kpt[kKeypoint2dRootId];
 
@@ -196,9 +197,9 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
                     output_buffer_->lhand_rcam_rect = proj_bbox_lhand_rcam;
                 }
             }
-            if (lastframe_kpt2d.rhand_rcam_valid) {
+            if (lastframe_kpt2d.rhand_rcam_valid && lastframe_kpt3d.rhand_valid) {
                 DetectRect proj_bbox_rhand_rcam;
-                std::vector<Vec2f_t> rhand_rcam_kpt = lastframe_kpt2d.rhand_rcam_kpt;
+                std::vector<Vec2f_t> rhand_rcam_kpt = lastframe_kpt3d.right_hand.kpt2d_rcam;
                 Vec2f_t root_kf_predicted;
                 Vec2f_t root_meas = rhand_rcam_kpt[kKeypoint2dRootId];
 
