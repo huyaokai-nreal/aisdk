@@ -58,7 +58,7 @@ node {
   node_options: {
     [type.googleapis.com/aisdk.MonoBinoSwitchCalculatorOptions] {
  #BINO, MONO, SWITCH
-      mode: "SWITCH" 
+      mode: "BINO" 
     }
   }
 }
