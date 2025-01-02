@@ -342,8 +342,8 @@ cv::Mat perspective_crop_image(const base::BaseCameraModel *src_camera, const ba
                                      vorrq_u32(v_is_overflow2, v_is_overflow3))) != 0) {
 // test little endian
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-                float32_t *__restrict__ map1 = (float32_t *)&xr_yr_x_storage;
-                float32_t *__restrict__ map2 = (float32_t *)&xr_yr_y_storage;
+                float32_t *__restrict__ map1 = (float32_t *)xr_yr_x_storage;
+                float32_t *__restrict__ map2 = (float32_t *)xr_yr_y_storage;
 #else
                 float32_t map1[16];
                 float32_t map2[16];
@@ -368,13 +368,13 @@ cv::Mat perspective_crop_image(const base::BaseCameraModel *src_camera, const ba
                     float x1_weight = 1 - x2_weight;
                     float y1_weight = 1 - y2_weight;
                     auto offset00 =
-                        ((x1 >= 0) & (x1 < src.cols) & (y1 >= 0) & (y1 < src.rows)) ? y1 * step + x1 : src.data - &zero;
+                        ((x1 >= 0) & (x1 < src.cols) & (y1 >= 0) & (y1 < src.rows)) ? y1 * step + x1 : &zero - src.data;
                     auto offset01 =
-                        ((x2 >= 0) & (x2 < src.cols) & (y1 >= 0) & (y1 < src.rows)) ? y1 * step + x2 : src.data - &zero;
+                        ((x2 >= 0) & (x2 < src.cols) & (y1 >= 0) & (y1 < src.rows)) ? y1 * step + x2 : &zero - src.data;
                     auto offset10 =
-                        ((x1 >= 0) & (x1 < src.cols) & (y2 >= 0) & (y2 < src.rows)) ? y2 * step + x1 : src.data - &zero;
+                        ((x1 >= 0) & (x1 < src.cols) & (y2 >= 0) & (y2 < src.rows)) ? y2 * step + x1 : &zero - src.data;
                     auto offset11 =
-                        ((x2 >= 0) & (x2 < src.cols) & (y2 >= 0) & (y2 < src.rows)) ? y2 * step + x2 : src.data - &zero;
+                        ((x2 >= 0) & (x2 < src.cols) & (y2 >= 0) & (y2 < src.rows)) ? y2 * step + x2 : &zero - src.data;
                     auto v00 = src.data[offset00];
                     auto v01 = src.data[offset01];
                     auto v10 = src.data[offset10];
