@@ -263,6 +263,19 @@ float GestureRecognitionV2::get_pinch_velocity(const std::vector<std::vector<Eig
     }
     return -1;
 }
+float distancePointToLine(const Eigen::Vector3f &a, const Eigen::Vector3f &b, const Eigen::Vector3f &c) {
+    // 计算向量 ab 和 bc
+    Eigen::Vector3f ab = a - b;
+    Eigen::Vector3f bc = c - b;
+
+    // 计算叉积 ab × bc
+    Eigen::Vector3f cross_product = ab.cross(bc);
+
+    // 计算距离
+    float distance = cross_product.norm() / bc.norm();
+
+    return distance;
+}
 std::pair<HandRawFeature, HandFeature> GestureRecognitionV2::extract_hand_feature(
     const std::vector<std::vector<Eigen::Vector3f>> &keypoints3d, const std::vector<Vec2f_t> &keypoints2d,
     bool is_left_hand, bool is_tracked, float hand_v, bool mono_cam) {
@@ -278,6 +291,7 @@ std::pair<HandRawFeature, HandFeature> GestureRecognitionV2::extract_hand_featur
     raw_features.hand_angle = hand_angle;
     raw_features.is_thumb_up = ((keypoints3d[0][3](1) - keypoints3d[0][2](1)) < -0.015F) &&
                                ((keypoints3d[0][4](1) - keypoints3d[0][3](1)) < -0.015F);
+    raw_features.is_thumb_closed = distancePointToLine(keypoints3d[0][4], keypoints3d[2][4], keypoints3d[2][2]);
     raw_features.pinch_distance = opposition_distances[0];
     if (is_tracked) {
         raw_features.pinch_velocity = get_pinch_velocity(keypoints3d);
