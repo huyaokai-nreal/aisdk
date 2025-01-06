@@ -40,8 +40,8 @@ PYBIND11_MODULE(_pyaisdk, m) {
         .def("init", &algorithm::HandFilters::init)
         .def("reset", &algorithm::HandFilters::reset)
         .def("process", &algorithm::HandFilters::process)
-        .def("set_filter_param", &algorithm::HandFilters::set_filter_param, py::arg("palm_param"),
-             py::arg("finger_param"));
+        .def("set_filter_param", &algorithm::HandFilters::set_filter_param, py::arg("palm_params"),
+             py::arg("index_finger_params"), py::arg("other_finger_params"));
 }
 
 }  // namespace aisdk

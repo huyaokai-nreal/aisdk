@@ -85,28 +85,7 @@ bool AddDataRecordCalculater(aisdk::xengine::PipelineConfig& config, std::string
         "  input_stream: \"DET_BBOX_OUTPUT:detection_output\"\n"
         "  input_stream: \"LANDMARK_OUTPUT:kpt2d\"\n"
         "  input_stream: \"LIFT_OUTPUT:kpt3d_bino\"\n"
-        "  input_stream: \"BLOCK_OUT:kpt3d_blocked\"\n"
-        "  input_stream: \"CONVERTWORLD_OUT:kpt3d_world\"\n"
-        "  input_stream: \"GR_OUTPUT:gesture\"\n"
-        "  input_stream: \"ALL_RESULTS:hand_result\"\n"
-        "  input_side_packet: \"CAM_INFO_INPUT:cam_info\"\n"
-        "  output_stream: \"RECORD_RESULTS:record_result\"\n"
-        "  input_stream_handler {\n"
-        "    input_stream_handler: \"ImmediateInputStreamHandler\"\n"
-        "  }\n"
-        "}\n";
-    // 3d模块输出kpt3d_bino+kpt3d_mono // 暂未实现
-    std::string new_mono_node_config2 =     
-        "node {\n"
-        "  name: \"MonoHandDataRecord\"\n"
-        "  executor: \"handtracking_data_exector\"\n"
-        "  calculator: \"HandDataRecordCalculator\"\n"
-        "  input_stream: \"IMAGE_INPUT:image\"\n"
-        "  input_stream: \"HEADPOSE_INPUT:head_pose\"\n"
-        "  input_stream: \"DET_BBOX_OUTPUT:detection_output\"\n"
-        "  input_stream: \"LANDMARK_OUTPUT:kpt2d\"\n"
         "  input_stream: \"KPT3D_OUTPUT:kpt3d_mono\"\n"
-        "  input_stream: \"LIFT_OUTPUT:kpt3d_bino\"\n"
         "  input_stream: \"BLOCK_OUT:kpt3d_blocked\"\n"
         "  input_stream: \"CONVERTWORLD_OUT:kpt3d_world\"\n"
         "  input_stream: \"GR_OUTPUT:gesture\"\n"
@@ -121,11 +100,8 @@ bool AddDataRecordCalculater(aisdk::xengine::PipelineConfig& config, std::string
 
     // 目前仅支持双目
     if (config.related_feature.bind_mono_bino == "bino") {
-        if (config.pipeline_name == "graph_flora_snpedsp.txt") {
-            AISDK_LOG_WARN("[HandDataRecordCalculator] Process Enbale Bino2");
-            new_graph_config = config.graph_config + new_exector_config + new_bino_node_config2;
-            return true;
-        }
+        new_graph_config = config.graph_config + new_exector_config + new_bino_node_config2;
+        return true;
     }
 
     return false;
@@ -133,7 +109,7 @@ bool AddDataRecordCalculater(aisdk::xengine::PipelineConfig& config, std::string
 
 aisdk::algorithm::Status HandTrackingXGraph::Init(aisdk::xengine::DlSymFuncs& funcs,
                                                   aisdk::xengine::PipelineConfig& config, CameraParams& camera) {
-    if (absl::StrContains(config.pipeline_name, "flora")) {
+    if (absl::StrContains(config.pipeline_name, "flora") || absl::StrContains(config.pipeline_name, "gina")) {
         post_filter_ = std::make_unique<algorithm::HandFilters>("flora");
     } else {
         post_filter_ = std::make_unique<algorithm::HandFilters>("ella");
@@ -209,6 +185,7 @@ aisdk::algorithm::Status HandTrackingXGraph::PushData(uint64_t timestamp,
                                                       NRTransform headpose) {
     // we use microseconds in xgraph pipeline
     int64_t timestamp_micro = static_cast<int64_t>(timestamp / 1000);
+
     auto image_packet = xgraph::MakePacket<std::vector<aisdk::algorithm::Image>>(std::move(in_image));
     auto headpose_packet = xgraph::MakePacket<algorithm::HeadPoseInternal>(headpose);
 
@@ -244,9 +221,8 @@ aisdk::algorithm::Status HandTrackingXGraph::PushData(uint64_t timestamp,
     // m_increase_timestep++;
     if (push_failure) {
         return aisdk::algorithm::Status::FAILURE;
-    } else {
-        return aisdk::algorithm::Status::SUCCESS;
     }
+    return aisdk::algorithm::Status::SUCCESS;
 }
 
 aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, uint32_t* hand_num,
@@ -336,7 +312,7 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
                 if (i == 0) {
                     if (predictor_lhand.get_tracking_status()) {
                         if (hand_data_internal.left_hand.source == algorithm::CamType::MONO) {
-                            query_time = latest_timestamp;
+                            query_time = latest_timestamp + (query_time - latest_timestamp) * 0.25;
                         }
                         root_kf_predicted = predictor_lhand.track_only_pred(query_time, true, true);
                     } else {
@@ -346,7 +322,7 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
                 } else {
                     if (predictor_rhand.get_tracking_status()) {
                         if (hand_data_internal.right_hand.source == algorithm::CamType::MONO) {
-                            query_time = latest_timestamp;
+                            query_time = latest_timestamp + (query_time - latest_timestamp) * 0.25;
                         }
                         root_kf_predicted = predictor_rhand.track_only_pred(query_time, true, true);
                     } else {
@@ -366,6 +342,8 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
                     auto points_mano = constraint_hand_v2(predicted_points, (i == 0));
                     predicted_points = algorithm::convert_to_23points(points_mano);
                 } else {
+                    constraint_hand_plane(predicted_points);
+                    constraint_thumb(predicted_points);
                     predicted_points = algorithm::convert_to_23points(predicted_points);
                 }
 #if defined(ENABLE_OPENXR_HANDJOINT_FORMAT)

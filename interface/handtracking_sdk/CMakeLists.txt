@@ -1,4 +1,5 @@
 set(HANDTRACKING_INTERFACE_LIBRARY_NAME nr_hand_tracking)
+find_package(libyuv REQUIRED)
 
 add_library(${HANDTRACKING_INTERFACE_LIBRARY_NAME} SHARED
 ${CMAKE_CURRENT_SOURCE_DIR}/handtracking_sdk_interface.cpp
@@ -65,7 +66,7 @@ if(NOT Xrlinux AND ENABLE_OPENXR_HANDJOINT_FORMAT)
     target_compile_options(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PRIVATE -DENABLE_OPENXR_HANDJOINT_FORMAT)
 endif()
 
-target_link_libraries(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PUBLIC base algorithm handtracking jsoncpp Eigen3::Eigen opencv::opencv)
+target_link_libraries(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PUBLIC base algorithm handtracking jsoncpp Eigen3::Eigen opencv::opencv libyuv::libyuv)
 set_target_properties(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib
     ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib

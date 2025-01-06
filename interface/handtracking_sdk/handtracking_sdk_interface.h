@@ -1,6 +1,7 @@
 #ifndef _HANDTRACKING_SDK_INTERFACE_H_
 #define _HANDTRACKING_SDK_INTERFACE_H_
 
+#include <cstdint>
 #include <string>
 #include "channel/nr_plugin_grayscale_camera_types.h"
 #include "common/nr_plugin_generic.h"
@@ -99,6 +100,8 @@ class Hmd {
     // 1: nrsdk_api for real_camera  2: nreal_studio/slam_raw_config for test
     uint32_t m_generate_method = 1;
     algorithm::CameraParams m_cam_param;
+    // camera的数目
+    uint32_t m_nr_cameras = 1;
     bool cam_is_horizontal = true;
 };
 

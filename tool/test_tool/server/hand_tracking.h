@@ -168,7 +168,7 @@ class StreamDataContrlAgent : public SdkBase {
     int ProduceHandTrackingResult(uint64_t simulation_nano_time);
     int ProduceProfilingResult(SendData& send, ProfilingInfo& info, bool is_match);
 
-   private:
+   
     // 线程状态控制
     bool send_exit = false;
     bool recv_exit = false;
@@ -186,7 +186,6 @@ class StreamDataContrlAgent : public SdkBase {
     // 仿真策略
     uint32_t m_send_simulation_policy;  // 0: 按原始数据 // 1: 按自定义帧率
     uint32_t m_recv_simulation_policy;  // 0: 按原始数据 // 1: 按自定义帧率
-   private:
     // 原始输入数据缓存控制
     uint32_t max_cache_fn;
     uint32_t current_cache_fn;
@@ -229,8 +228,6 @@ class HandTrackingSdk : public StreamDataContrlAgent {
     int StopSdk();
     int SendStream(std::shared_ptr<StreamData>& data);
     int RecvResult(uint64_t frame_id, std::shared_ptr<StreamResult>& result);
-
-   private:
     int CameraParamsParse(std::string& json_string);
     int ProfilingParamsParse(std::string& json_string);
 };

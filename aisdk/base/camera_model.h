@@ -1,4 +1,5 @@
 #pragma once
+#include <vector>
 #include "camera_model_distortion.h"
 #include "camera_model_projection.h"
 namespace aisdk::base {
@@ -33,6 +34,7 @@ class BaseCameraModel {
     virtual std::vector<Eigen::Vector2f> eye_to_window(const std::vector<Eigen::Vector3f>& point_3d) = 0;
     virtual std::vector<Eigen::Vector3f> window_to_eye(const std::vector<Eigen::Vector2f>& point_2d) = 0;
     virtual std::vector<Eigen::Vector3f> window_to_eye(const std::vector<Eigen::Vector3f>& point_3d) = 0;
+    virtual std::vector<float> get_distortion_params() const = 0;
     virtual Eigen::Isometry3f get_cam_to_world_transform() const { return camera_to_world_xf_; }
     virtual CameraIntrinsics get_camera_intrinsics() const { return camera_intrinsics_; }
     virtual void set_cam_to_world_transform(const Eigen::Isometry3f& xf) { camera_to_world_xf_ = xf; }
@@ -63,6 +65,10 @@ class CameraModel : public BaseCameraModel {
     std::vector<Eigen::Vector3f> window_to_eye(const std::vector<Eigen::Vector2f>& point_2d) override;
     std::vector<Eigen::Vector3f> window_to_eye(const std::vector<Eigen::Vector3f>& point_3d) override;
     DistortType get_distortion_model() const {return distortion_model_;}
+    std::vector<float> get_distortion_params() const override {
+        return  get_distortion_model().getDistortionParams();
+    }
+
 
    private:
     ProjectType projection_model_;

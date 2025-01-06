@@ -4,6 +4,7 @@
 #include <absl/time/time.h>
 #include <sys/time.h>
 
+#include <cstdint>
 #include <memory>
 #include <string>
 
@@ -614,10 +615,7 @@ int DataDebugRecord::CheckRealTimeDebugConfig(uint64_t new_timestamp) {
 
 void DataDebugRecord::DebugImage(Recordcache* record, const std::vector<Image>& input_image) {
     if (enable_detect_record_rawimage) {
-        struct timeval tv;
-        gettimeofday(&tv, NULL);
-        uint64_t cur_time_ms = tv.tv_sec * 1000 + tv.tv_usec / 1000;
-
+        uint64_t cur_time_ms = static_cast<uint64_t>(record->frame_timestamp / 1e3);
         if ((cur_time_ms - last_detect_record_rawimage_time_ms) > detect_record_rawimage_interval_ms) {
             std::string lcam_pic_name = lcam_local_record_rootpath + "/seq_" +
                                         aisdk::base::StringSprintf("%010d", record->sequence_id) + "_detect." +
@@ -630,6 +628,7 @@ void DataDebugRecord::DebugImage(Recordcache* record, const std::vector<Image>& 
 
             cv::imwrite(lcam_pic_name, lcam);
             cv::imwrite(rcam_pic_name, rcam);
+            last_detect_record_rawimage_time_ms = cur_time_ms;
         }
     }
 }

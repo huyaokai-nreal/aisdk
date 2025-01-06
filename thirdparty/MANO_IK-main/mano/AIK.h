@@ -18,5 +18,6 @@ std::vector<Eigen::Matrix3f> constraint_IK(std::vector<Eigen::Vector3f> T, std::
 										   bool left_hand);
 
 std::vector<Eigen::Vector3f> constraint_hand_v2(std::vector<Eigen::Vector3f> pred_xyz, bool left_hand);
-
+void constraint_thumb(std::vector<Eigen::Vector3f> &points);
+void constraint_hand_plane(std::vector<Eigen::Vector3f>& points);
 #endif
