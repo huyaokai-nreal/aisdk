@@ -82,7 +82,6 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
             output_buffer_->lhand_valid = false;
         } else {
             output_buffer_->left_hand.kpt3d = kpt3d_world.left_hand.kpt3d;
-            output_buffer_->left_hand.kpt3d = convert_to_23points(output_buffer_->left_hand.kpt3d);
             if (!predictor_lhand.get_tracking_status()) {
                 predictor_lhand.start_tracking(timestamp,
                                                {output_buffer_->left_hand.kpt3d[kKeypointRootId], {0., 0., 0.}});
@@ -103,7 +102,6 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
             output_buffer_->rhand_valid = false;
         } else {
             output_buffer_->right_hand.kpt3d = kpt3d_world.right_hand.kpt3d;
-            output_buffer_->right_hand.kpt3d = convert_to_23points(output_buffer_->right_hand.kpt3d);
             if (!predictor_rhand.get_tracking_status()) {
                 predictor_rhand.start_tracking(timestamp,
                                                {output_buffer_->right_hand.kpt3d[kKeypointRootId], {0., 0., 0.}});

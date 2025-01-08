@@ -106,17 +106,6 @@ std::tuple<Eigen::Matrix3d, Eigen::Matrix3d, float> get_rotations_for_standard_s
     return {left_R, right_R, baseline};
 }
 
-std::vector<Vec3f_t> convert_to_23points(const std::vector<Vec3f_t>& input) {
-    std::vector<Vec3f_t> result(26);
-    // input size should be 21
-    for (int i = 0; i < input.size(); i++) {
-        result[i] = input[i];
-    }
-    result[21] = 0.5 * (input[0] + input[9]);
-    // result[22] = 0.5 * (0.5 * (input[0] - input[9]) + 0.5 * (input[0] - input[17])) + input[17];
-    return result;
-}
-
 void get_metacarpal_xr_joints_v1(std::vector<Vec3f_t>& joints) {
     auto root_joint = joints[0];
     auto middle_vec = (root_joint - joints[9]).normalized();
@@ -142,6 +131,19 @@ void get_metacarpal_xr_joints_v1(std::vector<Vec3f_t>& joints) {
     joints[23] = index_metacarpal;
     joints[24] = middle_metacarpal;
     joints[25] = ring_metacarpal;
+}
+
+std::vector<Vec3f_t> interpolation_to_26points(const std::vector<Vec3f_t>& input) {
+    std::vector<Vec3f_t> result(26);
+    // input size should be 21
+    for (int i = 0; i < input.size(); i++) {
+        result[i] = input[i];
+    }
+    result[21] = 0.5 * (input[0] + input[9]);
+    result[22] = 0.5 * (0.5 * (input[0] - input[9]) + 0.5 * (input[0] - input[17])) + input[17];
+
+    get_metacarpal_xr_joints_v1(result);
+    return result;
 }
 
 std::vector<Vec3f_t> convert_to_26points(const std::vector<Vec3f_t>& input) {
