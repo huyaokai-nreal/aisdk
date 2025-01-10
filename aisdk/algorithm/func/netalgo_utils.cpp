@@ -133,6 +133,35 @@ void get_metacarpal_xr_joints_v1(std::vector<Vec3f_t>& joints) {
     joints[25] = ring_metacarpal;
 }
 
+std::vector<Vec3f_t> middle_palm_joint(std::vector<Vec3f_t>& input) {
+    std::vector<Vec3f_t> joints(26);
+    for (int i = 0; i < input.size(); i++) {
+        joints[i] = input[i];
+    }
+
+    auto root_joint = joints[0];
+    auto middle_vec = (root_joint - joints[9]).normalized();
+
+    // root_joint = joints[9] + 1.2 * (joints[0] - joints[9]).norm() * middle_vec;
+
+    auto little_vec = ((root_joint - joints[9]) + (root_joint - joints[17])).normalized();
+    auto little_metacarpal = joints[17] + 0.6667 * ((root_joint - joints[17])).norm() * little_vec;
+
+    auto ring_vec = ((root_joint - joints[9]) + (root_joint - joints[13])).normalized();
+    auto ring_metacarpal = joints[13] + 0.6667 * (root_joint - joints[13]).norm() * ring_vec;
+
+    auto middle_metacarpal = joints[9] + 0.6667 * (root_joint - joints[9]).norm() * middle_vec;
+
+    auto index_vec = 2 * middle_vec - ring_vec;
+    auto index_metacarpal = joints[5] + 0.6667 * (root_joint - joints[5]).norm() * index_vec;
+
+    joints[22] = (little_metacarpal + joints[22]) / 2;
+    joints[23] = (index_metacarpal + joints[23]) / 2;
+    joints[24] = (middle_metacarpal + joints[24]) / 2;
+    joints[25] = (ring_metacarpal + joints[25]) / 2;
+    return joints;
+}
+
 std::vector<Vec3f_t> interpolation_to_26points(const std::vector<Vec3f_t>& input) {
     std::vector<Vec3f_t> result(26);
     // input size should be 21
@@ -158,6 +187,7 @@ std::vector<Vec3f_t> convert_to_26points(const std::vector<Vec3f_t>& input) {
     auto middle_vec = (root_joint - result[9]).normalized();
     root_joint = result[9] + 1.2 * (result[0] - result[9]).norm() * middle_vec;
     result[0] = root_joint;
+    result = middle_palm_joint(result);
     return result;
 }
 
