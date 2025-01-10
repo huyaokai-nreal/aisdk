@@ -178,11 +178,11 @@ void GMLPLiftNimble::PostProcess(const LiftNetInputs &inputs, LiftNetOutputs &ou
     std::vector<float> local_angles(angle_ptr, angle_ptr + 171);
     local_angles = decode_hand_angle(local_angles);
     auto local_kpt = decode_hand_joints(shape_param, local_angles);
-    Eigen::Matrix<float, 21, 3> global_kpt =
+    Eigen::Matrix<float, 26, 3> global_kpt =
         ((global_rotation * local_kpt.transpose()).transpose().rowwise() + global_translation.transpose()) *
         baseline_scale_ / standard_baseline_;
-    outputs.res3d.resize(21);
-    for (int i = 0; i < kAlgoKeypointNum; i++) {
+    outputs.res3d.resize(26);
+    for (int i = 0; i < 26; i++) {
         outputs.res3d[i] = Vec3f_t{global_kpt(i, 0), global_kpt(i, 1), global_kpt(i, 2)};
     }
     AISDK_LOG_TRACE("[GMLPLiftNimble] run GMLPLiftNimble infer kpt success");
