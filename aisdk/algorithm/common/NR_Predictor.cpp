@@ -197,7 +197,7 @@ Vec3f_t KFPredictor::track_only_pred(double target_ts, bool with_smooth, bool up
 }
 
 double KFPredictor::get_valid_predict_time_length(double target_ts) {
-    std::array<double, 3> predict_time_interval_vec = {0.1, 0.08, 0.04};  // 100ms, 80ms, 40ms
+    std::array<double, 3> predict_time_interval_vec = {0.1, 0.08, 0.03};  // 100ms, 80ms, 40ms
     constexpr float static_hand_th_1 = 0.1;
     constexpr float static_hand_th_2 = 0.2;
     int hand_static_state = 0;  // 0 dynamic, 1 middle, 2 static

@@ -340,10 +340,12 @@ aisdk::algorithm::Status HandTrackingXGraph::PopResult(uint64_t hmd_time_nano, u
                 if ((!hand_data_internal.left_hand.constrained && i == 0) ||
                     (!hand_data_internal.right_hand.constrained && i == 1)) {
                     auto points_mano = constraint_hand_v2(predicted_points, (i == 0));
-                    predicted_points = algorithm::convert_to_23points(points_mano);
+                    predicted_points = points_mano;
                 } else {
-                    predicted_points = algorithm::convert_to_23points(predicted_points);
+                    constraint_hand_plane(predicted_points);
+                    constraint_thumb(predicted_points);
                 }
+
 #if defined(ENABLE_OPENXR_HANDJOINT_FORMAT)
                 algorithm::compute_xr_joint_rotation_v1(predicted_points, (i == 0), ontracked_rotations[i]);
 #else

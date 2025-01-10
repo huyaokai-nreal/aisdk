@@ -95,6 +95,7 @@ struct HandRawFeature {
     std::vector<float> opposition_distances;
     float hand_angle;
     bool is_thumb_up;
+    float is_thumb_closed;
     HandFeature feature;
     float pinch_velocity = 0;
     float root_velocity = 0;
@@ -131,8 +132,8 @@ class HandFeatureUpdator {
 
    private:
     float curl_th_width = 10;
-    float curl_thumb_open_th = 145;
-    float curl_thumb_closed_th = 130;
+    float curl_thumb_open_th = 155;
+    float curl_thumb_closed_th = 140;
     float curl_other_open_th = 130;
     float curl_other_closed_th = 80;
 
@@ -143,8 +144,8 @@ class HandFeatureUpdator {
     float flexion_other_closed_th = 110;
 
     float abduction_th_width = 2;
-    float abduction_thumb_open_th = 29;
-    float abduction_thumb_closed_th = 27;
+    float abduction_thumb_open_th = 35;
+    float abduction_thumb_closed_th = 20;
     float abduction_other_open_th = 13;
     float abduction_other_closed_th = 10;
     std::unique_ptr<HandFeature> cur_hand_feature;
@@ -159,10 +160,10 @@ class HandFeatureUpdator {
     //float opposition_th_width = 0.01;    
     // pinch relax th, in 1.5cm, out 3 cm
     float opposition_relax_closed_th = 0.025;  
-    float opposition_relax_th_width = 0.015;     
+    float opposition_relax_th_width = 0.01;     
     // moving pinch th, in 1 cm, out 3 cm
     float opposition_move_closed_th = 0.02; 
-    float opposition_move_th_width = 0.02; 
+    float opposition_move_th_width = 0.016; 
 };
 
 constexpr float pinch_v_th = -0.015; //m/s
@@ -174,17 +175,18 @@ class GestureMatchRule {
         auto [thumb_curl, index_curl, middle_curl, ring_curl, pinky_curl] = hand_feature.curl_features();
         auto [thumb_opposition, index_opposition, middle_opposition, ring_opposition, pinky_opposition] =
             hand_feature.opposition_features();
+        auto [thumb_abduction, _p, __p, ___p, ____p] = hand_feature.abduction_features();
         return index_curl == FingureState::OPEN && middle_curl == FingureState::CLOSED &&
                ring_curl == FingureState::CLOSED && pinky_curl == FingureState::CLOSED &&
-               index_opposition != FingureState::CLOSED;
+               index_opposition != FingureState::CLOSED && (thumb_curl != FingureState::OPEN ||
+               (thumb_abduction != FingureState::CLOSED && raw_feature.is_thumb_closed < 0.05));
     }
 
     static bool Grab(const HandFeature &hand_feature, const HandRawFeature &raw_feature) {
         auto [thumb_curl, index_curl, middle_curl, ring_curl, pinky_curl] = hand_feature.curl_features();
-        auto [thumb_abduction, __, ___, ____, _____] = hand_feature.abduction_features();
         return index_curl == FingureState::CLOSED && middle_curl == FingureState::CLOSED &&
                ring_curl == FingureState::CLOSED && pinky_curl == FingureState::CLOSED &&
-               thumb_abduction == FingureState::CLOSED;
+               thumb_curl != FingureState::OPEN;
     }
 
     static bool OpenHand(const HandFeature &hand_feature, const HandRawFeature &raw_feature) {

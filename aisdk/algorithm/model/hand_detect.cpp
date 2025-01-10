@@ -43,8 +43,8 @@ absl::Status HandDetectNet::Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xen
         for (auto j = 0; j < grid_w; j++) {
             grid_anchor[i * grid_w + j].grid_x = -0.5f + j * 1.0f;
             grid_anchor[i * grid_w + j].grid_y = -0.5f + i * 1.0f;
-            grid_anchor[i * grid_w + j].anchor_rw = 31.0f;
-            grid_anchor[i * grid_w + j].anchor_rh = 68.0f;
+            grid_anchor[i * grid_w + j].anchor_rw = 33.0f;
+            grid_anchor[i * grid_w + j].anchor_rh = 30.0f;
         }
     }
 
@@ -469,8 +469,8 @@ absl::Status HandDetectNetv2::Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::x
         for (auto j = 0; j < grid_w; j++) {
             grid_anchor[i * grid_w + j].grid_x = -0.5f + j * 1.0f;
             grid_anchor[i * grid_w + j].grid_y = -0.5f + i * 1.0f;
-            grid_anchor[i * grid_w + j].anchor_rw = 31.0f;
-            grid_anchor[i * grid_w + j].anchor_rh = 68.0f;
+            grid_anchor[i * grid_w + j].anchor_rw = 33.0f;
+            grid_anchor[i * grid_w + j].anchor_rh = 30.0f;
         }
     }
 

@@ -130,7 +130,8 @@ cv::Mat perspective_crop_image(const base::BaseCameraModel* src_camera, const ba
     float32x4_t x_scale = vdupq_n_f32(1.f / fx_d);
 
     // float kc[16] ={0.023569,	0.021583,	-0.025508,
-    // 0.005611,	1.000000,	1.000000,	1.000000,	1.000000,	1.000000,	1.000000,	1.000000,	1.000000};
+    // 0.005611,	1.000000,	1.000000,	1.000000,	1.000000,	1.000000,	1.000000,	1.000000,
+    // 1.000000};
     const auto kc_mat = src_camera->get_distortion_params();
     // cv::Mat kc_mat = src_camera.get_distortion_matrix_cv();
     float* kc = (float*)kc_mat.data();
@@ -279,6 +280,8 @@ cv::Mat perspective_crop_image(const base::BaseCameraModel* src_camera, const ba
 
             float32x4_t xr_yr_x = vfmaq_laneq_f32(vfmaq_f32(x2, tmp, src_eye_x), xy, kc4, 2);
             float32x4_t xr_yr_y = vfmaq_laneq_f32(vfmaq_f32(y2, tmp, src_eye_y), xy, kc4, 3);
+            xr_yr_x = vfmaq_f32(cx_s, xr_yr_x, fx_s);
+            xr_yr_y = vfmaq_f32(cy_s, xr_yr_y, fy_s);
 
             vst1q_f32(src_eye_x_dst, xr_yr_x);
             vst1q_f32(src_eye_y_dst, xr_yr_y);
@@ -396,6 +399,8 @@ cv::Mat perspective_crop_image(const base::BaseCameraModel* src_camera, const ba
 
                 float32x4_t xr_yr_x = vfmaq_laneq_f32(vfmaq_f32(x2, tmp, src_eye_x), xy, kc4, 2);
                 float32x4_t xr_yr_y = vfmaq_laneq_f32(vfmaq_f32(y2, tmp, src_eye_y), xy, kc4, 3);
+                xr_yr_x = vfmaq_f32(cx_s, xr_yr_x, fx_s);
+                xr_yr_y = vfmaq_f32(cy_s, xr_yr_y, fy_s);
 
                 vst1q_f32(src_eye_x_dst, xr_yr_x);
                 vst1q_f32(src_eye_y_dst, xr_yr_y);

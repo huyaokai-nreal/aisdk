@@ -58,7 +58,7 @@ node {
   node_options: {
     [type.googleapis.com/aisdk.MonoBinoSwitchCalculatorOptions] {
  #BINO, MONO, SWITCH
-      mode: "BINO" 
+      mode: "SWITCH" 
     }
   }
 }
@@ -81,7 +81,7 @@ node {
       input_width: 128
       bbox_expand_ratio: 1.5
       model_name: "2d_rtmtinyb2"
-      pcl_able: true
+      pcl_able: false
     }
   }
 }
@@ -124,7 +124,7 @@ node {
       max_root_depth: 1.0
       # score_th = 0.8 ? model_name == 3d_liftnimble else 0.85
       score_th: 0.775
-      score_th_width: 0.05
+      score_th_width: 0.1
     }
   }
 }
@@ -150,6 +150,7 @@ node {
   name: "HandFilter"
   calculator: "HandFilterCalculator"
   input_stream: "INPUT:kpt3d_world"
+  input_stream: "GR_KPT2D_INPUT:kpt2d"
   output_stream: "OUTPUT:kpt3d_filtered"
   node_options: {
     [type.googleapis.com/aisdk.HandFilterCalculatorOptions] {

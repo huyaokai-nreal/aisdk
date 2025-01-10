@@ -5,6 +5,7 @@
 #include <algorithm>
 
 #include "NR_GlobalCoordService.h"
+#include "aisdk/algorithm/common/nrnet_define.h"
 
 namespace aisdk::algorithm {
 
@@ -118,6 +119,7 @@ DetectRect kpts_to_bbox(const T& kps) {
 
     return detect_rect;
 }
+template DetectRect kpts_to_bbox(const std::vector<Vec2f_t>&);
 
 void reproj_bbox_with_new_headpose(std::shared_ptr<aisdk::base::BaseCameraModel> lcam_model,
                                    std::shared_ptr<aisdk::base::BaseCameraModel> rcam_model,

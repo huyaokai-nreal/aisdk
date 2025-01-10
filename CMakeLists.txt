@@ -48,7 +48,7 @@ option(ENABLE_SEGMENT_JOINT_INFERENCE_MODE "enable prior inference 'detect and k
 # 构建fptool工具业务的SDK，暂时未实现
 option(BUILD_HANDTRACKING_FPTOOL_SDK "build lib for detect fp_tool sdk" OFF)
 # 开启以OpenXR定义手势关键点的实现
-option(ENABLE_OPENXR_HANDJOINT_FORMAT "enable hand key_points in OpenXR format" OFF)
+option(ENABLE_OPENXR_HANDJOINT_FORMAT "enable hand key_points in OpenXR format" ON)
 
 if(Xrlinux AND ENABLE_SEGMENT_JOINT_INFERENCE_MODE)
     # Xrlinux是Flora/Gina眼镜所对应的操作系统的标签，等同于Android/Darwin/Linux等

@@ -288,7 +288,7 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
                 output_buffer_->lhand_rcam_valid = false;
             }
         }
-        if (bbox_data.rhand_lcam_valid && !bbox_data.rhand_rcam_valid) {
+        if (bbox_data.rhand_rcam_valid && !bbox_data.rhand_lcam_valid) {
             auto result = ProcessSingleHand(image_data[1], bbox_data.rhand_rcam_rect, false, rcam_model_.get(),
                                             output_buffer_->rhand_rcam_kpt, output_buffer_->rhand_rcam_rdepth,
                                             output_buffer_->rhand_rcam_virtual_camera, bbox_data.det_flag);
