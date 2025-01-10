@@ -85,7 +85,7 @@
         },
         "2d_rtmtinyb2": {
             "model_config": {
-                "file_name": "models/rtmtiny_res26sw_kpt_0105_dbf150_quantized.dlc",
+                "file_name": "models/rtmtiny_res26sw_kpt_0110_312ca7_quantized.dlc",
                 "vendor": "snpe"
             },
             "session_config": {
