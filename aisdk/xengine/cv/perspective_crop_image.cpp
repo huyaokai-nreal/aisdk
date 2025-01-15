@@ -27,7 +27,7 @@ cv::Mat perspective_crop_image_raw(base::BaseCameraModel* src_camera, base::Pers
     // double start2 = mysecond();
     auto world_pts = dst_camera->eye_to_world(dst_eye_pts);
     // double start3 = mysecond();
-    auto src_eye_pts = src_camera->world_to_eye(world_pts);
+    auto src_eye_pts = world_pts;
     // double start4 = mysecond();
     auto src_win_pts = src_camera->eye_to_window(src_eye_pts);
     // double start5 = mysecond();
