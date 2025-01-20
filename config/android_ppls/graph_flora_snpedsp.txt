@@ -123,8 +123,8 @@ node {
     [type.googleapis.com/aisdk.BlockHardRulesCalculatorOptions] {
       max_root_depth: 1.0
       # score_th = 0.8 ? model_name == 3d_liftnimble else 0.85
-      score_th: 0.775
-      score_th_width: 0.1
+      score_th: 0.725
+      score_th_width: 0.05
       rmse_th: 5
       rmse_th_width: 1
     }
