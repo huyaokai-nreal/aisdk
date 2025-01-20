@@ -131,23 +131,21 @@ class MonoHandKpt3DCalculator : public xgraph::CalculatorBase {
                 } else {
                     output_buffer_->left_hand.kpt2d_lcam = kpt2d.lhand_lcam_kpt;
                 }
-                // 如果手在中间且离眼镜较近，或者手在边缘且离眼镜特别近时，单目无效
-                if ((output_buffer_->left_hand.kpt3d[0][2] <= 0.3 &&
-                     output_buffer_->left_hand.kpt2d_lcam[0][0] >= 100) ||
-                    (output_buffer_->left_hand.kpt3d[0][2] <= 0.1 &&
-                     output_buffer_->left_hand.kpt2d_lcam[0][0] < 100)) {
-                    output_buffer_->left_hand.score = 0.;
-                } else {
-                    output_buffer_->left_hand.score = 1.0;
-                }
                 AISDK_LOG_TRACE("[MonoHandKpt3DSolver] left_hand pixel_x: {}",
                                 output_buffer_->left_hand.kpt2d_lcam[0][0]);
                 output_buffer_->left_hand.reproj_rmse = compute_mono_rmse_with_reprojection(
                     output_buffer_->left_hand.kpt3d, output_buffer_->left_hand.kpt2d_lcam, lcam_model_);
                 output_buffer_->left_hand.score =
                     output_buffer_->left_hand.reproj_rmse;  // only for recording visualization
-                AISDK_LOG_TRACE("MonoHandKpt3DCalculator, left hand err_13 is {} ", output_buffer_->left_hand.score);
-
+                // 如果手在中间且离眼镜较近，或者手在边缘且离眼镜特别近时，单目无效
+                if ((output_buffer_->left_hand.kpt3d[0][2] <= 0.3 &&
+                     output_buffer_->left_hand.kpt2d_lcam[0][0] >= 100) ||
+                    (output_buffer_->left_hand.kpt3d[0][2] <= 0.1 &&
+                     output_buffer_->left_hand.kpt2d_lcam[0][0] < 100)) {
+                    output_buffer_->left_hand.reproj_rmse = 10.;
+                }
+                AISDK_LOG_TRACE("[MonoHandKpt3DSolver] left_hand reproj_rmse: {}",
+                                output_buffer_->left_hand.reproj_rmse);
             } else {
                 AISDK_LOG_TRACE("[MonoHandKpt3DSolver] Falied to solve left hand on left image: {}", status.message());
             }
@@ -195,21 +193,22 @@ class MonoHandKpt3DCalculator : public xgraph::CalculatorBase {
                 } else {
                     output_buffer_->right_hand.kpt2d_rcam = kpt2d.rhand_rcam_kpt;
                 }
-                // 如果手在中间且离眼镜较近，或者手在边缘且离眼镜特别近时，单目无效
-                if ((output_buffer_->right_hand.kpt3d[0][2] <= 0.3 &&
-                     output_buffer_->right_hand.kpt2d_rcam[0][0] <= 400) ||
-                    (output_buffer_->right_hand.kpt3d[0][2] <= 0.1 &&
-                     output_buffer_->right_hand.kpt2d_rcam[0][0] > 400)) {
-                    output_buffer_->right_hand.score = 0.;
-                } else {
-                    output_buffer_->right_hand.score = 1.0;
-                }
                 AISDK_LOG_TRACE("[MonoHandKpt3DSolver] right_hand pixel_x: {}",
                                 output_buffer_->right_hand.kpt2d_rcam[0][0]);
                 output_buffer_->right_hand.reproj_rmse = compute_mono_rmse_with_reprojection(
                     output_buffer_->right_hand.kpt3d, output_buffer_->right_hand.kpt2d_rcam, rcam_model_);
                 output_buffer_->right_hand.score =
                     output_buffer_->right_hand.reproj_rmse;  // only for recording visualization
+
+                // 如果手在中间且离眼镜较近，或者手在边缘且离眼镜特别近时，单目无效
+                if ((output_buffer_->right_hand.kpt3d[0][2] <= 0.3 &&
+                     output_buffer_->right_hand.kpt2d_rcam[0][0] <= 400) ||
+                    (output_buffer_->right_hand.kpt3d[0][2] <= 0.1 &&
+                     output_buffer_->right_hand.kpt2d_rcam[0][0] > 400)) {
+                    output_buffer_->right_hand.reproj_rmse = 10.;
+                }
+                AISDK_LOG_TRACE("[MonoHandKpt3DSolver] right_hand reproj_rmse: {}",
+                                output_buffer_->right_hand.reproj_rmse);
             } else {
                 AISDK_LOG_TRACE("[MonoHandKpt3DSolver] Falied to solve right  hand on right image: {}",
                                 status.message());

@@ -121,6 +121,8 @@ class BlockHardRulesCalculator : public xgraph::CalculatorBase {
                     AISDK_LOG_TRACE("[BlockHardRulesCalculator] block left hand using BINO hand score {}",
                                     input_data.left_hand.score);
                     output_buffer_->lhand_valid = false;
+                } else {
+                    AISDK_LOG_TRACE("[BlockHardRulesCalculator] left_hand don't block");
                 }
             }
             if (input_data.rhand_valid) {
@@ -144,6 +146,8 @@ class BlockHardRulesCalculator : public xgraph::CalculatorBase {
                     AISDK_LOG_TRACE("[BlockHardRulesCalculator] block right hand using BINO hand score {}",
                                     input_data.right_hand.score);
                     output_buffer_->rhand_valid = false;
+                } else {
+                    AISDK_LOG_TRACE("[BlockHardRulesCalculator] right_hand don't block");
                 }
             }
         }
