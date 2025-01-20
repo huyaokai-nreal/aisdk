@@ -27,6 +27,18 @@ float compute_rmse(std::vector<Vec2f_t> lval, std::vector<Vec2f_t> rval) {
     return rmse / norm;
 }
 
+float compute_mono_rmse_with_reprojection(const std::vector<Vec3f_t>& pred_xyz, const std::vector<Vec2f_t>& uv_ori,
+                                          const std::shared_ptr<base::BaseCameraModel>& cam_model) {
+    auto reproj_kpt2d = cam_model->world_to_window(pred_xyz);
+    float err = 0;
+    for (int i = 0; i < 13; i++) {
+        err += (reproj_kpt2d[i][0] - uv_ori[i][0]) * (reproj_kpt2d[i][0] - uv_ori[i][0]) / 13 +
+               (reproj_kpt2d[i][1] - uv_ori[i][1]) * (reproj_kpt2d[i][1] - uv_ori[i][1]) / 13;
+    }
+
+    return sqrt(err);
+}
+
 float compute_score_with_reprojection(const std::vector<Vec3f_t>& pred_xyz, const std::vector<Vec2f_t>& leftcam_uv_ori,
                                       const std::vector<Vec2f_t>& rightcam_uv_ori,
                                       const std::shared_ptr<base::BaseCameraModel>& left_cam,

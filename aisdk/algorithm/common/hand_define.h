@@ -29,6 +29,7 @@ struct SingleHandData {
     std::vector<Eigen::Matrix3f> rotation;
     Vec3f_t root_v{0, 0, 0};
     float score = 0;
+    float reproj_rmse = 0;
     HandGesture gesture = HandGesture::Invalid;
     CamType source = CamType::UNKNOWN;
     bool constrained {false};

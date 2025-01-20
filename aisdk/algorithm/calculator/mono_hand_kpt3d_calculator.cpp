@@ -9,6 +9,7 @@
 #include "aisdk/algorithm/common/NR_GlobalPredictorService.h"
 #include "aisdk/algorithm/common/NR_Transfer.h"
 #include "aisdk/algorithm/common/hand_define.h"
+#include "aisdk/algorithm/common/metrics.h"
 #include "aisdk/algorithm/common/nrcore_define.h"
 #include "aisdk/algorithm/func/keypoint3d_solver.h"
 #include "aisdk/algorithm/func/netalgo_utils.h"
@@ -141,6 +142,12 @@ class MonoHandKpt3DCalculator : public xgraph::CalculatorBase {
                 }
                 AISDK_LOG_TRACE("[MonoHandKpt3DSolver] left_hand pixel_x: {}",
                                 output_buffer_->left_hand.kpt2d_lcam[0][0]);
+                output_buffer_->left_hand.reproj_rmse = compute_mono_rmse_with_reprojection(
+                    output_buffer_->left_hand.kpt3d, output_buffer_->left_hand.kpt2d_lcam, lcam_model_);
+                output_buffer_->left_hand.score =
+                    output_buffer_->left_hand.reproj_rmse;  // only for recording visualization
+                AISDK_LOG_TRACE("MonoHandKpt3DCalculator, left hand err_13 is {} ", output_buffer_->left_hand.score);
+
             } else {
                 AISDK_LOG_TRACE("[MonoHandKpt3DSolver] Falied to solve left hand on left image: {}", status.message());
             }
@@ -153,7 +160,7 @@ class MonoHandKpt3DCalculator : public xgraph::CalculatorBase {
             if (status.ok()) {
                 output_buffer_->lhand_valid = true;
                 output_buffer_->left_hand.source = CamType::MONO;
-                output_buffer_->left_hand.score = 1.0;
+                output_buffer_->left_hand.reproj_rmse = 0;
             } else {
                 AISDK_LOG_TRACE("[MonoHandKpt3DSolver] Falied to solve left hand on right image: {}", status.message());
             }
@@ -199,6 +206,10 @@ class MonoHandKpt3DCalculator : public xgraph::CalculatorBase {
                 }
                 AISDK_LOG_TRACE("[MonoHandKpt3DSolver] right_hand pixel_x: {}",
                                 output_buffer_->right_hand.kpt2d_rcam[0][0]);
+                output_buffer_->right_hand.reproj_rmse = compute_mono_rmse_with_reprojection(
+                    output_buffer_->right_hand.kpt3d, output_buffer_->right_hand.kpt2d_rcam, rcam_model_);
+                output_buffer_->right_hand.score =
+                    output_buffer_->right_hand.reproj_rmse;  // only for recording visualization
             } else {
                 AISDK_LOG_TRACE("[MonoHandKpt3DSolver] Falied to solve right  hand on right image: {}",
                                 status.message());
@@ -212,7 +223,7 @@ class MonoHandKpt3DCalculator : public xgraph::CalculatorBase {
             if (status.ok()) {
                 output_buffer_->rhand_valid = true;
                 output_buffer_->right_hand.source = CamType::MONO;
-                output_buffer_->right_hand.score = 1.0;
+                output_buffer_->right_hand.reproj_rmse = 0;
             } else {
                 AISDK_LOG_TRACE("[MonoHandKpt3DSolver] Falied to solve right  hand on left image: {}",
                                 status.message());
