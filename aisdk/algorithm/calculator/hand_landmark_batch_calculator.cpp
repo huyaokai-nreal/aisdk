@@ -120,7 +120,7 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
         auto kc = origin_camera->get_distortion_params();
         virutal_camera = GetVirtualCameraFromBox(origin_camera, rect, {input_width_, input_height_});
 #if ((defined(ANDROID) || defined(__ANDROID__)) && defined(__aarch64__))
-        crop_image = xengine::perspective_crop_image_raw(lcam_model_.get(), virutal_camera.get(), input_width_,
+        crop_image = xengine::perspective_crop_image_raw(origin_camera, virutal_camera.get(), input_width_,
                                                          input_height_, image_data.m_mat);
 #endif
         if (left_hand) {

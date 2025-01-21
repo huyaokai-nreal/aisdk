@@ -25,16 +25,27 @@ class BlockHardRulesCalculator : public xgraph::CalculatorBase {
     float max_root_depth_;
     float score_th_;
     float score_th_width_;
+    float rmse_th_;
+    float rmse_th_width_;
     enum class HandState { Lost = 0, Tracking };
     class HandStateUpdator {
        public:
-        HandStateUpdator(float score_th, float score_th_width) : score_th_(score_th), score_th_width_(score_th_width) {}
+        HandStateUpdator(float score_th, float score_th_width, float rmse_th, float rmse_th_width)
+            : score_th_(score_th), score_th_width_(score_th_width), rmse_th_(rmse_th), rmse_th_width_(rmse_th_width) {}
         HandState last_state;
-        HandState update(float score) {
-            if (score < score_th_ - score_th_width_ / 2.F) {
-                last_state = HandState::Lost;
-            } else if (score > score_th_ + score_th_width_ / 2.F) {
-                last_state = HandState::Tracking;
+        HandState update(CamType hand_source, float score) {
+            if (hand_source == CamType::BINO) {
+                if (score < score_th_ - score_th_width_ / 2.F) {
+                    last_state = HandState::Lost;
+                } else if (score > score_th_ + score_th_width_ / 2.F) {
+                    last_state = HandState::Tracking;
+                }
+            } else {
+                if (score > rmse_th_ + rmse_th_width_ / 2.F) {
+                    last_state = HandState::Lost;
+                } else if (score < rmse_th_ - rmse_th_width_ / 2.F) {
+                    last_state = HandState::Tracking;
+                }
             }
             return last_state;
         }
@@ -42,6 +53,8 @@ class BlockHardRulesCalculator : public xgraph::CalculatorBase {
        private:
         float score_th_;
         float score_th_width_;
+        float rmse_th_;
+        float rmse_th_width_;
     };
     std::unique_ptr<HandStateUpdator> left_hand_state_updator_;
     std::unique_ptr<HandStateUpdator> right_hand_state_updator_;
@@ -68,8 +81,12 @@ class BlockHardRulesCalculator : public xgraph::CalculatorBase {
         max_root_depth_ = options.max_root_depth();
         score_th_ = options.score_th();
         score_th_width_ = options.score_th_width();
-        left_hand_state_updator_ = std::make_unique<HandStateUpdator>(score_th_, score_th_width_);
-        right_hand_state_updator_ = std::make_unique<HandStateUpdator>(score_th_, score_th_width_);
+        rmse_th_ = options.rmse_th();
+        rmse_th_width_ = options.rmse_th_width();
+        left_hand_state_updator_ =
+            std::make_unique<HandStateUpdator>(score_th_, score_th_width_, rmse_th_, rmse_th_width_);
+        right_hand_state_updator_ =
+            std::make_unique<HandStateUpdator>(score_th_, score_th_width_, rmse_th_, rmse_th_width_);
         AISDK_LOG_TRACE("[BlockHardRulesCalculator] Open complete");
         return absl::OkStatus();
     }
@@ -88,10 +105,24 @@ class BlockHardRulesCalculator : public xgraph::CalculatorBase {
                 output_buffer_->left_hand = input_data.left_hand;
                 AISDK_LOG_TRACE("[BlockHardRulesCalculator] Checking left hand");
                 left_hand_state_updator_->last_state = HandState(static_cast<int>(kpt3d_world_pre.lhand_valid));
-                if (block_rule_root_distance(input_data.left_hand.kpt3d, max_root_depth_) ||
-                    left_hand_state_updator_->update(input_data.left_hand.score) == HandState::Lost) {
-                    AISDK_LOG_TRACE("[BlockHardRulesCalculator] block left hand {}", input_data.left_hand.score);
+                if (block_rule_root_distance(input_data.left_hand.kpt3d, max_root_depth_)) {
+                    AISDK_LOG_TRACE("[BlockHardRulesCalculator] block left hand using root point depth {}",
+                                    input_data.left_hand.kpt3d[root_index][2]);
                     output_buffer_->lhand_valid = false;
+                } else if (input_data.left_hand.source == CamType::MONO &&
+                           left_hand_state_updator_->update(input_data.left_hand.source,
+                                                            input_data.left_hand.reproj_rmse) == HandState::Lost) {
+                    AISDK_LOG_TRACE("[BlockHardRulesCalculator] block left hand using MONO hand rmse metric {}",
+                                    input_data.left_hand.reproj_rmse);
+                    output_buffer_->lhand_valid = false;
+                } else if (input_data.left_hand.source == CamType::BINO &&
+                           left_hand_state_updator_->update(input_data.left_hand.source, input_data.left_hand.score) ==
+                               HandState::Lost) {
+                    AISDK_LOG_TRACE("[BlockHardRulesCalculator] block left hand using BINO hand score {}",
+                                    input_data.left_hand.score);
+                    output_buffer_->lhand_valid = false;
+                } else {
+                    AISDK_LOG_TRACE("[BlockHardRulesCalculator] left_hand don't block");
                 }
             }
             if (input_data.rhand_valid) {
@@ -99,10 +130,24 @@ class BlockHardRulesCalculator : public xgraph::CalculatorBase {
                 output_buffer_->right_hand = input_data.right_hand;
                 AISDK_LOG_TRACE("[BlockHardRulesCalculator] Checking right hand");
                 right_hand_state_updator_->last_state = HandState(static_cast<int>(kpt3d_world_pre.rhand_valid));
-                if (block_rule_root_distance(input_data.right_hand.kpt3d, max_root_depth_) ||
-                    right_hand_state_updator_->update(input_data.right_hand.score) == HandState::Lost) {
-                    AISDK_LOG_TRACE("[BlockHardRulesCalculator] block right hand {}", input_data.right_hand.score);
+                if (block_rule_root_distance(input_data.right_hand.kpt3d, max_root_depth_)) {
+                    AISDK_LOG_TRACE("[BlockHardRulesCalculator] block right hand using root point depth {}",
+                                    input_data.right_hand.kpt3d[root_index][2]);
                     output_buffer_->rhand_valid = false;
+                } else if (input_data.right_hand.source == CamType::MONO &&
+                           right_hand_state_updator_->update(input_data.right_hand.source,
+                                                             input_data.right_hand.reproj_rmse) == HandState::Lost) {
+                    AISDK_LOG_TRACE("[BlockHardRulesCalculator] block right hand using MONO hand rmse metric {}",
+                                    input_data.right_hand.reproj_rmse);
+                    output_buffer_->rhand_valid = false;
+                } else if (input_data.right_hand.source == CamType::BINO &&
+                           right_hand_state_updator_->update(input_data.right_hand.source,
+                                                             input_data.right_hand.score) == HandState::Lost) {
+                    AISDK_LOG_TRACE("[BlockHardRulesCalculator] block right hand using BINO hand score {}",
+                                    input_data.right_hand.score);
+                    output_buffer_->rhand_valid = false;
+                } else {
+                    AISDK_LOG_TRACE("[BlockHardRulesCalculator] right_hand don't block");
                 }
             }
         }

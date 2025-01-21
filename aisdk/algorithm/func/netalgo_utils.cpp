@@ -133,11 +133,25 @@ void get_metacarpal_xr_joints_v1(std::vector<Vec3f_t>& joints) {
     joints[25] = ring_metacarpal;
 }
 
-std::vector<Vec3f_t> middle_palm_joint(std::vector<Vec3f_t>& input) {
+Vec3f_t computeNormal(const Vec3f_t& A, const Vec3f_t& B, const Vec3f_t& C, const bool left_hand) {
+    Vec3f_t AB = B - A;
+    Vec3f_t AC = C - A;
+
+    Vec3f_t normal = (left_hand) ? AC.cross(AB) : AB.cross(AC);
+    normal.normalize();
+    return normal;
+}
+
+std::vector<Vec3f_t> middle_palm_joint(std::vector<Vec3f_t>& input, bool left_hand) {
     std::vector<Vec3f_t> joints(26);
     for (int i = 0; i < input.size(); i++) {
         joints[i] = input[i];
     }
+
+    // 大拇指平面的法向量用于大拇指掌骨点
+    Vec3f_t thumb_normal = computeNormal(joints[0], joints[1], joints[21], left_hand);
+    auto thumb_moveVector = thumb_normal * 0.005f;
+    joints[2] -= thumb_moveVector;
 
     auto root_joint = joints[0];
     auto middle_vec = (root_joint - joints[9]).normalized();
@@ -159,6 +173,16 @@ std::vector<Vec3f_t> middle_palm_joint(std::vector<Vec3f_t>& input) {
     joints[23] = (index_metacarpal + joints[23]) / 2;
     joints[24] = (middle_metacarpal + joints[24]) / 2;
     joints[25] = (ring_metacarpal + joints[25]) / 2;
+
+    // 手掌平面的法向量用于移动掌骨点
+    Vec3f_t palm_normal = computeNormal(joints[0], joints[5], joints[17], left_hand);
+    auto palm_moveVector = palm_normal * 0.005f;
+    joints[22] += palm_moveVector;
+    joints[23] += palm_moveVector;
+    joints[24] += palm_moveVector;
+    joints[25] += palm_moveVector;
+    joints[23] += (joints[24] - joints[23]).normalized() * 0.008f;
+
     return joints;
 }
 
@@ -175,7 +199,7 @@ std::vector<Vec3f_t> interpolation_to_26points(const std::vector<Vec3f_t>& input
     return result;
 }
 
-std::vector<Vec3f_t> convert_to_26points(const std::vector<Vec3f_t>& input) {
+std::vector<Vec3f_t> convert_to_26points(const std::vector<Vec3f_t>& input, const bool left_hand) {
     std::vector<Vec3f_t> result(26);
     // input size should be 21
     for (int i = 0; i < input.size(); i++) {
@@ -187,7 +211,7 @@ std::vector<Vec3f_t> convert_to_26points(const std::vector<Vec3f_t>& input) {
     auto middle_vec = (root_joint - result[9]).normalized();
     root_joint = result[9] + 1.2 * (result[0] - result[9]).norm() * middle_vec;
     result[0] = root_joint;
-    result = middle_palm_joint(result);
+    result = middle_palm_joint(result, left_hand);
     return result;
 }
 

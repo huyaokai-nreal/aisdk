@@ -59,12 +59,30 @@ TEST_CASE("testing the get_roi_image func") {
 
     std::shared_ptr<PerspectiveCameraModel> virtual_camera =
         aisdk::algorithm::GetVirtualCameraFromBox(&ori_camera, bbox_cs, {128, 128});
+    const int COUNT = 3000;
+    auto start1 = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < COUNT; i++) {
+        cv::Mat cropped_image0 = aisdk::xengine::perspective_crop_image_raw(
+            &ori_camera, virtual_camera.get(), input_size(0), input_size(1), raw_image, cv::INTER_LINEAR, true);
+    }
 
+    auto start2 = std::chrono::high_resolution_clock::now();
     cv::Mat cropped_image0 = aisdk::xengine::perspective_crop_image_raw(
         &ori_camera, virtual_camera.get(), input_size(0), input_size(1), raw_image, cv::INTER_LINEAR, true);
 
+    auto start3 = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < COUNT; i++) {
+        cv::Mat cropped_image1 = aisdk::xengine::perspective_crop_image(
+            &ori_camera, virtual_camera.get(), input_size(0), input_size(1), raw_image, cv::INTER_LINEAR, true);
+    }
     cv::Mat cropped_image1 = aisdk::xengine::perspective_crop_image(&ori_camera, virtual_camera.get(), input_size(0),
                                                                     input_size(1), raw_image, cv::INTER_LINEAR, true);
+    auto start4 = std::chrono::high_resolution_clock::now();
+
+    std::chrono::duration<double, std::micro> elasped0 = start2 - start1;
+    std::chrono::duration<double, std::micro> elasped1 = start4 - start3;
+    printf("cv::remap time = %fμs\n", elasped0.count() / COUNT);
+    printf("remap_neon_u8_f32_f32_c1_linear_const0 time = %fμs\n", elasped1.count() / COUNT);
 
     // double diff = cv::norm(cropped_image0, cropped_image1, cv::NORM_L2);
     // CHECK_EQ(diff, 0.0);
