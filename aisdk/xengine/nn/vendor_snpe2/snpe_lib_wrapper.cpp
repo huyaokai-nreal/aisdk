@@ -190,7 +190,7 @@ int SNPELibWrapper::UnloadSnpe2PlatformCInterface() {
 
 SNPELibWrapper::SNPELibWrapper(aisdk::xengine::PlatformEnv* env) {
     int res = LoadSnpe2CInterface("libSNPE.so", &snpe2_provider_);
-    AISDK_LOG_ERROR("SNPELibWrapper init res: {}", res);
+    AISDK_LOG_WARN("SNPELibWrapper init res: {}", res);
     if (0 != res && env && env->app_lib_path) {
         AISDK_LOG_ERROR("SNPELibWrapper try load fix path: {}", env->app_lib_path);
         std::string fixpath(env->app_lib_path);
