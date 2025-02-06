@@ -110,6 +110,7 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
                     auto measure_v = (output_buffer_->right_hand.kpt3d[kKeypointRootId] -
                                       kpt3d_world_pre.right_hand.kpt3d[kKeypointRootId]) /
                                      (timestamp - last_timestamp_);
+                    output_buffer_->right_hand.root_v = measure_v;
                     predictor_rhand.track_with_correct(timestamp,
                                                        {output_buffer_->right_hand.kpt3d[kKeypointRootId], measure_v});
                 }

@@ -800,7 +800,10 @@ void HandTracking::NotifyData(NRPluginHandle handle, NRChannelDataType channel_d
     switch (channel_data_type) {
         case NR_CHANNEL_DATA_TYPE_GLASSES_GRAYSCALE_CAMERA:
             if (data_size != sizeof(NRGrayscaleCameraFrameData)) {
-                AISDK_LOG_ERROR("NotifyData Failed: data_size error, the interface is not compatible!");
+                AISDK_LOG_ERROR(
+                    "NotifyData Failed: data_size error, the interface is not compatible! data_size:{}, "
+                    "sizeof(NRGrayscaleCameraFrameData):{}",
+                    data_size, sizeof(NRGrayscaleCameraFrameData));
                 return;
             }
             if (Plugin::GetInstance()->isStart()) {
