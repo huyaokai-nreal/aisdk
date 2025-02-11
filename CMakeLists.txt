@@ -69,12 +69,6 @@ option(BUILD_PYTHON "Build python wrapper." OFF)
 option(BUILD_TOOL "Build tools."  OFF)
 option(ENABLE_CLANG_TIDY_CHECK       "Analyze code with clang-tidy."                OFF)
 
-# log
-# release模式，消除Warning和Error级别以下的log打印的函数调用消耗
-option(ENABLE_LOG_LEVEL_RELEASE  "enable log level for release" ON)
-# 非release模式，详细的输出全部trace日志
-option(ENABLE_LOG_LEVEL_ALL "enable trace log level" OFF)
-
 # build algorithm
 option(ENABLE_XGRAPH_PROFILER "enable mediapipe graph framework profiler."  OFF)
 # 开启单帧在图的推理下耗时统计
@@ -130,14 +124,6 @@ endif()
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     # 启动tensorrt推理引擎
     option(ENABLE_XENGINE_TENSORRT_NN "enable tensorrt nn."  ON)
-endif()
-
-if(ENABLE_LOG_LEVEL_RELEASE)
-    add_definitions(-DENABLE_LOG_LEVEL_RELEASE)
-endif()
-
-if(ENABLE_LOG_LEVEL_ALL)
-    add_definitions(-DENABLE_LOG_LEVEL_ALL)
 endif()
 
 if(BUILD_HANDTRACKING_FPTOOL_SDK)

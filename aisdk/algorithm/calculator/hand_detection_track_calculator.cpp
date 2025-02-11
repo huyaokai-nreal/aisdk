@@ -42,7 +42,7 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
     std::shared_ptr<aisdk::base::BaseCameraModel> rcam_model_ = nullptr;
 
     std::string model_name_;  //模型名称，calculator配置中设置了此值
-    bool is_mono_ = true;  //是否单目，true表示单目
+    bool is_mono_ = true;     //是否单目，true表示单目
     uint32_t video_width_;
     uint32_t video_height_;
     float min_bbox_area_th_ = 10 * 10;
@@ -52,7 +52,6 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
     bool enable_track = true;  //是否启用手部跟踪，true表示启用
 
    public:
-
     /// @brief 设置手部检测跟踪calculator的输入输出关系和对应数据类型
     /// @param cc mediapipe计算图的上下文（提供输出输出流，SidePacket，选项参数等）
     /// @return 返回结果，成功返回absl::OkStatus()
@@ -154,7 +153,6 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
             output_buffer_->det_flag = false;
         }
 
-        
         auto &predictor_lhand_lcam = GlobalPredictorService::getInstance().get_predictor_lhand_lcam_bbox();
         auto &predictor_rhand_lcam = GlobalPredictorService::getInstance().get_predictor_rhand_lcam_bbox();
         auto &predictor_lhand_rcam = GlobalPredictorService::getInstance().get_predictor_lhand_rcam_bbox();

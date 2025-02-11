@@ -1031,7 +1031,7 @@ NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
     ins->m_generic.m_interface->GetGlobalConfig(plugin_handle, &global_json_data, &global_json_size);
 
     if (global_json_size && global_json_data) {
-        AISDK_LOG_TRACE("Plugin::Initialize sdk_global={}", global_json_data);
+        AISDK_LOG_INFO("Plugin::Initialize sdk_global={}", global_json_data);
         Json::Reader reader;
         Json::Value root;
         std::string root_str(global_json_data, global_json_size);
