@@ -73,12 +73,12 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
     }
 
     /// @brief 加载模型，分配资源，初始化参数（计算节点启动时执行一次）
-    /// @param cc mediapipe计算图的上下文（提供输出输出流，SidePacket，选项参数等）
+    /// @param cc mediapipe计算图的上下文（提供输入输出流，SidePacket，选项参数等）
     /// @return 返回结果，成功返回absl::OkStatus()
     absl::Status Open(xgraph::CalculatorContext *cc) final {
         AISDK_LOG_TRACE("[HandDetTrackCalculator] Open start");
 
-        //根据模型名称，选择创建老模型HandDetectNet还是新模型HandDetectNetv2，根据配置里面，目前版本创建的是新模型
+        //根据模型名称，选择创建老模型HandDetectNet对象还是新模型HandDetectNetv2对象，根据配置里面，目前版本创建的是新模型
         const auto &options = cc->Options<aisdk::HandDetTrackCalculatorOptions>();
         model_name_ = options.model_name();
         if (model_name_ == "detect_cpu_ella" || model_name_ == "detect_cpu_flora" || model_name_ == "detect_dsp_ella") {

@@ -27,10 +27,10 @@ struct Kpt2dInternal {
     }
 
     // Hand 2d output data, a single eand data size should be 21.
-    std::vector<Vec2f_t> lhand_lcam_kpt;
-    std::vector<Vec2f_t> lhand_rcam_kpt;
-    std::vector<Vec2f_t> rhand_lcam_kpt;
-    std::vector<Vec2f_t> rhand_rcam_kpt;
+    std::vector<Vec2f_t> lhand_lcam_kpt;  //左相机检测到的左手2d数据
+    std::vector<Vec2f_t> lhand_rcam_kpt;  //右相机检测到的左手2d数据
+    std::vector<Vec2f_t> rhand_lcam_kpt;  //左相机检测到的右手2d数据
+    std::vector<Vec2f_t> rhand_rcam_kpt;  //右相机检测到的右手2d数据
     std::vector<float> lhand_lcam_rdepth;
     std::vector<float> lhand_rcam_rdepth;
     std::vector<float> rhand_lcam_rdepth;
@@ -40,10 +40,10 @@ struct Kpt2dInternal {
     std::shared_ptr<base::PerspectiveCameraModel> rhand_lcam_virtual_camera = nullptr;
     std::shared_ptr<base::PerspectiveCameraModel> rhand_rcam_virtual_camera = nullptr;
 
-    bool lhand_lcam_valid = false;
-    bool lhand_rcam_valid = false;
-    bool rhand_lcam_valid = false;
-    bool rhand_rcam_valid = false;
+    bool lhand_lcam_valid = false;  //左相机是否检测到左手
+    bool lhand_rcam_valid = false;  //右相机是否检测到左手
+    bool rhand_lcam_valid = false;  //左相机是否检测到右手
+    bool rhand_rcam_valid = false;  //右相机是否检测到右手
 
     void clear() {
         lhand_lcam_kpt.clear();
