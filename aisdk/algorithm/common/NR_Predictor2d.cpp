@@ -15,15 +15,21 @@
 #include "aisdk/base/type.h"
 
 namespace aisdk::algorithm {
+
+/// @brief 初始化函数
+/// @return 0
 int KFPredictor2d::init() {
     // Init KalmanFilter with status params
     std::lock_guard<std::mutex> lock(m_mutex);
     m_kf_impl = std::make_unique<cv::KalmanFilter>(m_state_size, m_meas_size, m_ctrl_size, m_type);
-    // reset kalman filter
+
+    //重置卡尔曼滤波器
     reset_kalman_fileter();
 
     return 0;
 }
+
+/// @brief 重置卡尔曼滤波器的矩阵参数
 void KFPredictor2d::reset_kalman_fileter() {
     // A: Transition State Matrix
     //     x  y  vx vy ax      ay
@@ -34,6 +40,7 @@ void KFPredictor2d::reset_kalman_fileter() {
     // ax[ 0  0  0  0  1       0       ]
     // ay[ 0  0  0  0  0       1       ]
 
+    //重置状态转移矩阵（用于描述运动过程，目前初始化为单位矩阵）
     cv::setIdentity(m_kf_impl->transitionMatrix);
     // m_kf_impl->measurementMatrix.at<float>(M_X, S_VX) = 1.0f;
     // m_kf_impl->measurementMatrix.at<float>(M_Y, S_VY) = 1.0f;
@@ -45,6 +52,7 @@ void KFPredictor2d::reset_kalman_fileter() {
     // [ 0  0  1  0  0  0 ] vx
     // [ 0  0  0  1  0  0 ] vy
 
+    //设置测量矩阵（仅测量位置 (x, y) 和速度 (vx, vy)，不测量加速度）
     m_kf_impl->measurementMatrix = cv::Mat::zeros(m_meas_size, m_state_size, m_type);
     m_kf_impl->measurementMatrix.at<float>(M_X, S_X) = 1.0f;
     m_kf_impl->measurementMatrix.at<float>(M_Y, S_Y) = 1.0f;
@@ -63,65 +71,103 @@ void KFPredictor2d::reset_kalman_fileter() {
     // [ 0    0    0    0    0    E_ay ]
     // [ 0    0    0    0    0    0    ]
 
+    //过程噪声协方差矩阵（表示系统的不确定性，即状态变量随时间推移的误差。明确位置变量的噪声协方差设为 1.0，说明位置状态的不确定性较大）
     cv::setIdentity(m_kf_impl->processNoiseCov, cv::Scalar(1e-1));
     // Override velocity errors
     m_kf_impl->processNoiseCov.at<float>(S_X, S_X) = 1.0;
     m_kf_impl->processNoiseCov.at<float>(S_Y, S_Y) = 1.0;
 
+    //测量噪声协方差矩阵（表示测量误差的协方差，通常与传感器精度相关。这里设置成
+    // 1e-4，意味着测量噪声较小，传感器比较精准）
     cv::setIdentity(m_kf_impl->measurementNoiseCov, cv::Scalar(1e-4));
 }
 
+/// @brief 开始进行轨迹追踪和预测
+/// @param target_ts 预测的时间点
+/// @param meas 传进来的初始测量值
+/// @return 0
 int KFPredictor2d::start_tracking(double target_ts, PredictorState_2d meas) {
     std::lock_guard<std::mutex> lock(m_mutex);
-    reset_kalman_fileter();
-    cv::Mat state = cv::Mat::zeros(m_state_size, 1, m_type);
-    state.at<float>(S_X) = meas.pos[0];
-    state.at<float>(S_Y) = meas.pos[1];
-    state.at<float>(S_VX) = meas.vec[0];
-    state.at<float>(S_VY) = meas.vec[1];
 
+    //每次开始轨迹追踪和预测，先重置卡尔曼滤波器
+    reset_kalman_fileter();
+
+    //将测量到的目标信息赋值给卡尔曼滤波器
+    cv::Mat state = cv::Mat::zeros(m_state_size, 1, m_type);
+    state.at<float>(S_X) = meas.pos[0];   //目标的x位置
+    state.at<float>(S_Y) = meas.pos[1];   //目标的y位置
+    state.at<float>(S_VX) = meas.vec[0];  //目标在x方向上的速度
+    state.at<float>(S_VY) = meas.vec[1];  //目标在y方向上的速度
+
+    //以初始测量值作为初始状态，进行赋值
     m_kf_impl->statePost = state;
     m_kf_impl->statePre = state;
     last_correct_time_ = target_ts;
     last_measure_time_ = target_ts;
     m_momentum.pos = meas.pos;
+
+    //正在被跟踪
     is_tracked = true;
     return 0;
 }
+
+/// @brief 更新卡尔曼滤波器的状态转移矩阵
+/// @param target_ts 预测时间
 void KFPredictor2d::update_transition_matrix(double target_ts) {
+    //当前时间戳与start_tracking时间戳差值，计算时间间隔
     double dt_seconds = target_ts - last_correct_time_;
+
+    //设定位置和速度之间关系（S_X_NEW = S_X_OLD + S_VX * dt_seconds）
     m_kf_impl->transitionMatrix.at<float>(S_X, S_VX) = dt_seconds;
     m_kf_impl->transitionMatrix.at<float>(S_Y, S_VY) = dt_seconds;
 
+    //设定速度和加速度之间的关系（S_VX_NEW = S_VX_OLD + S_AX * dt_seconds）
     m_kf_impl->transitionMatrix.at<float>(S_VX, S_AX) = abs(dt_seconds);
     m_kf_impl->transitionMatrix.at<float>(S_VY, S_AY) = abs(dt_seconds);
 
+    //设定位置和加速度之间的关系（S_X_NEW = S_X_OLD + S_AX * 0.5 * dt_seconds ^ 2）
     m_kf_impl->transitionMatrix.at<float>(S_X, S_AX) = 0.5 * abs(dt_seconds) * dt_seconds;
     m_kf_impl->transitionMatrix.at<float>(S_Y, S_AY) = 0.5 * abs(dt_seconds) * dt_seconds;
 }
 
+/// @brief 进行位置预测，并返回结果
+/// @return 预测的位置结果
 PredictorState_2d KFPredictor2d::predict() {
     m_kf_impl->predict();
     return {Vec2f_t{m_kf_impl->statePre.at<float>(S_X), m_kf_impl->statePre.at<float>(S_Y)},
             Vec2f_t{m_kf_impl->statePre.at<float>(S_VX), m_kf_impl->statePre.at<float>(S_VY)}};
 }
 
+/// @brief 利用测量值矫正卡尔曼滤波器的状态
+/// @param meas 测量值信息
+/// @return 返回修正后的预测状态
 PredictorState_2d KFPredictor2d::correct(PredictorState_2d meas) {
+    //创建测量矩阵并赋值
     cv::Mat meas_mat = cv::Mat::zeros(m_meas_size, 1, m_type);
     meas_mat.at<float>(M_X) = meas.pos[0];
     meas_mat.at<float>(M_Y) = meas.pos[1];
-
     meas_mat.at<float>(M_VX) = meas.vec[0];
     meas_mat.at<float>(M_VY) = meas.vec[1];
+
+    //进行卡尔曼滤波校正（根据新的测量值，矫正滤波器的内部状态）
     m_kf_impl->correct(meas_mat);
 
+    //获取矫正后的S_X, S_Y, S_VX, S_VY
     auto pred_pos = Vec2f_t{m_kf_impl->statePost.at<float>(S_X), m_kf_impl->statePost.at<float>(S_Y)};
     auto pred_vec = Vec2f_t{m_kf_impl->statePost.at<float>(S_VX), m_kf_impl->statePost.at<float>(S_VY)};
 
+    //使用EWMA公式，通过预测的位置pred_pos和实际测量的位置m_monentum.pos修正位置信息
+    // EWMA公式：m_momentum.pos=α⋅m_momentum.pos+(1−α)⋅pred_pos
     m_momentum.pos = ALPHA_2D.array() * m_momentum.pos.array() + (ONE_2D - ALPHA_2D).array() * pred_pos.array();
 
+    //返回修正后的位置m_momentum.pos和速度pred_vec
     return {m_momentum.pos, pred_vec};
 }
+
+/// @brief 进行带校正的目标跟踪
+/// @param target_ts 要预测的时间
+/// @param meas 测量值信息
+/// @return 返回预测时间的目标值信息
 Vec2f_t KFPredictor2d::track_with_correct(double target_ts, PredictorState_2d meas) {
     std::lock_guard<std::mutex> lock(m_mutex);
     update_transition_matrix(target_ts);
@@ -133,10 +179,20 @@ Vec2f_t KFPredictor2d::track_with_correct(double target_ts, PredictorState_2d me
     return cpred.pos;
 }
 
+/// @brief 根据卡尔曼滤波进行目标位置预测
+/// @param target_ts 预测时间
+/// @param update_state 预测完，是否更新状态，true表示更新，false表示不更新
+/// @return
 Vec2f_t KFPredictor2d::track_only_pred(double target_ts, bool update_state) {
     std::lock_guard<std::mutex> lock(m_mutex);
+
+    //计算一个有效的预测时间
     double valid_target_ts = get_valid_predict_time_length(target_ts);
+
+    //根据新的预测时间，更新卡尔曼滤波器的转移矩阵
     update_transition_matrix(valid_target_ts);
+
+    //根据预测时间，预测目标位置
     std::vector<Vec2f_t> pred_pose;
     PredictorState_2d pred;
     if (update_state) {
@@ -152,17 +208,29 @@ Vec2f_t KFPredictor2d::track_only_pred(double target_ts, bool update_state) {
     return pred_pose[0];
 }
 
+/// @brief 根据手部运动动态调整预测时间长度，提高预测的准确性
+/// @param target_ts 需要预测的时间戳
+/// @return 返回一个经过调整的时间戳
 double KFPredictor2d::get_valid_predict_time_length(double target_ts) {
+    //设置时间间隔预设值，0.1表示手完全静止；0.08表示手几乎静止；0.04表示手在运动中
     std::array<double, 3> predict_time_interval_vec = {0.1, 0.08, 0.04};  // 100ms, 80ms, 40ms
+
+    //定义速度阈值，判断手是否静止
     constexpr float static_hand_th_1 = 0.1;
     constexpr float static_hand_th_2 = 0.2;
-    int hand_static_state = 0;  // 0 dynamic, 1 middle, 2 static
+    int hand_static_state = 0;  // 0表示运动, 1表示几乎静止, 2表示静止
+
+    //计算当前手速（hand_speed = sqrt(S_VX ^ 2 + S_VY ^ 2)，即取手在x和y方向的速度的平方和，再求平方根）
     auto hand_speed = Vec2f_t{m_kf_impl->statePost.at<float>(S_VX), m_kf_impl->statePost.at<float>(S_VY)}.norm();
+
+    //根据手速判断当前手的状态是0，1，2
     if (hand_speed < static_hand_th_1) {
         hand_static_state = 2;
     } else if (hand_speed < static_hand_th_2) {
         hand_static_state = 1;
     }
+
+    //以predict_time_interval_vec[hand_static_state]作为预测时间上限，返回合适的预测时间
     double target_timestamp = 0;
     auto predict_interval = (target_ts - last_measure_time_) * predict_length_ratio_;
     predict_interval = std::min(predict_interval, predict_time_interval_vec[hand_static_state]);
@@ -170,11 +238,14 @@ double KFPredictor2d::get_valid_predict_time_length(double target_ts) {
     return target_timestamp;
 }
 
+/// @brief 获取是否在被追踪的状态
+/// @return true/false，true表示正在被追踪，false表示没有被追踪
 bool KFPredictor2d::get_tracking_status() const {
     std::lock_guard<std::mutex> lock(m_mutex);
     return is_tracked;
 }
 
+/// @brief 停止追踪
 void KFPredictor2d::stop_tracking() {
     std::lock_guard<std::mutex> lock(m_mutex);
     is_tracked = false;

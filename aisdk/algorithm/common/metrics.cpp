@@ -86,16 +86,22 @@ bool isNaN(const std::vector<Vec3f_t>& kpts) {
     return false;
 }
 
+/// @brief 检查头部姿态是否有效
+/// @param headpose 头部姿态信息
+/// @return true/false
 bool isHeadPoseValid(const NRTransform& headpose) {
     Eigen::Quaternion<float> q(headpose.rotation.qw, headpose.rotation.qx, headpose.rotation.qy, headpose.rotation.qz);
     const float max_float = std::numeric_limits<float>::max();
     const float min_float = std::numeric_limits<float>::lowest();
 
+    //每个四元数分量需要在有效范围内，即<= max_float && >= min_float
     if (q.w() < min_float || q.w() > max_float || q.x() < min_float || q.x() > max_float || q.y() < min_float ||
         q.y() > max_float || q.z() < min_float || q.z() > max_float) {
         return false;
     }
 
+    //检查四元数是否是单位四元数。（合法的旋转四元数应该是单位四元数，即w^2 + x^2 + y^2 + z^2 = 1;
+    //这里因为是float，两个float值判断是否相等，允许存在1e-6f的误差。）
     float length_squared = q.squaredNorm();
     const float epsilon = 1e-6f;
     return std::abs(length_squared - 1.0f) <= epsilon;

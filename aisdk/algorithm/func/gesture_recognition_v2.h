@@ -151,9 +151,9 @@ class HandFeatureUpdator {
     std::unique_ptr<HandFeature> cur_hand_feature;
   public:
      // in 1 cm, out 2 cm for lift3d
-    float opposition_closed_th = 0.018; 
-    float opposition_open_th = 0.1;     
-    float opposition_th_width = 0.01;    
+    float opposition_closed_th = 0.014; 
+    float opposition_open_th = 0.1;      
+    float opposition_th_width = 0.008;    
      // in 2 cm, out 3 cm for liftnimble
     //float opposition_closed_th = 0.025; 
     //float opposition_open_th = 0.1;     

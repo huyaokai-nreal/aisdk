@@ -40,6 +40,7 @@ struct PredictorState_2d {
     Vec2f_t vec;
 };
 
+/// @brief 2d关键点预测类（主要用于跟踪物体在2d平面中的运动轨迹，从而进行目标跟踪和运动预测）
 class KFPredictor2d {
    public:
     KFPredictor2d(){}
@@ -66,12 +67,12 @@ class KFPredictor2d {
     int m_ctrl_size = 0;
     double last_correct_time_ = 0;
     unsigned int m_type = CV_32F;
-    std::unique_ptr<cv::KalmanFilter> m_kf_impl;
-    bool is_tracked = false;
-    PredictorState_2d m_momentum;
+    std::unique_ptr<cv::KalmanFilter> m_kf_impl;  //卡尔曼滤波器对象
+    bool is_tracked = false;  //是否在被跟踪，true表示在被跟踪，false表示不在被跟踪
+    PredictorState_2d m_momentum;  //测量值信息
     mutable std::mutex m_mutex;
-    double last_measure_time_ = 0;
-    float predict_length_ratio_ = 1.0;
+    double last_measure_time_ = 0;  //上次的测量时间戳
+    float predict_length_ratio_ = 1.0;  //预测比例
     std::string glasses_type_ = "flora"; // flora or ella
 };
 
