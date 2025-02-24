@@ -138,7 +138,7 @@ class MonoHandKpt3DCalculator : public xgraph::CalculatorBase {
                 output_buffer_->left_hand.score =
                     output_buffer_->left_hand.reproj_rmse;  // only for recording visualization
                 // 如果手在中间且离眼镜较近，或者手在边缘且离眼镜特别近时，单目无效
-                if ((output_buffer_->left_hand.kpt3d[0][2] <= 0.3 &&
+                if ((output_buffer_->left_hand.kpt3d[0][2] <= 0.2 &&
                      output_buffer_->left_hand.kpt2d_lcam[0][0] >= 100) ||
                     (output_buffer_->left_hand.kpt3d[0][2] <= 0.1 &&
                      output_buffer_->left_hand.kpt2d_lcam[0][0] < 100)) {
@@ -201,7 +201,7 @@ class MonoHandKpt3DCalculator : public xgraph::CalculatorBase {
                     output_buffer_->right_hand.reproj_rmse;  // only for recording visualization
 
                 // 如果手在中间且离眼镜较近，或者手在边缘且离眼镜特别近时，单目无效
-                if ((output_buffer_->right_hand.kpt3d[0][2] <= 0.3 &&
+                if ((output_buffer_->right_hand.kpt3d[0][2] <= 0.2 &&
                      output_buffer_->right_hand.kpt2d_rcam[0][0] <= 400) ||
                     (output_buffer_->right_hand.kpt3d[0][2] <= 0.1 &&
                      output_buffer_->right_hand.kpt2d_rcam[0][0] > 400)) {
