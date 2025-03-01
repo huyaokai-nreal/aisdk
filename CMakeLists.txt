@@ -30,10 +30,12 @@ endif()
 if (CMAKE_BUILD_TYPE MATCHES "Release")
     # 增加debug符号或者信息
     set(ENABLE_REL_WITH_DEB_INFO OFF)
+
     # 启动编译生成的so执行strip清理
-    set(CMAKE_EXE_LINKER_FLAGS    "${CMAKE_EXE_LINKER_FLAGS}    -Wl,--gc-sections -Wl,-s -Wl,--exclude-libs,ALL")
-    set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -Wl,--gc-sections -Wl,-s -Wl,--exclude-libs,ALL")
-    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--gc-sections -Wl,-s -Wl,--exclude-libs,ALL")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")  #保留调试符号信息
+    set(CMAKE_EXE_LINKER_FLAGS    "${CMAKE_EXE_LINKER_FLAGS}    -Wl,--gc-sections -Wl,--exclude-libs,ALL")
+    set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -Wl,--gc-sections -Wl,--exclude-libs,ALL")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--gc-sections -Wl,--exclude-libs,ALL")
 endif()
 
 set(PROJECT_SRC_DIR "aisdk")

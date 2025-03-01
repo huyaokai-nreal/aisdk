@@ -709,7 +709,20 @@ NRPluginResult DeviceMessage::NotifyDeviceMessage(NRPluginHandle handle, const v
 
             std::shared_ptr<task::HandTrackingNextHostXGraph> impl =
                 std::dynamic_pointer_cast<task::HandTrackingNextHostXGraph>(pipeline.Impl());
-            impl->PushData(prediction_data, head_pose);
+            if (!impl) {
+                AISDK_LOG_ERROR("impl is nullptr now in DeviceMessage::NotifyDeviceMessage");
+            }
+
+            if (!(pipeline.Impl())) {
+                AISDK_LOG_ERROR("pipeline.Impl() is nullptr now in DeviceMessage::NotifyDeviceMessage");
+            }
+
+            if (impl) {
+                impl->PushData(prediction_data, head_pose);
+            } else {
+                AISDK_LOG_ERROR("impl is nullptr now")
+            }
+
             errorcode = NR_PLUGIN_RESULT_SUCCESS;
         }
     }
@@ -720,6 +733,12 @@ NRPluginResult DeviceMessage::NotifyDeviceMessage(NRPluginHandle handle, const v
 NRPluginResult HandTracking::ParseAllCameraData(const NRGrayscaleCameraFrameData* data) {
     // uint32_t camera_raw_data_size[4];
     // const uint8_t* camera_raw_data_[2];
+    //参数校验
+    if (!data) {
+        AISDK_LOG_ERROR("param is illegal in func HandTracking::ParseAllCameraData, data is nullptr");
+        return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
+    }
+
     AISDK_LOG_TRACE("start parse camera data, camera num is {}", data->camera_count);
     uint64_t nano_time_[2];
     NRTransform head_pose;
@@ -768,21 +787,37 @@ NRPluginResult HandTracking::ParseAllCameraData(const NRGrayscaleCameraFrameData
     // left or right timestamp should be the same
     errorcode = ins->m_handtracking.m_interface->GetDevicePose(ins->GetHandle(), &headpose_proto, nano_time_[0]);
     head_pose = headpose_proto.transform;
+
+    if (!(pipeline.Impl())) {
+        AISDK_LOG_ERROR("pipeline.Impl() is nullptr");
+    }
+
     if (ins->pipeline_work_scene == "handtracking_std_all_host") {
         std::shared_ptr<task::HandTrackingXGraph> impl =
             std::dynamic_pointer_cast<task::HandTrackingXGraph>(pipeline.Impl());
-        auto push_ret = impl->PushData(nano_time_[0], images, head_pose);
+
+        if (impl) {
+            auto push_ret = impl->PushData(nano_time_[0], images, head_pose);
+
 #if defined(ENABLE_ALGORITHM_DATA_RECORD) && !defined(ENABLE_SEGMENT_JOINT_INFERENCE_MODE)
-        if (push_ret == aisdk::algorithm::Status::SUCCESS) {
-            impl->SetTrackFrameState(current_time_nanos, aisdk::task::FrameState::PUSH_XGRAPH_WAIT_RESULT);
-        } else {
-            impl->SetTrackFrameState(current_time_nanos, aisdk::task::FrameState::PUSH_XGRAPH_FAILURE);
-        }
+            if (push_ret == aisdk::algorithm::Status::SUCCESS) {
+                impl->SetTrackFrameState(current_time_nanos, aisdk::task::FrameState::PUSH_XGRAPH_WAIT_RESULT);
+            } else {
+                impl->SetTrackFrameState(current_time_nanos, aisdk::task::FrameState::PUSH_XGRAPH_FAILURE);
+            }
 #endif
+        } else {
+            AISDK_LOG_ERROR("impl is nullptr in handtracking_std_all_host work scene");
+        }
     } else if (ins->pipeline_work_scene == "handtracking_segment_prior_glass") {
         std::shared_ptr<task::HandTrackingPriorGlassXGraph> impl =
             std::dynamic_pointer_cast<task::HandTrackingPriorGlassXGraph>(pipeline.Impl());
-        impl->PushData(nano_time_[0], images);
+
+        if (impl) {
+            impl->PushData(nano_time_[0], images);
+        } else {
+            AISDK_LOG_ERROR("impl is nullptr in handtracking_segment_prior_glass");
+        }
     }
 
     AISDK_LOG_TRACE("interface HandTrackingXGraph::PushData");
@@ -792,6 +827,12 @@ NRPluginResult HandTracking::ParseAllCameraData(const NRGrayscaleCameraFrameData
 
 void HandTracking::NotifyData(NRPluginHandle handle, NRChannelDataType channel_data_type, const void* data,
                               uint32_t data_size) {
+    //参数校验
+    if (!data) {
+        AISDK_LOG_ERROR("param is illegal in func HandTracking::NotifyData, data is nullptr");
+        return;
+    }
+
     AISDK_LOG_TRACE("NotifyData in HandTracking: data type {}", int(channel_data_type));
     if (handle != Plugin::GetInstance()->GetHandle()) {
         AISDK_LOG_ERROR("NotifyData handle error!");
