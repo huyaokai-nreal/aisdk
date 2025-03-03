@@ -50,6 +50,7 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
     std::string model_name_;
     bool pcl_able_;
     float bbox_expand_ratio_ = 1.3;
+    float mono_valid_bbox_area_ = 15000;  // 检测框面积阈值
     std::shared_ptr<base::BaseCameraModel> lcam_model_ = nullptr;
     std::shared_ptr<base::BaseCameraModel> rcam_model_ = nullptr;
     enum class CropMethod { WarpAffine, PCL };
@@ -280,19 +281,23 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
             }
         }
         if (bbox_data.lhand_lcam_valid && !bbox_data.lhand_rcam_valid) {
+            float bbox_area = bbox_data.lhand_lcam_rect.w * bbox_data.lhand_lcam_rect.h;
+            AISDK_LOG_TRACE("[HandLandmarkBatchCalculator] mono left_hand bbox_area {}", bbox_area);
             auto result = ProcessSingleHand(image_data[0], bbox_data.lhand_lcam_rect, true, lcam_model_.get(),
                                             output_buffer_->lhand_lcam_kpt, output_buffer_->lhand_lcam_rdepth,
                                             output_buffer_->lhand_lcam_virtual_camera, bbox_data.det_flag);
-            if (result.ok()) {
+            if (result.ok() && bbox_area < mono_valid_bbox_area_) {
                 output_buffer_->lhand_lcam_valid = true;
                 output_buffer_->lhand_rcam_valid = false;
             }
         }
         if (bbox_data.rhand_rcam_valid && !bbox_data.rhand_lcam_valid) {
+            float bbox_area = bbox_data.rhand_rcam_rect.w * bbox_data.rhand_rcam_rect.h;
+            AISDK_LOG_TRACE("[HandLandmarkBatchCalculator] mono right_hand bbox_area {}", bbox_area);
             auto result = ProcessSingleHand(image_data[1], bbox_data.rhand_rcam_rect, false, rcam_model_.get(),
                                             output_buffer_->rhand_rcam_kpt, output_buffer_->rhand_rcam_rdepth,
                                             output_buffer_->rhand_rcam_virtual_camera, bbox_data.det_flag);
-            if (result.ok()) {
+            if (result.ok() && bbox_area < mono_valid_bbox_area_) {
                 output_buffer_->rhand_rcam_valid = true;
                 output_buffer_->rhand_lcam_valid = false;
             }

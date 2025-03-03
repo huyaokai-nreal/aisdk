@@ -48,8 +48,8 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
     float min_bbox_area_th_ = 10 * 10;
     int det_tracker_step_ = 0;  //检测和跟踪的计数器
     int det_interval_ = 4;
-    float valid_bbox_in_image_ratio_ = 0.8;
-    bool enable_track = true;  //是否启用手部跟踪，true表示启用
+    float valid_bbox_in_image_ratio_ = 0.8;  // 检测框有效面积比例
+    bool enable_track = true;                //是否启用手部跟踪，true表示启用
 
    public:
     /// @brief 设置手部检测跟踪calculator的输入输出关系和对应数据类型
