@@ -46,7 +46,7 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
     uint32_t video_width_;
     uint32_t video_height_;
     float min_bbox_area_th_ = 10 * 10;
-    int det_tracker_step_ = 0;  //检测和跟踪的计数器
+    int det_tracker_step_ = 0;  //检测和跟踪的计数器，为0表示还未开始追踪，不为0表示在追踪的过程中
     int det_interval_ = 4;
     float valid_bbox_in_image_ratio_ = 0.8;  // 检测框有效面积比例
     bool enable_track = true;                //是否启用手部跟踪，true表示启用
@@ -160,6 +160,7 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
         auto &predictor_lhand_rcam = GlobalPredictorService::getInstance().get_predictor_lhand_rcam_bbox();
         auto &predictor_rhand_rcam = GlobalPredictorService::getInstance().get_predictor_rhand_rcam_bbox();
 
+        //并非刚开始追踪，并且有上次的数据，则通过时间戳预测下一个时间点的坐标
         if ((det_tracker_step_ != 0) && enable_track &&
             (predictor_lhand_lcam.get_tracking_status() || predictor_rhand_lcam.get_tracking_status() ||
              predictor_lhand_rcam.get_tracking_status() || predictor_rhand_rcam.get_tracking_status())) {
@@ -269,12 +270,12 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
 
                 det_tracker_step_++;
                 if (det_tracker_step_ > det_interval_) {
-                    det_tracker_step_ = 0;
+                    det_tracker_step_ = 0;  //预测追踪几次之后，就要重新开始检测，由再次从头开始预测追踪
                 }
             }
         }
 
-        //没有跟踪到手，则通过模型进行检测
+        //刚刚开始追踪，则通过模型进行检测
         if (output_buffer_->det_flag) {
             // do detection
             auto &result = *output_buffer_;
