@@ -35,4 +35,8 @@ export CONAN_USER_REQUIRES="['leopard/jenkins#8c2d2805c596ec2c398625c95cf020bf6b
 echo "CONAN_USER_REQUIRES 已设置为: $CONAN_USER_REQUIRES"
 
 # 执行编译脚本
-bash compile.sh -c android64
+if [[ "$1" == "linux" ]]; then
+    bash compile.sh -c linux
+else
+    bash compile.sh -c android64
+fi
