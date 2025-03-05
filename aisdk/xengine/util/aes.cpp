@@ -162,18 +162,28 @@ int aes::encryptFile(const char *src_path, const char *dst_path) {
     unsigned char *outbuf = new unsigned char[READ_BUF_LEN + 32];
 
     /* 获取文件属性 */
-    if (lstat(src_path, &src_stat) != 0) return ErrSrcNotExist;
+    if (lstat(src_path, &src_stat) != 0) {
+        delete[] inbuf;
+        delete[] outbuf;
+        return ErrSrcNotExist;
+    }
 
     read_file_size = src_stat.st_size;
 
     if (read_file_size % 16 == 0 || read_file_size == 0) add_tail = 1;
 
     read_fd = open(src_path, O_RDONLY | O_BINARY);
-    if (read_fd < 0) return ErrSrcOpenFail;
+    if (read_fd < 0) {
+        delete[] inbuf;
+        delete[] outbuf;
+        return ErrSrcOpenFail;
+    }
 
     write_fd = open(dst_path, O_CREAT | O_WRONLY | O_BINARY,
                     0777);  // permmision setting
     if (write_fd < 0) {
+        delete[] inbuf;
+        delete[] outbuf;
         close(read_fd);
         return ErrDstOpenFail;
     }
@@ -211,13 +221,23 @@ int aes::encryptFile(const char *src_path, const char *dst_path) {
     }
 
 END:
-    close(read_fd);
-    close(write_fd);
+    if (read_fd != -1) {
+        close(read_fd);
+    }
 
-    delete[] inbuf;
-    delete[] outbuf;
+    if (write_fd != -1) {
+        close(write_fd);
+    }
+
+    if (inbuf) {
+        delete[] inbuf;
+    }
+
+    if (outbuf) {
+        delete[] outbuf;
+    }
+
     if (ret < 0) return ErrWriteFail;
-
     return ErrNone;
 }
 
@@ -239,15 +259,27 @@ int aes::decryptFile(const char *src_path, const char *dst_path) {
     unsigned char data;
 
     /* 获取文件属性 */
-    if (lstat(src_path, &src_stat) != 0) return ErrSrcNotExist;
+    if (lstat(src_path, &src_stat) != 0) {
+        delete[] inbuf;
+        delete[] outbuf;
+        return ErrSrcNotExist;
+    }
 
     read_file_size = src_stat.st_size;
 
     /* 判断加密文件长度是否合法,正常为16的倍数 */
-    if (read_file_size % 16 != 0 || read_file_size == 0) return ErrAesFileFormat;
+    if (read_file_size % 16 != 0 || read_file_size == 0) {
+        delete[] inbuf;
+        delete[] outbuf;
+        return ErrAesFileFormat;
+    }
 
     read_fd = open(src_path, O_RDONLY | O_BINARY);
-    if (read_fd < 0) return ErrSrcOpenFail;
+    if (read_fd < 0) {
+        delete[] inbuf;
+        delete[] outbuf;
+        return ErrSrcOpenFail;
+    }
 
     /* 删除已存在的目的文件 */
     unlink(dst_path);
@@ -255,6 +287,8 @@ int aes::decryptFile(const char *src_path, const char *dst_path) {
     write_fd = open(dst_path, O_CREAT | O_WRONLY | O_BINARY,
                     0777);  // permmision setting
     if (write_fd < 0) {
+        delete[] inbuf;
+        delete[] outbuf;
         close(read_fd);
         return ErrDstOpenFail;
     }
@@ -288,11 +322,21 @@ int aes::decryptFile(const char *src_path, const char *dst_path) {
         read_file_size -= read_size;
     }
 END:
-    close(read_fd);
-    close(write_fd);
+    if (read_fd != -1) {
+        close(read_fd);
+    }
 
-    delete[] inbuf;
-    delete[] outbuf;
+    if (write_fd != -1) {
+        close(write_fd);
+    }
+
+    if (inbuf) {
+        delete[] inbuf;
+    }
+
+    if (outbuf) {
+        delete[] outbuf;
+    }
 
     if (ret < 0) return ErrWriteFail;
     return ErrNone;

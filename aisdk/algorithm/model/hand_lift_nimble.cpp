@@ -218,7 +218,7 @@ void GMLPLiftNimble::PostProcess(const LiftNetInputs &inputs, LiftNetOutputs &ou
             last_right_time = inputs.timestamp;
         }
     } else {
-        AISDK_LOG_WARN("[GMLPLiftNimble] PostProcess mem_size error, mem_size: {}", mem_size);
+        AISDK_LOG_TRACE("[GMLPLiftNimble] PostProcess mem_size error, mem_size: {}", mem_size);
     }
     AISDK_LOG_TRACE("[GMLPLiftNimble] run GMLPLiftNimble infer mem success, mem_size: {}", mem_size);
 }

@@ -238,7 +238,7 @@ bool BaseXGraph::CallBackInferenceResult(const xgraph::Packet &packet, int64_t o
             ret = true;
         } else {
 #if defined(ENABLE_ALGORITHM_GRAPH_STREAM_EVAL_TIME)
-            if (cache->m_stream_time) {
+            if (cache && (cache->m_stream_time)) {  // TODO 这行实际执行不到，cache在else里面始终是nullptr
                 cache->m_stream_time->valid = false;
             }
 #endif

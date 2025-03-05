@@ -11,6 +11,9 @@ namespace aisdk::algorithm {
 class HandDetectNet : public CalculatorBaseNet {
    public:
     struct GridAnchor {
+        // 显式定义默认构造函数
+        GridAnchor() : grid_x(0), grid_y(0), anchor_rw(0), anchor_rh(0) {}
+
         float grid_x;
         float grid_y;
         float anchor_rw;

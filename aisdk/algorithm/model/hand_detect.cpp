@@ -23,7 +23,8 @@ absl::Status HandDetectNet::Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xen
     // 简单实现
     {
         itensor_format = checkshapeformat(model.vendor_type, itensor.m_tensors[0].m_rank);
-        int height, width;
+        int height = 0;
+        int width = 0;
         if (itensor_format == aisdk::xengine::TensorFormat::CHW) {
             height = itensor.m_tensors[0].m_dims[1];
             width = itensor.m_tensors[0].m_dims[2];
@@ -449,7 +450,8 @@ absl::Status HandDetectNetv2::Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::x
     // 简单实现
     {
         itensor_format = checkshapeformat(model.vendor_type, itensor.m_tensors[0].m_rank);
-        int height, width;
+        int height = 0;
+        int width = 0;
         if (itensor_format == aisdk::xengine::TensorFormat::CHW) {
             height = itensor.m_tensors[0].m_dims[1];
             width = itensor.m_tensors[0].m_dims[2];
