@@ -1317,8 +1317,15 @@ NRPluginResult Plugin::Release(NRPluginHandle handle) {
         AISDK_LOG_ERROR("HandTracking::Release failed: get wrong handle!");
         return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
     }
+
     AISDK_LOG_WARN("HandTracking: Release");
     auto ins = Plugin::GetInstance();
+
+    //释放模型资源
+    if (ins && (ins->m_tar_handle)) {
+        ins->m_tar_handle->ReleaseCache();
+    }
+
     ins->ReleasePipeline();
 #if defined(XENGINE_SHARED_LIB)
     ins->m_handtracking.UnLoadDlsym(false);
