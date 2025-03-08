@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "interface/handtracking_sdk/public/nr_plugin_types.h"
+#include "interface/handtracking_sdk/include/public/nr_plugin_types.h"
 
 namespace aisdk::algorithm {
 

@@ -1,22 +1,17 @@
-set(HANDTRACKING_SDK_NAME test_hand_tracking_sdk_interface)
+# 添加可执行文件
+add_executable(handtracking_test test_interface.cpp)
 
-add_executable(${HANDTRACKING_SDK_NAME}
-${CMAKE_CURRENT_SOURCE_DIR}/test_hand_tracking_sdk_interface.cpp
+# 链接主库和依赖
+target_link_libraries(handtracking_test PRIVATE
+    ${HANDTRACKING_INTERFACE_LIBRARY_NAME}
+    # 其他测试专用依赖（如gtest）
 )
 
-# add target include. not fix exteral xxx.h 
-target_include_directories(${HANDTRACKING_SDK_DEMO_NAME} PRIVATE "../handtracking_sdk_interface.h")
+# 设置测试可执行文件输出目录
+set_target_properties(handtracking_test PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+)
 
-target_compile_options(${HANDTRACKING_SDK_DEMO_NAME} PRIVATE -DNRPLUGIN)
-
-if(NOT Xrlinux AND ENABLE_OPENXR_HANDJOINT_FORMAT) 
-    target_compile_options(${HANDTRACKING_SDK_DEMO_NAME} PRIVATE -DENABLE_OPENXR_HANDJOINT_FORMAT)
-endif()
-
-target_link_libraries(${HANDTRACKING_SDK_DEMO_NAME} PUBLIC base jsoncpp Eigen3::Eigen opencv::opencv)
-
-install(TARGETS ${HANDTRACKING_SDK_DEMO_NAME}
-            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
-add_clang_format_target(${HANDTRACKING_SDK_DEMO_NAME})
+# 如需添加测试框架（示例）
+# enable_testing()
+# add_test(NAME handtracking_test COMMAND handtracking_test)
