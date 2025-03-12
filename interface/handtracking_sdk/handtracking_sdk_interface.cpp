@@ -1208,7 +1208,7 @@ NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
                     if (status == aisdk::algorithm::Status::SUCCESS) {
                         ins->m_is_init = true;
                         ins->pipeline_name = pipeline_configs[pipeline_index].pipeline_name;
-                        AISDK_LOG_WARN("HandTracking: Initialized!");
+                        AISDK_LOG_WARN("HandTracking: Initialized");
                         return NR_PLUGIN_RESULT_SUCCESS;
                     }
                     AISDK_LOG_ERROR("HandTracking: init failed since NrCore::Status: {}!", static_cast<int>(status));
@@ -1361,7 +1361,7 @@ extern "C" void NR_INTERFACE_EXPORT NR_INTERFACE_API NRPluginCreate(NRPluginHand
 #else
 extern "C" void NRPluginCreate_HANDTRACKING(NRPluginHandle handle, NRInterfaces* interfaces) {
 #endif
-    AISDK_LOG_WARN("NRPluginCreate");
+    AISDK_LOG_WARN("HandTracking: NRPluginCreate");
     const std::string git_version = AISDK_GIT_VERSION;
     AISDK_LOG_WARN("HandTracking: git_version={:s}", git_version.c_str());
 
@@ -1374,7 +1374,7 @@ extern "C" void NRPluginCreate_HANDTRACKING(NRPluginHandle handle, NRInterfaces*
 
     auto ins = aisdk::interface::Plugin::GetInstance();
     ins->Init(handle, interfaces);
-    AISDK_LOG_WARN("NRPluginCreated");
+    AISDK_LOG_WARN("HandTracking: NRPluginCreated");
 }
 
 #ifdef HANDTRACKING_SHARED_LIBS
@@ -1382,9 +1382,9 @@ extern "C" void NR_INTERFACE_EXPORT NR_INTERFACE_API NRPluginDestroy() {
 #else
 extern "C" void NRPluginDestroy_HANDTRACKING() {
 #endif
-    AISDK_LOG_WARN("NRPluginDestroy");
+    AISDK_LOG_WARN("HandTracking: NRPluginDestroy");
     aisdk::interface::Plugin::DestoryInstance();
-    AISDK_LOG_WARN("NRPluginDestroied");
+    AISDK_LOG_WARN("HandTracking: NRPluginDestroied");
 }
 
 #ifdef HANDTRACKING_SHARED_LIBS
