@@ -124,10 +124,10 @@ class DeviceMessage {
 class Plugin;
 class Plugin {
    public:
-    Plugin(const Plugin&) = delete;
-    void operator=(const Plugin&) = delete;
+    // Plugin(const Plugin&) = delete;
+    // void operator=(const Plugin&) = delete;
 
-    static Plugin* GetInstance();
+    static Plugin& GetInstance();
     static void DestoryInstance();
     bool Init(NRPluginHandle handle, NRInterfaces* interfaces);
     task::Pipeline& GetPipeline();
@@ -154,10 +154,15 @@ class Plugin {
     static NRPluginResult Release(NRPluginHandle handle);
     static NRPluginResult Unregister(NRPluginHandle handle);
 
-   private:
-    Plugin() = default;
-    ~Plugin();
-    static Plugin* m_ins;
+private:
+   // private构造和析构，禁止所有拷贝和移动操作
+   Plugin() = default;
+   ~Plugin();
+   Plugin(const Plugin&) = delete;
+   Plugin(Plugin&&) = delete;
+   void operator=(const Plugin&) = delete;
+   void operator=(Plugin&&) = delete;
+    //static Plugin* m_ins;
 
     std::atomic_bool m_is_init = false;
     std::unique_ptr<task::Pipeline> m_pipeline;
