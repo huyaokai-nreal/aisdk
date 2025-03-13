@@ -58,10 +58,10 @@ const std::string netalgo_so_name = XENGINE_LIB_NAME;
 HandTracking::~HandTracking() { UnLoadDlsym(true); }
 
 NRPluginResult HandTracking::GetAvailableGestureType(NRPluginHandle handle, uint64_t* out_available_gesture_type_mask) {
-    if (handle != Plugin::GetInstance().GetHandle()) {
-        AISDK_LOG_TRACE("HandTracking: GetAvailableGestureType handle error!");
-        return NR_PLUGIN_RESULT_FAILURE;
-    }
+    // if (handle != Plugin::GetInstance().GetHandle()) {
+    //     AISDK_LOG_TRACE("HandTracking: GetAvailableGestureType handle error!");
+    //     return NR_PLUGIN_RESULT_FAILURE;
+    // }
     *out_available_gesture_type_mask = GESTURE_TYPE_MASK_OPEN_HAND | GESTURE_TYPE_MASK_GRAB | GESTURE_TYPE_MASK_PINCH |
                                        GESTURE_TYPE_MASK_POINT | GESTURE_TYPE_MASK_VICTORY | GESTURE_TYPE_MASK_CALL |
                                        GESTURE_TYPE_MASK_SYSTEM | GESTURE_TYPE_MASK_THUMBS_UP;
@@ -70,10 +70,10 @@ NRPluginResult HandTracking::GetAvailableGestureType(NRPluginHandle handle, uint
 
 #if defined(ENABLE_OPENXR_HANDJOINT_FORMAT)
 NRPluginResult HandTracking::GetAvailableHandJoint(NRPluginHandle handle, uint64_t* out_available_hand_joint_mask) {
-    if (handle != Plugin::GetInstance().GetHandle()) {
-        AISDK_LOG_TRACE("HandTracking: GetAvailableHandJoint handle error!");
-        return NR_PLUGIN_RESULT_FAILURE;
-    }
+    // if (handle != Plugin::GetInstance().GetHandle()) {
+    //     AISDK_LOG_TRACE("HandTracking: GetAvailableHandJoint handle error!");
+    //     return NR_PLUGIN_RESULT_FAILURE;
+    // }
     *out_available_hand_joint_mask =
         HAND_JOINT_TYPE_MASK_PALM | HAND_JOINT_TYPE_MASK_WRIST | HAND_JOINT_TYPE_MASK_THUMB_METACARPAL |
         HAND_JOINT_TYPE_MASK_THUMB_PROXIMAL | HAND_JOINT_TYPE_MASK_THUMB_DISTAL | HAND_JOINT_TYPE_MASK_THUMB_TIP |
@@ -91,10 +91,10 @@ NRPluginResult HandTracking::GetAvailableHandJoint(NRPluginHandle handle, uint64
 }
 #else
 NRPluginResult HandTracking::GetAvailableHandJoint(NRPluginHandle handle, uint64_t* out_available_hand_joint_mask) {
-    if (handle != Plugin::GetInstance().GetHandle()) {
-        AISDK_LOG_TRACE("HandTracking: GetAvailableHandJoint handle error!");
-        return NR_PLUGIN_RESULT_FAILURE;
-    }
+    // if (handle != Plugin::GetInstance().GetHandle()) {
+    //     AISDK_LOG_TRACE("HandTracking: GetAvailableHandJoint handle error!");
+    //     return NR_PLUGIN_RESULT_FAILURE;
+    // }
     *out_available_hand_joint_mask =
         HAND_JOINT_TYPE_MASK_THUMB_1 | HAND_JOINT_TYPE_MASK_THUMB_2 | HAND_JOINT_TYPE_MASK_THUMB_3 |
         HAND_JOINT_TYPE_MASK_INDEX_1 | HAND_JOINT_TYPE_MASK_INDEX_2 | HAND_JOINT_TYPE_MASK_INDEX_3 |
@@ -109,10 +109,10 @@ NRPluginResult HandTracking::GetAvailableHandJoint(NRPluginHandle handle, uint64
 #endif
 
 NRPluginResult HandTracking::GetSupportedFunctions(NRPluginHandle handle, uint64_t* out_supported_function_mask) {
-    if (handle != Plugin::GetInstance().GetHandle()) {
-        AISDK_LOG_TRACE("HandTracking: GetSupportedFunctions handle error!");
-        return NR_PLUGIN_RESULT_FAILURE;
-    }
+    // if (handle != Plugin::GetInstance().GetHandle()) {
+    //     AISDK_LOG_TRACE("HandTracking: GetSupportedFunctions handle error!");
+    //     return NR_PLUGIN_RESULT_FAILURE;
+    // }
     *out_supported_function_mask =
         HAND_TRACKING_SUPPORT_MASK_HAND_JOINT_POSITION | HAND_TRACKING_SUPPORT_MASK_HAND_JOINT_ROTATION;
     return NR_PLUGIN_RESULT_SUCCESS;
@@ -126,10 +126,10 @@ NRPluginResult HandTracking::GetHandData(NRPluginHandle handle, uint64_t hmd_tim
     (void)out_hand_array;
     (void)out_hand_num;
 
-    if (handle != Plugin::GetInstance().GetHandle()) {
-        AISDK_LOG_TRACE("HandTracking: GetHandData handle error!");
-        return NR_PLUGIN_RESULT_FAILURE;
-    }
+    // if (handle != Plugin::GetInstance().GetHandle()) {
+    //     AISDK_LOG_TRACE("HandTracking: GetHandData handle error!");
+    //     return NR_PLUGIN_RESULT_FAILURE;
+    // }
 
     auto& ins = Plugin::GetInstance();
     if (!ins.isInit()) {
@@ -785,7 +785,8 @@ NRPluginResult HandTracking::ParseAllCameraData(const NRGrayscaleCameraFrameData
                    aisdk::base::getTime2());
 #endif
     // left or right timestamp should be the same
-    errorcode = ins.m_handtracking.m_interface->GetDevicePose(ins.GetHandle(), &headpose_proto, nano_time_[0]);
+    errorcode = ins.m_handtracking.m_interface->GetDevicePose(Plugin::GetInstance().GetHandle(), &headpose_proto,
+                                                              nano_time_[0]);
     head_pose = headpose_proto.transform;
 
     if (!(pipeline.Impl())) {
@@ -1239,10 +1240,10 @@ NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
 }
 
 NRPluginResult Plugin::Start(NRPluginHandle handle) {
-    if (handle != Plugin::GetInstance().GetHandle()) {
-        AISDK_LOG_ERROR("HandTracking::Start failed: get wrong handle!");
-        return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
-    }
+    // if (handle != Plugin::GetInstance().GetHandle()) {
+    //     AISDK_LOG_ERROR("HandTracking::Start failed: get wrong handle!");
+    //     return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
+    // }
     AISDK_LOG_WARN("HandTracking: Start");
     auto& ins = Plugin::GetInstance();
     if (!ins.isInit()) {
@@ -1261,18 +1262,18 @@ NRPluginResult Plugin::Start(NRPluginHandle handle) {
 }
 
 NRPluginResult Plugin::Update(NRPluginHandle handle) {
-    if (handle != Plugin::GetInstance().GetHandle()) {
-        return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
-    }
+    // if (handle != Plugin::GetInstance().GetHandle()) {
+    //     return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
+    // }
     AISDK_LOG_WARN("HandTracking: Updated");
     return NR_PLUGIN_RESULT_SUCCESS;
 }
 
 NRPluginResult Plugin::Pause(NRPluginHandle handle) {
-    if (handle != Plugin::GetInstance().GetHandle()) {
-        AISDK_LOG_ERROR("HandTracking::Pause failed: get wrong handle!");
-        return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
-    }
+    // if (handle != Plugin::GetInstance().GetHandle()) {
+    //     AISDK_LOG_ERROR("HandTracking::Pause failed: get wrong handle!");
+    //     return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
+    // }
     AISDK_LOG_WARN("HandTracking: Pause");
     auto& ins = Plugin::GetInstance();
     if (!ins.isInit()) {
@@ -1287,10 +1288,10 @@ NRPluginResult Plugin::Pause(NRPluginHandle handle) {
 }
 
 NRPluginResult Plugin::Resume(NRPluginHandle handle) {
-    if (handle != Plugin::GetInstance().GetHandle()) {
-        AISDK_LOG_ERROR("HandTracking::Resume failed: get wrong handle!");
-        return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
-    }
+    // if (handle != Plugin::GetInstance().GetHandle()) {
+    //     AISDK_LOG_ERROR("HandTracking::Resume failed: get wrong handle!");
+    //     return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
+    // }
     AISDK_LOG_WARN("HandTracking: Resume");
     auto& ins = Plugin::GetInstance();
     if (!ins.isInit()) {
@@ -1309,10 +1310,10 @@ NRPluginResult Plugin::Resume(NRPluginHandle handle) {
 }
 
 NRPluginResult Plugin::Stop(NRPluginHandle handle) {
-    if (handle != Plugin::GetInstance().GetHandle()) {
-        AISDK_LOG_ERROR("HandTracking::Stop failed: get wrong handle!");
-        return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
-    }
+    // if (handle != Plugin::GetInstance().GetHandle()) {
+    //     AISDK_LOG_ERROR("HandTracking::Stop failed: get wrong handle!");
+    //     return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
+    // }
     AISDK_LOG_WARN("HandTracking: Stop");
     auto& ins = Plugin::GetInstance();
     if (!ins.isInit()) {
@@ -1327,10 +1328,10 @@ NRPluginResult Plugin::Stop(NRPluginHandle handle) {
 }
 
 NRPluginResult Plugin::Release(NRPluginHandle handle) {
-    if (handle != Plugin::GetInstance().GetHandle()) {
-        AISDK_LOG_ERROR("HandTracking::Release failed: get wrong handle!");
-        return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
-    }
+    // if (handle != Plugin::GetInstance().GetHandle()) {
+    //     AISDK_LOG_ERROR("HandTracking::Release failed: get wrong handle!");
+    //     return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
+    // }
 
     AISDK_LOG_WARN("HandTracking: Release");
     auto& ins = Plugin::GetInstance();
@@ -1350,19 +1351,19 @@ NRPluginResult Plugin::Release(NRPluginHandle handle) {
 }
 
 NRPluginResult Plugin::Register(NRPluginHandle handle) {
-    if (handle != Plugin::GetInstance().GetHandle()) {
-        AISDK_LOG_ERROR("HandTracking::Register failed: get wrong handle!");
-        return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
-    }
+    // if (handle != Plugin::GetInstance().GetHandle()) {
+    //     AISDK_LOG_ERROR("HandTracking::Register failed: get wrong handle!");
+    //     return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
+    // }
     AISDK_LOG_INFO("HandTracking: Registered");
     return NR_PLUGIN_RESULT_SUCCESS;
 }
 
 NRPluginResult Plugin::Unregister(NRPluginHandle handle) {
-    if (handle != Plugin::GetInstance().GetHandle()) {
-        AISDK_LOG_ERROR("HandTracking::Unregister failed: get wrong handle!");
-        return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
-    }
+    // if (handle != Plugin::GetInstance().GetHandle()) {
+    //     AISDK_LOG_ERROR("HandTracking::Unregister failed: get wrong handle!");
+    //     return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
+    // }
     AISDK_LOG_INFO("HandTracking: Unregistered");
     return NR_PLUGIN_RESULT_SUCCESS;
 }
