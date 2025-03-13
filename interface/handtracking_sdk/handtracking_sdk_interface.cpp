@@ -689,7 +689,8 @@ NRPluginResult DeviceMessage::NotifyDeviceMessage(NRPluginHandle handle, const v
     DevicePose headpose_proto;
 
     if (handle != Plugin::GetInstance().GetHandle()) {
-        AISDK_LOG_ERROR("NotifyDeviceMessage handle error!");
+        AISDK_LOG_ERROR("NotifyDeviceMessage handle error!, param_handle:{}, local_handle:{}", handle,
+                        Plugin::GetInstance().GetHandle());
         return errorcode;
     }
 
@@ -836,7 +837,8 @@ void HandTracking::NotifyData(NRPluginHandle handle, NRChannelDataType channel_d
 
     AISDK_LOG_TRACE("NotifyData in HandTracking: data type {}", int(channel_data_type));
     if (handle != Plugin::GetInstance().GetHandle()) {
-        AISDK_LOG_ERROR("NotifyData handle error!");
+        AISDK_LOG_ERROR("NotifyData handle error! param_handle:{}, local_handle:{}", handle,
+                        Plugin::GetInstance().GetHandle());
         return;
     }
     switch (channel_data_type) {
@@ -862,7 +864,12 @@ void HandTracking::NotifyData(NRPluginHandle handle, NRChannelDataType channel_d
 
 /// @brief 更新handle值
 /// @param handle 句柄信息
-void HandTracking::UpdatePluginHandle(NRPluginHandle handle) { Plugin::GetInstance().SetHandle(handle); }
+NRPluginResult HandTracking::UpdatePluginHandle(NRPluginHandle handle) {
+    AISDK_LOG_INFO("HandTracking: update handle, old_handle:{}, new_handle:{}", Plugin::GetInstance().GetHandle(),
+                   handle);
+    Plugin::GetInstance().SetHandle(handle);
+    return NR_PLUGIN_RESULT_SUCCESS;
+}
 
 // Plugin* Plugin::m_ins = nullptr;
 Plugin& Plugin::GetInstance() {
@@ -1058,7 +1065,8 @@ std::vector<int> SelectPipeline(std::vector<aisdk::xengine::PipelineConfig>& pip
 
 NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
     if (handle != Plugin::GetInstance().GetHandle()) {
-        AISDK_LOG_ERROR("HandTracking::Initialize failed: get wrong handle!");
+        AISDK_LOG_ERROR("HandTracking: Initialize failed: get wrong handle!, param_handle:{}, local_handle:{}", handle,
+                        Plugin::GetInstance().GetHandle());
         return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
     }
     AISDK_LOG_WARN("HandTracking: Initializing");
@@ -1077,6 +1085,7 @@ NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
         &HandTracking::GetSupportedFunctions,
         &HandTracking::GetHandData,
         &HandTracking::NotifyData,
+        &HandTracking::UpdatePluginHandle,
     };
 
     ins.m_handtracking.m_interface->RegisterProvider(plugin_handle, &provider, sizeof(provider));

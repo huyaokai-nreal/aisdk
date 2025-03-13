@@ -67,7 +67,7 @@ class HandTracking {
     static void SendGlassPredictionData();                                  
     static void NotifyData(NRPluginHandle handle, NRChannelDataType channel_data_type, const void* data,
                            uint32_t data_size);
-    static void UpdatePluginHandle(NRPluginHandle handle);
+    static NRPluginResult UpdatePluginHandle(NRPluginHandle handle);
     static NRPluginResult ParseGlassPredictionData(const GlassHandPredictionData* data);
     static NRPluginResult ParseAllCameraData(const NRGrayscaleCameraFrameData* data);
     static int GetHandTrackingMidExecInfo(ProfilingInfo* info);
