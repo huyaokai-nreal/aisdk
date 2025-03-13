@@ -859,6 +859,10 @@ void HandTracking::NotifyData(NRPluginHandle handle, NRChannelDataType channel_d
     // AISDK_LOG_TRACE("NotifyData in HandTracking: Complete!");
 }
 
+/// @brief 更新handle值
+/// @param handle 句柄信息
+void HandTracking::UpdatePluginHandle(NRPluginHandle handle) { Plugin::GetInstance()->SetHandle(handle); }
+
 Plugin* Plugin::m_ins = nullptr;
 Plugin* Plugin::GetInstance() {
     if (m_ins == nullptr) {
@@ -950,6 +954,18 @@ task::Pipeline& Plugin::GetPipeline() {
 }
 
 void Plugin::ReleasePipeline() { m_pipeline = nullptr; }
+
+NRPluginHandle Plugin::GetHandle() {
+    //共享锁控制，允许多线程读
+    std::shared_lock lck(m_mutex);
+    return m_handle;
+}
+
+void Plugin::SetHandle(NRPluginHandle handle) {
+    //独占锁控制，写的时候，读操作阻塞
+    std::unique_lock lck(m_mutex);
+    m_handle = handle;
+}
 
 void Plugin::Start() {
     m_is_start = true;

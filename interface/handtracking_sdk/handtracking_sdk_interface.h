@@ -16,6 +16,7 @@
 #include "aisdk/task/handtracking/nrcore_pipeline.h"
 
 #include <mutex>
+#include <shared_mutex>
 #include <thread>
 // #include "version.h"
 
@@ -66,6 +67,7 @@ class HandTracking {
     static void SendGlassPredictionData();                                  
     static void NotifyData(NRPluginHandle handle, NRChannelDataType channel_data_type, const void* data,
                            uint32_t data_size);
+    static void UpdatePluginHandle(NRPluginHandle handle);
     static NRPluginResult ParseGlassPredictionData(const GlassHandPredictionData* data);
     static NRPluginResult ParseAllCameraData(const NRGrayscaleCameraFrameData* data);
     static int GetHandTrackingMidExecInfo(ProfilingInfo* info);
@@ -130,8 +132,8 @@ class Plugin {
     bool Init(NRPluginHandle handle, NRInterfaces* interfaces);
     task::Pipeline& GetPipeline();
     void ReleasePipeline();
-    NRPluginHandle GetHandle() { return m_handle; }
-    void SetHandle(NRPluginHandle handle) { m_handle = handle; }
+    NRPluginHandle GetHandle();
+    void SetHandle(NRPluginHandle handle);
 
     bool isInit() { return m_is_init; }
     bool isStart() { return m_is_start; }
@@ -163,6 +165,7 @@ class Plugin {
 
     std::atomic_bool m_is_start = false;
     NRDeviceType m_act_device_type;
+    std::shared_mutex m_mutex;
 
    public:
     HandTracking m_handtracking;
