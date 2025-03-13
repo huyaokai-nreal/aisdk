@@ -97,6 +97,7 @@ bool isHeadPoseValid(const NRTransform& headpose) {
     //每个四元数分量需要在有效范围内，即<= max_float && >= min_float
     if (q.w() < min_float || q.w() > max_float || q.x() < min_float || q.x() > max_float || q.y() < min_float ||
         q.y() > max_float || q.z() < min_float || q.z() > max_float) {
+        AISDK_LOG_ERROR("isHeadPoseValid, {} {} {} {} {} {}", q.w(), q.x(), q.y(), q.z(), min_float, max_float)
         return false;
     }
 

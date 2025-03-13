@@ -147,7 +147,9 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
 
         //如果headpose无效，则停止追踪，当前帧不进行处理
         if (!isHeadPoseValid(headpose_data.transform)) {
-            AISDK_LOG_ERROR("[HandDetTrackCalculator] HeadPose isn't valid !!!");
+            AISDK_LOG_ERROR("[HandDetTrackCalculator] HeadPose isn't valid !!! qw:{} qx:{} qy:{} qz:{}",
+                            headpose_data.transform.rotation.qw, headpose_data.transform.rotation.qx,
+                            headpose_data.transform.rotation.qy, headpose_data.transform.rotation.qz);
             // headpose异常，停止tracker，并且此帧不分析。
             det_tracker_step_ = 0;
             output_buffer_->det_flag = false;
