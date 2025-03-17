@@ -142,6 +142,7 @@ public:
     void setDeviceType(NRDeviceType device_type) { m_act_device_type = device_type; }
     NRDeviceType getDeviceType() { return m_act_device_type; }
 
+
     bool isInit() { return m_is_init; }
     bool isStart() { return m_is_start; }
 

@@ -151,6 +151,7 @@ bool GenerateModelConfig(Json::Value &root, mtar_t &tar, aisdk::xengine::ModelCo
                 mtar_read_data(&tar, p, h.size);
                 config.model_mem = (const char *)p;
                 config.model_size = h.size;
+                p = nullptr;
             }
         } else {
             // 必须参数
@@ -360,6 +361,7 @@ void AnalysisTar::ReleaseCache() {
     for (auto &iter : configs) {
         CleanPipelineConfig(iter);
     }
+
     configs.clear();
     if (m_global_shared_config) {
         CleanGlobalSharedConfig(*m_global_shared_config);
@@ -371,7 +373,7 @@ AnalysisTar::AnalysisTar() {}
 AnalysisTar::~AnalysisTar() { ReleaseCache(); }
 bool AnalysisTar::Analysis(unsigned char *tar_mem, uint32_t tar_len) {
     // 清空历史缓存的
-    ReleaseCache();
+    // ReleaseCache();
     std::vector<PipelineConfig> &configs = GetPipelineConfig();
     m_global_shared_config = std::make_shared<GlobalSharedConfig>();
 

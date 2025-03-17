@@ -234,6 +234,7 @@ void HandTracking::SendGlassPredictionData() {
 /// @return
 int HandTracking::GetHandTrackingMidExecInfo(ProfilingInfo* info) {
     (void)info;
+
     //参数校验
     if (!info) {
         AISDK_LOG_ERROR("HandTracking: GetHandTrackingMidExecInfo failed, param is illegal. info is nullptr");
@@ -1437,10 +1438,10 @@ NRPluginResult Plugin::Release(NRPluginHandle handle) {
     AISDK_LOG_WARN("HandTracking: Release");
     auto& ins = Plugin::GetInstance();
 
-    // //释放模型资源
-    // if (ins.m_tar_handle) {
-    //     ins.m_tar_handle->ReleaseCache();
-    // }
+    //释放模型资源
+    if (ins.m_tar_handle) {
+        ins.m_tar_handle->ReleaseCache();
+    }
 
     ins.ReleasePipeline();
 #if defined(XENGINE_SHARED_LIB)
