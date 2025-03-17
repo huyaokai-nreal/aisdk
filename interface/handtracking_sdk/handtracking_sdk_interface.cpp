@@ -1085,7 +1085,7 @@ NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
         &HandTracking::GetSupportedFunctions,
         &HandTracking::GetHandData,
         &HandTracking::NotifyData,
-        &HandTracking::UpdatePluginHandle,
+        //&HandTracking::UpdatePluginHandle,  //暂时注释掉，当前的版本，不使用这个函数
     };
 
     ins.m_handtracking.m_interface->RegisterProvider(plugin_handle, &provider, sizeof(provider));
