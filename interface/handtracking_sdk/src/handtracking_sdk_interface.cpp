@@ -63,15 +63,10 @@ HandTracking::~HandTracking() { UnLoadDlsym(true); }
 /// @param out_available_gesture_type_mask 返回给外部的支持的手势类型的结果mask值
 /// @return
 NRPluginResult HandTracking::GetAvailableGestureType(NRPluginHandle handle, uint64_t* out_available_gesture_type_mask) {
-    //参数校验
-    if ((handle != Plugin::GetInstance()->GetHandle()) || (!out_available_gesture_type_mask)) {
-        AISDK_LOG_ERROR(
-            "HandTracking: GetAvailableGestureType handle error! param is illgeal. handle: {} is not equal to "
-            "localHandle: {} or out_available_gesture_type_mask is nullptr",
-            handle, Plugin::GetInstance()->GetHandle());
-        return NR_PLUGIN_RESULT_INVALID_ARGUMENT;
-    }
-
+    // if (handle != Plugin::GetInstance().GetHandle()) {
+    //     AISDK_LOG_TRACE("HandTracking: GetAvailableGestureType handle error!");
+    //     return NR_PLUGIN_RESULT_FAILURE;
+    // }
     *out_available_gesture_type_mask = GESTURE_TYPE_MASK_OPEN_HAND | GESTURE_TYPE_MASK_GRAB | GESTURE_TYPE_MASK_PINCH |
                                        GESTURE_TYPE_MASK_POINT | GESTURE_TYPE_MASK_VICTORY | GESTURE_TYPE_MASK_CALL |
                                        GESTURE_TYPE_MASK_SYSTEM | GESTURE_TYPE_MASK_THUMBS_UP;
@@ -80,10 +75,10 @@ NRPluginResult HandTracking::GetAvailableGestureType(NRPluginHandle handle, uint
 
 #if defined(ENABLE_OPENXR_HANDJOINT_FORMAT)
 NRPluginResult HandTracking::GetAvailableHandJoint(NRPluginHandle handle, uint64_t* out_available_hand_joint_mask) {
-    if (handle != Plugin::GetInstance()->GetHandle()) {
-        AISDK_LOG_TRACE("HandTracking: GetAvailableHandJoint handle error!");
-        return NR_PLUGIN_RESULT_FAILURE;
-    }
+    // if (handle != Plugin::GetInstance().GetHandle()) {
+    //     AISDK_LOG_TRACE("HandTracking: GetAvailableHandJoint handle error!");
+    //     return NR_PLUGIN_RESULT_FAILURE;
+    // }
     *out_available_hand_joint_mask =
         HAND_JOINT_TYPE_MASK_PALM | HAND_JOINT_TYPE_MASK_WRIST | HAND_JOINT_TYPE_MASK_THUMB_METACARPAL |
         HAND_JOINT_TYPE_MASK_THUMB_PROXIMAL | HAND_JOINT_TYPE_MASK_THUMB_DISTAL | HAND_JOINT_TYPE_MASK_THUMB_TIP |
@@ -106,15 +101,10 @@ NRPluginResult HandTracking::GetAvailableHandJoint(NRPluginHandle handle, uint64
 /// @param out_available_hand_joint_mask 返回给外部的支持的手势关节的结果mask值
 /// @return
 NRPluginResult HandTracking::GetAvailableHandJoint(NRPluginHandle handle, uint64_t* out_available_hand_joint_mask) {
-    //参数校验
-    if ((handle != Plugin::GetInstance()->GetHandle()) || (!out_available_hand_joint_mask)) {
-        AISDK_LOG_ERROR(
-            "HandTracking: GetAvailableHandJoint handle error! param is illgeal. handle: {} is not equal to "
-            "localHandle: {} or out_available_hand_joint_mask is nullptr",
-            handle, Plugin::GetInstance()->GetHandle());
-        return NR_PLUGIN_RESULT_INVALID_ARGUMENT;
-    }
-
+    // if (handle != Plugin::GetInstance().GetHandle()) {
+    //     AISDK_LOG_TRACE("HandTracking: GetAvailableHandJoint handle error!");
+    //     return NR_PLUGIN_RESULT_FAILURE;
+    // }
     *out_available_hand_joint_mask =
         HAND_JOINT_TYPE_MASK_THUMB_1 | HAND_JOINT_TYPE_MASK_THUMB_2 | HAND_JOINT_TYPE_MASK_THUMB_3 |
         HAND_JOINT_TYPE_MASK_INDEX_1 | HAND_JOINT_TYPE_MASK_INDEX_2 | HAND_JOINT_TYPE_MASK_INDEX_3 |
@@ -133,15 +123,10 @@ NRPluginResult HandTracking::GetAvailableHandJoint(NRPluginHandle handle, uint64
 /// @param out_supported_function_mask 返回给外部的支持的手势功能的结果mask值
 /// @return
 NRPluginResult HandTracking::GetSupportedFunctions(NRPluginHandle handle, uint64_t* out_supported_function_mask) {
-    //参数校验
-    if ((handle != Plugin::GetInstance()->GetHandle()) || (!out_supported_function_mask)) {
-        AISDK_LOG_ERROR(
-            "HandTracking: param is illgeal in func HandTracking::GetSupportedFunctions. handle: {} is not equal to "
-            "localHandle: {} or out_supported_function_mask is nullptr",
-            handle, Plugin::GetInstance()->GetHandle());
-        return NR_PLUGIN_RESULT_INVALID_ARGUMENT;
-    }
-
+    // if (handle != Plugin::GetInstance().GetHandle()) {
+    //     AISDK_LOG_TRACE("HandTracking: GetSupportedFunctions handle error!");
+    //     return NR_PLUGIN_RESULT_FAILURE;
+    // }
     *out_supported_function_mask =
         HAND_TRACKING_SUPPORT_MASK_HAND_JOINT_POSITION | HAND_TRACKING_SUPPORT_MASK_HAND_JOINT_ROTATION;
     return NR_PLUGIN_RESULT_SUCCESS;
@@ -161,28 +146,25 @@ NRPluginResult HandTracking::GetHandData(NRPluginHandle handle, uint64_t hmd_tim
     (void)out_hand_array;
     (void)out_hand_num;
 
-    //参数校验
-    if (handle != Plugin::GetInstance()->GetHandle()) {
-        AISDK_LOG_ERROR(
-            "HandTracking: GetHandData handle error! param is illegal. handle: {} is not equal to localHandle: {}",
-            handle, Plugin::GetInstance()->GetHandle());
-        return NR_PLUGIN_RESULT_INVALID_ARGUMENT;
-    }
+    // if (handle != Plugin::GetInstance().GetHandle()) {
+    //     AISDK_LOG_TRACE("HandTracking: GetHandData handle error!");
+    //     return NR_PLUGIN_RESULT_FAILURE;
+    // }
 
-    auto* ins = Plugin::GetInstance();
-    if (!ins->isInit()) {
+    auto& ins = Plugin::GetInstance();
+    if (!ins.isInit()) {
         AISDK_LOG_WARN("HandTracking: init Failure");
         return NR_PLUGIN_RESULT_FAILURE;
     }
-    auto& pipeline = ins->GetPipeline();
+    auto& pipeline = ins.GetPipeline();
     aisdk::algorithm::Status status = aisdk::algorithm::Status::FAILURE;
-    if ("handtracking_std_all_host" == ins->pipeline_work_scene) {
+    if (ins.pipeline_work_scene == "handtracking_std_all_host") {
         std::shared_ptr<task::HandTrackingXGraph> impl =
             std::dynamic_pointer_cast<task::HandTrackingXGraph>(pipeline.Impl());
         if (impl) {
             status = impl->PopResult(hmd_time_nanos, out_hand_num, out_hand_array);
         }
-    } else if ("handtracking_segment_next_host" == ins->pipeline_work_scene) {
+    } else if (ins.pipeline_work_scene == "handtracking_segment_next_host") {
         std::shared_ptr<task::HandTrackingNextHostXGraph> impl =
             std::dynamic_pointer_cast<task::HandTrackingNextHostXGraph>(pipeline.Impl());
         if (impl) {
@@ -224,24 +206,24 @@ NRPluginResult HandTracking::GetHandData(NRPluginHandle handle, uint64_t hmd_tim
 
 /// @brief 发送预测的数据信息
 void HandTracking::SendGlassPredictionData() {
-    auto* ins = Plugin::GetInstance();
-    if (!ins->isInit()) {
+    auto& ins = Plugin::GetInstance();
+    if (!ins.isInit()) {
         AISDK_LOG_WARN("HandTracking: init Failure");
         return;
     }
 
-    auto& pipeline = ins->GetPipeline();
+    auto& pipeline = ins.GetPipeline();
     aisdk::algorithm::Status status;
-    if ("handtracking_segment_prior_glass" == ins->pipeline_work_scene) {
+    if (ins.pipeline_work_scene == "handtracking_segment_prior_glass") {
         std::shared_ptr<task::HandTrackingPriorGlassXGraph> impl =
             std::dynamic_pointer_cast<task::HandTrackingPriorGlassXGraph>(pipeline.Impl());
 
         GlassHandPredictionData out_hand;
-        while (ins->exec_exit) {
+        while (ins.exec_exit) {
             status = impl->PopResult(&out_hand);
             if (status == aisdk::algorithm::Status::SUCCESS) {
-                ins->m_message.m_interface->SendDeviceMessage(ins->GetHandle(), &out_hand,
-                                                              sizeof(GlassHandPredictionData));
+                ins.m_message.m_interface->SendDeviceMessage(ins.GetHandle(), &out_hand,
+                                                             sizeof(GlassHandPredictionData));
             }
         }
     }
@@ -258,21 +240,21 @@ int HandTracking::GetHandTrackingMidExecInfo(ProfilingInfo* info) {
         return -1;
     }
 
-    auto* ins = Plugin::GetInstance();
-    if (!ins->isInit()) {
+    auto& ins = Plugin::GetInstance();
+    if (!ins.isInit()) {
         AISDK_LOG_WARN("HandTracking: init Failure");
         return -1;
     }
 
-    auto& pipline = ins->GetPipeline();
+    auto& pipline = ins.GetPipeline();
     aisdk::algorithm::Status status;
     uint64_t timestamp;
     std::string jsonstring;
-    if ("handtracking_std_all_host" == ins->pipeline_work_scene) {
+    if (ins.pipeline_work_scene == "handtracking_std_all_host") {
         std::shared_ptr<task::HandTrackingXGraph> impl =
             std::dynamic_pointer_cast<task::HandTrackingXGraph>(pipline.Impl());
         status = impl->PopExecInfo(timestamp, jsonstring);
-        if (aisdk::algorithm::Status::SUCCESS == status) {
+        if (status == aisdk::algorithm::Status::SUCCESS) {
             info->timestamp = timestamp;
             uint32_t lens = jsonstring.size();
             // 使用者释放
@@ -387,7 +369,7 @@ bool HandTracking::GetApkStorePath() {
     jobject obj_activity_ = nullptr;
     void* class_loader = nullptr;
 
-    Plugin::GetInstance()->m_generic.m_interface->GetActivityInfo(
+    Plugin::GetInstance().m_generic.m_interface->GetActivityInfo(
         reinterpret_cast<void**>(&java_vm_), reinterpret_cast<void**>(&obj_activity_), &class_loader);
 
     if (java_vm_ && obj_activity_) {
@@ -405,9 +387,8 @@ bool HandTracking::GetApkStorePath() {
 
         const char* global_lib_path = nullptr;
         uint32_t global_path_length = 0;
-        if (NR_PLUGIN_RESULT_SUCCESS ==
-            Plugin::GetInstance()->m_generic.m_interface->GetDynamicLibraryPath(
-                Plugin::GetInstance()->GetHandle(), &global_lib_path, &global_path_length)) {
+        if (NR_PLUGIN_RESULT_SUCCESS == Plugin::GetInstance().m_generic.m_interface->GetDynamicLibraryPath(
+                                            Plugin::GetInstance().GetHandle(), &global_lib_path, &global_path_length)) {
             if (global_lib_path && global_path_length) {
                 std::string dynlib_str(global_lib_path, global_path_length);
                 dlopen_with_classloader_dir = dynlib_str + "/";
@@ -539,7 +520,7 @@ bool HandTracking::GetApkStorePath() {
         }
 #endif
         // 指定获取相机参数的方式类型，其他分支由debug接口设置
-        Plugin::GetInstance()->m_hmd.m_generate_method = 1;
+        Plugin::GetInstance().m_hmd.m_generate_method = 1;
 
         // 系统调试配置解析,需要时手动开启
         auto& prof = aisdk::base::DebugProfiling::Get().GetOpt();
@@ -628,7 +609,7 @@ void Hmd::GetCamerasInformation() {
     NRCameraDistortion distortion_params_[2];
     NRTransform extrinsics_lr, extrinsics_lh;
 
-    auto handle = Plugin::GetInstance()->GetHandle();
+    auto handle = Plugin::GetInstance().GetHandle();
 
     m_interface->GetComponentResolution(handle, NR_COMPONENT_GRAYSCALE_CAMERA_LEFT, &resolution_[0]);
     m_interface->GetComponentIntrinsic(handle, NR_COMPONENT_GRAYSCALE_CAMERA_LEFT, &intrinsic_mat_[0]);
@@ -751,11 +732,11 @@ NRPluginResult DeviceMessage::NotifyDeviceMessage(NRPluginHandle handle, const v
     DevicePose headpose_proto;
 
     //参数校验
-    if ((handle != Plugin::GetInstance()->GetHandle() || (!data))) {
+    if ((handle != Plugin::GetInstance().GetHandle() || (!data))) {
         AISDK_LOG_ERROR(
             "HandTracking: NotifyDeviceMessage faile! param is illegal. handle: {} is not equal to local_handel: {} or "
             "data is nullptr",
-            handle, Plugin::GetInstance()->GetHandle());
+            handle, Plugin::GetInstance().GetHandle());
         return NR_PLUGIN_RESULT_INVALID_ARGUMENT;
     }
 
@@ -764,13 +745,13 @@ NRPluginResult DeviceMessage::NotifyDeviceMessage(NRPluginHandle handle, const v
         return errorcode;
     }
 
-    auto ins = Plugin::GetInstance();
-    if (ins->isStart()) {
-        auto& pipeline = ins->GetPipeline();
-        if (ins->pipeline_work_scene == "handtracking_segment_next_host") {
+    auto& ins = Plugin::GetInstance();
+    if (ins.isStart()) {
+        auto& pipeline = ins.GetPipeline();
+        if (ins.pipeline_work_scene == "handtracking_segment_next_host") {
             auto prediction_data = (const GlassHandPredictionData*)data;
             nano_time_ = prediction_data->timestamp_nanos;
-            errorcode = ins->m_handtracking.m_interface->GetDevicePose(ins->GetHandle(), &headpose_proto, nano_time_);
+            errorcode = ins.m_handtracking.m_interface->GetDevicePose(ins.GetHandle(), &headpose_proto, nano_time_);
             head_pose = headpose_proto.transform;
 
             std::shared_ptr<task::HandTrackingNextHostXGraph> impl =
@@ -813,15 +794,15 @@ NRPluginResult HandTracking::ParseAllCameraData(const NRGrayscaleCameraFrameData
 
     // We only use cam0 and cam1 now (coresponding to leftcam and rightcam on Light/Air Pro)
     std::vector<aisdk::algorithm::Image> images;
-    auto ins = Plugin::GetInstance();
-    auto& pipeline = ins->GetPipeline();
-    for (int cam_id = 0; cam_id < ins->m_hmd.m_nr_cameras; cam_id++) {
+    auto& ins = Plugin::GetInstance();
+    auto& pipeline = ins.GetPipeline();
+    for (int cam_id = 0; cam_id < ins.m_hmd.m_nr_cameras; cam_id++) {
         std::shared_ptr<aisdk::base::XrMem> img_mem =
-            ins->m_picbuf->RequestMemBlob(data->cameras[cam_id].width * data->cameras[cam_id].height);
+            ins.m_picbuf->RequestMemBlob(data->cameras[cam_id].width * data->cameras[cam_id].height);
         if (!img_mem) {
             AISDK_LOG_ERROR("HandTracking::ParseAllCameraData RequestMemBlob error");
 #if defined(ENABLE_ALGORITHM_DATA_RECORD) && !defined(ENABLE_SEGMENT_JOINT_INFERENCE_MODE)
-            if (ins->pipeline_work_scene == "handtracking_std_all_host") {
+            if (ins.pipeline_work_scene == "handtracking_std_all_host") {
                 std::shared_ptr<task::HandTrackingXGraph> impl =
                     std::dynamic_pointer_cast<task::HandTrackingXGraph>(pipeline.Impl());
                 impl->SetTrackFrameState(current_time_nanos, aisdk::task::FrameState::MEM_FULL_DROP);
@@ -846,14 +827,15 @@ NRPluginResult HandTracking::ParseAllCameraData(const NRGrayscaleCameraFrameData
                    aisdk::base::getTime2());
 #endif
     // left or right timestamp should be the same
-    errorcode = ins->m_handtracking.m_interface->GetDevicePose(ins->GetHandle(), &headpose_proto, nano_time_[0]);
+    errorcode = ins.m_handtracking.m_interface->GetDevicePose(Plugin::GetInstance().GetHandle(), &headpose_proto,
+                                                              nano_time_[0]);
     head_pose = headpose_proto.transform;
 
     if (!(pipeline.Impl())) {
         AISDK_LOG_ERROR("pipeline.Impl() is nullptr");
     }
 
-    if (ins->pipeline_work_scene == "handtracking_std_all_host") {
+    if (ins.pipeline_work_scene == "handtracking_std_all_host") {
         std::shared_ptr<task::HandTrackingXGraph> impl =
             std::dynamic_pointer_cast<task::HandTrackingXGraph>(pipeline.Impl());
 
@@ -870,7 +852,7 @@ NRPluginResult HandTracking::ParseAllCameraData(const NRGrayscaleCameraFrameData
         } else {
             AISDK_LOG_ERROR("impl is nullptr in handtracking_std_all_host work scene");
         }
-    } else if (ins->pipeline_work_scene == "handtracking_segment_prior_glass") {
+    } else if (ins.pipeline_work_scene == "handtracking_segment_prior_glass") {
         std::shared_ptr<task::HandTrackingPriorGlassXGraph> impl =
             std::dynamic_pointer_cast<task::HandTrackingPriorGlassXGraph>(pipeline.Impl());
 
@@ -900,8 +882,9 @@ void HandTracking::NotifyData(NRPluginHandle handle, NRChannelDataType channel_d
     }
 
     AISDK_LOG_TRACE("NotifyData in HandTracking: data type {}", int(channel_data_type));
-    if (handle != Plugin::GetInstance()->GetHandle()) {
-        AISDK_LOG_ERROR("NotifyData handle error!");
+    if (handle != Plugin::GetInstance().GetHandle()) {
+        AISDK_LOG_ERROR("NotifyData handle error! param_handle:{}, local_handle:{}", handle,
+                        Plugin::GetInstance().GetHandle());
         return;
     }
     switch (channel_data_type) {
@@ -913,7 +896,7 @@ void HandTracking::NotifyData(NRPluginHandle handle, NRChannelDataType channel_d
                     data_size, sizeof(NRGrayscaleCameraFrameData));
                 return;
             }
-            if (Plugin::GetInstance()->isStart()) {
+            if (Plugin::GetInstance().isStart()) {
                 ParseAllCameraData((const NRGrayscaleCameraFrameData*)data);
             } else {
                 AISDK_LOG_WARN("NotifyData Failed: Plugin is not start!");
@@ -925,24 +908,26 @@ void HandTracking::NotifyData(NRPluginHandle handle, NRChannelDataType channel_d
     // AISDK_LOG_TRACE("NotifyData in HandTracking: Complete!");
 }
 
-Plugin* Plugin::m_ins = nullptr;
-
-/// @brief 获取单例对象
-/// @return 返回单例对象指针
-Plugin* Plugin::GetInstance() {
-    if (m_ins == nullptr) {
-        static Plugin instance;
-        m_ins = &instance;
-    }
-    return m_ins;
+/// @brief 更新handle值
+/// @param handle 句柄信息
+NRPluginResult HandTracking::UpdatePluginHandle(NRPluginHandle handle) {
+    AISDK_LOG_INFO("HandTracking: update handle, old_handle:{}, new_handle:{}", Plugin::GetInstance().GetHandle(),
+                   handle);
+    Plugin::GetInstance().SetHandle(handle);
+    return NR_PLUGIN_RESULT_SUCCESS;
 }
 
-/// @brief 销毁单例对象
+// Plugin* Plugin::m_ins = nullptr;
+Plugin& Plugin::GetInstance() {
+    static Plugin instance;
+    return instance;
+}
+
 void Plugin::DestoryInstance() {
-    if (m_ins) {
-        // delete m_ins;
-        m_ins = nullptr;
-    }
+    // if (m_ins) {
+    //     // delete m_ins;
+    //     m_ins = nullptr;
+    // }
 }
 
 /// @brief 析构函数
@@ -961,59 +946,59 @@ bool Plugin::Init(NRPluginHandle handle, NRInterfaces* interfaces) {
         return false;
     }
 
-    if (m_ins) {
-        unsigned long long hmd_interface_size, generic_interface_size;
-        hmd_interface_size = sizeof(NRHMDInterface);
-        generic_interface_size = sizeof(NRGenericInterface);
-        m_hmd.m_interface = interfaces->Get<NRHMDInterface>(&hmd_interface_size);
-        m_generic.m_interface = interfaces->Get<NRGenericInterface>(&generic_interface_size);
-        if (nullptr == m_hmd.m_interface || m_generic.m_interface == nullptr) {
-            AISDK_LOG_TRACE("Plugin::Initialize get invalid interface !!! hmd: {}, generic: {}",
-                            nullptr == m_hmd.m_interface, m_generic.m_interface == nullptr);
-            return false;
-        }
-
-        // unique handle
-        Plugin::GetInstance()->SetHandle(handle);
-
-        AISDK_LOG_TRACE("Plugin::Initialize get handle: {}", handle);
-
-        bool ret = m_ins->m_handtracking.GetApkStorePath();
-        if (!ret) {
-            AISDK_LOG_TRACE("Plugin::Initialize GetApkStorePath error!!!");
-            return false;
-        }
-
-        // 注册NRPluginLifecycleProvider接口函数
-        unsigned long long handtracking_interface_size;
-        handtracking_interface_size = sizeof(HandTrackingInterface);
-        m_handtracking.m_interface = interfaces->Get<HandTrackingInterface>(&handtracking_interface_size);
-        auto ht = m_handtracking.m_interface;
-        if (nullptr == ht) {
-            return false;
-        }
-
-        // AISDK_LOG_TRACE("Plugin::Init HandTracking_interface={}", ht);
-        // AISDK_LOG_INFO("Plugin::Init HandTracking_interface={:p}", fmt::ptr(ht));
-        NRPluginLifecycleProvider provider = {&Plugin::Register, &Plugin::Initialize, &Plugin::Start,
-                                              &Plugin::Update,   &Plugin::Pause,      &Plugin::Resume,
-                                              &Plugin::Stop,     &Plugin::Release,    &Plugin::Unregister};
-        ht->RegisterLifecycleProvider(handle, "nr_handtracking_id", "version1.0", &provider, sizeof(provider));
-
-        // 分段pipeline之间通信接口
-#if defined(PRIOR_GLASS_INFERENCE) || defined(NEXT_HOST_INFERENCE)
-        unsigned long long message_interface_size;
-        m_message.m_interface = interfaces->Get<DeviceMessageSendInterface>(&message_interface_size);
-        if (nullptr == m_message.m_interface) {
-            AISDK_LOG_ERROR("Plugin::Initialize Get<DeviceMessageSendInterface> error!!!");
-            return false;
-        }
-        DeviceMessageHandleProvider provider1 = {&DeviceMessage::NotifyDeviceMessage};
-        m_message.m_interface->RegisterProvider(handle, &provider1, sizeof(DeviceMessageHandleProvider));
-#endif
-        return true;
+    // if (m_ins) {
+    unsigned long long hmd_interface_size, generic_interface_size;
+    hmd_interface_size = sizeof(NRHMDInterface);
+    generic_interface_size = sizeof(NRGenericInterface);
+    m_hmd.m_interface = interfaces->Get<NRHMDInterface>(&hmd_interface_size);
+    m_generic.m_interface = interfaces->Get<NRGenericInterface>(&generic_interface_size);
+    if (nullptr == m_hmd.m_interface || m_generic.m_interface == nullptr) {
+        AISDK_LOG_TRACE("Plugin::Initialize get invalid interface !!! hmd: {}, generic: {}",
+                        nullptr == m_hmd.m_interface, m_generic.m_interface == nullptr);
+        return false;
     }
-    return false;
+
+    // unique handle
+    Plugin::GetInstance().SetHandle(handle);
+
+    AISDK_LOG_TRACE("Plugin::Initialize get handle: {}", handle);
+
+    bool ret = Plugin::GetInstance().m_handtracking.GetApkStorePath();
+    if (!ret) {
+        AISDK_LOG_TRACE("Plugin::Initialize GetApkStorePath error!!!");
+        return false;
+    }
+
+    // 注册NRPluginLifecycleProvider接口函数
+    unsigned long long handtracking_interface_size;
+    handtracking_interface_size = sizeof(HandTrackingInterface);
+    m_handtracking.m_interface = interfaces->Get<HandTrackingInterface>(&handtracking_interface_size);
+    auto ht = m_handtracking.m_interface;
+    if (nullptr == ht) {
+        return false;
+    }
+
+    // AISDK_LOG_TRACE("Plugin::Init HandTracking_interface={}", ht);
+    // AISDK_LOG_INFO("Plugin::Init HandTracking_interface={:p}", fmt::ptr(ht));
+    NRPluginLifecycleProvider provider = {&Plugin::Register, &Plugin::Initialize, &Plugin::Start,
+                                          &Plugin::Update,   &Plugin::Pause,      &Plugin::Resume,
+                                          &Plugin::Stop,     &Plugin::Release,    &Plugin::Unregister};
+    ht->RegisterLifecycleProvider(handle, "nr_handtracking_id", "version1.0", &provider, sizeof(provider));
+
+    // 分段pipeline之间通信接口
+#if defined(PRIOR_GLASS_INFERENCE) || defined(NEXT_HOST_INFERENCE)
+    unsigned long long message_interface_size;
+    m_message.m_interface = interfaces->Get<DeviceMessageSendInterface>(&message_interface_size);
+    if (nullptr == m_message.m_interface) {
+        AISDK_LOG_ERROR("Plugin::Initialize Get<DeviceMessageSendInterface> error!!!");
+        return false;
+    }
+    DeviceMessageHandleProvider provider1 = {&DeviceMessage::NotifyDeviceMessage};
+    m_message.m_interface->RegisterProvider(handle, &provider1, sizeof(DeviceMessageHandleProvider));
+#endif
+    return true;
+    // }
+    // return false;
 }
 
 /// @brief 选择pipeline和pipeline_work_secne信息
@@ -1035,7 +1020,18 @@ task::Pipeline& Plugin::GetPipeline() {
 /// @brief 释放pipeline信息
 void Plugin::ReleasePipeline() { m_pipeline = nullptr; }
 
-/// @brief start函数
+NRPluginHandle Plugin::GetHandle() {
+    //共享锁控制，允许多线程读
+    std::shared_lock lck(m_mutex);
+    return m_handle;
+}
+
+void Plugin::SetHandle(NRPluginHandle handle) {
+    //独占锁控制，写的时候，读操作阻塞
+    std::unique_lock lck(m_mutex);
+    m_handle = handle;
+}
+
 void Plugin::Start() {
     m_is_start = true;
     if (pipeline_work_scene == "handtracking_segment_prior_glass") {
@@ -1059,16 +1055,16 @@ void Plugin::Stop() {
 /// @return true/fasle
 bool Plugin::AnalysisTar() {
     bool is_ok = false;
-    auto ins = Plugin::GetInstance();
+    auto& ins = Plugin::GetInstance();
     std::string tar_name(NAME_TO_STRING(DEFAULT_PIPELINE_TAR_NAME));
 
 // 优先加载外部模型
 #if (defined(ANDROID) || defined(__ANDROID__))
     std::string external_modeltar_path = apk_copydir + tar_name + ".tar";
-    if (ins->m_load_external_modeltar) {
+    if (ins.m_load_external_modeltar) {
         AISDK_LOG_TRACE("AnalysisTar::TarFile = {:s}", external_modeltar_path.c_str());
         if (aisdk::base::IsFileExist(external_modeltar_path)) {
-            m_tar_handle = ins->m_handtracking.m_funcs.m_createanalysistar();
+            m_tar_handle = ins.m_handtracking.m_funcs.m_createanalysistar();
             is_ok = m_tar_handle->TarFile(external_modeltar_path.c_str());
             AISDK_LOG_TRACE("AnalysisTar::TarFile = {:s} is_ok={}", external_modeltar_path.c_str(), is_ok);
         }
@@ -1077,7 +1073,7 @@ bool Plugin::AnalysisTar() {
 
     // 默认情况下
     if (!is_ok) {
-        m_tar_handle = ins->m_handtracking.m_funcs.m_createanalysistar();
+        m_tar_handle = ins.m_handtracking.m_funcs.m_createanalysistar();
         is_ok = m_tar_handle->TarMem(tar_name.c_str());
         AISDK_LOG_TRACE("AnalysisTar::TarMem = {:s} is_ok={}", tar_name.c_str(), is_ok);
     }
@@ -1141,19 +1137,20 @@ std::vector<int> SelectPipeline(std::vector<aisdk::xengine::PipelineConfig>& pip
 /// @param handle 句柄信息
 /// @return 返回执行结果
 NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
-    if (handle != Plugin::GetInstance()->GetHandle()) {
-        AISDK_LOG_ERROR("HandTracking::Initialize failed: get wrong handle!");
+    if (handle != Plugin::GetInstance().GetHandle()) {
+        AISDK_LOG_ERROR("HandTracking: Initialize failed: get wrong handle!, param_handle:{}, local_handle:{}", handle,
+                        Plugin::GetInstance().GetHandle());
         return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
     }
 
     AISDK_LOG_WARN("HandTracking: Initializing");
     // bool ret = false;
-    auto ins = Plugin::GetInstance();
+    auto& ins = Plugin::GetInstance();
 #ifdef ENABLE_EXPORT_DATA_RECORD
     aisdk::base::DebugProfiling::Get().GetOpt().export_pipeline_exec_info_jsonstring = true;
 #endif
 
-    auto plugin_handle = Plugin::GetInstance()->GetHandle();
+    auto plugin_handle = Plugin::GetInstance().GetHandle();
 
     // 注册NRHandTrackingProvider接口函数
     HandTrackingProvider provider = {
@@ -1162,13 +1159,14 @@ NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
         &HandTracking::GetSupportedFunctions,
         &HandTracking::GetHandData,
         &HandTracking::NotifyData,
+        //&HandTracking::UpdatePluginHandle,  //暂时注释掉，当前的版本，不使用这个函数
     };
 
-    ins->m_handtracking.m_interface->RegisterProvider(plugin_handle, &provider, sizeof(provider));
+    ins.m_handtracking.m_interface->RegisterProvider(plugin_handle, &provider, sizeof(provider));
     // 获取全局sdk_global.json的配置
     const char* global_json_data = nullptr;
     uint32_t global_json_size = 0;
-    ins->m_generic.m_interface->GetGlobalConfig(plugin_handle, &global_json_data, &global_json_size);
+    ins.m_generic.m_interface->GetGlobalConfig(plugin_handle, &global_json_data, &global_json_size);
 
     if (global_json_size && global_json_data) {
         AISDK_LOG_INFO("Plugin::Initialize sdk_global={}", global_json_data);
@@ -1193,7 +1191,7 @@ NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
                     std::string load_external_modeltar =
                         root["aisdk_developer_options"]["load_external_modeltar"].asString();
                     if (load_external_modeltar == "1") {
-                        ins->m_load_external_modeltar = true;
+                        ins.m_load_external_modeltar = true;
                         AISDK_LOG_TRACE("HandTracking: load_external_modeltar is true!!!");
                     }
                 }
@@ -1205,19 +1203,19 @@ NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
 
     NRDeviceType device_type;
 
-    ins->m_generic.m_interface->GetDeviceType(plugin_handle, &device_type);
+    ins.m_generic.m_interface->GetDeviceType(plugin_handle, &device_type);
 
     if (device_type == NRDeviceType::NR_DEVICE_TYPE_LIGHT) {
-        ins->m_hmd.m_camera_model = 1;
-        ins->m_hmd.m_nr_cameras = 2;
+        ins.m_hmd.m_camera_model = 1;
+        ins.m_hmd.m_nr_cameras = 2;
     } else if (device_type == NRDeviceType::NR_DEVICE_TYPE_FLORA) {
-        ins->m_hmd.m_camera_model = 3;
-        ins->m_hmd.m_nr_cameras = 2;
+        ins.m_hmd.m_camera_model = 3;
+        ins.m_hmd.m_nr_cameras = 2;
     } else if (device_type == NRDeviceType::NR_DEVICE_TYPE_GINA_FLORA ||
                device_type == NRDeviceType::NR_DEVICE_TYPE_GINA_L ||
                device_type == NRDeviceType::NR_DEVICE_TYPE_GINA_M) {
-        ins->m_hmd.m_camera_model = 1;
-        ins->m_hmd.m_nr_cameras = 1;
+        ins.m_hmd.m_camera_model = 1;
+        ins.m_hmd.m_nr_cameras = 1;
         AISDK_LOG_TRACE("HandTracking: Get Device Type: Gina!");
 
     } else {
@@ -1225,7 +1223,7 @@ NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
         return NR_PLUGIN_RESULT_FAILURE;
     }
 
-    Plugin::GetInstance()->setDeviceType(device_type);
+    Plugin::GetInstance().setDeviceType(device_type);
 
     AISDK_LOG_WARN("HandTracking: setDeviceType to {}!", device_type);
 
@@ -1236,12 +1234,12 @@ NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
 #endif
 
     // 获取camera参数
-    ins->m_hmd.GetCamerasInformation();
+    ins.m_hmd.GetCamerasInformation();
 
     // 输入图像缓存
-    auto image_width = ins->m_hmd.m_cam_param.m_params["cam_resolution"][0];
-    auto image_height = ins->m_hmd.m_cam_param.m_params["cam_resolution"][1];
-    ins->m_picbuf =
+    auto image_width = ins.m_hmd.m_cam_param.m_params["cam_resolution"][0];
+    auto image_height = ins.m_hmd.m_cam_param.m_params["cam_resolution"][1];
+    ins.m_picbuf =
         std::make_unique<aisdk::base::FixedMembuffer>(std::string("grayscale_pic"), image_height * image_width * 10);
 
     // 算法库中设置调试选项
@@ -1257,23 +1255,23 @@ NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
                     profcnf.handtracking_pipeline_exec_enable_detect_boxtracker);
     AISDK_LOG_TRACE("Plugin::Initialize handtracking_pipeline_exec_enable_detect_boxsmooth={}",
                     profcnf.handtracking_pipeline_exec_enable_detect_boxsmooth);
-    ins->m_handtracking.m_funcs.m_syncdebugprofiling(profcnf);
+    ins.m_handtracking.m_funcs.m_syncdebugprofiling(profcnf);
 
     // 解析pipeline_tar包
     AISDK_LOG_TRACE("HandTracking: AnalysisTar");
-    bool is_ok = ins->AnalysisTar();
+    bool is_ok = ins.AnalysisTar();
     if (is_ok) {
         // 多条pipeline的项目，这里需要指定pipeline的运行策略
-        std::vector<aisdk::xengine::PipelineConfig> pipeline_configs = ins->m_tar_handle->GetPipelineConfig();
+        std::vector<aisdk::xengine::PipelineConfig> pipeline_configs = ins.m_tar_handle->GetPipelineConfig();
         AISDK_LOG_WARN("HandTracking: pipeline size={}", pipeline_configs.size());
         if (pipeline_configs.size() > 0) {
             aisdk::xengine::PlatformEnv platenv;
-            platenv.is_system_app = ins->m_handtracking.m_system_app;
+            platenv.is_system_app = ins.m_handtracking.m_system_app;
             platenv.is_untrusted_app = !platenv.is_system_app;
-            platenv.app_lib_path = ins->m_handtracking.mNativeLibDir.c_str();
+            platenv.app_lib_path = ins.m_handtracking.mNativeLibDir.c_str();
             AISDK_LOG_WARN("HandTracking: is_system_app={},is_untrusted_app={},app_lib_path={}", platenv.is_system_app,
                            platenv.is_untrusted_app, platenv.app_lib_path);
-            aisdk::xengine::PlatformStatus* plat = ins->m_handtracking.m_funcs.m_getplatform(&platenv);
+            aisdk::xengine::PlatformStatus* plat = ins.m_handtracking.m_funcs.m_getplatform(&platenv);
             AISDK_LOG_WARN("HandTracking: dsp_support={}", plat->is_snpe_support);
             // clang-format off
             AISDK_LOG_WARN("HandTracking: is_snpe_support={},is_hexagon_dsp={},is_hexagon_signedPD_dsp={},is_hexagon_unsignedPD_dsp={},is_mobile_evapro={}",
@@ -1289,27 +1287,26 @@ NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
                     AISDK_LOG_WARN("Plugin::Initialize pipline.Init index={} pipline.name={:s}", pipeline_index,
                                    pipeline_configs[pipeline_index].pipeline_name.c_str());
                     AISDK_LOG_TRACE("start init pipeline");
-                    auto& pipline = ins->GetPipeline();
-
+                    auto& pipline = ins.GetPipeline();
                     // 需要指定具体的实现
                     aisdk::algorithm::Status status;
-                    if (ins->pipeline_work_scene == "handtracking_std_all_host") {
+                    if (ins.pipeline_work_scene == "handtracking_std_all_host") {
                         AISDK_LOG_TRACE("start init hand track pipeline");
                         status = pipline.Init<task::HandTrackingXGraph>(
-                            ins->m_handtracking.m_funcs, pipeline_configs[pipeline_index], ins->m_hmd.m_cam_param);
+                            ins.m_handtracking.m_funcs, pipeline_configs[pipeline_index], ins.m_hmd.m_cam_param);
                         AISDK_LOG_TRACE("finish init hand track pipeline");
-                    } else if (ins->pipeline_work_scene == "handtracking_segment_prior_glass") {
+                    } else if (ins.pipeline_work_scene == "handtracking_segment_prior_glass") {
                         status = pipline.Init<task::HandTrackingPriorGlassXGraph>(
-                            ins->m_handtracking.m_funcs, pipeline_configs[pipeline_index], ins->m_hmd.m_cam_param);
-                    } else if (ins->pipeline_work_scene == "handtracking_segment_next_host") {
+                            ins.m_handtracking.m_funcs, pipeline_configs[pipeline_index], ins.m_hmd.m_cam_param);
+                    } else if (ins.pipeline_work_scene == "handtracking_segment_next_host") {
                         status = pipline.Init<task::HandTrackingNextHostXGraph>(
-                            ins->m_handtracking.m_funcs, pipeline_configs[pipeline_index], ins->m_hmd.m_cam_param);
+                            ins.m_handtracking.m_funcs, pipeline_configs[pipeline_index], ins.m_hmd.m_cam_param);
                     }
 
                     if (status == aisdk::algorithm::Status::SUCCESS) {
-                        ins->m_is_init = true;
-                        ins->pipeline_name = pipeline_configs[pipeline_index].pipeline_name;
-                        AISDK_LOG_WARN("HandTracking: Initialized!");
+                        ins.m_is_init = true;
+                        ins.pipeline_name = pipeline_configs[pipeline_index].pipeline_name;
+                        AISDK_LOG_WARN("HandTracking: Initialized");
                         return NR_PLUGIN_RESULT_SUCCESS;
                     }
                     AISDK_LOG_ERROR("HandTracking: init failed since NrCore::Status: {}!", static_cast<int>(status));
@@ -1329,23 +1326,23 @@ NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
 /// @param handle 句柄信息
 /// @return 返回操作结果
 NRPluginResult Plugin::Start(NRPluginHandle handle) {
-    if (handle != Plugin::GetInstance()->GetHandle()) {
-        AISDK_LOG_ERROR("HandTracking::Start failed: get wrong handle!");
-        return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
-    }
+    // if (handle != Plugin::GetInstance().GetHandle()) {
+    //     AISDK_LOG_ERROR("HandTracking::Start failed: get wrong handle!");
+    //     return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
+    // }
     AISDK_LOG_WARN("HandTracking: Start");
-    auto ins = Plugin::GetInstance();
-    if (!ins->isInit()) {
+    auto& ins = Plugin::GetInstance();
+    if (!ins.isInit()) {
         AISDK_LOG_WARN("HandTracking: init Failure");
         return NR_PLUGIN_RESULT_FAILURE;
     }
-    auto pipeline = ins->GetPipeline().Impl();
+    auto pipeline = ins.GetPipeline().Impl();
     auto ret = pipeline->Start();
     if (ret != aisdk::algorithm::Status::SUCCESS) {
         AISDK_LOG_WARN("HandTracking: Started Failure");
         return NR_PLUGIN_RESULT_FAILURE;
     }
-    ins->Start();
+    ins.Start();
     AISDK_LOG_WARN("HandTracking: Started");
     return NR_PLUGIN_RESULT_SUCCESS;
 }
@@ -1354,9 +1351,9 @@ NRPluginResult Plugin::Start(NRPluginHandle handle) {
 /// @param handle 句柄信息
 /// @return 返回操作结果
 NRPluginResult Plugin::Update(NRPluginHandle handle) {
-    if (handle != Plugin::GetInstance()->GetHandle()) {
-        return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
-    }
+    // if (handle != Plugin::GetInstance().GetHandle()) {
+    //     return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
+    // }
     AISDK_LOG_WARN("HandTracking: Updated");
     return NR_PLUGIN_RESULT_SUCCESS;
 }
@@ -1365,19 +1362,19 @@ NRPluginResult Plugin::Update(NRPluginHandle handle) {
 /// @param handle 句柄信息
 /// @return 返回操作结果
 NRPluginResult Plugin::Pause(NRPluginHandle handle) {
-    if (handle != Plugin::GetInstance()->GetHandle()) {
-        AISDK_LOG_ERROR("HandTracking::Pause failed: get wrong handle!");
-        return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
-    }
+    // if (handle != Plugin::GetInstance().GetHandle()) {
+    //     AISDK_LOG_ERROR("HandTracking::Pause failed: get wrong handle!");
+    //     return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
+    // }
     AISDK_LOG_WARN("HandTracking: Pause");
-    auto ins = Plugin::GetInstance();
-    if (!ins->isInit()) {
+    auto& ins = Plugin::GetInstance();
+    if (!ins.isInit()) {
         AISDK_LOG_WARN("HandTracking: init Failure");
         return NR_PLUGIN_RESULT_FAILURE;
     }
-    auto pipline = ins->GetPipeline().Impl();
+    auto pipline = ins.GetPipeline().Impl();
     pipline->Stop();
-    ins->Stop();
+    ins.Stop();
     AISDK_LOG_WARN("HandTracking: Paused");
     return NR_PLUGIN_RESULT_SUCCESS;
 }
@@ -1386,23 +1383,23 @@ NRPluginResult Plugin::Pause(NRPluginHandle handle) {
 /// @param handle 句柄信息
 /// @return 返回操作结果
 NRPluginResult Plugin::Resume(NRPluginHandle handle) {
-    if (handle != Plugin::GetInstance()->GetHandle()) {
-        AISDK_LOG_ERROR("HandTracking::Resume failed: get wrong handle!");
-        return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
-    }
+    // if (handle != Plugin::GetInstance().GetHandle()) {
+    //     AISDK_LOG_ERROR("HandTracking::Resume failed: get wrong handle!");
+    //     return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
+    // }
     AISDK_LOG_WARN("HandTracking: Resume");
-    auto ins = Plugin::GetInstance();
-    if (!ins->isInit()) {
+    auto& ins = Plugin::GetInstance();
+    if (!ins.isInit()) {
         AISDK_LOG_WARN("HandTracking: init Failure");
         return NR_PLUGIN_RESULT_FAILURE;
     }
-    auto pipline = ins->GetPipeline().Impl();
+    auto pipline = ins.GetPipeline().Impl();
     auto ret = pipline->Start();
     if (ret != aisdk::algorithm::Status::SUCCESS) {
         AISDK_LOG_WARN("HandTracking: Resume Failure");
         return NR_PLUGIN_RESULT_FAILURE;
     }
-    ins->Start();
+    ins.Start();
     AISDK_LOG_WARN("HandTracking: Resumed");
     return NR_PLUGIN_RESULT_SUCCESS;
 }
@@ -1411,19 +1408,19 @@ NRPluginResult Plugin::Resume(NRPluginHandle handle) {
 /// @param handle 句柄信息
 /// @return 返回操作结果
 NRPluginResult Plugin::Stop(NRPluginHandle handle) {
-    if (handle != Plugin::GetInstance()->GetHandle()) {
-        AISDK_LOG_ERROR("HandTracking::Stop failed: get wrong handle!");
-        return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
-    }
+    // if (handle != Plugin::GetInstance().GetHandle()) {
+    //     AISDK_LOG_ERROR("HandTracking::Stop failed: get wrong handle!");
+    //     return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
+    // }
     AISDK_LOG_WARN("HandTracking: Stop");
-    auto ins = Plugin::GetInstance();
-    if (!ins->isInit()) {
+    auto& ins = Plugin::GetInstance();
+    if (!ins.isInit()) {
         AISDK_LOG_WARN("HandTracking: init Failure");
         return NR_PLUGIN_RESULT_FAILURE;
     }
-    auto pipline = ins->GetPipeline().Impl();
+    auto pipline = ins.GetPipeline().Impl();
     pipline->Stop();
-    ins->Stop();
+    ins.Stop();
     AISDK_LOG_WARN("HandTracking: Stoped");
     return NR_PLUGIN_RESULT_SUCCESS;
 }
@@ -1432,17 +1429,24 @@ NRPluginResult Plugin::Stop(NRPluginHandle handle) {
 /// @param handle 句柄信息
 /// @return 返回操作结果
 NRPluginResult Plugin::Release(NRPluginHandle handle) {
-    if (handle != Plugin::GetInstance()->GetHandle()) {
-        AISDK_LOG_ERROR("HandTracking::Release failed: get wrong handle!");
-        return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
-    }
+    // if (handle != Plugin::GetInstance().GetHandle()) {
+    //     AISDK_LOG_ERROR("HandTracking::Release failed: get wrong handle!");
+    //     return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
+    // }
+
     AISDK_LOG_WARN("HandTracking: Release");
-    auto ins = Plugin::GetInstance();
-    ins->ReleasePipeline();
+    auto& ins = Plugin::GetInstance();
+
+    // //释放模型资源
+    // if (ins.m_tar_handle) {
+    //     ins.m_tar_handle->ReleaseCache();
+    // }
+
+    ins.ReleasePipeline();
 #if defined(XENGINE_SHARED_LIB)
-    ins->m_handtracking.UnLoadDlsym(false);
+    ins.m_handtracking.UnLoadDlsym(false);
 #endif
-    ins->m_picbuf = nullptr;
+    ins.m_picbuf = nullptr;
     AISDK_LOG_WARN("HandTracking: Released");
     return NR_PLUGIN_RESULT_SUCCESS;
 }
@@ -1451,10 +1455,10 @@ NRPluginResult Plugin::Release(NRPluginHandle handle) {
 /// @param handle 句柄信息
 /// @return 返回操作结果
 NRPluginResult Plugin::Register(NRPluginHandle handle) {
-    if (handle != Plugin::GetInstance()->GetHandle()) {
-        AISDK_LOG_ERROR("HandTracking::Register failed: get wrong handle!");
-        return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
-    }
+    // if (handle != Plugin::GetInstance().GetHandle()) {
+    //     AISDK_LOG_ERROR("HandTracking::Register failed: get wrong handle!");
+    //     return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
+    // }
     AISDK_LOG_INFO("HandTracking: Registered");
     return NR_PLUGIN_RESULT_SUCCESS;
 }
@@ -1463,10 +1467,10 @@ NRPluginResult Plugin::Register(NRPluginHandle handle) {
 /// @param handle 句柄信息
 /// @return 返回操作结果
 NRPluginResult Plugin::Unregister(NRPluginHandle handle) {
-    if (handle != Plugin::GetInstance()->GetHandle()) {
-        AISDK_LOG_ERROR("HandTracking::Unregister failed: get wrong handle!");
-        return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
-    }
+    // if (handle != Plugin::GetInstance().GetHandle()) {
+    //     AISDK_LOG_ERROR("HandTracking::Unregister failed: get wrong handle!");
+    //     return NRPluginResult::NR_PLUGIN_RESULT_FAILURE;
+    // }
     AISDK_LOG_INFO("HandTracking: Unregistered");
     return NR_PLUGIN_RESULT_SUCCESS;
 }
@@ -1479,7 +1483,7 @@ extern "C" void NR_INTERFACE_EXPORT NR_INTERFACE_API NRPluginCreate(NRPluginHand
 #else
 extern "C" void NRPluginCreate_HANDTRACKING(NRPluginHandle handle, NRInterfaces* interfaces) {
 #endif
-    AISDK_LOG_WARN("NRPluginCreate");
+    AISDK_LOG_WARN("HandTracking: NRPluginCreate");
     const std::string git_version = AISDK_GIT_VERSION;
     AISDK_LOG_WARN("HandTracking: git_version={:s}", git_version.c_str());
 
@@ -1490,9 +1494,9 @@ extern "C" void NRPluginCreate_HANDTRACKING(NRPluginHandle handle, NRInterfaces*
     }
 #endif
 
-    auto ins = aisdk::interface::Plugin::GetInstance();
-    ins->Init(handle, interfaces);
-    AISDK_LOG_WARN("NRPluginCreated");
+    aisdk::interface::Plugin::GetInstance().Init(handle, interfaces);
+    // ins.Init(handle, interfaces);
+    AISDK_LOG_WARN("HandTracking: NRPluginCreated");
 }
 
 #ifdef HANDTRACKING_SHARED_LIBS
@@ -1500,9 +1504,9 @@ extern "C" void NR_INTERFACE_EXPORT NR_INTERFACE_API NRPluginDestroy() {
 #else
 extern "C" void NRPluginDestroy_HANDTRACKING() {
 #endif
-    AISDK_LOG_WARN("NRPluginDestroy");
+    AISDK_LOG_WARN("HandTracking: NRPluginDestroy");
     aisdk::interface::Plugin::DestoryInstance();
-    AISDK_LOG_WARN("NRPluginDestroied");
+    AISDK_LOG_WARN("HandTracking: NRPluginDestroied");
 }
 
 #ifdef HANDTRACKING_SHARED_LIBS
@@ -1530,9 +1534,9 @@ extern "C" void NR_INTERFACE_EXPORT NR_INTERFACE_API NRPluginSetProfilingOption(
             prof.developer_test_all = (tmp->developer_test_all > 0);
         }
 
-        auto ins = aisdk::interface::Plugin::GetInstance();
-        ins->m_hmd.m_camera_model = tmp->camera_model;
-        ins->m_hmd.m_generate_method = tmp->generate_method;
+        auto& ins = aisdk::interface::Plugin::GetInstance();
+        ins.m_hmd.m_camera_model = tmp->camera_model;
+        ins.m_hmd.m_generate_method = tmp->generate_method;
     }
 }
 

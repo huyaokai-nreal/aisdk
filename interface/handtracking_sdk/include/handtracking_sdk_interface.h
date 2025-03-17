@@ -2,8 +2,6 @@
 #define _HANDTRACKING_SDK_INTERFACE_H_
 
 #include <string>
-#include <mutex>
-#include <thread>
 
 #include "nr_plugin_grayscale_camera_types.h"
 #include "nr_plugin_generic.h"
@@ -16,6 +14,9 @@
 #include "aisdk/base/mem_buffer.h"
 #include "aisdk/task/handtracking/nrcore_pipeline.h"
 
+#include <mutex>
+#include <shared_mutex>
+#include <thread>
 // #include "version.h"
 
 namespace aisdk::interface {
@@ -69,6 +70,7 @@ class HandTracking {
     static void SendGlassPredictionData();                                  
     static void NotifyData(NRPluginHandle handle, NRChannelDataType channel_data_type, const void* data,
                            uint32_t data_size);
+    static NRPluginResult UpdatePluginHandle(NRPluginHandle handle);
     static NRPluginResult ParseGlassPredictionData(const GlassHandPredictionData* data);
     static NRPluginResult ParseAllCameraData(const NRGrayscaleCameraFrameData* data);
     static int GetHandTrackingMidExecInfo(ProfilingInfo* info);
@@ -126,20 +128,17 @@ class DeviceMessage {
 //对外的接口类，提供aisdk代码功能的对外接口
 class Plugin {
 public:
-    //单例模式下，复制构造，复制赋值运算符，移动构造，移动赋值运算符全部禁用
-    Plugin(const Plugin&) = delete;
-    Plugin& operator=(const Plugin&) = delete;
-    Plugin(Plugin&&) = delete;
-    Plugin& operator=(Plugin&&) = delete;
+    // Plugin(const Plugin&) = delete;
+    // void operator=(const Plugin&) = delete;
 
-    static Plugin* GetInstance();
+    static Plugin& GetInstance();
     static void DestoryInstance();
     
     task::Pipeline& GetPipeline();
     void ReleasePipeline();
     
-    void SetHandle(NRPluginHandle handle) { m_handle = handle; }
-    NRPluginHandle GetHandle() { return m_handle; }
+    void SetHandle(NRPluginHandle handle);
+    NRPluginHandle GetHandle();
     void setDeviceType(NRDeviceType device_type) { m_act_device_type = device_type; }
     NRDeviceType getDeviceType() { return m_act_device_type; }
 
@@ -163,9 +162,14 @@ public:
     static NRPluginResult Unregister(NRPluginHandle handle);
 
 private:
-    Plugin() = default;
-    ~Plugin();
-    static Plugin* m_ins;
+   // private构造和析构，禁止所有拷贝和移动操作
+   Plugin() = default;
+   ~Plugin();
+   Plugin(const Plugin&) = delete;
+   Plugin(Plugin&&) = delete;
+   void operator=(const Plugin&) = delete;
+   void operator=(Plugin&&) = delete;
+    //static Plugin* m_ins;
 
     std::atomic_bool m_is_init = false;
     std::unique_ptr<task::Pipeline> m_pipeline;
@@ -173,6 +177,7 @@ private:
 
     std::atomic_bool m_is_start = false;
     NRDeviceType m_act_device_type;
+    std::shared_mutex m_mutex;
 
 public:
     HandTracking m_handtracking;
