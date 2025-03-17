@@ -128,9 +128,6 @@ class DeviceMessage {
 //对外的接口类，提供aisdk代码功能的对外接口
 class Plugin {
 public:
-    // Plugin(const Plugin&) = delete;
-    // void operator=(const Plugin&) = delete;
-
     static Plugin& GetInstance();
     static void DestoryInstance();
     
@@ -141,7 +138,6 @@ public:
     NRPluginHandle GetHandle();
     void setDeviceType(NRDeviceType device_type) { m_act_device_type = device_type; }
     NRDeviceType getDeviceType() { return m_act_device_type; }
-
 
     bool isInit() { return m_is_init; }
     bool isStart() { return m_is_start; }
@@ -170,7 +166,6 @@ private:
    Plugin(Plugin&&) = delete;
    void operator=(const Plugin&) = delete;
    void operator=(Plugin&&) = delete;
-    //static Plugin* m_ins;
 
     std::atomic_bool m_is_init = false;
     std::unique_ptr<task::Pipeline> m_pipeline;
@@ -191,7 +186,7 @@ public:
     bool m_load_external_modeltar = false;
     std::string pipeline_work_scene;
     std::string pipeline_name;
-    // model_tar
+
     bool AnalysisTar();
     xengine::AnalysisTar *m_tar_handle = nullptr;
 
