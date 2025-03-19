@@ -111,3 +111,19 @@ void RemoveFile(const std::string &file) {
     }
 }
 }  // namespace aisdk::base
+
+#include <android/log.h>
+#include <dlfcn.h>
+
+__BEGIN_DECLS
+
+void __attribute__((visibility("hidden"), no_stack_protector)) __stack_chk_fail(void) {
+    __android_log_print(ANDROID_LOG_ERROR, "AISDK", "stack smashing detected at pc %p __stack_chk_fail at %p\n",
+                        (void *)__builtin_return_address(0), (void *)__stack_chk_fail);
+    AISDK_LOG_ERROR("stack smashing detected at pc {} __stack_chk_fail at {}\n", (void *)__builtin_return_address(0),
+                    (void *)__stack_chk_fail);
+    void (*__stack_chk_fail_local)(void) = (void (*)(void))dlsym(RTLD_NEXT, "__stack_chk_fail");
+    __stack_chk_fail_local();
+}
+
+__END_DECLS
