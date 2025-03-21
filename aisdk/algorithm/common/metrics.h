@@ -8,7 +8,7 @@
 #include "aisdk/base/camera_model.h"
 #include "aisdk/base/type.h"
 #include "aisdk/algorithm/common/nrnet_define.h"
-#include "interface/handtracking_sdk/public/nr_plugin_types.h"
+#include "interface/handtracking_sdk/include/public/nr_plugin_types.h"
 
 namespace aisdk::algorithm {
 float compute_mono_rmse_with_reprojection(const std::vector<Vec3f_t>& pred_xyz, const std::vector<Vec2f_t>& uv_ori,

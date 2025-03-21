@@ -1,80 +1,16 @@
+cmake_minimum_required(VERSION 3.12)
+project(handtracking_sdk)
+
+# 全局变量定义
 set(HANDTRACKING_INTERFACE_LIBRARY_NAME nr_hand_tracking)
+# set(CMAKE_CXX_STANDARD 17)
+
+# 查找依赖项
 find_package(libyuv REQUIRED)
+find_package(Eigen3 REQUIRED)
+find_package(OpenCV REQUIRED)
+find_package(jsoncpp REQUIRED)
 
-add_library(${HANDTRACKING_INTERFACE_LIBRARY_NAME} SHARED
-${CMAKE_CURRENT_SOURCE_DIR}/handtracking_sdk_interface.cpp
-)
-
-# add target include. not fix exteral xxx.h
-target_include_directories(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PRIVATE "./")
-target_include_directories(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PRIVATE "./channel")
-target_include_directories(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PRIVATE "./common")
-target_include_directories(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PRIVATE "./public")
-target_include_directories(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PRIVATE "./plugin")
-
-target_compile_options(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PRIVATE
--DHANDTRACKING_SHARED_LIBS
--DNRPLUGIN
--DAISDK_GIT_VERSION="${GIT_CURRENT_BRANCH}:${GIT_LAST_COMMIT}"
-PRIVATE -Wno-error
-)
-add_custom_command(
-    TARGET ${HANDTRACKING_INTERFACE_LIBRARY_NAME}  
-    POST_BUILD                         # 在目标构建完成后执行
-    COMMAND rm ${DEFAULT_PIPELINE_TAR_KEY_PATH} && rm ${DEFAULT_PIPELINE_TAR_PATH} 
-    COMMENT "rm temperal model packages"
-    VERBATIM                           # 保持命令原样传递给shell
-)
-
-if(ENABLE_XENGINE_SNPE_NN)
-    target_compile_options(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PRIVATE -DHAVE_HAL_SNPE)
-
-    if(SNPE_VERSION STREQUAL "snpe-1.55.0")
-        target_compile_options(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PRIVATE -DSNPE_VERSION=1550)
-    endif()
-    if(SNPE_VERSION STREQUAL "snpe-1.61.0")
-        target_compile_options(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PRIVATE -DSNPE_VERSION=1610)
-    endif()
-    if(SNPE_VERSION STREQUAL "snpe-1.66.0")
-        target_compile_options(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PRIVATE -DSNPE_VERSION=1660)
-    endif()
-    if(SNPE_VERSION STREQUAL "snpe-2.17.0")
-        target_compile_options(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PRIVATE -DSNPE_VERSION=2170)
-    endif()
-endif()
-
-
-if(ENABLE_XENGINE_SHARED_LIB)
-    target_compile_options(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PRIVATE -DXENGINE_SHARED_LIB -DXENGINE_LIB_NAME="nr_hand_algo")
-else()
-    target_compile_options(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PRIVATE -DXENGINE_STATIC_LIB)
-endif()
-
-if(ENABLE_ALGORITHM_DATA_RECORD)
-    target_compile_options(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PRIVATE -DENABLE_ALGORITHM_DATA_RECORD)
-endif()
-
-if(Xrlinux AND ENABLE_SEGMENT_JOINT_INFERENCE_MODE)
-    target_compile_options(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PRIVATE -DENABLE_SEGMENT_JOINT_INFERENCE_MODE)
-    target_compile_options(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PRIVATE -DPRIOR_GLASS_INFERENCE)
-elseif(ENABLE_SEGMENT_JOINT_INFERENCE_MODE)
-    target_compile_options(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PRIVATE -DENABLE_SEGMENT_JOINT_INFERENCE_MODE)
-    target_compile_options(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PRIVATE -DNEXT_HOST_INFERENCE)
-endif()
-
-if(NOT Xrlinux AND ENABLE_OPENXR_HANDJOINT_FORMAT) 
-    target_compile_options(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PRIVATE -DENABLE_OPENXR_HANDJOINT_FORMAT)
-endif()
-
-target_link_libraries(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PUBLIC base algorithm handtracking jsoncpp Eigen3::Eigen opencv::opencv libyuv::libyuv)
-set_target_properties(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib
-    ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib
-)
-
-install(TARGETS ${HANDTRACKING_INTERFACE_LIBRARY_NAME}
-            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
-add_clang_format_target(${HANDTRACKING_INTERFACE_LIBRARY_NAME})
-
+# 添加子目录
+add_subdirectory(src)
+add_subdirectory(bin)
