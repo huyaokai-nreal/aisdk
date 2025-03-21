@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "aisdk/algorithm/calculator/hand_landmark_calculator.pb.h"
+#include "aisdk/algorithm/common/NR_GlobalPredictorService.h"
 #include "aisdk/algorithm/common/bbox.h"
 #include "aisdk/algorithm/common/nrnet_define.h"
 #include "aisdk/algorithm/func/perspective_crop.h"
@@ -58,10 +59,7 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
 
         cc->Inputs().Tag("IMAGE_INPUT").Set<std::vector<Image>>();
         cc->Inputs().Tag("BBOX_SMOOTHED_OUTPUT").Set<DetOutputInternal>();
-        cc->InputSidePackets()
-            .Tag("CAM_INFO_INPUT")
-            .Set<std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>,
-                           std::shared_ptr<aisdk::base::BaseCameraModel>>>();
+        cc->InputSidePackets().Tag("CAM_INFO_INPUT").Set<std::vector<std::shared_ptr<aisdk::base::BaseCameraModel>>>();
         cc->Outputs().Tag("LANDMARK_OUTPUT").Set<Kpt2dInternal>();
 
         AISDK_LOG_TRACE("[HandLandmarkCalculator] GetContract complete");
@@ -77,18 +75,10 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
         if (options.bbox_expand_ratio() > 0) {
             bbox_expand_ratio_ = options.bbox_expand_ratio();
         }
-        if (model_name_ == "2d_rsntiny") {
-            netalgo = XGraphServiceUtils::CreateNetAlgoBase<RSNTiny>((void*)0x202310, model_name_);
-        } else if (model_name_ == "2d_rtmtiny") {
+        if (model_name_ == "2d_rtmtiny") {
             AISDK_LOG_TRACE("[HandLandmarkCalculator] start init rtmtiny");
             netalgo = XGraphServiceUtils::CreateNetAlgoBase<RTMTiny>((void*)0x202310, model_name_);
             AISDK_LOG_TRACE("[HandLandmarkCalculator] finish init rtmtiny");
-            if (nullptr == netalgo) {
-                // 2d_rtmtiny: int16量化  2d_rsntiny: int8量化
-                // 晓龙870以下芯片，仅支持int8
-                AISDK_LOG_WARN("[HandLandmarkCalculator] failed to load rtmtiny, load rsntiny for int8")
-                netalgo = XGraphServiceUtils::CreateNetAlgoBase<RSNTiny>((void*)0x202310, std::string("2d_rsntiny"));
-            }
         } else if (model_name_ == "2d_rsnnano") {
             AISDK_LOG_TRACE("[HandLandmarkCalculator] start init rsnnano");
             netalgo = XGraphServiceUtils::CreateNetAlgoBase<RSNNano>((void*)0x202310, model_name_);
@@ -102,10 +92,11 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
         }
         const auto& cam_info = cc->InputSidePackets()
                                    .Tag("CAM_INFO_INPUT")
-                                   .Get<std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>,
-                                                  std::shared_ptr<aisdk::base::BaseCameraModel>>>();
-        lcam_model_ = cam_info.first;
-        rcam_model_ = cam_info.second;
+                                   .Get<std::vector<std::shared_ptr<aisdk::base::BaseCameraModel>>>();
+        lcam_model_ = cam_info.at(0);
+        if (cam_info.size() == 2) {
+            rcam_model_ = cam_info.at(1);
+        }
         AISDK_LOG_TRACE("[HandLandmarkCalculator] Open complete");
         return absl::OkStatus();
     }
@@ -131,9 +122,8 @@ class HandLandmarkCalculator : public xgraph::CalculatorBase {
         } else {
             virutal_camera = GetVirtualCameraFromBox(origin_camera, rect, {input_width_, input_height_});
 #if ((defined(ANDROID) || defined(__ANDROID__)) && defined(__aarch64__))
-            crop_image = xengine::perspective_crop_image(
-                std::dynamic_pointer_cast<base::Fisheye624CameraModel>(lcam_model_).get(), virutal_camera.get(),
-                input_width_, input_height_, image_data.m_mat);
+            crop_image = xengine::perspective_crop_image(lcam_model_.get(), virutal_camera.get(), input_width_,
+                                                         input_height_, image_data.m_mat);
 #endif
         }
         if (left_hand) {

@@ -1,0 +1,79 @@
+/*
+ * @Author: Zhang Junsong
+ * @Date: 2023-02-01 09:52:22
+ * @Last Modified by: Zhang Junsong
+ * @Last Modified time: 2023-02-02 01:49:25
+ */
+
+#pragma once
+
+#include <memory>
+#include <mutex>
+#include <opencv2/opencv.hpp>
+#include <string>
+#include <utility>
+#include "aisdk/algorithm/common/NR_Seq_Manager.h"
+#include "aisdk/base/type.h"
+
+namespace aisdk::algorithm {
+
+// state variable indices
+#define S_X 0
+#define S_Y 1
+#define S_VX 2 
+#define S_VY 3
+#define S_AX 4
+#define S_AY 5
+// measurement variable indices
+#define M_X 0
+#define M_Y 1
+#define M_VX 2
+#define M_VY 3
+
+// #define BETA Vec3f_t(0.4, 0.4, 0.4)
+#define ALPHA_2D \
+    Vec2f_t { 0.6, 0.6 }
+#define ONE_2D \
+    Vec2f_t { 1.0, 1.0 }
+struct PredictorState_2d {
+    Vec2f_t pos;
+    Vec2f_t vec;
+};
+
+/// @brief 2d关键点预测类（主要用于跟踪物体在2d平面中的运动轨迹，从而进行目标跟踪和运动预测）
+class KFPredictor2d {
+   public:
+    KFPredictor2d(){}
+    int init();
+    int start_tracking(double target_ts, PredictorState_2d meas);
+    void stop_tracking();
+
+    Vec2f_t track_only_pred(double target_ts, bool update_state);
+    Vec2f_t track_with_correct(double target_ts, PredictorState_2d meas);
+
+    bool get_tracking_status() const;
+    void set_glasses_type(std::string glass_type){
+        glasses_type_ = std::move(glass_type);
+    }
+
+   private:
+    PredictorState_2d predict();
+    PredictorState_2d correct( PredictorState_2d meas);
+    void update_transition_matrix(double target_ts);
+    void reset_kalman_fileter();
+    double get_valid_predict_time_length(double target_ts);
+    int m_state_size = 6;
+    int m_meas_size = 4;
+    int m_ctrl_size = 0;
+    double last_correct_time_ = 0;
+    unsigned int m_type = CV_32F;
+    std::unique_ptr<cv::KalmanFilter> m_kf_impl;  //卡尔曼滤波器对象
+    bool is_tracked = false;  //是否在被跟踪，true表示在被跟踪，false表示不在被跟踪
+    PredictorState_2d m_momentum;  //测量值信息
+    mutable std::mutex m_mutex;
+    double last_measure_time_ = 0;  //上次的测量时间戳
+    float predict_length_ratio_ = 1.0;  //预测比例
+    std::string glasses_type_ = "flora"; // flora or ella
+};
+
+}

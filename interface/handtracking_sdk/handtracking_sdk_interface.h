@@ -1,11 +1,12 @@
 #ifndef _HANDTRACKING_SDK_INTERFACE_H_
 #define _HANDTRACKING_SDK_INTERFACE_H_
 
+#include <cstdint>
 #include <string>
 #include "channel/nr_plugin_grayscale_camera_types.h"
 #include "common/nr_plugin_generic.h"
 #include "common/nr_plugin_hmd.h"
-#include "perception/nr_perception_hand_tracking.h"
+#include "plugin/nr_perception_hand_tracking.h"
 #include "public/nr_plugin_lifecycle.h"
 #include "public/nr_plugin_types.h"
 #include "public/nr_plugin_message.h"
@@ -15,6 +16,7 @@
 #include "aisdk/task/handtracking/nrcore_pipeline.h"
 
 #include <mutex>
+#include <shared_mutex>
 #include <thread>
 // #include "version.h"
 
@@ -65,6 +67,7 @@ class HandTracking {
     static void SendGlassPredictionData();                                  
     static void NotifyData(NRPluginHandle handle, NRChannelDataType channel_data_type, const void* data,
                            uint32_t data_size);
+    static NRPluginResult UpdatePluginHandle(NRPluginHandle handle);
     static NRPluginResult ParseGlassPredictionData(const GlassHandPredictionData* data);
     static NRPluginResult ParseAllCameraData(const NRGrayscaleCameraFrameData* data);
     static int GetHandTrackingMidExecInfo(ProfilingInfo* info);
@@ -99,6 +102,8 @@ class Hmd {
     // 1: nrsdk_api for real_camera  2: nreal_studio/slam_raw_config for test
     uint32_t m_generate_method = 1;
     algorithm::CameraParams m_cam_param;
+    // camera的数目
+    uint32_t m_nr_cameras = 1;
     bool cam_is_horizontal = true;
 };
 
@@ -119,16 +124,16 @@ class DeviceMessage {
 class Plugin;
 class Plugin {
    public:
-    Plugin(const Plugin&) = delete;
-    void operator=(const Plugin&) = delete;
+    // Plugin(const Plugin&) = delete;
+    // void operator=(const Plugin&) = delete;
 
-    static Plugin* GetInstance();
+    static Plugin& GetInstance();
     static void DestoryInstance();
     bool Init(NRPluginHandle handle, NRInterfaces* interfaces);
     task::Pipeline& GetPipeline();
     void ReleasePipeline();
-    NRPluginHandle GetHandle() { return m_handle; }
-    void SetHandle(NRPluginHandle handle) { m_handle = handle; }
+    NRPluginHandle GetHandle();
+    void SetHandle(NRPluginHandle handle);
 
     bool isInit() { return m_is_init; }
     bool isStart() { return m_is_start; }
@@ -149,17 +154,23 @@ class Plugin {
     static NRPluginResult Release(NRPluginHandle handle);
     static NRPluginResult Unregister(NRPluginHandle handle);
 
-   private:
-    Plugin() = default;
-    ~Plugin();
-    static Plugin* m_ins;
+private:
+   // private构造和析构，禁止所有拷贝和移动操作
+   Plugin() = default;
+   ~Plugin();
+   Plugin(const Plugin&) = delete;
+   Plugin(Plugin&&) = delete;
+   void operator=(const Plugin&) = delete;
+   void operator=(Plugin&&) = delete;
+    //static Plugin* m_ins;
 
-    bool m_is_init = false;
+    std::atomic_bool m_is_init = false;
     std::unique_ptr<task::Pipeline> m_pipeline;
     NRPluginHandle m_handle;
 
-    bool m_is_start = false;
+    std::atomic_bool m_is_start = false;
     NRDeviceType m_act_device_type;
+    std::shared_mutex m_mutex;
 
    public:
     HandTracking m_handtracking;

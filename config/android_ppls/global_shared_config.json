@@ -1,0 +1,159 @@
+{
+    "models_mgr": {
+        "_statement": "the models name is globally unique",
+        "models_name": [
+            "detect",
+            "detect_dsp_ella",
+            "detect_cpu_ella",
+            "detect_cpu_flora",
+            "detect_dsp_flora_mono",
+            "2d_rtmtinyb2",
+            "2d_rsnnano",
+            "2d_filter",
+            "3d_lift_ella",
+            "3d_liftnimble"
+        ],
+        "detect": {
+            "model_config": {
+                "file_name": "models/det_flora_250224_yolov5_quantized.dlc",
+                "vendor": "snpe"
+            },
+            "session_config": {
+                "batch": 2,
+                "precision": "int8",
+                "thread_num": 1,
+                "runtime": "dsp",
+                "output_tensors": [
+                    "output_box",
+                    "output_cls"
+                ]
+            }
+        },
+        "detect_dsp_ella": {
+            "model_config": {
+                "file_name": "models/yolo_hand_det_v5_ppl_230307_snpe217_quantized.dlc",
+                "vendor": "snpe"
+            },
+            "session_config": {
+                "batch": 2,
+                "precision": "int8",
+                "thread_num": 1,
+                "runtime": "dsp"
+            }
+        },
+        "detect_cpu_ella": {
+            "model_config": {
+                "file_name": "models/fp2302_int8.mnn",
+                "vendor": "mnn",
+                "dont_batch": 1
+            },
+            "session_config": {
+                "batch": 2,
+                "precision": "int8",
+                "thread_num": 1,
+                "runtime": "cpu"
+            }
+        },
+        "detect_cpu_flora": {
+            "model_config": {
+                "file_name": "models/det_nano_231213_fp16.mnn",
+                "vendor": "mnn"
+            },
+            "session_config": {
+                "batch": 2,
+                "precision": "float16",
+                "thread_num": 1,
+                "runtime": "cpu"
+            }
+        },
+        "detect_dsp_flora_mono": {
+            "model_config": {
+                "file_name": "models/det_flora_250224_yolov5_quantized.dlc",
+
+                "vendor": "snpe"
+            },
+            "session_config": {
+                "batch": 1,
+                "precision": "int8",
+                "thread_num": 1,
+                "runtime": "dsp",
+                "output_tensors": [
+                    "output_box",
+                    "output_cls"
+                ]
+            }
+        },
+        "2d_rtmtinyb2": {
+            "model_config": {
+                "file_name": "models/rtmtiny_res26sw_kpt_0120_51838e_quantized.dlc",
+                "vendor": "snpe"
+            },
+            "session_config": {
+                "batch": 2,
+                "precision": "int16",
+                "thread_num": 1,
+                "runtime": "dsp",
+                "output_tensors": [
+                    "feat_x",
+                    "feat_y",
+                    "feat_z"
+                ]
+            }
+        },
+        "2d_filter": {
+            "model_config": {
+                "file_name": "models/FilterNet_20220307_linux.enc",
+                "aes_key": "4D 3A B1 19 F0 2A 4A 41 C1 7F 82 0F 30 30 D4 0D 9C 0C 78 E0 A9 98 3C 74 FA 5F 8B 34 A4 CF B8 80",
+                "vendor": "mnn"
+            },
+            "session_config": {
+                "batch": 1,
+                "precision": "float32",
+                "thread_num": 1,
+                "runtime": "cpu"
+            }
+        },
+        "2d_rsnnano": {
+            "model_config": {
+                "file_name": "models/rsnnano_affine_25d_128_240313_5d6045_fp16.mnn",
+                "vendor": "mnn"
+            },
+            "session_config": {
+                "batch": 1,
+                "precision": "float16",
+                "thread_num": 1,
+                "runtime": "cpu",
+                "input_tensors": [
+                    "input"
+                ],
+                "output_tensors": [
+                    "kpt"
+                ]
+            }
+        },
+        "3d_lift_ella": {
+            "model_config": {
+                "file_name": "models/GMLP_20230417.mnn",
+                "vendor": "mnn"
+            },
+            "session_config": {
+                "batch": 1,
+                "precision": "float32",
+                "thread_num": 1,
+                "runtime": "cpu"
+            }
+        },
+        "3d_liftnimble": {
+            "model_config": {
+                "file_name": "models/liftnimble_res26sw_250316_reproj_ebeff3.mnn",
+                "vendor": "mnn"
+            },
+            "session_config": {
+                "batch": 1,
+                "precision": "float32",
+                "thread_num": 1,
+                "runtime": "cpu"
+            }
+        }
+    }
+}

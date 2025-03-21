@@ -9,8 +9,10 @@
 #include "aisdk/algorithm/common/NR_GlobalPredictorService.h"
 #include "aisdk/algorithm/common/NR_Transfer.h"
 #include "aisdk/algorithm/common/hand_define.h"
+#include "aisdk/algorithm/common/metrics.h"
 #include "aisdk/algorithm/common/nrcore_define.h"
 #include "aisdk/algorithm/func/keypoint3d_solver.h"
+#include "aisdk/algorithm/func/netalgo_utils.h"
 #include "aisdk/algorithm/internal_structs/headpose_struct_internal.h"
 #include "aisdk/base/camera_model.h"
 #include "aisdk/base/log.h"
@@ -28,10 +30,7 @@ class MonoHandKpt3DCalculator : public xgraph::CalculatorBase {
    public:
     static absl::Status GetContract(xgraph::CalculatorContract* cc) {
         AISDK_LOG_TRACE("[MonoHandKpt3DCalculator] GetContract start");
-        cc->InputSidePackets()
-            .Tag("CAM_INFO_INPUT")
-            .Set<std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>,
-                           std::shared_ptr<aisdk::base::BaseCameraModel>>>();
+        cc->InputSidePackets().Tag("CAM_INFO_INPUT").Set<std::vector<std::shared_ptr<aisdk::base::BaseCameraModel>>>();
         cc->Inputs().Tag("LANDMARK_INPUT").Set<Kpt2dInternal>();
         cc->Inputs().Tag("HEADPOSE").Set<HeadPoseInternal>();
         cc->Outputs().Tag("KPT3D_OUTPUT").Set<HandsData>();
@@ -44,10 +43,11 @@ class MonoHandKpt3DCalculator : public xgraph::CalculatorBase {
         solver_ = std::make_unique<Keypoint3DSolver>();
         const auto& cam_info = cc->InputSidePackets()
                                    .Tag("CAM_INFO_INPUT")
-                                   .Get<std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>,
-                                                  std::shared_ptr<aisdk::base::BaseCameraModel>>>();
-        lcam_model_ = cam_info.first;
-        rcam_model_ = cam_info.second;
+                                   .Get<std::vector<std::shared_ptr<aisdk::base::BaseCameraModel>>>();
+        lcam_model_ = cam_info.at(0);
+        if (cam_info.size() == 2) {
+            rcam_model_ = cam_info.at(1);
+        }
         AISDK_LOG_TRACE("[MonoHandKpt3DCalculator] Open complete");
         return absl::OkStatus();
     }
@@ -88,6 +88,7 @@ class MonoHandKpt3DCalculator : public xgraph::CalculatorBase {
             if (right_image) {
                 kpt3d = rcam_model_->eye_to_world(kpt3d);
             }
+            kpt3d = interpolation_to_26points(kpt3d);
             return absl::OkStatus();
         }
         AISDK_LOG_TRACE("[MonoHandKpt3DSolver] Falied to solve left: {}", virtual_kpt3d.status().message());
@@ -112,13 +113,39 @@ class MonoHandKpt3DCalculator : public xgraph::CalculatorBase {
             if (status.ok()) {
                 output_buffer_->lhand_valid = true;
                 output_buffer_->left_hand.source = CamType::MONO;
-                output_buffer_->left_hand.score = 1.0;
+                AISDK_LOG_TRACE("[MonoHandKpt3DSolver] left_hand root: {} {} {}", output_buffer_->left_hand.kpt3d[0][0],
+                                output_buffer_->left_hand.kpt3d[0][1], output_buffer_->left_hand.kpt3d[0][2]);
                 if (kpt3d_world_pre.left_hand.source == CamType::BINO) {
                     auto kpt3d_cam_pre =
                         recal_lcam_kpt3d_cv_with_new_headpose(headpose_data.transform, kpt3d_world_pre.left_hand.kpt3d);
                     AISDK_LOG_TRACE("[MonoHandKpt3DSolver]: left hand change from bino root depth {} to mono depth {}",
                                     kpt3d_cam_pre[0][2], output_buffer_->left_hand.kpt3d[0][2]);
                 }
+                // virtualcam 2d convert oricam 2d
+                if (kpt2d.lhand_lcam_virtual_camera != nullptr) {
+                    std::vector<Eigen::Vector3f> kpt_norm_eye =
+                        kpt2d.lhand_lcam_virtual_camera->window_to_eye(kpt2d.lhand_lcam_kpt);
+                    std::vector<Eigen::Vector3f> kpt_norm_world =
+                        kpt2d.lhand_lcam_virtual_camera->eye_to_world(kpt_norm_eye);
+                    output_buffer_->left_hand.kpt2d_lcam = lcam_model_->eye_to_window(kpt_norm_world);
+                } else {
+                    output_buffer_->left_hand.kpt2d_lcam = kpt2d.lhand_lcam_kpt;
+                }
+                AISDK_LOG_TRACE("[MonoHandKpt3DSolver] left_hand pixel_x: {}",
+                                output_buffer_->left_hand.kpt2d_lcam[0][0]);
+                output_buffer_->left_hand.reproj_rmse = compute_mono_rmse_with_reprojection(
+                    output_buffer_->left_hand.kpt3d, output_buffer_->left_hand.kpt2d_lcam, lcam_model_);
+                output_buffer_->left_hand.score =
+                    output_buffer_->left_hand.reproj_rmse;  // only for recording visualization
+                // 如果手在中间且离眼镜较近，或者手在边缘且离眼镜特别近时，单目无效
+                // if ((output_buffer_->left_hand.kpt3d[0][2] <= 0.2 &&
+                //      output_buffer_->left_hand.kpt2d_lcam[0][0] >= 100) ||
+                //     (output_buffer_->left_hand.kpt3d[0][2] <= 0.1 &&
+                //      output_buffer_->left_hand.kpt2d_lcam[0][0] < 100)) {
+                //     output_buffer_->left_hand.reproj_rmse = 10.;
+                // }
+                AISDK_LOG_TRACE("[MonoHandKpt3DSolver] left_hand reproj_rmse: {}",
+                                output_buffer_->left_hand.reproj_rmse);
             } else {
                 AISDK_LOG_TRACE("[MonoHandKpt3DSolver] Falied to solve left hand on left image: {}", status.message());
             }
@@ -131,7 +158,7 @@ class MonoHandKpt3DCalculator : public xgraph::CalculatorBase {
             if (status.ok()) {
                 output_buffer_->lhand_valid = true;
                 output_buffer_->left_hand.source = CamType::MONO;
-                output_buffer_->left_hand.score = 1.0;
+                output_buffer_->left_hand.reproj_rmse = 0;
             } else {
                 AISDK_LOG_TRACE("[MonoHandKpt3DSolver] Falied to solve left hand on right image: {}", status.message());
             }
@@ -146,13 +173,42 @@ class MonoHandKpt3DCalculator : public xgraph::CalculatorBase {
             if (status.ok()) {
                 output_buffer_->rhand_valid = true;
                 output_buffer_->right_hand.source = CamType::MONO;
-                output_buffer_->right_hand.score = 1.0;
+
+                AISDK_LOG_TRACE("[MonoHandKpt3DSolver] right_hand root: {} {} {}",
+                                output_buffer_->right_hand.kpt3d[0][0], output_buffer_->right_hand.kpt3d[0][1],
+                                output_buffer_->right_hand.kpt3d[0][2]);
                 if (kpt3d_world_pre.right_hand.source == CamType::BINO) {
                     auto kpt3d_cam_pre = recal_lcam_kpt3d_cv_with_new_headpose(headpose_data.transform,
                                                                                kpt3d_world_pre.right_hand.kpt3d);
                     AISDK_LOG_TRACE("[MonoHandKpt3DSolver]: right hand change from bino root depth {} to mono depth {}",
                                     kpt3d_cam_pre[0][2], output_buffer_->right_hand.kpt3d[0][2]);
                 }
+                // virtualcam 2d convert oricam 2d
+                if (kpt2d.rhand_rcam_virtual_camera != nullptr) {
+                    std::vector<Eigen::Vector3f> kpt_norm_eye =
+                        kpt2d.rhand_rcam_virtual_camera->window_to_eye(kpt2d.rhand_rcam_kpt);
+                    std::vector<Eigen::Vector3f> kpt_norm_world =
+                        kpt2d.rhand_rcam_virtual_camera->eye_to_world(kpt_norm_eye);
+                    output_buffer_->right_hand.kpt2d_rcam = rcam_model_->eye_to_window(kpt_norm_world);
+                } else {
+                    output_buffer_->right_hand.kpt2d_rcam = kpt2d.rhand_rcam_kpt;
+                }
+                AISDK_LOG_TRACE("[MonoHandKpt3DSolver] right_hand pixel_x: {}",
+                                output_buffer_->right_hand.kpt2d_rcam[0][0]);
+                output_buffer_->right_hand.reproj_rmse = compute_mono_rmse_with_reprojection(
+                    output_buffer_->right_hand.kpt3d, output_buffer_->right_hand.kpt2d_rcam, rcam_model_);
+                output_buffer_->right_hand.score =
+                    output_buffer_->right_hand.reproj_rmse;  // only for recording visualization
+
+                // 如果手在中间且离眼镜较近，或者手在边缘且离眼镜特别近时，单目无效
+                // if ((output_buffer_->right_hand.kpt3d[0][2] <= 0.2 &&
+                //      output_buffer_->right_hand.kpt2d_rcam[0][0] <= 400) ||
+                //     (output_buffer_->right_hand.kpt3d[0][2] <= 0.1 &&
+                //      output_buffer_->right_hand.kpt2d_rcam[0][0] > 400)) {
+                //     output_buffer_->right_hand.reproj_rmse = 10.;
+                // }
+                AISDK_LOG_TRACE("[MonoHandKpt3DSolver] right_hand reproj_rmse: {}",
+                                output_buffer_->right_hand.reproj_rmse);
             } else {
                 AISDK_LOG_TRACE("[MonoHandKpt3DSolver] Falied to solve right  hand on right image: {}",
                                 status.message());
@@ -166,7 +222,7 @@ class MonoHandKpt3DCalculator : public xgraph::CalculatorBase {
             if (status.ok()) {
                 output_buffer_->rhand_valid = true;
                 output_buffer_->right_hand.source = CamType::MONO;
-                output_buffer_->right_hand.score = 1.0;
+                output_buffer_->right_hand.reproj_rmse = 0;
             } else {
                 AISDK_LOG_TRACE("[MonoHandKpt3DSolver] Falied to solve right  hand on left image: {}",
                                 status.message());

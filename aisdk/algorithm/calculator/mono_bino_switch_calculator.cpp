@@ -41,6 +41,7 @@ class MonoBinoSwitchCalculator : public xgraph::CalculatorBase {
         *output_buffer_ = bbox_data;
         if (mode_ == "MONO") {
             output_buffer_->rhand_lcam_valid = false;
+            output_buffer_->lhand_rcam_valid = false;
 
         } else if (mode_ == "BINO") {
             output_buffer_->lhand_lcam_valid = bbox_data.lhand_lcam_valid && bbox_data.lhand_rcam_valid;

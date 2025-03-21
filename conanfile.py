@@ -11,6 +11,10 @@ class AISDK(ConanFile):
         self.options.update(base.options, base.default_options)
         self.revision_mode = base.revision_mode
     def build_requirements(self):
+        super().build_requirements()
+        if os.getenv('BUILD_TOOL'):
+            self.tool_requires("grpc/1.54.3")
+            self.tool_requires("protobuf/3.21.9")
         if self.settings.os == "Android": 
             self.tool_requires("android-ndk/r25c")
         self.test_requires("doctest/2.4.11")
@@ -25,16 +29,21 @@ class AISDK(ConanFile):
         tc = CMakeToolchain(self)
         if os.getenv('ENABLE_XGRAPH_PROFILER') == 'ON':
             tc.variables["ENABLE_XGRAPH_PROFILER"] = True
+        if os.getenv('BUILD_TOOL') == 'ON':
+            tc.variables["BUILD_TOOL"] = True
         tc.generate()
         deps = CMakeDeps(self)
         deps.generate()
 
     def requirements(self):
+        if os.getenv('BUILD_TOOL'):
+            self.requires("grpc/1.54.3")
         self.requires("fmt/9.1.0", transitive_headers=True, transitive_libs=True)
         self.requires("opencv/4.5.5", transitive_headers=True, transitive_libs=True)
         self.requires("eigen/3.3.7", transitive_headers=True, transitive_libs=True)
         self.requires("jsoncpp/1.9.5", transitive_headers=True, transitive_libs=True)
         self.requires("openssl/3.2.2", transitive_headers=True, transitive_libs=True)
+        self.requires("libyuv/stable", transitive_libs=True)
         self.requires("nreal_mnn/2.0.0", transitive_headers=True, transitive_libs=True)
         if self.settings.os in ["Linux", "Android"] and self.conf.get("user.os:distro") != "Xrlinux":
             self.requires("snpe/2.17.0", transitive_headers=False, transitive_libs=False)

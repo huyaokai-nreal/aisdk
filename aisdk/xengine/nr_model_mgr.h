@@ -49,7 +49,7 @@ using LogicAlgoNodeTupleConfig = std::tuple<aisdk::xengine::LogicAlgoConfig>;
 
 struct PipelineRelatedFeature {
     std::string bind_mono_bino;           // "mono" / "bino" / "mono_bino"
-    std::string bind_glass;               // "ella / flora"
+    std::string bind_glass;               // ella / flora / gina
     std::string bind_sensor_orientation;  // "horizontal / vertical"
     std::string bind_runtime;             // "snpe_dsp / cpu"
 };
@@ -91,9 +91,9 @@ class AnalysisTar {
     virtual bool TarFile(const char *pipeline_tarfile, const char *aeskey);
     // 获取tar中解析完成的PipelineConfig
     virtual std::vector<aisdk::xengine::PipelineConfig> &GetPipelineConfig();
-   private:
     // 释放缓存的模型内存等信息
     void ReleaseCache();
+   private:
     // 解析tar包转换pipeline
     bool Analysis(unsigned char *tar_mem, uint32_t tar_len);
     std::vector<PipelineConfig> m_config;

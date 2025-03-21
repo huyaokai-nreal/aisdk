@@ -174,10 +174,10 @@ void NR_INTERFACE_EXPORT NR_INTERFACE_API NRPluginUnload();
 }
 #endif
 
-#ifdef NRSDK
+#ifdef NRAPP
 
 #include "nr_plugin_interface.inc"
 
-#else  // NRSDK
+#else  // NRAPP
 
-#endif  // NRSDK
+#endif  // NRAPP

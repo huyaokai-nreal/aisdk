@@ -5,4 +5,6 @@ message BlockHardRulesCalculatorOptions  {
   float max_root_depth = 1;
   float score_th = 2;
   float score_th_width = 3;
+  float rmse_th = 4;
+  float rmse_th_width = 5;
 }

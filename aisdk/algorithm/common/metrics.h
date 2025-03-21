@@ -11,6 +11,8 @@
 #include "interface/handtracking_sdk/public/nr_plugin_types.h"
 
 namespace aisdk::algorithm {
+float compute_mono_rmse_with_reprojection(const std::vector<Vec3f_t>& pred_xyz, const std::vector<Vec2f_t>& uv_ori,
+                                           const std::shared_ptr<base::BaseCameraModel>& cam_model);
 float compute_score_with_reprojection(const std::vector<Vec3f_t>& pred_xyz, const std::vector<Vec2f_t>& leftcam_uv_ori,
                                       const std::vector<Vec2f_t>& rightcam_uv_ori,
                                       const std::shared_ptr<base::BaseCameraModel>& left_cam,

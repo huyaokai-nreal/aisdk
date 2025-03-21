@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef NRSDK
+#ifdef NRAPP
 
 #include "nr_plugin_types.inc"
 
@@ -100,4 +100,4 @@ typedef struct NRExtents {
 
 #pragma pack()
 
-#endif // NRSDK
+#endif // NRAPP

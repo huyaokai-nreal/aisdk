@@ -45,6 +45,7 @@ struct PredictorState {
     Vec3f_t vec;
 };
 
+/// @brief 3d关键点预测类（主要用于跟踪物体在3d平面中的运动轨迹，从而进行目标跟踪和位置预测）
 class KFPredictor {
    public:
     KFPredictor(){}
@@ -76,12 +77,12 @@ class KFPredictor {
     int m_ctrl_size = 0;
     double last_correct_time_ = 0;
     unsigned int m_type = CV_32F;
-    std::unique_ptr<cv::KalmanFilter> m_kf_impl;
-    bool is_tracked = false;
-    PredictorState m_momentum;
+    std::unique_ptr<cv::KalmanFilter> m_kf_impl;  //卡尔曼滤波器对象
+    bool is_tracked = false;  //是否被跟踪，true表示被追踪，false表示不被追踪
+    PredictorState m_momentum;  //测量值信心
     mutable std::mutex m_mutex;
-    double last_measure_time_ = 0;
-    float predict_length_ratio_ = 1.0;
+    double last_measure_time_ = 0;  //上次的测量时间戳
+    float predict_length_ratio_ = 1.0;  //预测比例
     std::string glasses_type_ = "flora"; // flora or ella
     std::unique_ptr<SeqManager3D> predict_smoother_;
 };

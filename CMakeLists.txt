@@ -30,6 +30,7 @@ endif()
 if (CMAKE_BUILD_TYPE MATCHES "Release")
     # 增加debug符号或者信息
     set(ENABLE_REL_WITH_DEB_INFO OFF)
+
     # 启动编译生成的so执行strip清理
     set(CMAKE_EXE_LINKER_FLAGS    "${CMAKE_EXE_LINKER_FLAGS}    -Wl,--gc-sections -Wl,-s -Wl,--exclude-libs,ALL")
     set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -Wl,--gc-sections -Wl,-s -Wl,--exclude-libs,ALL")
@@ -48,23 +49,19 @@ option(ENABLE_SEGMENT_JOINT_INFERENCE_MODE "enable prior inference 'detect and k
 # 构建fptool工具业务的SDK，暂时未实现
 option(BUILD_HANDTRACKING_FPTOOL_SDK "build lib for detect fp_tool sdk" OFF)
 # 开启以OpenXR定义手势关键点的实现
-option(ENABLE_OPENXR_HANDJOINT_FORMAT "enable hand key_points in OpenXR format" OFF)
+option(ENABLE_OPENXR_HANDJOINT_FORMAT "enable hand key_points in OpenXR format" ON)
 
 if(Xrlinux AND ENABLE_SEGMENT_JOINT_INFERENCE_MODE)
     # Xrlinux是Flora/Gina眼镜所对应的操作系统的标签，等同于Android/Darwin/Linux等
     # 分段联合模式下，眼镜业务的模型包
-    set(tar_ppls "gina_ppls")
+    set(tar_ppls "xrlinux_ppls")
     set(tar_model "hand_tracking_gina")
 elseif(Xrlinux AND NOT ENABLE_SEGMENT_JOINT_INFERENCE_MODE)
     # 暂不支持
     message(FATAL_ERROR "Xrlinux && !ENABLE_SEGMENT_JOINT_INFERENCE_MODE")
-elseif(NOT Xrlinux AND ENABLE_SEGMENT_JOINT_INFERENCE_MODE)
-    # 分段联合模式下，手机业务的模型包
-    set(tar_ppls "gina_joint_ppls")
-    set(tar_model "hand_tracking")
 else()
     # 默认模式下的模型包
-    set(tar_ppls "ppls")
+    set(tar_ppls "android_ppls")
     set(tar_model "hand_tracking")
 endif()
 
@@ -72,12 +69,6 @@ option(BUILD_EXAMPLE "Build examples." ON)
 option(BUILD_PYTHON "Build python wrapper." OFF)
 option(BUILD_TOOL "Build tools."  OFF)
 option(ENABLE_CLANG_TIDY_CHECK       "Analyze code with clang-tidy."                OFF)
-
-# log
-# release模式，消除Warning和Error级别以下的log打印的函数调用消耗
-option(ENABLE_LOG_LEVEL_RELEASE  "enable log level for release" ON)
-# 非release模式，详细的输出全部trace日志
-option(ENABLE_LOG_LEVEL_ALL "enable trace log level" OFF)
 
 # build algorithm
 option(ENABLE_XGRAPH_PROFILER "enable mediapipe graph framework profiler."  OFF)
@@ -92,6 +83,11 @@ if(ENABLE_ALGORITHM_DATA_RECORD)
     # add_definitions(-DDATA_RECORD_METHOD="Gesture")
     # add_definitions(-DDATA_RECORD_METHOD="UnityButton")
     add_definitions(-DDATA_RECORD_METHOD="DebugConfig")
+endif()
+# 导出中间数据
+option(ENABLE_EXPORT_DATA_RECORD "enable export algorithm data record as json file"  OFF)
+if(ENABLE_EXPORT_DATA_RECORD)
+    add_definitions(-DENABLE_EXPORT_DATA_RECORD)
 endif()
 # 开启M2P延时测试
 option(ENBALE_M2P_DELAYED_TIME_PROFILER "enable gesture M2P delayed time profiler" OFF)
@@ -129,14 +125,6 @@ endif()
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     # 启动tensorrt推理引擎
     option(ENABLE_XENGINE_TENSORRT_NN "enable tensorrt nn."  ON)
-endif()
-
-if(ENABLE_LOG_LEVEL_RELEASE)
-    add_definitions(-DENABLE_LOG_LEVEL_RELEASE)
-endif()
-
-if(ENABLE_LOG_LEVEL_ALL)
-    add_definitions(-DENABLE_LOG_LEVEL_ALL)
 endif()
 
 if(BUILD_HANDTRACKING_FPTOOL_SDK)
@@ -222,8 +210,8 @@ list(GET file_content 2 DEFAULT_PIPELINE_TAR_KEY)
 message(STATUS "MODEL_KEY: ${DEFAULT_PIPELINE_TAR_KEY}")
 # 模型包include到头文件中
 configure_file (
-    "${CMAKE_CURRENT_SOURCE_DIR}/aisdk/xengine/model/models.h.in"
-    "${CMAKE_CURRENT_SOURCE_DIR}/aisdk/xengine/model/models.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/aisdk/xengine/util/models.h.in"
+    "${CMAKE_CURRENT_SOURCE_DIR}/aisdk/xengine/util/models.h"
 )
 
 
@@ -244,7 +232,7 @@ message(STATUS "enable build examples")
 add_subdirectory(example)
 endif()
 
-if(BUILD_PYTHON)
+if(BUILD_PYTHON AND  CMAKE_SYSTEM_NAME STREQUAL "Linux")
 message(STATUS "enable build python wrapper")
 add_subdirectory(python/aisdk)
 endif()

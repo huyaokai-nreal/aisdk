@@ -5,6 +5,7 @@ Desktop.ini
 
 # Visual Studio files
 .vs
+*.so
 *.sdf
 *.opensdf
 *.VC.opendb
@@ -36,7 +37,7 @@ obfuscate
 install/
 tmp
 pipeline_tar/
-aisdk/xengine/model/models.h
+aisdk/xengine/util/models.h
 
 # Misc
 .idea/
@@ -60,3 +61,4 @@ out/
 __pycache__
 *.log
 *.png
+*.egg-info

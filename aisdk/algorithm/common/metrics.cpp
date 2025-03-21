@@ -5,7 +5,6 @@
 #include <vector>
 
 #include "aisdk/base/camera_model.h"
-#include "aisdk/base/log.h"
 #include "aisdk/base/type.h"
 namespace aisdk::algorithm {
 
@@ -26,6 +25,18 @@ float compute_rmse(std::vector<Vec2f_t> lval, std::vector<Vec2f_t> rval) {
     float norm = *std::max_element(dist_array.begin(), dist_array.end());
 
     return rmse / norm;
+}
+
+float compute_mono_rmse_with_reprojection(const std::vector<Vec3f_t>& pred_xyz, const std::vector<Vec2f_t>& uv_ori,
+                                          const std::shared_ptr<base::BaseCameraModel>& cam_model) {
+    auto reproj_kpt2d = cam_model->world_to_window(pred_xyz);
+    float err = 0;
+    for (int i = 0; i < 13; i++) {
+        err += (reproj_kpt2d[i][0] - uv_ori[i][0]) * (reproj_kpt2d[i][0] - uv_ori[i][0]) / 13 +
+               (reproj_kpt2d[i][1] - uv_ori[i][1]) * (reproj_kpt2d[i][1] - uv_ori[i][1]) / 13;
+    }
+
+    return sqrt(err);
 }
 
 float compute_score_with_reprojection(const std::vector<Vec3f_t>& pred_xyz, const std::vector<Vec2f_t>& leftcam_uv_ori,
@@ -75,16 +86,23 @@ bool isNaN(const std::vector<Vec3f_t>& kpts) {
     return false;
 }
 
+/// @brief 检查头部姿态是否有效
+/// @param headpose 头部姿态信息
+/// @return true/false
 bool isHeadPoseValid(const NRTransform& headpose) {
     Eigen::Quaternion<float> q(headpose.rotation.qw, headpose.rotation.qx, headpose.rotation.qy, headpose.rotation.qz);
     const float max_float = std::numeric_limits<float>::max();
     const float min_float = std::numeric_limits<float>::lowest();
 
+    //每个四元数分量需要在有效范围内，即<= max_float && >= min_float
     if (q.w() < min_float || q.w() > max_float || q.x() < min_float || q.x() > max_float || q.y() < min_float ||
         q.y() > max_float || q.z() < min_float || q.z() > max_float) {
+        AISDK_LOG_ERROR("isHeadPoseValid, {} {} {} {} {} {}", q.w(), q.x(), q.y(), q.z(), min_float, max_float)
         return false;
     }
 
+    //检查四元数是否是单位四元数。（合法的旋转四元数应该是单位四元数，即w^2 + x^2 + y^2 + z^2 = 1;
+    //这里因为是float，两个float值判断是否相等，允许存在1e-6f的误差。）
     float length_squared = q.squaredNorm();
     const float epsilon = 1e-6f;
     return std::abs(length_squared - 1.0f) <= epsilon;

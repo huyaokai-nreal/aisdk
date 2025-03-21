@@ -11,7 +11,7 @@
 #include "aisdk/algorithm/internal_structs/kpt2d_struct_internal.h"
 #include "aisdk/algorithm/internal_structs/kpt3d_struct_internal.h"
 #include "aisdk/algorithm/internal_structs/hand_gesture_struct_internal.h"
-#include "perception/nr_perception_hand_tracking.h"
+#include "plugin/nr_perception_hand_tracking.h"
 #include "json/json.h"
 #include "aisdk/base/profiling.h"
 #include "aisdk/base/file.h"
@@ -105,7 +105,7 @@ class DataDebugRecord {
 };
 
 // 需要将1个Record，在多模块中共享
-std::shared_ptr<DataDebugRecord> GetSharedDataDebugRecord(std::string key);
+std::shared_ptr<DataDebugRecord> GetSharedDataDebugRecord(const std::string& key);
 
 }  // namespace aisdk::algorithm
 

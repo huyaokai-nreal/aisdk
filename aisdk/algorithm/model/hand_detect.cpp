@@ -23,7 +23,8 @@ absl::Status HandDetectNet::Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xen
     // 简单实现
     {
         itensor_format = checkshapeformat(model.vendor_type, itensor.m_tensors[0].m_rank);
-        int height, width;
+        int height = 0;
+        int width = 0;
         if (itensor_format == aisdk::xengine::TensorFormat::CHW) {
             height = itensor.m_tensors[0].m_dims[1];
             width = itensor.m_tensors[0].m_dims[2];
@@ -43,8 +44,8 @@ absl::Status HandDetectNet::Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xen
         for (auto j = 0; j < grid_w; j++) {
             grid_anchor[i * grid_w + j].grid_x = -0.5f + j * 1.0f;
             grid_anchor[i * grid_w + j].grid_y = -0.5f + i * 1.0f;
-            grid_anchor[i * grid_w + j].anchor_rw = 31.0f;
-            grid_anchor[i * grid_w + j].anchor_rh = 68.0f;
+            grid_anchor[i * grid_w + j].anchor_rw = 33.0f;
+            grid_anchor[i * grid_w + j].anchor_rh = 30.0f;
         }
     }
 
@@ -449,7 +450,8 @@ absl::Status HandDetectNetv2::Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::x
     // 简单实现
     {
         itensor_format = checkshapeformat(model.vendor_type, itensor.m_tensors[0].m_rank);
-        int height, width;
+        int height = 0;
+        int width = 0;
         if (itensor_format == aisdk::xengine::TensorFormat::CHW) {
             height = itensor.m_tensors[0].m_dims[1];
             width = itensor.m_tensors[0].m_dims[2];
@@ -469,8 +471,8 @@ absl::Status HandDetectNetv2::Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::x
         for (auto j = 0; j < grid_w; j++) {
             grid_anchor[i * grid_w + j].grid_x = -0.5f + j * 1.0f;
             grid_anchor[i * grid_w + j].grid_y = -0.5f + i * 1.0f;
-            grid_anchor[i * grid_w + j].anchor_rw = 31.0f;
-            grid_anchor[i * grid_w + j].anchor_rh = 68.0f;
+            grid_anchor[i * grid_w + j].anchor_rw = 33.0f;
+            grid_anchor[i * grid_w + j].anchor_rh = 30.0f;
         }
     }
 
@@ -597,8 +599,11 @@ void HandDetectNetv2::PostProcess(DetOutputInternal &result) {
                     cls_idx_left = 2 * cls_h * cls_w + idx_i * cls_w + idx_j;
                     cls_idx_right = 3 * cls_h * cls_w + idx_i * cls_w + idx_j;
                 }
-                float score = cls_data[cls_idx_score];
-                bool is_left = cls_data[cls_idx_left] * score > cls_data[cls_idx_right] * score;
+                float obj_score = cls_data[cls_idx_score];
+                float left_score = cls_data[cls_idx_left] * obj_score;
+                float right_score = cls_data[cls_idx_right] * obj_score;
+                bool is_left = left_score > right_score;
+                float score = is_left ? left_score : right_score;
                 if (score > score_threshold) {
                     float _coord[box_c];
                     if (otensor_format == aisdk::xengine::TensorFormat::HWC) {

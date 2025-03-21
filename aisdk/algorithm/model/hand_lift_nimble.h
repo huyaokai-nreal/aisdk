@@ -25,7 +25,7 @@ class GMLPLiftNimble : public LiftBaseNet {
     Eigen::Matrix3f rot_right_ = Eigen::Matrix3f::Identity();
     aisdk::xengine::TensorFormat itensor_format;
     aisdk::xengine::TensorFormat otensor_format;
-    std::vector<float> m_leftcam_x, m_leftcam_y, m_rightcam_x, m_rightcam_y;
+    std::vector<float> m_leftcam_x, m_leftcam_y, m_leftcam_z, m_rightcam_x, m_rightcam_y, m_rightcam_z;
     std::shared_ptr<BaseCameraModel> left_camera_;
     std::shared_ptr<BaseCameraModel> right_camera_;
     std::vector<float> mem_left_hand;

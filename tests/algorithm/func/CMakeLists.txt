@@ -5,3 +5,4 @@ ADD_TEST_CASE(${CMAKE_CURRENT_SOURCE_DIR}/test_keypoint3d_solver.cpp "" TEST_DEP
 ADD_TEST_CASE(${CMAKE_CURRENT_SOURCE_DIR}/test_hand_rotation.cpp "" TEST_DEP_LIBS)
 ADD_TEST_CASE(${CMAKE_CURRENT_SOURCE_DIR}/test_hand_nimble.cpp "" TEST_DEP_LIBS)
 ADD_TEST_CASE(${CMAKE_CURRENT_SOURCE_DIR}/test_netalgo_utils.cpp "" TEST_DEP_LIBS)
+ADD_TEST_CASE(${CMAKE_CURRENT_SOURCE_DIR}/test_perspective_crop_image "" TEST_DEP_LIBS)

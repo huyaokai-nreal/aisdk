@@ -3,6 +3,8 @@
 
 // Use int32_t for ABI compatibility.
 #if __cplusplus >= 201100 || defined(_WIN32)
+#define NR_PLUGIN_ENUM8(__TYPE__) enum __TYPE__ : int8_t
+#define NR_PLUGIN_ENUM16(__TYPE__) enum __TYPE__ : int16_t
 #define NR_PLUGIN_ENUM32(__TYPE__) enum __TYPE__ : int32_t
 #define NR_PLUGIN_ENUM64(__TYPE__) enum __TYPE__ : int64_t
 #define NR_PLUGIN_ENUM(__TYPE__) NR_PLUGIN_ENUM32(__TYPE__)
@@ -10,17 +12,20 @@
 #error "C++ versions less than C++11 are not supported."
 #endif
 
-#if defined(NRSDK) || defined(NRPLUGIN)
+#if defined(NRAPP) || defined(NRPLUGIN)
 
-#include "common/nr_plugin_result.inl"
-#include "common/nr_plugin_types.inl"
-#include "common/nr_plugin_types_ext.inl"
+#include "nr_plugin_result.inl"
+#include "nr_plugin_types.inl"
+#include "nr_plugin_types_ext.inl"
 
 #else
 
 NR_PLUGIN_ENUM(NRPluginResult){
     NR_PLUGIN_RESULT_SUCCESS = 0,
     NR_PLUGIN_RESULT_FAILURE = 1,
+	NR_PLUGIN_RESULT_INVALID_ARGUMENT = 2,
+	NR_PLUGIN_RESULT_NOT_ENOUGH_MEMORY = 3,
+	NR_PLUGIN_RESULT_UNSUPPORTED = 4,
 
     // In addition to the error code above, developers can use their own error
     // code. User defined error code start from
@@ -32,7 +37,7 @@ typedef unsigned long long NRPluginHandle;
 typedef unsigned long long NRHandle;
 typedef unsigned long long NRDefinitionHandle;
 
-/// @brief The version information of NRSDK
+/// @brief The version information of NRAPP
 typedef struct NRVersion {
     int32_t major;
     int32_t minor;
@@ -107,4 +112,4 @@ typedef struct NRExtents {
     NRVector3f extents;
 } NRExtents;
 
-#endif  // NRSDK
+#endif  // NRAPP

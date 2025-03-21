@@ -5,7 +5,9 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <string>
+#include <vector>
 
 #include "aisdk/algorithm/common/nrcore_define.h"
 #include "aisdk/algorithm/common/nrnet_define.h"
@@ -236,7 +238,7 @@ bool BaseXGraph::CallBackInferenceResult(const xgraph::Packet &packet, int64_t o
             ret = true;
         } else {
 #if defined(ENABLE_ALGORITHM_GRAPH_STREAM_EVAL_TIME)
-            if (cache->m_stream_time) {
+            if (cache && (cache->m_stream_time)) {  // TODO 这行实际执行不到，cache在else里面始终是nullptr
                 cache->m_stream_time->valid = false;
             }
 #endif
@@ -305,23 +307,6 @@ aisdk::algorithm::CamInfo ConvertCameraInfo(aisdk::algorithm::CameraParams cam_i
     aisdk::algorithm::CamInfo input_cam_info;
     // 1. cvL_T_cvR
     Eigen::Isometry3f glL_T_glR = Eigen::Isometry3f::Identity();
-    glL_T_glR.rotate(Eigen::Quaternionf(cam_param["glL_R_glR"][0], cam_param["glL_R_glR"][1], cam_param["glL_R_glR"][2],
-                                        cam_param["glL_R_glR"][3]));
-    // TODO: 后面处理一下输入是cv系的问题
-    glL_T_glR.pretranslate(
-        Eigen::Vector3f(cam_param["glL_t_glR"][0], cam_param["glL_t_glR"][1], cam_param["glL_t_glR"][2]));
-    // 输入是GL系
-    input_cam_info.generate_method = (int)cam_param["generate_method"][0];
-    Eigen::Matrix3f gl_R_cv;
-    if (1 == input_cam_info.generate_method) {
-        gl_R_cv << 1, 0, 0, 0, -1, 0, 0, 0, -1;
-    } else {
-        gl_R_cv << 1, 0, 0, 0, 1, 0, 0, 0, 1;
-    }
-    Eigen::Isometry3f gl_T_cv = Eigen::Isometry3f::Identity();
-    gl_T_cv.rotate(gl_R_cv);
-    input_cam_info.cvL_T_cvR = gl_T_cv * glL_T_glR * gl_T_cv;
-
     // 2. 左目内参 lcam_intrinsics
     cv::Mat l_K = cv::Mat::eye(3, 3, CV_32FC1);
     l_K.at<float>(0, 0) = cam_param["cam_l_fc"][0];
@@ -329,44 +314,95 @@ aisdk::algorithm::CamInfo ConvertCameraInfo(aisdk::algorithm::CameraParams cam_i
     l_K.at<float>(0, 2) = cam_param["cam_l_cc"][0];
     l_K.at<float>(1, 2) = cam_param["cam_l_cc"][1];
     input_cam_info.lcam_intrinsics = l_K;
-
-    // 3. 右目内参 rcam_intrinsics
-    cv::Mat r_K = cv::Mat::eye(3, 3, CV_32FC1);
-    r_K.at<float>(0, 0) = cam_param["cam_r_fc"][0];
-    r_K.at<float>(1, 1) = cam_param["cam_r_fc"][1];
-    r_K.at<float>(0, 2) = cam_param["cam_r_cc"][0];
-    r_K.at<float>(1, 2) = cam_param["cam_r_cc"][1];
-    input_cam_info.rcam_intrinsics = r_K;
-
     // 4. 全部按照最多的参数存储
     input_cam_info.lcam_dist_coeffs = cv::Mat::eye(1, 12, CV_32FC1);
     for (uint32_t k = 0; k < cam_param["cam_l_kc"].size(); k++) {
         input_cam_info.lcam_dist_coeffs.at<float>(0, k) = cam_param["cam_l_kc"][k];
     }
-
-    input_cam_info.rcam_dist_coeffs = cv::Mat::eye(1, 12, CV_32FC1);
-    for (uint32_t k = 0; k < cam_param["cam_r_kc"].size(); k++) {
-        input_cam_info.rcam_dist_coeffs.at<float>(0, k) = cam_param["cam_r_kc"][k];
+    input_cam_info.lcam_valid = true;
+    if (cam_info.m_nr_cameras == 2) {
+        input_cam_info.rcam_valid = true;
+        glL_T_glR.rotate(Eigen::Quaternionf(cam_param["glL_R_glR"][0], cam_param["glL_R_glR"][1],
+                                            cam_param["glL_R_glR"][2], cam_param["glL_R_glR"][3]));
+        // TODO: 后面处理一下输入是cv系的问题
+        glL_T_glR.pretranslate(
+            Eigen::Vector3f(cam_param["glL_t_glR"][0], cam_param["glL_t_glR"][1], cam_param["glL_t_glR"][2]));
+        // 输入是GL系
+        input_cam_info.generate_method = (int)cam_param["generate_method"][0];
+        Eigen::Matrix3f gl_R_cv;
+        if (1 == input_cam_info.generate_method) {
+            gl_R_cv << 1, 0, 0, 0, -1, 0, 0, 0, -1;
+        } else {
+            gl_R_cv << 1, 0, 0, 0, 1, 0, 0, 0, 1;
+        }
+        Eigen::Isometry3f gl_T_cv = Eigen::Isometry3f::Identity();
+        gl_T_cv.rotate(gl_R_cv);
+        input_cam_info.cvL_T_cvR = gl_T_cv * glL_T_glR * gl_T_cv;
+        // 3. 右目内参 rcam_intrinsics
+        cv::Mat r_K = cv::Mat::eye(3, 3, CV_32FC1);
+        r_K.at<float>(0, 0) = cam_param["cam_r_fc"][0];
+        r_K.at<float>(1, 1) = cam_param["cam_r_fc"][1];
+        r_K.at<float>(0, 2) = cam_param["cam_r_cc"][0];
+        r_K.at<float>(1, 2) = cam_param["cam_r_cc"][1];
+        input_cam_info.rcam_intrinsics = r_K;
+        input_cam_info.rcam_dist_coeffs = cv::Mat::eye(1, 12, CV_32FC1);
+        for (uint32_t k = 0; k < cam_param["cam_r_kc"].size(); k++) {
+            input_cam_info.rcam_dist_coeffs.at<float>(0, k) = cam_param["cam_r_kc"][k];
+        }
     }
-
     input_cam_info.camera_type = (int)cam_param["camera_model"][0];
-
     input_cam_info.video_width = (uint32_t)cam_param["cam_resolution"][0];
     input_cam_info.video_height = (uint32_t)cam_param["cam_resolution"][1];
     return input_cam_info;
 }
 
-std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>, std::shared_ptr<aisdk::base::BaseCameraModel>>
-format_pinhole_camera_model(const aisdk::algorithm::CamInfo &cam_info) {
+std::vector<std::shared_ptr<aisdk::base::BaseCameraModel>> format_pinhole_camera_model(
+    const aisdk::algorithm::CamInfo &cam_info) {
+    std::vector<std::shared_ptr<aisdk::base::BaseCameraModel>> cameras;
+    if (cam_info.lcam_valid) {
+        // lcam
+        aisdk::base::CameraIntrinsics intrinsics_lcam{
+            cam_info.lcam_intrinsics.at<float>(0, 0), cam_info.lcam_intrinsics.at<float>(1, 1),
+            cam_info.lcam_intrinsics.at<float>(0, 2), cam_info.lcam_intrinsics.at<float>(1, 2)};
+        aisdk::base::OpenCVPinholeCameraDistortion distortion_lcam{
+            cam_info.lcam_dist_coeffs.at<float>(0, 0), cam_info.lcam_dist_coeffs.at<float>(0, 1),
+            cam_info.lcam_dist_coeffs.at<float>(0, 2), cam_info.lcam_dist_coeffs.at<float>(0, 3),
+            cam_info.lcam_dist_coeffs.at<float>(0, 4)};
+        auto lcam_model = std::make_shared<aisdk::base::OpenCVPinholeCameraModel>(
+            intrinsics_lcam, distortion_lcam, Eigen::Isometry3f::Identity(),
+            static_cast<aisdk::base::CameraType>(cam_info.camera_type), cam_info.video_width, cam_info.video_height);
+        cameras.push_back(lcam_model);
+    }
+    if (cam_info.rcam_valid) {
+        // rcam
+        aisdk::base::CameraIntrinsics intrinsics_rcam{
+            cam_info.rcam_intrinsics.at<float>(0, 0), cam_info.rcam_intrinsics.at<float>(1, 1),
+            cam_info.rcam_intrinsics.at<float>(0, 2), cam_info.rcam_intrinsics.at<float>(1, 2)};
+        aisdk::base::OpenCVPinholeCameraDistortion distortion_rcam{
+            cam_info.rcam_dist_coeffs.at<float>(0, 0), cam_info.rcam_dist_coeffs.at<float>(0, 1),
+            cam_info.rcam_dist_coeffs.at<float>(0, 2), cam_info.rcam_dist_coeffs.at<float>(0, 3),
+            cam_info.rcam_dist_coeffs.at<float>(0, 4)};
+        auto rcam_model = std::make_shared<aisdk::base::OpenCVPinholeCameraModel>(
+            intrinsics_rcam, distortion_rcam, cam_info.cvL_T_cvR,
+            static_cast<aisdk::base::CameraType>(cam_info.camera_type), cam_info.video_width, cam_info.video_height);
+        cameras.push_back(rcam_model);
+    }
+
+    return cameras;
+}
+std::vector<std::shared_ptr<aisdk::base::BaseCameraModel>> format_opencv_fisheye_camera_model(
+    const aisdk::algorithm::CamInfo &cam_info) {
     // lcam
     aisdk::base::CameraIntrinsics intrinsics_lcam{
         cam_info.lcam_intrinsics.at<float>(0, 0), cam_info.lcam_intrinsics.at<float>(1, 1),
         cam_info.lcam_intrinsics.at<float>(0, 2), cam_info.lcam_intrinsics.at<float>(1, 2)};
-    aisdk::base::OpenCVPinholeCameraDistortion distortion_lcam{
-        cam_info.lcam_dist_coeffs.at<float>(0, 0), cam_info.lcam_dist_coeffs.at<float>(0, 1),
-        cam_info.lcam_dist_coeffs.at<float>(0, 2), cam_info.lcam_dist_coeffs.at<float>(0, 3),
-        cam_info.lcam_dist_coeffs.at<float>(0, 4)};
-    auto lcam_model = std::make_shared<aisdk::base::OpenCVPinholeCameraModel>(
+    aisdk::base::OpenCVFisheyeCameraDistortion distortion_lcam{
+        cam_info.lcam_dist_coeffs.at<float>(0, 0),
+        cam_info.lcam_dist_coeffs.at<float>(0, 1),
+        cam_info.lcam_dist_coeffs.at<float>(0, 2),
+        cam_info.lcam_dist_coeffs.at<float>(0, 3),
+    };
+    auto lcam_model = std::make_shared<aisdk::base::OpenCVFisheyeCameraModel>(
         intrinsics_lcam, distortion_lcam, Eigen::Isometry3f::Identity(),
         static_cast<aisdk::base::CameraType>(cam_info.camera_type), cam_info.video_width, cam_info.video_height);
 
@@ -374,19 +410,21 @@ format_pinhole_camera_model(const aisdk::algorithm::CamInfo &cam_info) {
     aisdk::base::CameraIntrinsics intrinsics_rcam{
         cam_info.rcam_intrinsics.at<float>(0, 0), cam_info.rcam_intrinsics.at<float>(1, 1),
         cam_info.rcam_intrinsics.at<float>(0, 2), cam_info.rcam_intrinsics.at<float>(1, 2)};
-    aisdk::base::OpenCVPinholeCameraDistortion distortion_rcam{
-        cam_info.rcam_dist_coeffs.at<float>(0, 0), cam_info.rcam_dist_coeffs.at<float>(0, 1),
-        cam_info.rcam_dist_coeffs.at<float>(0, 2), cam_info.rcam_dist_coeffs.at<float>(0, 3),
-        cam_info.rcam_dist_coeffs.at<float>(0, 4)};
-    auto rcam_model = std::make_shared<aisdk::base::OpenCVPinholeCameraModel>(
+    aisdk::base::OpenCVFisheyeCameraDistortion distortion_rcam{
+        cam_info.rcam_dist_coeffs.at<float>(0, 0),
+        cam_info.rcam_dist_coeffs.at<float>(0, 1),
+        cam_info.rcam_dist_coeffs.at<float>(0, 2),
+        cam_info.rcam_dist_coeffs.at<float>(0, 3),
+    };
+    auto rcam_model = std::make_shared<aisdk::base::OpenCVFisheyeCameraModel>(
         intrinsics_rcam, distortion_rcam, cam_info.cvL_T_cvR,
         static_cast<aisdk::base::CameraType>(cam_info.camera_type), cam_info.video_width, cam_info.video_height);
 
-    return std::make_pair(lcam_model, rcam_model);
+    return {lcam_model, rcam_model};
 }
 
-std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>, std::shared_ptr<aisdk::base::BaseCameraModel>>
-format_fisheye624_camera_model(const aisdk::algorithm::CamInfo &cam_info) {
+std::vector<std::shared_ptr<aisdk::base::BaseCameraModel>> format_fisheye624_camera_model(
+    const aisdk::algorithm::CamInfo &cam_info) {
     // lcam
     aisdk::base::CameraIntrinsics intrinsics_lcam{
         cam_info.lcam_intrinsics.at<float>(0, 0), cam_info.lcam_intrinsics.at<float>(1, 1),
@@ -417,18 +455,20 @@ format_fisheye624_camera_model(const aisdk::algorithm::CamInfo &cam_info) {
         intrinsics_rcam, distortion_rcam, cam_info.cvL_T_cvR,
         static_cast<aisdk::base::CameraType>(cam_info.camera_type), cam_info.video_width, cam_info.video_height);
 
-    return std::make_pair(lcam_model, rcam_model);
+    return {lcam_model, rcam_model};
 }
 
-std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>, std::shared_ptr<aisdk::base::BaseCameraModel>>
-ConvertCameraModel(const aisdk::algorithm::CamInfo &cam_info) {
-    std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>, std::shared_ptr<aisdk::base::BaseCameraModel>>
-        camera_model;
+std::vector<std::shared_ptr<aisdk::base::BaseCameraModel>> ConvertCameraModel(
+    const aisdk::algorithm::CamInfo &cam_info) {
+    std::vector<std::shared_ptr<aisdk::base::BaseCameraModel>> camera_model;
     if (cam_info.camera_type == 1) {  // ella pinhole
-        AISDK_LOG_TRACE("BaseXGraph::Init use ella pinhole camera model");
+        AISDK_LOG_TRACE("BaseXGraph::Init use pinhole camera model");
         camera_model = format_pinhole_camera_model(cam_info);
+    } else if (cam_info.camera_type == 2) {
+        AISDK_LOG_TRACE("BaseXGraph::Init use fisheye camera model");
+        camera_model = format_opencv_fisheye_camera_model(cam_info);
     } else if (cam_info.camera_type == 3) {  // flora fisheye624
-        AISDK_LOG_TRACE("BaseXGraph::Init use flora fisheye624 camera model");
+        AISDK_LOG_TRACE("BaseXGraph::Init use fisheye624 camera model");
         camera_model = format_fisheye624_camera_model(cam_info);
     } else {
         AISDK_LOG_WARN("Not Support camera_type = {}", cam_info.camera_type);
@@ -439,21 +479,16 @@ ConvertCameraModel(const aisdk::algorithm::CamInfo &cam_info) {
 aisdk::algorithm::Status BaseXGraph::Init(aisdk::xengine::DlSymFuncs &funcs, aisdk::xengine::PipelineConfig &config,
                                           CameraParams &camera) {
     auto camera_info = ConvertCameraInfo(camera);
-    if (camera_info.camera_type == 2) {
-        // flora fisheye600
-        return aisdk::algorithm::Status::FAILURE;
-    }
     auto camera_model = ConvertCameraModel(camera_info);
-
     std::map<std::string, xgraph::Packet> side_packets;
-    side_packets["cam_info"] = xgraph::MakePacket<
-        std::pair<std::shared_ptr<aisdk::base::BaseCameraModel>, std::shared_ptr<aisdk::base::BaseCameraModel>>>(
-        camera_model);
+    side_packets["cam_info"] =
+        xgraph::MakePacket<std::vector<std::shared_ptr<aisdk::base::BaseCameraModel>>>(camera_model);
 
     TriggerGloalGraphCalculatorsConstruct();
-    AISDK_LOG_TRACE("XGraph::Trigger calculator construct");
+    AISDK_LOG_TRACE("start graph  calculator construct");
 
     PipeGraphImpl::Init(funcs, config, camera);
+    AISDK_LOG_TRACE("Finish graph calculator construct");
 
     auto &calculator_graph_config = config.graph_config;
 

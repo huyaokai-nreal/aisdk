@@ -24,14 +24,14 @@ static std::map<int, int> JOINT_ID_BONE_DICT{{0, 0},   {1, 1},   {2, 2},   {3, 3
                                              {8, 7},   {10, 8},  {11, 9},  {12, 10}, {13, 11}, {15, 12}, {16, 13},
                                              {17, 14}, {18, 15}, {20, 16}, {21, 17}, {22, 18}, {23, 19}};
 
-const static std::array<int, 21> VALID_JOINT_INDEX{0,  1,  2,  3,  4,  6,  7,  8,  9,  11, 12,
-                                                   13, 14, 16, 17, 18, 19, 21, 22, 23, 24};
+const static std::array<int, 26> VALID_JOINT_INDEX{0,  1,  2,  3,  4,  6,  7,  8,  9, 11, 12, 13, 14,
+                                                   16, 17, 18, 19, 21, 22, 23, 24, 0, 20, 5,  10, 15};
 
 const static std::array<int, 25> KINTREE_PARENTS{-1, 0,  1, 2,  3,  0,  5,  6, 7,  8,  0,  10, 11,
                                                  12, 13, 0, 15, 16, 17, 18, 0, 20, 21, 22, 23};
 
 static constexpr int STATIC_JOINT_NUM = 25;
-Mat21_3f_t decode_hand_joints(float hand_scale, std::vector<float>& joint_angles) {
+Mat26_3f_t decode_hand_joints(float hand_scale, std::vector<float>& joint_angles) {
     // get joints
     const Eigen::Map<Eigen::Matrix<float, STATIC_JOINT_NUM, 3, Eigen::RowMajor>> template_joins(
         NIMBLE_TEMPLATE_JOINTS.data());
@@ -59,7 +59,7 @@ Mat21_3f_t decode_hand_joints(float hand_scale, std::vector<float>& joint_angles
         joint_rel_transform.block<3, 1>(0, 3) = joint_j - parent_j;
         hand_poses[i_val_joint] = hand_poses[parent_id] * joint_rel_transform;
     }
-    Mat21_3f_t joints = Mat21_3f_t::Zero();
+    Mat26_3f_t joints = Mat26_3f_t::Zero();
     auto rebuild_root = hand_poses[0].block<3, 1>(0, 3);
     for (int i = 0; i < VALID_JOINT_INDEX.size(); i++) {
         joints.row(i) = (hand_poses[VALID_JOINT_INDEX[i]].block<3, 1>(0, 3) - rebuild_root) / 1000.F;

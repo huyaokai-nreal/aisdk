@@ -28,10 +28,12 @@ absl::Status GMLPLiftNimble::Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xe
     otensor_format = checkshapeformat(model.vendor_type, otensor.m_tensors[0].m_rank);
     m_leftcam_x.resize(kAlgoKeypointNum);
     m_leftcam_y.resize(kAlgoKeypointNum);
+    m_leftcam_z.resize(kAlgoKeypointNum);
     m_rightcam_x.resize(kAlgoKeypointNum);
     m_rightcam_y.resize(kAlgoKeypointNum);
-    mem_left_hand.resize(86);
-    mem_right_hand.resize(86);
+    m_rightcam_z.resize(kAlgoKeypointNum);
+    mem_left_hand.resize(105);
+    mem_right_hand.resize(105);
     return ret;
 }
 
@@ -42,13 +44,19 @@ void GMLPLiftNimble::transfer_to_standard_stereo_input() {
     for (size_t i = 0; i < kAlgoKeypointNum; i++) {
         left_kpt_homo(i, 0) = m_leftcam_x[i];
         left_kpt_homo(i, 1) = m_leftcam_y[i];
+        left_kpt_homo(i, 2) = m_leftcam_z[i];
         right_kpt_homo(i, 0) = m_rightcam_x[i];
         right_kpt_homo(i, 1) = m_rightcam_y[i];
+        right_kpt_homo(i, 2) = m_rightcam_z[i];
     }
-    left_kpt_homo.noalias() = (rot_left_ * left_kpt_homo.transpose()).transpose();
-    right_kpt_homo.noalias() = (rot_right_ * right_kpt_homo.transpose()).transpose();
-    left_kpt_homo = left_kpt_homo.array().colwise() / left_kpt_homo.array().col(2);
-    right_kpt_homo = right_kpt_homo.array().colwise() / right_kpt_homo.array().col(2);
+    if (!left_kpt_homo.isZero()) {
+        left_kpt_homo.noalias() = (rot_left_ * left_kpt_homo.transpose()).transpose();
+        left_kpt_homo = left_kpt_homo.array().colwise() / left_kpt_homo.array().col(2);
+    }
+    if (!right_kpt_homo.isZero()) {
+        right_kpt_homo.noalias() = (rot_right_ * right_kpt_homo.transpose()).transpose();
+        right_kpt_homo = right_kpt_homo.array().colwise() / right_kpt_homo.array().col(2);
+    }
     for (size_t i = 0; i < kAlgoKeypointNum; i++) {
         m_leftcam_x[i] = left_kpt_homo(i, 0);
         m_leftcam_y[i] = left_kpt_homo(i, 1);
@@ -83,32 +91,33 @@ void GMLPLiftNimble::PreProcess(const LiftNetInputs &inputs) {
 
     float *temp = (float *)mem;
 
-    auto l_K = left_camera_->get_camera_intrinsics();
-    auto r_K = right_camera_->get_camera_intrinsics();
-    for (int idx = 0; idx < kAlgoKeypointNum; idx++) {
-        m_leftcam_x[idx] = (inputs.input_kpt_lcam[idx][0] - l_K.cx_) / l_K.fx_;
-        m_leftcam_y[idx] = (inputs.input_kpt_lcam[idx][1] - l_K.cy_) / l_K.fy_;
-        m_rightcam_x[idx] = (inputs.input_kpt_rcam[idx][0] - r_K.cx_) / r_K.fx_;
-        m_rightcam_y[idx] = (inputs.input_kpt_rcam[idx][1] - r_K.cy_) / r_K.fy_;
-    }
+    m_leftcam_x = inputs.m_leftcam_x;
+    m_leftcam_y = inputs.m_leftcam_y;
+    m_leftcam_z = inputs.m_leftcam_z;
+    m_rightcam_x = inputs.m_rightcam_x;
+    m_rightcam_y = inputs.m_rightcam_y;
+    m_rightcam_z = inputs.m_rightcam_z;
 
     transfer_to_standard_stereo_input();
 
     auto buffer_x = temp;
-    auto buffer_y = temp + 43;
+    // auto buffer_y = temp + 43;
 
     for (int i = 0; i < kAlgoKeypointNum; i++) {
-        buffer_x[i * 2] = m_leftcam_x[i];
-        buffer_x[i * 2 + 1] = m_leftcam_y[i];
+        buffer_x[i * 5] = m_leftcam_x[i];
+        buffer_x[i * 5 + 1] = m_leftcam_y[i];
+        buffer_x[i * 5 + 2] = m_rightcam_x[i];
+        buffer_x[i * 5 + 3] = m_rightcam_y[i];
+        buffer_x[i * 5 + 4] = inputs.is_left;
     }
-    buffer_x[42] = inputs.is_left;
-    for (int i = 0; i < kAlgoKeypointNum; i++) {
-        buffer_y[i * 2] = m_rightcam_x[i];
-        buffer_y[i * 2 + 1] = m_rightcam_y[i];
-    }
-    buffer_y[42] = inputs.is_left;
+    // buffer_x[42] = inputs.is_left;
+    // for (int i = 0; i < kAlgoKeypointNum; i++) {
+    //     buffer_y[i * 2] = m_rightcam_x[i];
+    //     buffer_y[i * 2 + 1] = m_rightcam_y[i];
+    // }
+    // buffer_y[42] = inputs.is_left;
 
-    AISDK_LOG_TRACE("[GMLPLiftNimble] buffer_x[42]={}, buffer_y[42]={}", buffer_x[42], buffer_y[42]);
+    // AISDK_LOG_TRACE("[GMLPLiftNimble] buffer_x[42]={}, buffer_y[42]={}", buffer_x[42], buffer_y[42]);
 
     int index_mem = this->m_net->GetInputTensorIndex("mem_in");
     int mem_channels = itensor.m_tensors[index_mem].m_dims[0];
@@ -135,6 +144,7 @@ void GMLPLiftNimble::PreProcess(const LiftNetInputs &inputs) {
             mem_hand[i] = 0;
         }
     }
+    AISDK_LOG_TRACE("[GMLPLiftNimble] PreProcess success, mem_size: {}", mem_size);
 }
 
 void GMLPLiftNimble::PostProcess(const LiftNetInputs &inputs, LiftNetOutputs &outputs) {
@@ -147,8 +157,8 @@ void GMLPLiftNimble::PostProcess(const LiftNetInputs &inputs, LiftNetOutputs &ou
         -0.07071068, 0., -0.07071068, -0.07071068;
     Eigen::Isometry3f global_hand_pose = get_transform_with_svd(svd_src_pt, svd_pt);
     Eigen::Matrix3f global_rotation = global_hand_pose.rotation();
-    Eigen::Vector3f global_translation = global_hand_pose.translation();
-    global_translation.noalias() = rot_left_.inverse() * global_translation;
+    Eigen::Vector3f global_translation_ = global_hand_pose.translation();
+    Eigen::Vector3f global_translation = rot_left_.inverse() * global_translation_;
     global_rotation.noalias() = rot_left_.inverse() * global_rotation;
 
     // right to left
@@ -168,11 +178,11 @@ void GMLPLiftNimble::PostProcess(const LiftNetInputs &inputs, LiftNetOutputs &ou
     std::vector<float> local_angles(angle_ptr, angle_ptr + 171);
     local_angles = decode_hand_angle(local_angles);
     auto local_kpt = decode_hand_joints(shape_param, local_angles);
-    Eigen::Matrix<float, 21, 3> global_kpt =
+    Eigen::Matrix<float, 26, 3> global_kpt =
         ((global_rotation * local_kpt.transpose()).transpose().rowwise() + global_translation.transpose()) *
         baseline_scale_ / standard_baseline_;
-    outputs.res3d.resize(21);
-    for (int i = 0; i < kAlgoKeypointNum; i++) {
+    outputs.res3d.resize(26);
+    for (int i = 0; i < 26; i++) {
         outputs.res3d[i] = Vec3f_t{global_kpt(i, 0), global_kpt(i, 1), global_kpt(i, 2)};
     }
     AISDK_LOG_TRACE("[GMLPLiftNimble] run GMLPLiftNimble infer kpt success");
@@ -191,18 +201,26 @@ void GMLPLiftNimble::PostProcess(const LiftNetInputs &inputs, LiftNetOutputs &ou
     int mem_size = mem_height * mem_width * mem_channels;
     float *mem_hand = (float *)otensor.m_tensors[index_mem].m_viraddr;
 
-    if (inputs.is_left != 0.) {
-        for (int i = 0; i < mem_size; i++) {
-            mem_left_hand[i] = mem_hand[i];
+    if (mem_size > 0 && mem_size <= mem_right_hand.size()) {
+        if (inputs.is_left != 0.) {
+            for (int i = 0; i < mem_size; i++) {
+                // AISDK_LOG_INFO("mem_left_hand[{}]: {}, mem_size: {}, mem_hand: {}", i, mem_hand[i], mem_size,
+                //               fmt::ptr(mem_hand));
+                mem_left_hand[i] = mem_hand[i];
+            }
+            last_left_time = inputs.timestamp;
+        } else {
+            for (int i = 0; i < mem_size; i++) {
+                // AISDK_LOG_INFO("mem_right_hand[{}]: {}, mem_size: {}, mem_hand: {}", i, mem_hand[i], mem_size,
+                //                fmt::ptr(mem_hand));
+                mem_right_hand[i] = mem_hand[i];
+            }
+            last_right_time = inputs.timestamp;
         }
-        last_left_time = inputs.timestamp;
     } else {
-        for (int i = 0; i < mem_size; i++) {
-            mem_right_hand[i] = mem_hand[i];
-        }
-        last_right_time = inputs.timestamp;
+        AISDK_LOG_TRACE("[GMLPLiftNimble] PostProcess mem_size error, mem_size: {}", mem_size);
     }
-    AISDK_LOG_TRACE("[GMLPLiftNimble] run GMLPLiftNimble infer mem success");
+    AISDK_LOG_TRACE("[GMLPLiftNimble] run GMLPLiftNimble infer mem success, mem_size: {}", mem_size);
 }
 
 absl::StatusOr<LiftNetOutputs> GMLPLiftNimble::Inference(const LiftNetInputs &inputs) {
