@@ -60,6 +60,8 @@ const std::string default_libdir = "./handTracking/";
 const std::string netalgo_so_name = XENGINE_LIB_NAME;
 #endif
 
+std::shared_mutex m_mutex_processdata;  //控制处理图片逻辑和Plugin::Stop逻辑整体的调用时序
+
 /// @brief 析构函数
 HandTracking::~HandTracking() { UnLoadDlsym(true); }
 
@@ -783,10 +785,15 @@ NRPluginResult DeviceMessage::NotifyDeviceMessage(NRPluginHandle handle, const v
         return NR_PLUGIN_RESULT_INVALID_ARGUMENT;
     }
 
+    /**
+     * 注意：Plugin::Stop中包含local资源的stop和pipeline资源的stop,图片处理逻辑包含local资源的使用和pipeline资源的使用.所以，Plugin::Stop函数是和图片处理逻辑整体互斥的，而不只是pipeline的部分互斥
+     */
+    //加锁，允许多线程处理图片数据，但是处理图片逻辑和Plugin::Stop逻辑整体互斥
+    std::shared_lock lck(m_mutex_processdata);
     auto& ins = Plugin::GetInstance();
     if (ins.isStart()) {
         auto& pipeline = ins.GetPipeline();
-        if (ins.pipeline_work_scene == "handtracking_segment_next_host") {
+        if ("handtracking_segment_next_host" == ins.pipeline_work_scene) {
             auto prediction_data = (const GlassHandPredictionData*)data;
             nano_time_ = prediction_data->timestamp_nanos;
             errorcode = ins.m_handtracking.m_interface->GetDevicePose(ins.GetHandle(), &headpose_proto, nano_time_);
@@ -797,7 +804,7 @@ NRPluginResult DeviceMessage::NotifyDeviceMessage(NRPluginHandle handle, const v
             if (impl) {
                 impl->PushData(prediction_data, head_pose);
             } else {
-                AISDK_LOG_ERROR("impl is nullptr now")
+                AISDK_LOG_ERROR("impl is nullptr in handtracking_segment_next_host work scene or impl is nullptr")
             }
 
             errorcode = NR_PLUGIN_RESULT_SUCCESS;
@@ -873,11 +880,7 @@ NRPluginResult HandTracking::ParseAllCameraData(const NRGrayscaleCameraFrameData
                                                               nano_time_[0]);
     head_pose = headpose_proto.transform;
 
-    // if (!(pipeline.Impl())) {
-    //     AISDK_LOG_ERROR("pipeline.Impl() is nullptr");
-    // }
-
-    if (ins.pipeline_work_scene == "handtracking_std_all_host") {
+    if ("handtracking_std_all_host" == ins.pipeline_work_scene) {
         std::shared_ptr<task::HandTrackingXGraph> impl =
             std::dynamic_pointer_cast<task::HandTrackingXGraph>(pipeline.Impl());
 
@@ -894,7 +897,7 @@ NRPluginResult HandTracking::ParseAllCameraData(const NRGrayscaleCameraFrameData
         } else {
             AISDK_LOG_ERROR("impl is nullptr in handtracking_std_all_host work scene or plugin is stop");
         }
-    } else if (ins.pipeline_work_scene == "handtracking_segment_prior_glass") {
+    } else if ("handtracking_segment_prior_glass" == ins.pipeline_work_scene) {
         std::shared_ptr<task::HandTrackingPriorGlassXGraph> impl =
             std::dynamic_pointer_cast<task::HandTrackingPriorGlassXGraph>(pipeline.Impl());
 
@@ -928,7 +931,7 @@ void HandTracking::NotifyData(NRPluginHandle handle, NRChannelDataType channel_d
     AISDK_LOG_TRACE("NotifyData in HandTracking: data type {}", int(channel_data_type));
 
     switch (channel_data_type) {
-        case NR_CHANNEL_DATA_TYPE_GLASSES_GRAYSCALE_CAMERA:
+        case NR_CHANNEL_DATA_TYPE_GLASSES_GRAYSCALE_CAMERA: {
             if (data_size != sizeof(NRGrayscaleCameraFrameData)) {
                 AISDK_LOG_ERROR(
                     "NotifyData Failed: data_size error, the interface is not compatible! data_size:{}, "
@@ -937,13 +940,18 @@ void HandTracking::NotifyData(NRPluginHandle handle, NRChannelDataType channel_d
                 return;
             }
 
-            //送数据进行处理
+            /**
+             * 注意：Plugin::Stop中包含local资源的stop和pipeline资源的stop,图片处理逻辑包含local资源的使用和pipeline资源的使用.所以，Plugin::Stop函数是和图片处理逻辑整体互斥的，而不只是pipeline的部分互斥
+             */
+            //加锁，允许多线程处理图片数据，但是ParseAllCameraData和Plugin::Stop整体互斥
+            std::shared_lock lck(m_mutex_processdata);
             if (Plugin::GetInstance().isStart()) {
                 ParseAllCameraData((const NRGrayscaleCameraFrameData*)data);
             } else {
                 AISDK_LOG_WARN("NotifyData Failed: Plugin is not start!");
             }
             break;
+        }
         default:
             break;
     }
@@ -1058,13 +1066,13 @@ void Plugin::ReleasePipeline() { m_pipeline = nullptr; }
 
 NRPluginHandle Plugin::GetHandle() {
     //共享锁控制，允许多线程读
-    std::shared_lock lck(m_mutex);
+    std::shared_lock lck(m_mutex_handle);
     return m_handle;
 }
 
 void Plugin::SetHandle(NRPluginHandle handle) {
     //独占锁控制，写的时候，读操作阻塞
-    std::unique_lock lck(m_mutex);
+    std::unique_lock lck(m_mutex_handle);
     m_handle = handle;
 }
 
@@ -1393,9 +1401,19 @@ NRPluginResult Plugin::Pause(NRPluginHandle handle) {
         return NR_PLUGIN_RESULT_FAILURE;
     }
 
+    /**
+     * 注意：Plugin::Stop中包含local资源的stop和pipeline资源的stop,图片处理逻辑包含local资源的使用和pipeline资源的使用.所以，Plugin::Stop函数是和图片处理逻辑整体互斥的，而不只是pipeline的部分互斥.因此，要把ins的stop和pipeline的stop都通过互斥锁控制起来
+     */
+    //加锁，阻塞的等待已有的数据处理完成
+    std::unique_lock lck(m_mutex_processdata);
+
+    //接口停止，不再送数据进来，释放local部分资源
     ins.Stop();
+
+    //停止pipeline，释放pipeline部分资源
     auto pipline = ins.GetPipeline().Impl();
     pipline->Stop();
+
     AISDK_LOG_WARN("HandTracking: Paused");
     return NR_PLUGIN_RESULT_SUCCESS;
 }
@@ -1429,12 +1447,19 @@ NRPluginResult Plugin::Stop(NRPluginHandle handle) {
         return NR_PLUGIN_RESULT_FAILURE;
     }
 
-    //停止pipeline
+    /**
+     * 注意：Plugin::Stop中包含local资源的stop和pipeline资源的stop,图片处理逻辑包含local资源的使用和pipeline资源的使用.所以，Plugin::Stop函数是和图片处理逻辑整体互斥的，而不只是pipeline的部分互斥.因此，要把ins的stop和pipeline的stop都通过互斥锁控制起来
+     */
+    //加锁，阻塞的等待已有的数据处理完成
+    std::unique_lock lck(m_mutex_processdata);
+
+    //接口停止，不再接受数据进来，释放local部分资源
+    ins.Stop();
+
+    //停止pipeline，释放pipeline部分资源
     auto pipline = ins.GetPipeline().Impl();
     pipline->Stop();
 
-    //接口停止，不再接受数据进来
-    ins.Stop();
     AISDK_LOG_WARN("HandTracking: Stoped");
     return NR_PLUGIN_RESULT_SUCCESS;
 }

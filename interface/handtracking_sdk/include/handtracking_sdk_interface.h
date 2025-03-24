@@ -173,7 +173,7 @@ private:
 
     std::atomic_bool m_is_start = false;
     NRDeviceType m_act_device_type;
-    std::shared_mutex m_mutex;
+    std::shared_mutex m_mutex_handle;  //控制handle的读写
 
 public:
     HandTracking m_handtracking;
