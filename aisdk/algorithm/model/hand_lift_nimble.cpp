@@ -195,10 +195,8 @@ void GMLPLiftNimble::PostProcess(const LiftNetInputs &inputs, LiftNetOutputs &ou
     int index_mem = this->m_net->GetOutputTensorIndex("mem_out");
 
     int mem_channels = otensor.m_tensors[index_mem].m_dims[0];
-    int mem_height = otensor.m_tensors[index_mem].m_dims[1];
-    int mem_width = otensor.m_tensors[index_mem].m_dims[2];
 
-    int mem_size = mem_height * mem_width * mem_channels;
+    int mem_size = mem_channels;
     float *mem_hand = (float *)otensor.m_tensors[index_mem].m_viraddr;
 
     if (mem_size > 0 && mem_size <= mem_right_hand.size()) {
