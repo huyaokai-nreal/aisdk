@@ -39,8 +39,8 @@ echo "CONAN_USER_REQUIRES 已设置为: $CONAN_USER_REQUIRES"
 # 执行编译脚本
 if [[ "$1" == "linux" ]]; then
     bash compile.sh -c linux
-elif [[ "$1" == "Xrlinux" ]]; then
-    bash compile.sh -c Xrlinux
+elif [[ "$1" == "xrlinux" ]]; then
+    bash compile.sh -c xrlinux
 else
     bash compile.sh -c android64
 fi

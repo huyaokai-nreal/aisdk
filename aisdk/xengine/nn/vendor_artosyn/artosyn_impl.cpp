@@ -200,18 +200,17 @@ int ARTOSYN_Session::MakeIfcInput(std::shared_ptr<ARTOSYN_AIModel> &aimodel) {
         s32Ret = AR_MPI_NPU_GetInputTensorParam(aimodel->m_handle, i, &stTensor);
         AISDK_LOG_TRACE("AR_MPI_NPU_GetInputTensorParam s32Ret={}", s32Ret);
         AISDK_LOG_TRACE(
-            "input-{} stTensor: u32ID={},u32Bank={},u32Offset={},u32Height={},u32KStep={}, 
-            u32KNormNum = {},
-            u32KSizeLast = {}, u32KSizeNorm = {}, achName = {}, achType = {}, u32Num = {}, u32OriChannels = {},
-            u32OriFrameSize = {} u32Precision = {}, u32RowStep = {}, u32TensorStep = {}, dScaleFactor = {},
-            u32Size = {}, u32Width = {}, s32ZeroPoint = {},
-            achLayoutType = {} ",i,
-                            stTensor.u32ID,
-            stTensor.u32Bank, stTensor.u32Offset, stTensor.u32Height, stTensor.u32KStep, stTensor.u32KNormNum,
-            stTensor.u32KSizeLast, stTensor.u32KSizeNorm, stTensor.achName, stTensor.achType, stTensor.u32Num,
-            stTensor.u32OriChannels, stTensor.u32OriFrameSize, stTensor.u32Precision, stTensor.u32RowStep,
-            stTensor.u32TensorStep, (float)stTensor.dScaleFactor, stTensor.u32Size, stTensor.u32Width,
-            stTensor.s32ZeroPoint, stTensor.achLayoutType);
+            "input-{} stTensor: u32ID={},u32Bank={},u32Offset={},u32Height={},u32KStep={}, "
+            "u32KNormNum = {},"
+            "u32KSizeLast = {}, u32KSizeNorm = {}, achName = {}, achType = {}, u32Num = {}, u32OriChannels = {},"
+            "u32OriFrameSize = {} u32Precision = {}, u32RowStep = {}, u32TensorStep = {}, dScaleFactor = {},"
+            "u32Size = {}, u32Width = {}, s32ZeroPoint = {},"
+            "achLayoutType = {} ",
+            i, stTensor.u32ID, stTensor.u32Bank, stTensor.u32Offset, stTensor.u32Height, stTensor.u32KStep,
+            stTensor.u32KNormNum, stTensor.u32KSizeLast, stTensor.u32KSizeNorm, stTensor.achName, stTensor.achType,
+            stTensor.u32Num, stTensor.u32OriChannels, stTensor.u32OriFrameSize, stTensor.u32Precision,
+            stTensor.u32RowStep, stTensor.u32TensorStep, (float)stTensor.dScaleFactor, stTensor.u32Size,
+            stTensor.u32Width, stTensor.s32ZeroPoint, stTensor.achLayoutType);
 
         AR_NPU_IFC_PARAM_S stIFCParam[2];
         s32Ret = AR_MPI_NPU_GetIFCParamByName(aimodel->m_handle, stTensor.achName, &stIFCParam[0]);
@@ -318,18 +317,17 @@ int ARTOSYN_Session::MakeInput(std::shared_ptr<ARTOSYN_AIModel> &aimodel) {
         AISDK_LOG_TRACE("AR_MPI_NPU_GetInputTensorParam s32Ret={}", s32Ret);
 
         AISDK_LOG_TRACE(
-            "input-{} stTensor: u32ID={},u32Bank={},u32Offset={},u32Height={},u32KStep={}, 
-            u32KNormNum = {},
-            u32KSizeLast = {}, u32KSizeNorm = {}, achName = {}, achType = {}, u32Num = {}, u32OriChannels = {},
-            u32OriFrameSize = {} u32Precision = {}, u32RowStep = {}, u32TensorStep = {}, dScaleFactor = {},
-            u32Size = {}, u32Width = {}, s32ZeroPoint = {},
-            achLayoutType = {} ",i,
-                            stTensor.u32ID,
-            stTensor.u32Bank, stTensor.u32Offset, stTensor.u32Height, stTensor.u32KStep, stTensor.u32KNormNum,
-            stTensor.u32KSizeLast, stTensor.u32KSizeNorm, stTensor.achName, stTensor.achType, stTensor.u32Num,
-            stTensor.u32OriChannels, stTensor.u32OriFrameSize, stTensor.u32Precision, stTensor.u32RowStep,
-            stTensor.u32TensorStep, (float)stTensor.dScaleFactor, stTensor.u32Size, stTensor.u32Width,
-            stTensor.s32ZeroPoint, stTensor.achLayoutType);
+            "input-{} stTensor: u32ID={},u32Bank={},u32Offset={},u32Height={},u32KStep={}, "
+            "u32KNormNum = {},"
+            "u32KSizeLast = {}, u32KSizeNorm = {}, achName = {}, achType = {}, u32Num = {}, u32OriChannels = {},"
+            "u32OriFrameSize = {} u32Precision = {}, u32RowStep = {}, u32TensorStep = {}, dScaleFactor = {},"
+            "u32Size = {}, u32Width = {}, s32ZeroPoint = {},"
+            "achLayoutType = {} ",
+            i, stTensor.u32ID, stTensor.u32Bank, stTensor.u32Offset, stTensor.u32Height, stTensor.u32KStep,
+            stTensor.u32KNormNum, stTensor.u32KSizeLast, stTensor.u32KSizeNorm, stTensor.achName, stTensor.achType,
+            stTensor.u32Num, stTensor.u32OriChannels, stTensor.u32OriFrameSize, stTensor.u32Precision,
+            stTensor.u32RowStep, stTensor.u32TensorStep, (float)stTensor.dScaleFactor, stTensor.u32Size,
+            stTensor.u32Width, stTensor.s32ZeroPoint, stTensor.achLayoutType);
 
         m_in.m_tensors[i].m_name = std::string(stTensor.achName);
         m_in.m_tensors[i].m_dimtype = TensorFormat::BlockingNHWC;
@@ -377,18 +375,17 @@ int ARTOSYN_Session::MakeOutput(std::shared_ptr<ARTOSYN_AIModel> &aimodel) {
         AISDK_LOG_TRACE("AR_MPI_NPU_GetOutputTensorParam s32Ret={}", s32Ret);
 
         AISDK_LOG_TRACE(
-            "output-{} stTensor: u32ID={},u32Bank={},u32Offset={},u32Height={},u32KStep={}, 
-            u32KNormNum = {},
-            u32KSizeLast = {}, u32KSizeNorm = {}, achName = {}, achType = {}, u32Num = {}, u32OriChannels = {},
-            u32OriFrameSize = {} u32Precision = {}, u32RowStep = {}, u32TensorStep = {}, dScaleFactor = {},
-            u32Size = {}, u32Width = {}, s32ZeroPoint = {},
-            achLayoutType = {} ",i,
-                            stTensor.u32ID,
-            stTensor.u32Bank, stTensor.u32Offset, stTensor.u32Height, stTensor.u32KStep, stTensor.u32KNormNum,
-            stTensor.u32KSizeLast, stTensor.u32KSizeNorm, stTensor.achName, stTensor.achType, stTensor.u32Num,
-            stTensor.u32OriChannels, stTensor.u32OriFrameSize, stTensor.u32Precision, stTensor.u32RowStep,
-            stTensor.u32TensorStep, (float)stTensor.dScaleFactor, stTensor.u32Size, stTensor.u32Width,
-            stTensor.s32ZeroPoint, stTensor.achLayoutType);
+            "output-{} stTensor: u32ID={},u32Bank={},u32Offset={},u32Height={},u32KStep={}, "
+            "u32KNormNum = {},"
+            "u32KSizeLast = {}, u32KSizeNorm = {}, achName = {}, achType = {}, u32Num = {}, u32OriChannels = {},"
+            "u32OriFrameSize = {} u32Precision = {}, u32RowStep = {}, u32TensorStep = {}, dScaleFactor = {},"
+            "u32Size = {}, u32Width = {}, s32ZeroPoint = {},"
+            "achLayoutType = {} ",
+            i, stTensor.u32ID, stTensor.u32Bank, stTensor.u32Offset, stTensor.u32Height, stTensor.u32KStep,
+            stTensor.u32KNormNum, stTensor.u32KSizeLast, stTensor.u32KSizeNorm, stTensor.achName, stTensor.achType,
+            stTensor.u32Num, stTensor.u32OriChannels, stTensor.u32OriFrameSize, stTensor.u32Precision,
+            stTensor.u32RowStep, stTensor.u32TensorStep, (float)stTensor.dScaleFactor, stTensor.u32Size,
+            stTensor.u32Width, stTensor.s32ZeroPoint, stTensor.achLayoutType);
 
         m_out.m_tensors[i].m_name = std::string(stTensor.achName);
         m_out.m_tensors[i].m_dimtype = TensorFormat::BlockingNHWC;
