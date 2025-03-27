@@ -1,5 +1,8 @@
 
+#if (defined(ANDROID) || defined(__ANDROID__))
 #include <android/log.h>
+#endif
+
 #include <dlfcn.h>
 #include <unwind.h>
 
@@ -37,7 +40,9 @@ static size_t captureBacktrace(void **buffer, size_t max) {
 }
 
 void SYM_HIDDEN dumpBacktrace(size_t max) {
+#if (defined(ANDROID) || defined(__ANDROID__))
     __android_log_print(ANDROID_LOG_ERROR, "AISDK", "Custom dumping backtrace:");
+#endif
     void *buffer[max];
     size_t count = captureBacktrace(buffer, max);
     for (size_t idx = 0; idx < count; ++idx) {
@@ -49,13 +54,17 @@ void SYM_HIDDEN dumpBacktrace(size_t max) {
             symbol = info.dli_sname;
         }
 
+#if (defined(ANDROID) || defined(__ANDROID__))
         __android_log_print(ANDROID_LOG_ERROR, "AISDK", "  #%2zu: %p  %s\n", idx, addr, symbol);
+#endif
     }
 }
 
 void SYM_HIDDEN __attribute__((no_stack_protector)) __stack_chk_fail(void) {
+#if (defined(ANDROID) || defined(__ANDROID__))
     __android_log_print(ANDROID_LOG_ERROR, "AISDK", "stack smashing detected at pc %p __stack_chk_fail at %p\n",
                         (void *)__builtin_return_address(0), (void *)__stack_chk_fail);
+#endif
     dumpBacktrace(128);
     AISDK_LOG_ERROR("stack smashing detected at pc {} __stack_chk_fail at {}\n", (void *)__builtin_return_address(0),
                     (void *)__stack_chk_fail);
@@ -64,8 +73,10 @@ void SYM_HIDDEN __attribute__((no_stack_protector)) __stack_chk_fail(void) {
 }
 
 void SYM_HIDDEN __attribute__((no_stack_protector)) abort(void) {
+#if (defined(ANDROID) || defined(__ANDROID__))
     __android_log_print(ANDROID_LOG_ERROR, "AISDK", "abort at pc %p abort at %p\n", (void *)__builtin_return_address(0),
                         (void *)abort);
+#endif
 
     dumpBacktrace(128);
 

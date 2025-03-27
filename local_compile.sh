@@ -23,7 +23,9 @@
 
 # 检查脚本是否是通过 source 命令执行的
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-  echo "错误：请使用 'source local_compile.sh' 来执行此脚本。"
+  echo "错误：请使用 'source local_compile.sh' 来执行此脚本android环境下的编译生成。"
+  echo "错误：请使用 'source local_compile.sh linux' 来执行此脚本linux环境下的编译生成。"
+  echo "错误：请使用 'source local_compile.sh Xrlinux' 来执行此脚本Xrlinux环境下的编译生成。"
   echo "直接运行 './local_compile.sh' 会导致环境变量设置失败。"
   exit 1
 fi
@@ -37,6 +39,8 @@ echo "CONAN_USER_REQUIRES 已设置为: $CONAN_USER_REQUIRES"
 # 执行编译脚本
 if [[ "$1" == "linux" ]]; then
     bash compile.sh -c linux
+elif [[ "$1" == "Xrlinux" ]]; then
+    bash compile.sh -c Xrlinux
 else
     bash compile.sh -c android64
 fi
