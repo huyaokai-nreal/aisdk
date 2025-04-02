@@ -121,6 +121,12 @@ class BlockHardRulesCalculator : public xgraph::CalculatorBase {
                     AISDK_LOG_TRACE("[BlockHardRulesCalculator] block left hand using BINO hand score {}",
                                     input_data.left_hand.score);
                     output_buffer_->lhand_valid = false;
+                    // 如果手在非视线水平以上区域，可以宽容一些
+                    if (input_data.left_hand.kpt3d[root_index][1] > -0.05 &&
+                        input_data.left_hand.score > (score_th_ - score_th_width_ / 2 - 0.1)) {
+                        output_buffer_->lhand_valid = true;
+                        AISDK_LOG_TRACE("[BlockHardRulesCalculator] block but save left hand");
+                    }
                 } else {
                     AISDK_LOG_TRACE("[BlockHardRulesCalculator] left_hand don't block");
                 }
@@ -146,6 +152,12 @@ class BlockHardRulesCalculator : public xgraph::CalculatorBase {
                     AISDK_LOG_TRACE("[BlockHardRulesCalculator] block right hand using BINO hand score {}",
                                     input_data.right_hand.score);
                     output_buffer_->rhand_valid = false;
+                    // 如果手在非视线水平以上区域，可以宽容一些
+                    if (input_data.right_hand.kpt3d[root_index][1] > -0.05 &&
+                        input_data.right_hand.score > (score_th_ - score_th_width_ / 2 - 0.1)) {
+                        output_buffer_->rhand_valid = true;
+                        AISDK_LOG_TRACE("[BlockHardRulesCalculator] block but save right hand");
+                    }
                 } else {
                     AISDK_LOG_TRACE("[BlockHardRulesCalculator] right_hand don't block");
                 }
