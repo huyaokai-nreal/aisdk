@@ -29,15 +29,20 @@ namespace aisdk::algorithm {
 //   output_stream: "LIFT_OUTPUT:kpt3d"
 // }
 
+/// @brief
+/// 基于输入的左右相机的2D手部关键点和相机模型参数，通过深度学习进行3D关键点提升，输出包含3D关键点，置信度，2D投影坐标等信息的HandsData结构
 class HandLiftCalculator : public xgraph::CalculatorBase {
    private:
     // SeqGMLPLiftNet algo instance
-    std::shared_ptr<LiftBaseNet> netalgo;
-    std::shared_ptr<base::BaseCameraModel> lcam_model_ = nullptr;
-    std::shared_ptr<base::BaseCameraModel> rcam_model_ = nullptr;
-    std::string model_name_;
+    std::shared_ptr<LiftBaseNet> netalgo;                          // 算法实例
+    std::shared_ptr<base::BaseCameraModel> lcam_model_ = nullptr;  // 左目相机模型
+    std::shared_ptr<base::BaseCameraModel> rcam_model_ = nullptr;  // 右目相机模型
+    std::string model_name_;                                       // 当前使用的模型名称
 
    public:
+    /// @brief 设置calculator的输入输出关系和对应数据类型
+    /// @param cc mediapipe计算图的上下文（提供输出输出流，SidePacket，选项参数等）
+    /// @return absl::OkStatus()
     static absl::Status GetContract(xgraph::CalculatorContract* cc) {
         AISDK_LOG_TRACE("[LiftCalculator] GetContract start");
         cc->InputSidePackets().Tag("CAM_INFO_INPUT").Set<std::vector<std::shared_ptr<aisdk::base::BaseCameraModel>>>();
@@ -47,12 +52,17 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
         return absl::OkStatus();
     }
 
+    /// @brief 加载模型，分配资源，初始化参数（计算节点启动时执行一次）
+    /// @param cc mediapipe计算图的上下文（提供输入输出流，SidePacket，选项参数等）
+    /// @return 返回结果，成功返回absl::OkStatus()
     absl::Status Open(xgraph::CalculatorContext* cc) final {
         AISDK_LOG_TRACE("[LiftCalculator] Open start");
 
         // 3d_lift
         const auto& config = cc->Options<HandLiftCalculatorOptions>();
-        model_name_ = config.model_name();
+        model_name_ = config.model_name();  //从配置中获取模型名称
+
+        //根据模型名称初始化算法实例
         if (model_name_ == "3d_lift") {
             netalgo = XGraphServiceUtils::CreateNetAlgoBase<GMLPLiftNet3>((void*)0x202310, "3d_lift");
         } else if (model_name_ == "3d_liftnimble") {
@@ -62,11 +72,13 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
         } else {
             return absl::AbortedError(fmt::format("can not init model with {}", model_name_));
         }
+
         if (!netalgo) {
             return absl::Status(absl::StatusCode::kInvalidArgument,
                                 "[LiftCalculator] CreateNetAlgoBase nodename error");
         }
 
+        //获取相机参数，并设置到算法中
         const auto& cam_info = cc->InputSidePackets()
                                    .Tag("CAM_INFO_INPUT")
                                    .Get<std::vector<std::shared_ptr<aisdk::base::BaseCameraModel>>>();
@@ -81,11 +93,16 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
 #if defined(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
         TIMER_ONCE_WITH_TAG(LiftCalculator::Process);
 #endif
+
+        //输入输出数据准备
         AISDK_LOG_TRACE("[LiftCalculator] Process start");
         const auto& kpt2d = cc->Inputs().Tag("LANDMARK_INPUT").Get<Kpt2dInternal>();
         const auto& timestamp = cc->InputTimestamp().Seconds();
         std::unique_ptr<HandsData> output_buffer_ = absl::make_unique<HandsData>();
+
+        //左手处理逻辑
         if (kpt2d.lhand_lcam_valid && kpt2d.lhand_rcam_valid) {
+            // step1: 构造算法输入数据结构LiftNetInputs
             LiftNetInputs lift_inputs;
             std::vector<Vec2f_t> input_kpt_lcam;  // 左目像素坐标
             std::vector<Vec2f_t> input_kpt_rcam;  // 右目像素坐标
@@ -96,7 +113,9 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
             lift_inputs.m_rightcam_y.resize(kAlgoKeypointNum);
             lift_inputs.m_rightcam_z.resize(kAlgoKeypointNum);
 
+            // step2: 根据是否使用虚拟相机，进行不同的坐标转换
             if (kpt2d.lhand_lcam_virtual_camera == nullptr && kpt2d.lhand_rcam_virtual_camera == nullptr) {
+                //无虚拟相机，去畸变+归一化坐标到相机坐标系
                 input_kpt_lcam = lcam_model_->undistort(kpt2d.lhand_lcam_kpt);
                 input_kpt_rcam = rcam_model_->undistort(kpt2d.lhand_rcam_kpt);
 
@@ -111,6 +130,7 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
                     lift_inputs.m_rightcam_z[idx] = 1.;
                 }
             } else if (kpt2d.lhand_lcam_virtual_camera != nullptr && kpt2d.lhand_rcam_virtual_camera != nullptr) {
+                //使用虚拟相机，通过虚拟相机的内外参转换到世界坐标系
                 input_kpt_lcam = kpt2d.lhand_lcam_kpt;  // pcl 不需要去畸变
                 input_kpt_rcam = kpt2d.lhand_rcam_kpt;
                 // 虚拟双目 -> 原始双目
@@ -141,9 +161,15 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
             } else {
                 AISDK_LOG_ERROR("[LiftCalculator] bbox count mismatches virtual cameras")
             }
+
+            // step3: 设置时间戳和左右手标记
             lift_inputs.is_left = 1.;
             lift_inputs.timestamp = timestamp;
+
+            // step4: 调用算法进行推理
             const auto lift_outputs = netalgo->Inference(lift_inputs);
+
+            // step5: 处理推理结果
             if (lift_outputs.ok()) {
                 output_buffer_->lhand_valid = true;
                 output_buffer_->left_hand.source = CamType::BINO;
@@ -173,7 +199,9 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
             }
         }
 
+        //右手处理逻辑
         if (kpt2d.rhand_rcam_valid && kpt2d.rhand_lcam_valid) {
+            // step1: 构造算法输入数据结构LiftNetInputs
             LiftNetInputs lift_inputs;
             std::vector<Vec2f_t> input_kpt_lcam;  // 左目像素坐标
             std::vector<Vec2f_t> input_kpt_rcam;  // 右目像素坐标
@@ -184,6 +212,7 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
             lift_inputs.m_rightcam_y.resize(kAlgoKeypointNum);
             lift_inputs.m_rightcam_z.resize(kAlgoKeypointNum);
 
+            // step2: 根据是否使用虚拟相机，进行不同的坐标转换
             if (kpt2d.rhand_lcam_virtual_camera == nullptr && kpt2d.rhand_rcam_virtual_camera == nullptr) {
                 input_kpt_lcam = lcam_model_->undistort(kpt2d.rhand_lcam_kpt);
                 input_kpt_rcam = rcam_model_->undistort(kpt2d.rhand_rcam_kpt);
@@ -229,9 +258,15 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
             } else {
                 AISDK_LOG_ERROR("[LiftCalculator] bbox count mismatches virtual cameras")
             }
+
+            // step3: 设置时间戳和左右手标记
             lift_inputs.is_left = 0.;
             lift_inputs.timestamp = timestamp;
+
+            // step4: 调用算法进行推理
             const auto lift_outputs = netalgo->Inference(lift_inputs);
+
+            // step5: 处理推理结果
             if (lift_outputs.ok()) {
                 output_buffer_->rhand_valid = true;
                 output_buffer_->right_hand.source = CamType::BINO;
@@ -260,12 +295,15 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
                 output_buffer_->rhand_valid = false;
             }
         }
+
+        //输出结果
         if (output_buffer_->lhand_valid || output_buffer_->rhand_valid) {
             cc->Outputs().Tag("LIFT_OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
         } else {
             cc->Outputs().Tag("LIFT_OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
             AISDK_LOG_TRACE("[LiftCalculator] No valid hand, truncated here");
         }
+
         AISDK_LOG_TRACE("[LiftCalculator] Process complete");
         return absl::OkStatus();
     }

@@ -11,7 +11,7 @@
 #include "aisdk/algorithm/internal_structs/kpt2d_struct_internal.h"
 #include "aisdk/algorithm/internal_structs/kpt3d_struct_internal.h"
 #include "aisdk/algorithm/internal_structs/hand_gesture_struct_internal.h"
-#include "plugin/nr_perception_hand_tracking.h"
+#include "interface/handtracking_sdk/include/plugin/nr_perception_hand_tracking.h"
 #include "json/json.h"
 #include "aisdk/base/profiling.h"
 #include "aisdk/base/file.h"

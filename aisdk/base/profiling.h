@@ -1,6 +1,7 @@
 #pragma  once
 #include <string>
 #define SYM_EXPORT __attribute__((visibility("default")))
+#define SYM_HIDDEN __attribute__((visibility("hidden")))
 
 namespace aisdk::base {
 

@@ -21,21 +21,29 @@ namespace aisdk::algorithm {
 //   output_stream: "OUTPUT:kpt3d_filtered"
 // }
 
+/// @brief
+/// 通过多模态数据（3D关键点、2D关键点）对手部运动进行平滑跟踪，并在数据无效时重置跟踪状态
 class HandFilterCalculator : public xgraph::CalculatorBase {
    private:
-    std::string glasses_type_;
-    double last_timestamp_;  // in seconds
+    std::string glasses_type_;  //眼镜类型配置（影响跟踪参数）
+    double last_timestamp_;     // 上一帧时间戳（用于计算速度）,单位是s
 
    public:
+    /// @brief 设置calculator的输入输出关系和对应数据类型
+    /// @param cc mediapipe计算图的上下文（提供输出输出流，SidePacket，选项参数等）
+    /// @return absl::OkStatus()
     static absl::Status GetContract(xgraph::CalculatorContract* cc) {
         AISDK_LOG_TRACE("[HandFilterCalculator] GetContract start.");
-        cc->Inputs().Tag("INPUT").Set<HandsData>();
-        cc->Inputs().Tag("GR_KPT2D_INPUT").Set<Kpt2dInternal>();
-        cc->Outputs().Tag("OUTPUT").Set<HandsData>();
+        cc->Inputs().Tag("INPUT").Set<HandsData>();               // 输入：3D手部关键点（世界坐标系）
+        cc->Inputs().Tag("GR_KPT2D_INPUT").Set<Kpt2dInternal>();  // 输入：2D手部关键点（图像坐标系）
+        cc->Outputs().Tag("OUTPUT").Set<HandsData>();  // 输出：滤波后的手部数据（平滑后的3D关键点及速度）
         AISDK_LOG_TRACE("[HandFilterCalculator] GetContract complete.");
         return absl::OkStatus();
     }
 
+    /// @brief 加载模型，分配资源，初始化参数（计算节点启动时执行一次）
+    /// @param cc mediapipe计算图的上下文（提供输入输出流，SidePacket，选项参数等）
+    /// @return 返回结果，成功返回absl::OkStatus()
     absl::Status Open(xgraph::CalculatorContext* cc) final {
         AISDK_LOG_TRACE("[HandFilterCalculator] Open start.");
         const auto& config = cc->Options<HandFilterCalculatorOptions>();
@@ -56,13 +64,16 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
         return absl::OkStatus();
     }
 
+    /// @brief 对手部运动进行平滑追踪，修改追踪状态
+    /// @param cc mediapipe计算图的上下文
+    /// @return absl::OkStatus()
     absl::Status Process(xgraph::CalculatorContext* cc) final {
 #if defined(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
         TIMER_ONCE_WITH_TAG(HandFilterCalculator::Process);
 #endif
         AISDK_LOG_TRACE("[HandFilterCalculator] Process start.");
-        const auto& kpt3d_world = cc->Inputs().Tag("INPUT").Get<HandsData>();
-        const auto& kpt2d_data = cc->Inputs().Tag("GR_KPT2D_INPUT").Get<Kpt2dInternal>();
+        const auto& kpt3d_world = cc->Inputs().Tag("INPUT").Get<HandsData>();              // 当前帧3D数据
+        const auto& kpt2d_data = cc->Inputs().Tag("GR_KPT2D_INPUT").Get<Kpt2dInternal>();  // 当前帧2D数据
         const auto& timestamp = cc->InputTimestamp().Seconds();
         std::unique_ptr<HandsData> output_buffer_ = absl::make_unique<HandsData>();
         *output_buffer_ = kpt3d_world;
@@ -77,15 +88,16 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
 
         GlobalPredictorService::getInstance().set_last_kpt2d_pixel(kpt2d_data);  // 当前帧使用完kpt2d以后才设置
 
-        if (!kpt3d_world.lhand_valid) {
-            predictor_lhand.stop_tracking();
-            output_buffer_->lhand_valid = false;
-        } else {
+        //左手3D关键点跟踪
+        if (!kpt3d_world.lhand_valid) {           //左手数据无效
+            predictor_lhand.stop_tracking();      //停止跟踪
+            output_buffer_->lhand_valid = false;  //标记输出无效
+        } else {                                  //左手数据有效
             output_buffer_->left_hand.kpt3d = kpt3d_world.left_hand.kpt3d;
-            if (!predictor_lhand.get_tracking_status()) {
-                predictor_lhand.start_tracking(timestamp,
-                                               {output_buffer_->left_hand.kpt3d[kKeypointRootId], {0., 0., 0.}});
-            } else {
+            if (!predictor_lhand.get_tracking_status()) {  //首次跟踪
+                predictor_lhand.start_tracking(
+                    timestamp, {output_buffer_->left_hand.kpt3d[kKeypointRootId], {0., 0., 0.}});  //初始化根节点位置
+            } else {                                                                               //持续跟踪
                 if (kpt3d_world_pre.lhand_valid) {
                     auto measure_v = (output_buffer_->left_hand.kpt3d[kKeypointRootId] -
                                       kpt3d_world_pre.left_hand.kpt3d[kKeypointRootId]) /
@@ -97,15 +109,16 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
             }
         }
 
-        if (!kpt3d_world.rhand_valid) {
+        //右手3D关键点跟踪
+        if (!kpt3d_world.rhand_valid) {  //右手数据无效
             predictor_rhand.stop_tracking();
             output_buffer_->rhand_valid = false;
-        } else {
+        } else {  //右手数据有效
             output_buffer_->right_hand.kpt3d = kpt3d_world.right_hand.kpt3d;
-            if (!predictor_rhand.get_tracking_status()) {
+            if (!predictor_rhand.get_tracking_status()) {  //首次跟踪
                 predictor_rhand.start_tracking(timestamp,
                                                {output_buffer_->right_hand.kpt3d[kKeypointRootId], {0., 0., 0.}});
-            } else {
+            } else {  //持续跟踪
                 if (kpt3d_world_pre.rhand_valid) {
                     auto measure_v = (output_buffer_->right_hand.kpt3d[kKeypointRootId] -
                                       kpt3d_world_pre.right_hand.kpt3d[kKeypointRootId]) /
@@ -116,7 +129,9 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
                 }
             }
         }
-        // lhand_lcam
+
+        // 2D边界框跟踪
+        //左摄像头下的左手边界框跟踪
         if (!kpt2d_data.lhand_lcam_valid || !kpt3d_world.lhand_valid) {
             predictor_lhand_lcam_bbox.stop_tracking();
         } else {
@@ -133,7 +148,8 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
                 }
             }
         }
-        // rhand_lcam
+
+        //左摄像头下的右手边界框跟踪
         if (!kpt2d_data.rhand_lcam_valid || !kpt3d_world.rhand_valid) {
             predictor_rhand_lcam_bbox.stop_tracking();
         } else {
@@ -150,7 +166,8 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
                 }
             }
         }
-        // lhand_rcam
+
+        //右摄像头下的左手边界框跟踪
         if (!kpt2d_data.lhand_rcam_valid || !kpt3d_world.lhand_valid) {
             predictor_lhand_rcam_bbox.stop_tracking();
         } else {
@@ -167,7 +184,8 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
                 }
             }
         }
-        // rhand_rcam
+
+        //右摄像头下的右手边界框跟踪
         if (!kpt2d_data.rhand_rcam_valid || !kpt3d_world.rhand_valid) {
             predictor_rhand_rcam_bbox.stop_tracking();
         } else {
@@ -185,8 +203,9 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
             }
         }
 
+        //输出
         cc->Outputs().Tag("OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
-        last_timestamp_ = timestamp;
+        last_timestamp_ = timestamp;  //更新时间戳
         AISDK_LOG_TRACE("[HandFilterCalculator] Process complete.");
         return absl::OkStatus();
     }

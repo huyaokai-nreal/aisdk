@@ -44,7 +44,7 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 # build aisdk
 # 构建标准业务的SDK
 option(BUILD_HANDTRACKING_STD_SDK "build lib for std sdk" ON)
-# 开启"Gina眼镜+手机的分段联合模式"，默认模式是全部业务都在手机上
+# 开启"Gina眼镜+手机的分段联合模式"，默认模式是全部业务都在手机上，注意这个和BUILD_HANDTRACKING_STD_SDK都要开启才有效
 option(ENABLE_SEGMENT_JOINT_INFERENCE_MODE "enable prior inference 'detect and key2d model' in glass" OFF)
 # 构建fptool工具业务的SDK，暂时未实现
 option(BUILD_HANDTRACKING_FPTOOL_SDK "build lib for detect fp_tool sdk" OFF)

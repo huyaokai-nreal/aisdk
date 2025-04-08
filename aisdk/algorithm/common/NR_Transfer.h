@@ -5,7 +5,7 @@
 #include "aisdk/base/camera_model.h"
 #include "aisdk/base/type.h"
 #include "aisdk/algorithm/common/nrnet_define.h"
-#include "interface/handtracking_sdk/public/nr_plugin_types.h"
+#include "interface/handtracking_sdk/include/public/nr_plugin_types.h"
 
 namespace aisdk::algorithm {
 

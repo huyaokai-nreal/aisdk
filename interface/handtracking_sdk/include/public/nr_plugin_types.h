@@ -14,9 +14,9 @@
 
 #if defined(NRAPP) || defined(NRPLUGIN)
 
-#include "nr_plugin_result.inl"
-#include "nr_plugin_types.inl"
-#include "nr_plugin_types_ext.inl"
+#include "../common/nr_plugin_result.inl"
+#include "../common/nr_plugin_types.inl"
+#include "../common/nr_plugin_types_ext.inl"
 
 #else
 
