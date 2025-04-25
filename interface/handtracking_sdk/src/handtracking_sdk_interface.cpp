@@ -884,7 +884,7 @@ NRPluginResult HandTracking::ParseAllCameraData(const NRGrayscaleCameraFrameData
         std::shared_ptr<task::HandTrackingXGraph> impl =
             std::dynamic_pointer_cast<task::HandTrackingXGraph>(pipeline.Impl());
 
-        if (impl && (Plugin::GetInstance().isStart())) {
+        if (impl) {
             auto push_ret = impl->PushData(nano_time_[0], images, head_pose);
 
 #if defined(ENABLE_ALGORITHM_DATA_RECORD) && !defined(ENABLE_SEGMENT_JOINT_INFERENCE_MODE)
@@ -895,16 +895,16 @@ NRPluginResult HandTracking::ParseAllCameraData(const NRGrayscaleCameraFrameData
             }
 #endif
         } else {
-            AISDK_LOG_ERROR("impl is nullptr in handtracking_std_all_host work scene or plugin is stop");
+            AISDK_LOG_ERROR("impl is nullptr in handtracking_std_all_host work scene");
         }
     } else if ("handtracking_segment_prior_glass" == ins.pipeline_work_scene) {
         std::shared_ptr<task::HandTrackingPriorGlassXGraph> impl =
             std::dynamic_pointer_cast<task::HandTrackingPriorGlassXGraph>(pipeline.Impl());
 
-        if (impl && (Plugin::GetInstance().isStart())) {
+        if (impl) {
             impl->PushData(nano_time_[0], images);
         } else {
-            AISDK_LOG_ERROR("impl is nullptr in handtracking_segment_prior_glass or plugin is stop");
+            AISDK_LOG_ERROR("impl is nullptr in handtracking_segment_prior_glass");
         }
     } else {
         AISDK_LOG_WARN("pipeline_work_scene: {}, not process", ins.pipeline_work_scene);
