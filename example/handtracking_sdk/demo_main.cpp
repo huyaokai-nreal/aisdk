@@ -104,6 +104,7 @@ int main(int argc, char **argv) {
 #endif
     config_params["camera_param"] = camera_param_content;
 
+    // 2.启动手势识别引擎
     auto handle = GetHandTrackingInstance();
     int ret = handle->StartSdk(config_params);
     if (ret) {
@@ -162,6 +163,7 @@ int main(int argc, char **argv) {
             }
         }
 
+        // 3.送图片流进去
         if (test_case1) {
             while (1) {
                 handle->SendStream(testdata);
@@ -175,6 +177,7 @@ int main(int argc, char **argv) {
             std::this_thread::sleep_for(std::chrono::milliseconds(33));
         }
 
+        // 4.获取处理结果
         while (1) {
             std::shared_ptr<StreamResult> result;
             ret = handle->RecvResult(loop, result);
@@ -188,8 +191,9 @@ int main(int argc, char **argv) {
         liter++;
         riter++;
     }
-    handle->StopSdk();
 
+    // 5.关闭手势识别引擎
+    handle->StopSdk();
     handle = nullptr;
     DestroyHandTrackingInstance();
     return 0;

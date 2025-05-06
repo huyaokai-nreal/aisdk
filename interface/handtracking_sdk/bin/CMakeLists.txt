@@ -1,5 +1,7 @@
 # 添加可执行文件
 add_executable(handtracking_test test_interface.cpp)
+add_executable(test_bin test_bin.cpp)
+# add_executable(test_lifnet test_lifnet.cpp)
 
 # 链接主库和依赖
 target_link_libraries(handtracking_test PRIVATE
