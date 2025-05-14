@@ -1,16 +1,22 @@
 #include "demo_deploy_handTracking.h"
 
+// c std
 #include <dlfcn.h>
 
-#include <Eigen/Dense>
-#include <Eigen/Geometry>
+// c++ std
 #include <iostream>
 
+// other lib .h
+#include <Eigen/Dense>
+#include <Eigen/Geometry>
+
+#include "json/json.h"
+
+// sort from a-z
 #include "channel/nr_plugin_grayscale_camera_types.h"
 #include "common/nr_plugin_generic.h"
 #include "common/nr_plugin_hmd.h"
 #include "common/nr_plugin_types_ext.inl"
-#include "json/json.h"
 #include "plugin/nr_perception_hand_tracking.h"
 #include "plugin/nr_plugin_tracking_common.h"
 #include "public/nr_plugin_lifecycle.h"
@@ -378,18 +384,9 @@ NRPluginResult generic_UpdateMetricsui(NRPluginHandle handle, NRMetricsType metr
 
 /***********************************************************************************/
 
-std::shared_ptr<HandTrackingSdk> g_shared_sdk = nullptr;
-std::shared_ptr<HandTrackingSdk> GetHandTrackingInstance() {
-    if (nullptr == g_shared_sdk) {
-        g_shared_sdk = std::make_shared<HandTrackingSdk>();
-    }
-    return g_shared_sdk;
-}
-
-void DestroyHandTrackingInstance() {
-    if (g_shared_sdk) {
-        g_shared_sdk = nullptr;
-    }
+HandTrackingSdk &HandTrackingSdk::GetHandTrackingInstance() {
+    static HandTrackingSdk instance;
+    return instance;
 }
 
 HandTrackingSdk::HandTrackingSdk() {

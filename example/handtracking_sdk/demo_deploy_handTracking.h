@@ -71,20 +71,27 @@ struct StreamResult {
 };
 
 class HandTrackingSdk {
-   public:
-    HandTrackingSdk();
-    ~HandTrackingSdk();
-
-   public:
-    friend std::shared_ptr<HandTrackingSdk> GetHandTrackingInstance();
-    friend void DestroyHandTrackingInstance();
+public:
+    //单例模式，对外的统一接口
+    static HandTrackingSdk& GetHandTrackingInstance();
 
     int StartSdk(std::map<std::string, std::string> &config_params);
     int StopSdk();
     int SendStream(std::shared_ptr<StreamData> &data);
     int RecvResult(uint64_t frame_id, std::shared_ptr<StreamResult> &result);
 
-   private:
+    std::map<uint64_t, std::shared_ptr<StreamData>> m_wait_free_datas;  // frame_id是key
+    // std::map<uint64_t, std::shared_ptr<StreamData>> m_add_datas;        // frame_id是key
+    // std::map<uint64_t,std::shared_ptr<StreamResult>> m_results; // frame_id是key
+private:
+    // private构造和析构，禁止所有拷贝和移动操作
+    HandTrackingSdk();
+    ~HandTrackingSdk();
+    HandTrackingSdk(const HandTrackingSdk&) = delete;
+    HandTrackingSdk(HandTrackingSdk&&) = delete;
+    void operator=(const HandTrackingSdk&) = delete;
+    void operator=(HandTrackingSdk&&) = delete;
+
     int CameraParamsParse(std::string &json_string);
     std::string m_plugin_so;
     CameraParams m_camera_params;
@@ -96,13 +103,4 @@ class HandTrackingSdk {
     _NRPluginSetProfilingOption m_plugin_setprofiling = nullptr;
     _NRPluginGetProfilingInfo m_plugin_getprofiling = nullptr;
     bool m_sdk_started = false;
-
-   public:
-    std::map<uint64_t, std::shared_ptr<StreamData>> m_add_datas;        // frame_id是key
-    std::map<uint64_t, std::shared_ptr<StreamData>> m_wait_free_datas;  // frame_id是key
-    // std::map<uint64_t,std::shared_ptr<StreamResult>> m_results; //
-    // frame_id是key
 };
-
-std::shared_ptr<HandTrackingSdk> GetHandTrackingInstance();
-void DestroyHandTrackingInstance();

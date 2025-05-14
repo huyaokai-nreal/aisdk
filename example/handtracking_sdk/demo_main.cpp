@@ -54,16 +54,23 @@ std::map<std::string, std::string> ScanDirAddPicData(std::string &stream_path) {
 
     //尝试打开目录
     dir = opendir(stream_path.c_str());
-    if (dir == nullptr) {
+    if (!dir) {
         return ret;
     }
 
     //遍历目录进行条目
     while ((entry = readdir(dir)) != nullptr) {
-        //仅处理常规文件，（排除.和..目录项）
-        if (entry->d_type == DT_REG) {
-            std::string tfile(entry->d_name);
-            std::string tfile_path = std::string(stream_path) + "/" + tfile;
+        std::string tfile(entry->d_name);
+        if (tfile == "." || tfile == "..") {
+            continue;  //跳过. 和..
+        }
+
+        //获取文件绝对路径
+        std::string tfile_path = std::string(stream_path) + tfile;
+
+        //将可访问的，正常文件存入map中
+        struct stat st;
+        if ((0 == stat(tfile_path.c_str(), &st)) && (S_ISREG(st.st_mode))) {
             ret[tfile] = tfile_path;
         }
     }
@@ -120,8 +127,7 @@ int main(int argc, char **argv) {
     config_params["camera_param"] = camera_param_content;
 
     // 2.启动手势识别引擎
-    auto handle = GetHandTrackingInstance();
-    int ret = handle->StartSdk(config_params);
+    int ret = HandTrackingSdk::GetHandTrackingInstance().StartSdk(config_params);
     if (ret) {
         std::cout << "StartSdk error" << std::endl;
         return -1;
@@ -133,7 +139,8 @@ int main(int argc, char **argv) {
     auto liter = l_file_map.begin();
     auto riter = r_file_map.begin();
     bool test_case1 = false;
-    std::cout << "sum is: " << sum << std::endl;
+    std::cout << "max_used_frame_num is " << sum << std::endl;
+    std::cout << "l_file_map size is " << l_file_map.size() << std::endl;
     std::cout << "loopn is: " << loopn << std::endl;
     while (loop < loopn) {
         std::shared_ptr<StreamData> testdata = std::make_shared<StreamData>();
@@ -153,53 +160,49 @@ int main(int argc, char **argv) {
                 return -1;
             }
 
-            {
-                char *pData1 = (char *)src_img1.data;
-                auto lens1 = src_img1.cols * src_img1.rows;
+            char *pData1 = (char *)src_img1.data;
+            auto lens1 = src_img1.cols * src_img1.rows;
 
-                char *pData2 = (char *)src_img2.data;
-                auto lens2 = src_img2.cols * src_img2.rows;
+            char *pData2 = (char *)src_img2.data;
+            auto lens2 = src_img2.cols * src_img2.rows;
 
-                testdata->left_right_frame.resize(lens1 + lens2);
-                memcpy((char *)testdata->left_right_frame.data(), pData1, lens1);
-                memcpy((char *)testdata->left_right_frame.data() + lens1, pData2, lens2);
-            }
+            testdata->left_right_frame.resize(lens1 + lens2);
+            memcpy((char *)testdata->left_right_frame.data(), pData1, lens1);
+            memcpy((char *)testdata->left_right_frame.data() + lens1, pData2, lens2);
         } else if (stream_type == "raw") {
-            {
-                std::string l_image;
-                ReadFromFile(liter->second, l_image);
-                auto lens1 = l_image.size();
+            std::string l_image;
+            ReadFromFile(liter->second, l_image);
+            auto lens1 = l_image.size();
 
-                std::string r_image;
-                ReadFromFile(riter->second, r_image);
-                auto lens2 = r_image.size();
+            std::string r_image;
+            ReadFromFile(riter->second, r_image);
+            auto lens2 = r_image.size();
 
-                testdata->left_right_frame.resize(lens1 + lens2);
-                memcpy((char *)testdata->left_right_frame.data(), l_image.data(), lens1);
-                memcpy((char *)testdata->left_right_frame.data() + lens1, r_image.data(), lens2);
-            }
+            testdata->left_right_frame.resize(lens1 + lens2);
+            memcpy((char *)testdata->left_right_frame.data(), l_image.data(), lens1);
+            memcpy((char *)testdata->left_right_frame.data() + lens1, r_image.data(), lens2);
         } else {
-            // do nothing
+            std::cout << "stream_type: " << stream_type << " is illegal. should be picture or raw." << std::endl;
         }
 
         // 3.送图片流进去
         if (test_case1) {
             while (1) {
-                handle->SendStream(testdata);
+                HandTrackingSdk::GetHandTrackingInstance().SendStream(testdata);
                 std::this_thread::sleep_for(std::chrono::milliseconds(33));
                 loop++;
                 testdata->frame_id = loop;
                 testdata->nano_time = (loop + 1) * 33333332LL;
             }
         } else {
-            handle->SendStream(testdata);
+            HandTrackingSdk::GetHandTrackingInstance().SendStream(testdata);
             std::this_thread::sleep_for(std::chrono::milliseconds(33));
         }
 
         // 4.获取处理结果
         while (1) {
             std::shared_ptr<StreamResult> result;
-            ret = handle->RecvResult(loop, result);
+            ret = HandTrackingSdk::GetHandTrackingInstance().RecvResult(loop, result);
             if (ret == 0) {
                 break;
             }
@@ -212,8 +215,6 @@ int main(int argc, char **argv) {
     }
 
     // 5.关闭手势识别引擎
-    handle->StopSdk();
-    handle = nullptr;
-    DestroyHandTrackingInstance();
+    HandTrackingSdk::GetHandTrackingInstance().StopSdk();
     return 0;
 }
