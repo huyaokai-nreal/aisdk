@@ -21,8 +21,14 @@
 #include "json/json.h"
 #include "opencv2/opencv.hpp"
 
+/// @brief 读取文件内容到字符串中（二进制读取，适用于文本和二进制文件）
+/// @param file_name 要读取的文件名
+/// @param content 要读取到的字符串
+/// @return 0/-1，0表示成功，-1表示失败
 int ReadFromFile(std::string &file_name, std::string &content) {
+    //以二进制格式打开文件
     std::ifstream in(file_name, std::ios::binary | std::ios::ate);
+
     if (in.is_open()) {
         auto size = in.tellg();
         content.resize(size);
@@ -33,20 +39,28 @@ int ReadFromFile(std::string &file_name, std::string &content) {
     } else {
         std::cout << "ReadFromFile " << file_name << " is error !!!" << std::endl;
     }
+
     return -1;
 }
 
+/// @brief
+/// 扫描特定目录下的所有文件，生成文件名到绝对路径的映射并返回(仅处理常规文件（DT_REG），忽略子目录/符号链接/设备文件等)
+/// @param stream_path 要进行扫描的目录
+/// @return 生成的文件名到绝对路径的映射map
 std::map<std::string, std::string> ScanDirAddPicData(std::string &stream_path) {
     DIR *dir;
     struct dirent *entry;
     std::map<std::string, std::string> ret;
 
+    //尝试打开目录
     dir = opendir(stream_path.c_str());
     if (dir == nullptr) {
         return ret;
     }
 
+    //遍历目录进行条目
     while ((entry = readdir(dir)) != nullptr) {
+        //仅处理常规文件，（排除.和..目录项）
         if (entry->d_type == DT_REG) {
             std::string tfile(entry->d_name);
             std::string tfile_path = std::string(stream_path) + "/" + tfile;
@@ -54,6 +68,7 @@ std::map<std::string, std::string> ScanDirAddPicData(std::string &stream_path) {
         }
     }
 
+    //关闭文件句柄
     closedir(dir);
     return ret;
 }
@@ -118,6 +133,8 @@ int main(int argc, char **argv) {
     auto liter = l_file_map.begin();
     auto riter = r_file_map.begin();
     bool test_case1 = false;
+    std::cout << "sum is: " << sum << std::endl;
+    std::cout << "loopn is: " << loopn << std::endl;
     while (loop < loopn) {
         std::shared_ptr<StreamData> testdata = std::make_shared<StreamData>();
         testdata->frame_id = loop;
@@ -161,6 +178,8 @@ int main(int argc, char **argv) {
                 memcpy((char *)testdata->left_right_frame.data(), l_image.data(), lens1);
                 memcpy((char *)testdata->left_right_frame.data() + lens1, r_image.data(), lens2);
             }
+        } else {
+            // do nothing
         }
 
         // 3.送图片流进去

@@ -176,7 +176,7 @@ NRPluginResult HandTracking::GetHandData(NRPluginHandle handle, uint64_t hmd_tim
     //校验状态，必须init成功，才能开始获取数据
     auto& ins = Plugin::GetInstance();
     if (!ins.isInit()) {
-        AISDK_LOG_WARN("HandTracking: GetHandData failed. not Inited.");
+        AISDK_LOG_ERROR("HandTracking: GetHandData failed. not Inited.");
         return NR_PLUGIN_RESULT_FAILURE;
     }
 
@@ -196,6 +196,7 @@ NRPluginResult HandTracking::GetHandData(NRPluginHandle handle, uint64_t hmd_tim
             status = impl->PopResult(hmd_time_nanos, out_hand_num, out_hand_array);
         }
     } else {
+        AISDK_LOG_ERROR("ins.pipeline_work_scene is {}", ins.pipeline_work_scene);
         // do nothing
     }
 

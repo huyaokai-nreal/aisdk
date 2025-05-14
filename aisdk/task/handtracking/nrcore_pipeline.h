@@ -5,6 +5,7 @@
 #include "aisdk/algorithm/common/nrcore_define.h"
 #include "aisdk/xengine/nr_model_mgr.h"
 #include "aisdk/xengine/nrhal_capi_symbol.h"
+#include "aisdk/base/log.h"
 
 namespace aisdk::task {
 using CameraParams = algorithm::CameraParams;
@@ -35,12 +36,14 @@ class Pipeline {
                 auto err = m_graph_impl->Init(funcs, config, camera);
                 if (aisdk::algorithm::Status::SUCCESS != err) {
                     m_graph_impl = nullptr;
+                    AISDK_LOG_ERROR("m_graph_impl init failed, err: {}", static_cast<int>(err));
                     return aisdk::algorithm::Status::PIPELINE_INIT_FAILURE;
                 }
             }
             return aisdk::algorithm::Status::SUCCESS;
         }
 
+        AISDK_LOG_ERROR("pipeline init failed, config.frameword_type is not XGRAPH, config.framwork_type:{}", static_cast<int>(config.framework_type));
         return aisdk::algorithm::Status::PIPELINE_INIT_FAILURE;
     }
 

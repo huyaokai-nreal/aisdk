@@ -22,7 +22,7 @@ class SNPEWrapper {
     SNPEWrapper();
     ~SNPEWrapper();
 
-    bool init(const std::string& model_path, const std::string& runtime);
+    bool init(const std::string& model_path, const std::string& runtime);  //这个接口，没有被用到
     bool init(const uint8_t* buffer, const size_t size, const std::string& runtime, bool support_SigndPD = false);
     bool release();
     bool setInputShape(const std::string& name, const std::vector<size_t>& shape);

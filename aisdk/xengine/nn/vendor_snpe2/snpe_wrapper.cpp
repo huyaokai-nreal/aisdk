@@ -263,34 +263,43 @@ bool SNPEWrapper::init(const std::string& model_path, const std::string& runtime
     return true;
 }
 
+/// @brief 初始化snpe引擎，加载模型并配置运行时环境
+/// @param buffer 模型数据
+/// @param size 模型数据的大小
+/// @param runtime 指定运行时的字符串
+/// @param support_SigndPD 是否支持SignedPD
+/// @return true/false 成功返回true;失败返回false
 bool SNPEWrapper::init(const uint8_t* buffer, const size_t size, const std::string& runtime, bool support_SigndPD) {
+    //配置运行时后端
     if (runtime == "CPU") {
-        m_runtime = SNPE_RUNTIME_CPU;
+        m_runtime = SNPE_RUNTIME_CPU;  // cpu浮点运算
     } else if (runtime == "GPU_FP16") {
-        m_runtime = SNPE_RUNTIME_GPU_FLOAT16;
+        m_runtime = SNPE_RUNTIME_GPU_FLOAT16;  // GPU FP16加速
     } else if (runtime == "DSP_INT8") {
-        m_runtime = SNPE_RUNTIME_DSP;
+        m_runtime = SNPE_RUNTIME_DSP;  // DSP量化推理（int8）
     } else if (runtime == "AIP") {
-        m_runtime = SNPE_RUNTIME_AIP_FIXED8_TF;
+        m_runtime = SNPE_RUNTIME_AIP_FIXED8_TF;  // AI处理器（专用硬件）
     } else {
         AISDK_LOG_ERROR("Unsupported runtime: {}", runtime.c_str());
         return false;
     }
     AISDK_LOG_TRACE("setting runtime: {}", m_runtime);
 
-    // 接口正确性
+    // 检查接口正确性
     if (!snpe2_capi.Snpe_Util_IsRuntimeAvailable) {
         return false;
     }
 
-    // if (!snpe2_capi.Snpe_Util_IsRuntimeAvailable(m_runtime)) {
-    //     AISDK_LOG_ERROR("Selected runtime not supported. Falling back to CPU.");
-    //     m_runtime = SNPE_RUNTIME_CPU;
-    // }
-    // AISDK_LOG_TRACE("runtime avaliable!: {}", m_runtime);
+    // 判断是否支持上面选择的runtime，不支持的话切换到cpu
+    if (!snpe2_capi.Snpe_Util_IsRuntimeAvailable(m_runtime)) {
+        AISDK_LOG_ERROR("Selected runtime not supported. Falling back to CPU.");
+        m_runtime = SNPE_RUNTIME_CPU;
+    }
 
+    AISDK_LOG_TRACE("runtime avaliable!: {}", m_runtime);
     // AISDK_LOG_TRACE("buffer ptr: {}, size: {}", buffer, size);
 
+    //从内存中加载容器模型（DLC格式）
     m_container = snpe2_capi.Snpe_DlContainer_OpenBuffer(buffer, size);
     if (nullptr == m_container) {
         const char* errStr = snpe2_capi.Snpe_ErrorCode_GetLastErrorString();
@@ -298,14 +307,22 @@ bool SNPEWrapper::init(const uint8_t* buffer, const size_t size, const std::stri
         return false;
     }
     AISDK_LOG_TRACE("model open success! ");
+
+    //创建SNPE适配器并配置参数
     Snpe_SNPEBuilder_Handle_t snpeBuilderHandle = snpe2_capi.Snpe_SNPEBuilder_Create(m_container);
     AISDK_LOG_TRACE("builder create success! ");
+
+    //选择性能模式
     Snpe_PerformanceProfile_t profile = SNPE_PERFORMANCE_PROFILE_DEFAULT;
+
+    //配置运行时优先列表
     if (nullptr == m_runtimeList) m_runtimeList = snpe2_capi.Snpe_RuntimeList_Create();
     snpe2_capi.Snpe_RuntimeList_Add(m_runtimeList, m_runtime);
     // Snpe_RuntimeList_Add(m_runtimeList, SNPE_RUNTIME_CPU);
     snpe2_capi.Snpe_SNPEBuilder_SetRuntimeProcessorOrder(snpeBuilderHandle, m_runtimeList);
     AISDK_LOG_TRACE("set runtime success! ");
+
+    //设置输出层（用于指定网络输出节点）
     if (m_set_outputLayers) {
         if (snpe2_capi.Snpe_SNPEBuilder_SetOutputLayers(snpeBuilderHandle, m_set_outputLayers)) {
             AISDK_LOG_ERROR("Snpe_SNPEBuilder_SetOutputLayers failed: {}",
@@ -313,6 +330,8 @@ bool SNPEWrapper::init(const uint8_t* buffer, const size_t size, const std::stri
             return false;
         }
     }
+
+    //设置输出张量，用于指定输出格式
     if (m_set_outputTensors) {
         if (snpe2_capi.Snpe_SNPEBuilder_SetOutputTensors(snpeBuilderHandle, m_set_outputTensors)) {
             AISDK_LOG_ERROR("Snpe_SNPEBuilder_SetOutputTensors failed: {}",
@@ -320,20 +339,27 @@ bool SNPEWrapper::init(const uint8_t* buffer, const size_t size, const std::stri
             return false;
         }
     }
+
+    //启用用户提供的缓冲区（避免SNPE内部拷贝）
     snpe2_capi.Snpe_SNPEBuilder_SetUseUserSuppliedBuffers(snpeBuilderHandle, true);
     AISDK_LOG_TRACE("set userbuffer success! ");
     snpe2_capi.Snpe_SNPEBuilder_SetPerformanceProfile(snpeBuilderHandle, profile);
 
+    //输入维度配置
     if (!m_inputShapeList.empty()) {
         m_inputShapeMapHandle = snpe2_capi.Snpe_TensorShapeMap_Create();
         for (auto& shape : m_inputShapeList) {
+            //创建张量形状描述
             Snpe_TensorShape_Handle_t inputShapeHandle;
             inputShapeHandle = snpe2_capi.Snpe_TensorShape_CreateDimsSize(shape.second.data(), shape.second.size());
             snpe2_capi.Snpe_TensorShapeMap_Add(m_inputShapeMapHandle, shape.first.c_str(), inputShapeHandle);
         }
+
+        //将输入形状绑定到构建器
         snpe2_capi.Snpe_SNPEBuilder_SetInputDimensions(snpeBuilderHandle, m_inputShapeMapHandle);
     }
 
+    //如果启用dsp签名模式，则进行下面平台参数配置
     if (support_SigndPD) {
         // test
         m_platformconfig = snpe2_capi.Snpe_PlatformConfig_Create();
@@ -349,6 +375,7 @@ bool SNPEWrapper::init(const uint8_t* buffer, const size_t size, const std::stri
         AISDK_LOG_TRACE("Snpe_SNPEBuilder_Build Signed dsp\n");
     }
 
+    //性能分析配置
 #if defined(ENABLE_XENGINE_TRACE_SNPE_PROFILER_DIAGLOG)
     if (1) {
         // dsp 只能用 SNPE_PROFILING_LEVEL_BASIC ???
@@ -357,6 +384,7 @@ bool SNPEWrapper::init(const uint8_t* buffer, const size_t size, const std::stri
     }
 #endif
 
+    //执行构建操作，生成snpe实例
     m_snpe = snpe2_capi.Snpe_SNPEBuilder_Build(snpeBuilderHandle);
     if (nullptr == m_snpe) {
         const char* errStr = snpe2_capi.Snpe_ErrorCode_GetLastErrorString();
@@ -365,6 +393,7 @@ bool SNPEWrapper::init(const uint8_t* buffer, const size_t size, const std::stri
     }
     AISDK_LOG_TRACE("build success! ");
 
+    //诊断日志配置
 #if defined(ENABLE_XENGINE_TRACE_SNPE_PROFILER_DIAGLOG)
     if (1) {
         m_idiaglog = snpe2_capi.Snpe_SNPE_GetDiagLogInterface_Ref(m_snpe);
@@ -378,17 +407,15 @@ bool SNPEWrapper::init(const uint8_t* buffer, const size_t size, const std::stri
                 snpe2_capi.Snpe_Options_SetLogFileDirectory(m_idiagopt, prof.local_data_record_rootpath.c_str());
                 snpe2_capi.Snpe_IDiagLog_SetOptions(m_idiaglog, m_idiagopt);
                 snpe2_capi.Snpe_IDiagLog_Start(m_idiaglog);
-                AISDK_LOG_ERROR("Snpe_IDiagLog_Start log={}", diaglogfilename.c_str());
+                // AISDK_LOG_ERROR("Snpe_IDiagLog_Start log={}", diaglogfilename.c_str());
             }
         }
     }
 #endif
 
-    // get input tensor names of the network that need to be populated
+    //获取输入张量名称，并创建用户缓冲区
     Snpe_StringList_Handle_t inputNamesHandle = snpe2_capi.Snpe_SNPE_GetInputTensorNames(m_snpe);
-
     assert(snpe2_capi.Snpe_StringList_Size(inputNamesHandle) > 0);
-
     AISDK_LOG_TRACE("Creating input userbuffer");
 
     // create SNPE user buffers for each application storage buffer
@@ -417,11 +444,12 @@ bool SNPEWrapper::init(const uint8_t* buffer, const size_t size, const std::stri
         snpe2_capi.Snpe_IBufferAttributes_Delete(bufferAttributesOptHandle);
         snpe2_capi.Snpe_TensorShape_Delete(bufferShapeHandle);
     }
+
+    //清理输入用户缓冲区资源
     snpe2_capi.Snpe_StringList_Delete(inputNamesHandle);
 
+    //获取输出张量名称，创建输出用户缓冲区
     AISDK_LOG_TRACE("Creating output userbuffer");
-
-    // get output tensor names of the network that need to be populated
     if (nullptr == m_outputUserBufferMap) m_outputUserBufferMap = snpe2_capi.Snpe_UserBufferMap_Create();
     Snpe_StringList_Handle_t outputNamesHandle = snpe2_capi.Snpe_SNPE_GetOutputTensorNames(m_snpe);
     if (nullptr == outputNamesHandle) {
@@ -456,13 +484,13 @@ bool SNPEWrapper::init(const uint8_t* buffer, const size_t size, const std::stri
         snpe2_capi.Snpe_TensorShape_Delete(bufferShapeHandle);
     }
 
+    //清理输出用户缓冲区资源
     snpe2_capi.Snpe_StringList_Delete(outputNamesHandle);
     snpe2_capi.Snpe_SNPEBuilder_Delete(snpeBuilderHandle);
 
+    // snpe引擎初始化成功
     AISDK_LOG_TRACE("SNPE init complete!");
-
     m_isInit = true;
-
     return true;
 }
 

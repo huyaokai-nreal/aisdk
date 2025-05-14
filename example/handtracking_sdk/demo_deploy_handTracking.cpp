@@ -703,6 +703,9 @@ int HandTrackingSdk::CameraParamsParse(std::string &json_string) {
     return 0;
 }
 
+/// @brief 手势sdk启动接口
+/// @param config_params 相关配置参数
+/// @return 0/-1 0表示成功，-1表示失败
 int HandTrackingSdk::StartSdk(std::map<std::string, std::string> &config_params) {
     for (auto iter = config_params.begin(); iter != config_params.end(); iter++) {
         if (iter->first == "plugin_so") {
@@ -712,6 +715,8 @@ int HandTrackingSdk::StartSdk(std::map<std::string, std::string> &config_params)
         }
     }
 
+    //加载动态库，并加载对应接口
+    std::cout << "m_plugin_so: " << m_plugin_so << std::endl;
     m_plugin_fd = dlopen(m_plugin_so.c_str(), RTLD_NOW | RTLD_LOCAL);
     if (nullptr == m_plugin_fd) {
         std::cout << "dlopen m_plugin_so" << std::string(dlerror()) << std::endl;
@@ -745,7 +750,7 @@ int HandTrackingSdk::StartSdk(std::map<std::string, std::string> &config_params)
     // memset(&m_profiling_option, 0, sizeof(ProfilingOption));
     m_profiling_option.struct_bytes = 0;
     m_profiling_option.aisdk_init_report = 1;
-    m_profiling_option.pipeline_debug = 1;
+    m_profiling_option.pipeline_debug = 0;
     // m_profiling_option.pipeline_node_time_statistics = 0;
     m_profiling_option.export_pipeline_exec_info_jsonstring = 0;
     // m_profiling_option.handtracking_pipeline_exec_enable_detect_boxtracker = 1;
@@ -753,26 +758,34 @@ int HandTrackingSdk::StartSdk(std::map<std::string, std::string> &config_params)
     // m_profiling_option.handtracking_pipeline_exec_enable_sync_kfpredictor = 0;
     // m_profiling_option.handtracking_pipeline_exec_enable_sync_kfpredictor_timems = 0;
     // m_profiling_option.handtracking_pipeline_exec_enable_sync_world_seqfilter = 0;
-    m_profiling_option.developer_test_all = 1;
+    m_profiling_option.developer_test_all = 0;
 
     m_profiling_option.camera_model = m_camera_params.device1.camera_model;
     m_profiling_option.generate_method = 2;
 
+    std::cout << "create handle" << std::endl;
     NRPluginHandle handle = 256;
     m_plugin_create(handle, &g_user_interface);
     if (m_plugin_setprofiling) {
         m_plugin_setprofiling(PROFILING_FLAG, &m_profiling_option);
     }
 
+    std::cout << "init handle" << std::endl;
     NRPluginResult ret = g_lifecycle_provider.Initialize(handle);
     if (ret != NR_PLUGIN_RESULT_SUCCESS) {
+        std::cout << "initialize handle failed, ret: " << static_cast<int>(ret) << std::endl;
         return -1;
     }
+
+    std::cout << "start handle" << std::endl;
     ret = g_lifecycle_provider.Start(handle);
     if (ret != NR_PLUGIN_RESULT_SUCCESS) {
+        std::cout << "start handle failed, ret: " << static_cast<int>(ret) << std::endl;
         return -1;
     }
+
     m_sdk_started = true;
+    std::cout << "Start HandTracking Sdk over" << std::endl;
     return 0;
 }
 
@@ -790,8 +803,7 @@ int HandTrackingSdk::StopSdk() {
 }
 
 int HandTrackingSdk::SendStream(std::shared_ptr<StreamData> &data) {
-    // std::cout << "SendStream frame_id=" << data->frame_id << "is sending!!"
-    // << std::endl;
+    std::cout << "SendStream frame_id=" << data->frame_id << " is sending!!" << std::endl;
     NRGrayscaleCameraFrameData tmp;
     tmp.camera_count = 2;
     tmp.data = (uint8_t *)data->left_right_frame.data();
@@ -879,9 +891,31 @@ int HandTrackingSdk::RecvResult(uint64_t frame_id, std::shared_ptr<StreamResult>
                 }
             }
 
+            //按特定格式输出内容到控制台，方便与interface中的结果进行比较
+            std::cout << "output_data_record begin" << std::endl;
+            for (int j = 0; j < 26; j++) {
+                NRVector3f position = g_out_hand_array[0].hand_joint_data[j].hand_joint_pose.position;
+                NRQuatf rotation = g_out_hand_array[0].hand_joint_data[j].hand_joint_pose.rotation;
+                std::cout << "output_data_record left_hand index_" << j << " position: " << position.x << ", "
+                          << position.y << ", " << position.z << " rotation: " << rotation.qw << ", " << rotation.qx
+                          << ", " << rotation.qy << ", " << rotation.qz << std::endl;
+            }
+
+            for (int j = 0; j < 26; j++) {
+                NRVector3f position = g_out_hand_array[1].hand_joint_data[j].hand_joint_pose.position;
+                NRQuatf rotation = g_out_hand_array[1].hand_joint_data[j].hand_joint_pose.rotation;
+                std::cout << "output_data_record right_hand index_" << j << " position: " << position.x << ", "
+                          << position.y << ", " << position.z << " rotation: " << rotation.qw << ", " << rotation.qx
+                          << ", " << rotation.qy << ", " << rotation.qz << std::endl;
+            }
+
+            std::cout << "output_data_record end" << std::endl;
+
             Json::FastWriter fwriter;
             result->hand_tracking_data = fwriter.write(json_result);
             std::cout << "RecvResult frame_id=" << frame_id << " finish!!" << std::endl;
+            // std::cout << "RecvResult nano_time=" << result->nano_time << std::endl;
+            // std::cout << "RecvResult hand_tracking_data" << result->hand_tracking_data << std::endl;
         } else {
             // std::cout << "RecvResult frame_id=" << frame_id << " is not exist!!" << std::endl;
             return -1;
@@ -890,5 +924,6 @@ int HandTrackingSdk::RecvResult(uint64_t frame_id, std::shared_ptr<StreamResult>
         // std::cout << "RecvResult frame_id=" << frame_id << " is not exist!!" << std::endl;
         return -1;
     }
+
     return 0;
 }

@@ -652,6 +652,7 @@ SYM_EXPORT aisdk::xengine::PlatformStatus* _ZN2NR200TK7FUNC001E(aisdk::xengine::
                     // ret.is_hexagon_signedPD_dsp = checkHexagonSignedPD(env);
                     // ret.is_hexagon_dsp = ret.is_hexagon_signedPD_dsp;
                 }
+
                 // 其次进行UnsignedPD检查
                 if (false == ret.is_hexagon_signedPD_dsp) {
                     ret.is_hexagon_dsp = checkHexagonDSP(env);
@@ -662,6 +663,17 @@ SYM_EXPORT aisdk::xengine::PlatformStatus* _ZN2NR200TK7FUNC001E(aisdk::xengine::
                         ret.is_hexagon_unsignedPD_dsp = checkHexagonUnsignedPDDSP(env);
                     }
 #endif
+                }
+
+                // 在自己手机上，但是不是system_app，说明是android环境下的demo测试，这里直接支持snpe
+                if (env && !(env->is_system_app) && ret.is_mobile_evapro) {
+                    AISDK_LOG_INFO(
+                        "local android mobile demo test, support snpe, support hexagon, unsupport "
+                        "hexagon_signedPD_dsp, support hexagon_unsignedPD_dsp");
+                    ret.is_snpe_support = true;
+                    ret.is_hexagon_dsp = true;
+                    ret.is_hexagon_signedPD_dsp = false;
+                    ret.is_hexagon_unsignedPD_dsp = true;
                 }
             } else {
                 ret.is_hexagon_dsp = false;
