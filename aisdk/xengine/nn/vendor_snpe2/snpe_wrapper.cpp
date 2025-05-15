@@ -291,10 +291,10 @@ bool SNPEWrapper::init(const uint8_t* buffer, const size_t size, const std::stri
     }
 
     // 判断是否支持上面选择的runtime，不支持的话切换到cpu
-    if (!snpe2_capi.Snpe_Util_IsRuntimeAvailable(m_runtime)) {
-        AISDK_LOG_ERROR("Selected runtime not supported. Falling back to CPU.");
-        m_runtime = SNPE_RUNTIME_CPU;
-    }
+    // if (!snpe2_capi.Snpe_Util_IsRuntimeAvailable(m_runtime)) {
+    //     AISDK_LOG_ERROR("Selected runtime not supported. Falling back to CPU.");
+    //     m_runtime = SNPE_RUNTIME_CPU;
+    // }
 
     AISDK_LOG_TRACE("runtime avaliable!: {}", m_runtime);
     // AISDK_LOG_TRACE("buffer ptr: {}, size: {}", buffer, size);
