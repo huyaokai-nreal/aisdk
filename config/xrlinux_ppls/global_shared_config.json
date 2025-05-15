@@ -3,11 +3,12 @@
         "_statement": "the models name is globally unique",
         "models_name": [
             "detect_ar9481npu_gina",
-            "2d_rtmtiny_ar9481npu_gina"
+            "2d_rtmtiny_ar9481npu_gina",
+            "3d_liftnimble"
         ],
         "detect_ar9481npu_gina": {
             "model_config": {
-                "file_name": "models/det_tiny_240415.h2.s.B.batch2.ar9401.npubin",
+                "file_name": "models/det_flora_0317_onnx.npubin",
                 "vendor": "artosyn"
             },
             "session_config": {
@@ -23,7 +24,7 @@
         },
         "2d_rtmtiny_ar9481npu_gina": {
             "model_config": {
-                "file_name": "models/rtmtiny_dark_res26s_128_bs1_240412_d85797.ar9401.npubin",
+                "file_name": "models/rtmtiny_res26sw_kpt_0407_b1_74ac2f_onnx.npubin",
                 "vendor": "artosyn"
             },
             "session_config": {
@@ -39,6 +40,18 @@
                     "feat_y",
                     "feat_z"
                 ]
+            }
+        },
+        "3d_liftnimble": {
+            "model_config": {
+                "file_name": "models/liftnimble_res26sw_250316_reproj_ebeff3.mnn",
+                "vendor": "mnn"
+            },
+            "session_config": {
+                "batch": 1,
+                "precision": "float32",
+                "thread_num": 1,
+                "runtime": "cpu"
             }
         }
     }
