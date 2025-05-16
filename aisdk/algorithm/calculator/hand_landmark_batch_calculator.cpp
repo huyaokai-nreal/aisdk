@@ -16,6 +16,7 @@
 #include "aisdk/algorithm/internal_structs/det_struct_internal.h"
 #include "aisdk/algorithm/internal_structs/kpt2d_struct_internal.h"
 #include "aisdk/algorithm/model/calculator_basenet.h"
+#include "aisdk/algorithm/model/hand_rsntiny_artosyn.h"
 #include "aisdk/algorithm/model/hand_rtmtiny.h"
 #include "aisdk/base/camera_model.h"
 #include "aisdk/base/log.h"
@@ -47,7 +48,8 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
    private:
     // RSNTiny algo instance
     std::shared_ptr<HandLandmarkBaseNet> netalgo;  //模型对象
-    int32_t input_width_;                          //
+
+    int32_t input_width_;  //
     int32_t input_height_;
     std::string model_name_;  //模型名称
     bool pcl_able_;
@@ -64,10 +66,21 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
     static absl::Status GetContract(xgraph::CalculatorContract* cc) {
         AISDK_LOG_TRACE("[HandLandmarkBatchCalculator] GetContract start");
 
-        cc->Inputs().Tag("IMAGE_INPUT").Set<std::vector<Image>>();          //原始IMAGE
-        cc->Inputs().Tag("BBOX_SMOOTHED_OUTPUT").Set<DetOutputInternal>();  //平滑后的检测框
+        /**
+         * 输入：
+         * BBOX_SMOOTHED_OUTPUT：平滑后的检测框
+         * IMAGE_INPUT：图像
+         * CAM_INFO_INPUT：相机参数（静态数据包）
+         */
+        cc->Inputs().Tag("IMAGE_INPUT").Set<std::vector<Image>>();
+        cc->Inputs().Tag("BBOX_SMOOTHED_OUTPUT").Set<DetOutputInternal>();
         cc->InputSidePackets().Tag("CAM_INFO_INPUT").Set<std::vector<std::shared_ptr<aisdk::base::BaseCameraModel>>>();
-        cc->Outputs().Tag("LANDMARK_OUTPUT").Set<Kpt2dInternal>();  //关键点输出
+
+        /**
+         * 输出：
+         * LANDMARK_OUTPUT：2D关键点
+         */
+        cc->Outputs().Tag("LANDMARK_OUTPUT").Set<Kpt2dInternal>();
 
         AISDK_LOG_TRACE("[HandLandmarkBatchCalculator] GetContract complete");
         return absl::OkStatus();
@@ -87,12 +100,17 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
             bbox_expand_ratio_ = options.bbox_expand_ratio();
         }
 
-        //目前只支持2d_rtmtinyb2模型
+        //根据模型名称，寻找适配的模型
         if (model_name_ == "2d_rtmtinyb2") {
             AISDK_LOG_TRACE("[HandLandmarkBatchCalculator] start init rtmtinyb2");
             netalgo = XGraphServiceUtils::CreateNetAlgoBase<RTMTiny>((void*)0x202310, model_name_);
             AISDK_LOG_TRACE("[HandLandmarkBatchCalculator] finish init rtmtinyb2");
+        } else if ("2d_rtmtiny_ar9481npu_gina" == model_name_) {
+            AISDK_LOG_TRACE("[HandLandmarkBatchCalculator] start init artosyn_rsn_tiny");
+            netalgo = XGraphServiceUtils::CreateNetAlgoBase<ArtosynRSNTiny>((void*)0x202310, model_name_);
+            AISDK_LOG_TRACE("[HandLandmarkBatchCalculator] finish init artosyn_rsn_tiny");
         } else {
+            AISDK_LOG_ERROR("HandDetTrackCalculator init failed. can not find model:{}", model_name_);
             return absl::AbortedError(fmt::format("can not init model with {}", model_name_));
         }
 

@@ -14,6 +14,7 @@
 #include "aisdk/algorithm/internal_structs/det_struct_internal.h"
 #include "aisdk/algorithm/internal_structs/headpose_struct_internal.h"
 #include "aisdk/algorithm/model/hand_detect.h"
+#include "aisdk/algorithm/model/hand_detect_artosyn.h"
 #include "aisdk/base/camera_model.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/time.h"
@@ -35,8 +36,7 @@ namespace aisdk::algorithm {
 /// @brief 手部检测跟踪的calculator类
 class HandDetTrackCalculator : public xgraph::CalculatorBase {
    private:
-    // DetNet algo instance
-    std::shared_ptr<HandDetectNet> netalgo;  //创建的模型对象
+    std::shared_ptr<DetectBaseNet> netalgo;  //创建的模型对象
 
     std::shared_ptr<aisdk::base::BaseCameraModel> lcam_model_ = nullptr;
     std::shared_ptr<aisdk::base::BaseCameraModel> rcam_model_ = nullptr;
@@ -58,12 +58,22 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
     static absl::Status GetContract(xgraph::CalculatorContract *cc) {
         AISDK_LOG_TRACE("[HandDetTrackCalculator] GetContract start");
 
-        // Declaration of input and output, according to definitons.
+        /**
+         * 输入：
+         * CAM_INFO_INPUT：相机参数（静态数据包）
+         * IMAGE_INPUT：图像
+         * HEADPOSE：头部姿态
+         */
         cc->InputSidePackets().Tag("CAM_INFO_INPUT").Set<std::vector<std::shared_ptr<aisdk::base::BaseCameraModel>>>();
-
         cc->Inputs().Tag("IMAGE_INPUT").Set<std::vector<Image>>();
         cc->Inputs().Tag("HEADPOSE").Set<HeadPoseInternal>();
 
+        /**
+         * 输出：
+         * DET_BBOX_OUTPUT：检测框
+         * IMAGE_OUTPUT：检测后的图像
+         * HEADPOSE_OUTPUT：头部姿态
+         */
         cc->Outputs().Tag("DET_BBOX_OUTPUT").Set<DetOutputInternal>();
         cc->Outputs().Tag("IMAGE_OUTPUT").Set<std::vector<Image>>();
         cc->Outputs().Tag("HEADPOSE_OUTPUT").Set<HeadPoseInternal>();
@@ -78,17 +88,24 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
     absl::Status Open(xgraph::CalculatorContext *cc) final {
         AISDK_LOG_TRACE("[HandDetTrackCalculator] Open start");
 
-        //根据模型名称，选择创建老模型HandDetectNet对象还是新模型HandDetectNetv2对象，根据配置里面，目前版本创建的是新模型
+        //根据模型名称，选择创建合适的模型
         const auto &options = cc->Options<aisdk::HandDetTrackCalculatorOptions>();
         model_name_ = options.model_name();
         if (model_name_ == "detect_cpu_ella" || model_name_ == "detect_cpu_flora" || model_name_ == "detect_dsp_ella") {
             // 老模型
             AISDK_LOG_TRACE("[HandDetTrackCalculator] HandDetectNet init {}", model_name_);
             netalgo = XGraphServiceUtils::CreateNetAlgoBase<HandDetectNet>((void *)0x202310, model_name_);
-        } else {
+        } else if ("detect" == model_name_) {
             // 新模型
             AISDK_LOG_TRACE("[HandDetTrackCalculator] HandDetectNetv2 init {}", model_name_);
             netalgo = XGraphServiceUtils::CreateNetAlgoBase<HandDetectNetv2>((void *)0x202310, model_name_);
+        } else if ("detect_ar9481npu_gina" == model_name_) {
+            // npu检测模型
+            AISDK_LOG_TRACE("[HandDetTrackCalculator] ArtosynHandDetectNetv2 init {}", model_name_);
+            netalgo = XGraphServiceUtils::CreateNetAlgoBase<ArtosynHandDetectNetv2>((void *)0x202310, model_name_);
+        } else {
+            AISDK_LOG_ERROR("HandDetTrackCalculator init failed. can not find model:{}", model_name_);
+            return absl::AbortedError(fmt::format("can not init model with {}", model_name_));
         }
 
         if (!netalgo) {
@@ -357,7 +374,6 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
         }
 
         AISDK_LOG_TRACE("[HandDetTrackCalculator] Process complete");
-
         return absl::OkStatus();
     }
 };

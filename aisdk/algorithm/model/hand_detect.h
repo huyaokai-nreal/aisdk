@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../internal_structs/det_struct_internal.h"
 #include "aisdk/xengine/nr_model_mgr.h"
 #include "calculator_basenet.h"
 
@@ -8,7 +7,7 @@
 
 namespace aisdk::algorithm {
 
-class HandDetectNet : public CalculatorBaseNet {
+class HandDetectNet : public DetectBaseNet {
    public:
     struct GridAnchor {
         // 显式定义默认构造函数
@@ -20,7 +19,7 @@ class HandDetectNet : public CalculatorBaseNet {
         float anchor_rh;
     };
 
-    HandDetectNet() : CalculatorBaseNet(){};
+    HandDetectNet() : DetectBaseNet(){};
     ~HandDetectNet(){};
 
     absl::Status Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::ModelConfig &model,
@@ -29,7 +28,7 @@ class HandDetectNet : public CalculatorBaseNet {
     void PostProcess(DetOutputInternal &result);
     void PreProcessSingle(const std::vector<Image> &net_input, uint32_t batchn);
     void PostProcessSingle(DetOutputInternal &result, uint32_t batchn);
-    virtual absl::Status Inference(const std::vector<Image> &baseinput, DetOutputInternal &baseresult);
+    virtual absl::Status Inference(const std::vector<Image> &baseinput, DetOutputInternal &baseresult) override;
 
    protected:
     aisdk::xengine::TensorFormat itensor_format;
@@ -64,7 +63,7 @@ class HandDetectNetv2 : public HandDetectNet {
 
     absl::Status Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::ModelConfig &model,
                                 aisdk::xengine::SessionConfig &session);
-    absl::Status Inference(const std::vector<Image> &baseinput, DetOutputInternal &baseresult);
+    virtual absl::Status Inference(const std::vector<Image> &baseinput, DetOutputInternal &baseresult) override;
     void PostProcess(DetOutputInternal &result);
     // void PostProcessSingle(DetOutputInternal &result, uint32_t batchn);  // TODO: develop中的 PostProcessSingle
 };

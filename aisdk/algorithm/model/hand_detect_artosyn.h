@@ -1,6 +1,5 @@
 #pragma once
 
-#include "aisdk/algorithm/internal_structs/det_struct_internal.h"
 #include "aisdk/xengine/nr_model_mgr.h"
 #include "aisdk/algorithm/model/calculator_basenet.h"
 
@@ -13,7 +12,7 @@ namespace aisdk::algorithm {
     - output_cls [B, 3, 16, 12] (3维依次是conf, left_cls, right_cls)
     - output_box [B, 4, 16, 12] (4维依次是x1,y1,x2,y2)
 */
-class ArtosynHandDetectNetv2 : public CalculatorBaseNet {
+class ArtosynHandDetectNetv2 : public DetectBaseNet {
    public:
     struct GridAnchor {
         // 显式定义默认构造函数
@@ -25,7 +24,7 @@ class ArtosynHandDetectNetv2 : public CalculatorBaseNet {
         float anchor_rh;
     };
 
-    ArtosynHandDetectNetv2() : CalculatorBaseNet(){};
+    ArtosynHandDetectNetv2() : DetectBaseNet(){};
     ~ArtosynHandDetectNetv2(){};
 
     absl::Status Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::ModelConfig &model,
@@ -34,7 +33,7 @@ class ArtosynHandDetectNetv2 : public CalculatorBaseNet {
     void PostProcess(DetOutputInternal &result);
     void PreProcessSingle(const std::vector<Image> &net_input, uint32_t batchn);
     void PostProcessSingle(DetOutputInternal &result, uint32_t batchn);
-    virtual absl::Status Inference(const std::vector<Image> &baseinput, DetOutputInternal &baseresult);
+    virtual absl::Status Inference(const std::vector<Image> &baseinput, DetOutputInternal &baseresult) override;
 
    protected:
     aisdk::xengine::TensorFormat itensor_format;
