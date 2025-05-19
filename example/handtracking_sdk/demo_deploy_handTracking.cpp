@@ -383,6 +383,7 @@ NRPluginResult generic_UpdateMetricsui(NRPluginHandle handle, NRMetricsType metr
 }
 
 /***********************************************************************************/
+int HandTrackingSdk::m_camera_number = 2;  //默认情况下是双目
 
 HandTrackingSdk &HandTrackingSdk::GetHandTrackingInstance() {
     static HandTrackingSdk instance;
@@ -802,7 +803,7 @@ int HandTrackingSdk::StopSdk() {
 int HandTrackingSdk::SendStream(std::shared_ptr<StreamData> &data) {
     std::cout << "SendStream frame_id=" << data->frame_id << " is sending!!" << std::endl;
     NRGrayscaleCameraFrameData tmp;
-    tmp.camera_count = 2;
+    tmp.camera_count = 1;
     tmp.data = (uint8_t *)data->left_right_frame.data();
 
     tmp.cameras[0].offset = 0;
@@ -811,11 +812,15 @@ int HandTrackingSdk::SendStream(std::shared_ptr<StreamData> &data) {
     tmp.cameras[0].height = g_camera_params.device1.resolution[1];
     tmp.cameras[0].stride = g_camera_params.device1.resolution[0];
 
-    tmp.cameras[1].offset = data->left_right_frame.size() / 2;
-    tmp.cameras[1].exposure_start_time_system = data->nano_time;
-    tmp.cameras[1].width = g_camera_params.device2.resolution[0];
-    tmp.cameras[1].height = g_camera_params.device2.resolution[1];
-    tmp.cameras[1].stride = g_camera_params.device2.resolution[0];
+    if (2 == GetCameraNum()) {
+        tmp.cameras[1].offset = data->left_right_frame.size() / 2;
+        tmp.cameras[1].exposure_start_time_system = data->nano_time;
+        tmp.cameras[1].width = g_camera_params.device2.resolution[0];
+        tmp.cameras[1].height = g_camera_params.device2.resolution[1];
+        tmp.cameras[1].stride = g_camera_params.device2.resolution[0];
+
+        tmp.camera_count = 2;
+    }
 
     g_provider.NotifyData(256, NR_CHANNEL_DATA_TYPE_GLASSES_GRAYSCALE_CAMERA, (const void *)&tmp,
                           sizeof(NRGrayscaleCameraFrameData));

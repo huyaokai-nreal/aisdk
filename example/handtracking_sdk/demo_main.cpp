@@ -80,61 +80,10 @@ std::map<std::string, std::string> ScanDirAddPicData(std::string &stream_path) {
     return ret;
 }
 
-int main(int argc, char **argv) {
-    if (argc != 2) {
-        std::cout << "use example:  ./grpc_client_x86 ./input_config.json" << std::endl;
-        return -1;
-    }
-
-    // 1.读取输入配置文件
-    std::string input_config_path(argv[1]);
-    std::string input_config;
-    ReadFromFile(input_config_path, input_config);
-
-    Json::Value input_config_json;
-    Json::Reader reader;
-    if (!reader.parse(input_config, input_config_json)) {
-        std::cout << "load input_config.json error" << std::endl;
-        return -1;
-    } else {
-        std::cout << "load input_config.json ok: " << std::endl;
-        std::cout << input_config << std::endl;
-    }
-
-    std::string stream_type = input_config_json["camera_datas"]["stream_type"].asString();
-    std::string l_file_path = input_config_json["camera_datas"]["left_camera_stream_path"].asString();
-    std::string r_file_path = input_config_json["camera_datas"]["right_camera_stream_path"].asString();
-    std::map<std::string, std::string> l_file_map = ScanDirAddPicData(l_file_path);
-    std::map<std::string, std::string> r_file_map = ScanDirAddPicData(r_file_path);
-    std::cout << "stream_type=" << stream_type << std::endl;
-    std::cout << "l_file_map.size=" << l_file_map.size() << std::endl;
-    std::cout << "r_file_map.size=" << r_file_map.size() << std::endl;
-    if (l_file_map.size() != r_file_map.size()) {
-        std::cout << "pic num error" << std::endl;
-        return -1;
-    }
-
-    std::string camera_param = input_config_json["camera_datas"]["camera_param"].asString();
-    std::string camera_param_content;
-    ReadFromFile(camera_param, camera_param_content);
-
-    std::map<std::string, std::string> config_params;
-#if defined(__linux__)
-    config_params["plugin_so"] = "libnr_hand_tracking.so";
-#elif defined(__APPLE__)
-    config_params["plugin_so"] = "libnr_hand_tracking.dylib";
-#endif
-    config_params["camera_param"] = camera_param_content;
-
-    // 2.启动手势识别引擎
-    int ret = HandTrackingSdk::GetHandTrackingInstance().StartSdk(config_params);
-    if (ret) {
-        std::cout << "StartSdk error" << std::endl;
-        return -1;
-    }
-
-    int sum = input_config_json["camera_datas"]["max_used_frame_num"].asInt();
-    int loopn = (sum > 0) ? std::min((int)sum, (int)l_file_map.size()) : l_file_map.size();
+//处理双目相机数据流
+int process_bino_camera_data(std::map<std::string, std::string> &l_file_map,
+                             std::map<std::string, std::string> &r_file_map, int sum, int loopn,
+                             const std::string stream_type) {
     int loop = 0;
     auto liter = l_file_map.begin();
     auto riter = r_file_map.begin();
@@ -185,7 +134,7 @@ int main(int argc, char **argv) {
             std::cout << "stream_type: " << stream_type << " is illegal. should be picture or raw." << std::endl;
         }
 
-        // 3.送图片流进去
+        // 1.送图片流进去
         if (test_case1) {
             while (1) {
                 HandTrackingSdk::GetHandTrackingInstance().SendStream(testdata);
@@ -199,10 +148,10 @@ int main(int argc, char **argv) {
             std::this_thread::sleep_for(std::chrono::milliseconds(33));
         }
 
-        // 4.获取处理结果
+        // 2.获取处理结果
         while (1) {
             std::shared_ptr<StreamResult> result;
-            ret = HandTrackingSdk::GetHandTrackingInstance().RecvResult(loop, result);
+            int ret = HandTrackingSdk::GetHandTrackingInstance().RecvResult(loop, result);
             if (ret == 0) {
                 break;
             }
@@ -214,7 +163,160 @@ int main(int argc, char **argv) {
         riter++;
     }
 
-    // 5.关闭手势识别引擎
+    return 0;
+}
+
+// 处理单目相机数据流
+int process_mono_camera_data(std::map<std::string, std::string> &l_file_map, int sum, int loopn,
+                             const std::string stream_type) {
+    int loop = 0;
+    auto liter = l_file_map.begin();
+    bool test_case1 = false;
+    std::cout << "max_used_frame_num is " << sum << std::endl;
+    std::cout << "l_file_map size is " << l_file_map.size() << std::endl;
+    std::cout << "loopn is: " << loopn << std::endl;
+    while (loop < loopn) {
+        std::shared_ptr<StreamData> testdata = std::make_shared<StreamData>();
+        testdata->frame_id = loop;
+        testdata->nano_time = (loop + 1) * 33333332LL;
+
+        std::cout << "----------------------------" << loop << std::endl;
+        std::cout << "frame_id=" << loop << std::endl;
+        std::cout << "l_pic=" << liter->second << std::endl;
+
+        if (stream_type == "picture") {
+            cv::Mat src_img1 = cv::imread(liter->second.c_str(), cv::IMREAD_GRAYSCALE);
+            if (src_img1.empty()) {
+                std::cout << "cv::imread l_file error" << std::endl;
+                return -1;
+            }
+
+            char *pData1 = (char *)src_img1.data;
+            auto lens1 = src_img1.cols * src_img1.rows;
+
+            testdata->left_right_frame.resize(lens1);
+            memcpy((char *)testdata->left_right_frame.data(), pData1, lens1);
+        } else if (stream_type == "raw") {
+            std::string l_image;
+            ReadFromFile(liter->second, l_image);
+            auto lens1 = l_image.size();
+
+            testdata->left_right_frame.resize(lens1);
+            memcpy((char *)testdata->left_right_frame.data(), l_image.data(), lens1);
+        } else {
+            std::cout << "stream_type: " << stream_type << " is illegal. should be picture or raw." << std::endl;
+        }
+
+        // 1.送图片流进去
+        if (test_case1) {
+            while (1) {
+                HandTrackingSdk::GetHandTrackingInstance().SendStream(testdata);
+                std::this_thread::sleep_for(std::chrono::milliseconds(33));
+                loop++;
+                testdata->frame_id = loop;
+                testdata->nano_time = (loop + 1) * 33333332LL;
+            }
+        } else {
+            HandTrackingSdk::GetHandTrackingInstance().SendStream(testdata);
+            std::this_thread::sleep_for(std::chrono::milliseconds(33));
+        }
+
+        // 2.获取处理结果
+        while (1) {
+            std::shared_ptr<StreamResult> result;
+            int ret = HandTrackingSdk::GetHandTrackingInstance().RecvResult(loop, result);
+            if (ret == 0) {
+                break;
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+
+        loop++;
+        liter++;
+    }
+
+    return 0;
+}
+
+int main(int argc, char **argv) {
+    if (argc != 2) {
+        std::cout << "use example:  ./grpc_client_x86 ./input_config.json" << std::endl;
+        return -1;
+    }
+
+    // 1.读取输入配置文件
+    std::string input_config_path(argv[1]);
+    std::string input_config;
+    ReadFromFile(input_config_path, input_config);
+
+    Json::Value input_config_json;
+    Json::Reader reader;
+    if (!reader.parse(input_config, input_config_json)) {
+        std::cout << "load input_config.json error" << std::endl;
+        return -1;
+    } else {
+        std::cout << "load input_config.json ok: " << std::endl;
+        std::cout << input_config << std::endl;
+    }
+
+    //从配置文件中解析内容
+    std::string stream_type = input_config_json["camera_datas"]["stream_type"].asString();
+    std::string l_file_path = input_config_json["camera_datas"]["left_camera_stream_path"].asString();
+    std::string r_file_path = input_config_json["camera_datas"]["right_camera_stream_path"].asString();
+    int camera_num = input_config_json["camera_datas"]["camera_num"].asInt();
+    if ((1 != camera_num) && (2 != camera_num)) {
+        std::cout << "camera_num error. should be 1 or 2." << std::endl;
+        return -1;
+    }
+
+    std::map<std::string, std::string> l_file_map = ScanDirAddPicData(l_file_path);
+    std::map<std::string, std::string> r_file_map;
+    if (2 == camera_num) {
+        r_file_map = ScanDirAddPicData(r_file_path);
+        if (l_file_map.size() != r_file_map.size()) {
+            std::cout << "pic num error" << std::endl;
+            return -1;
+        }
+    }
+
+    std::cout << "stream_type=" << stream_type << std::endl;
+    std::cout << "camera_num=" << camera_num << std::endl;
+    std::cout << "l_file_map.size=" << l_file_map.size() << std::endl;
+    std::cout << "r_file_map.size=" << r_file_map.size() << std::endl;
+
+    std::string camera_param = input_config_json["camera_datas"]["camera_param"].asString();
+    std::string camera_param_content;
+    ReadFromFile(camera_param, camera_param_content);
+
+    std::map<std::string, std::string> config_params;
+#if defined(__linux__)
+    config_params["plugin_so"] = "libnr_hand_tracking.so";
+#elif defined(__APPLE__)
+    config_params["plugin_so"] = "libnr_hand_tracking.dylib";
+#endif
+    config_params["camera_param"] = camera_param_content;
+
+    // 2.启动手势识别引擎
+    int ret = HandTrackingSdk::GetHandTrackingInstance().StartSdk(config_params);
+    if (ret) {
+        std::cout << "StartSdk error" << std::endl;
+        return -1;
+    }
+
+    int sum = input_config_json["camera_datas"]["max_used_frame_num"].asInt();
+    int loopn = (sum > 0) ? std::min((int)sum, (int)l_file_map.size()) : l_file_map.size();
+
+    // 3. 根据单双目选择合适的发送数据和接受数据逻辑
+    HandTrackingSdk::GetHandTrackingInstance().SetCameraNum(camera_num);
+    if (1 == camera_num) {
+        process_mono_camera_data(l_file_map, sum, loopn, stream_type);
+    } else if (2 == camera_num) {
+        process_bino_camera_data(l_file_map, r_file_map, sum, loopn, stream_type);
+    } else {
+        // do nothing
+    }
+
+    // 4.关闭手势识别引擎
     HandTrackingSdk::GetHandTrackingInstance().StopSdk();
     return 0;
 }

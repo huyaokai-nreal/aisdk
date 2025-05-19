@@ -75,6 +75,9 @@ public:
     //单例模式，对外的统一接口
     static HandTrackingSdk& GetHandTrackingInstance();
 
+    void SetCameraNum(int num) { m_camera_number = num;}
+    int GetCameraNum() { return m_camera_number;}
+
     int StartSdk(std::map<std::string, std::string> &config_params);
     int StopSdk();
     int SendStream(std::shared_ptr<StreamData> &data);
@@ -93,6 +96,7 @@ private:
     void operator=(HandTrackingSdk&&) = delete;
 
     int CameraParamsParse(std::string &json_string);
+    static int m_camera_number;
     std::string m_plugin_so;
     CameraParams m_camera_params;
     ProfilingOption m_profiling_option;
