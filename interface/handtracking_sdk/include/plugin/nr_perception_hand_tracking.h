@@ -262,7 +262,7 @@ typedef struct HandTrackingProvider {
                                        NRChannelDataType channel_data_type,
                                        const void *data, uint32_t data_size);
     // call UpdatePluginHandle when switch DoF, new handle is bind to the new DoF
-    NRPluginResult(NR_INTERFACE_API *UpdatePluginHandle)(NRPluginHandle handle);
+    // NRPluginResult(NR_INTERFACE_API *UpdatePluginHandle)(NRPluginHandle handle);
 } HandTrackingProvider;
 
 NR_DECLARE_INTERFACE(HandTrackingInterface) {

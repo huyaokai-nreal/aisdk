@@ -1202,7 +1202,7 @@ NRPluginResult Plugin::Initialize(NRPluginHandle handle) {
         &HandTracking::GetSupportedFunctions,
         &HandTracking::GetHandData,
         &HandTracking::NotifyData,
-        &HandTracking::UpdatePluginHandle,
+        // &HandTracking::UpdatePluginHandle,
     };
 
     ins.m_handtracking.m_interface->RegisterProvider(Plugin::GetInstance().GetHandle(), &provider, sizeof(provider));
