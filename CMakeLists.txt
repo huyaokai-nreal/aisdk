@@ -228,7 +228,7 @@ install(
 )
 
 ## 模型打包配置
-if(Xrlinux AND ENABLE_SEGMENT_JOINT_INFERENCE_MODE)
+if(Xrlinux)
     set(tar_ppls "xrlinux_ppls")
     set(tar_model "hand_tracking_gina")
 else()

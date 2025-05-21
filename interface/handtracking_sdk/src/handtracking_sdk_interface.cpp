@@ -1146,6 +1146,7 @@ std::vector<int> SelectPipeline(std::vector<aisdk::xengine::PipelineConfig>& pip
         bool b_contains = absl::StrContains(b.pipeline_name, prior_processor);
         return a_contains && !b_contains;
     });
+
     std::vector<int> pipeline_policy;
     for (uint32_t i = 0; i < pipelines.size(); i++) {
         auto& config = pipelines[i];
@@ -1177,6 +1178,10 @@ std::vector<int> SelectPipeline(std::vector<aisdk::xengine::PipelineConfig>& pip
                 pipeline_policy.push_back(i);
                 continue;
             }
+        } else if ((config.related_feature.bind_glass == "gina") &&
+                   config.related_feature.bind_runtime == "artosynnpu") {
+            pipeline_policy.push_back(i);
+            continue;
         } else {
             // do nothing
         }

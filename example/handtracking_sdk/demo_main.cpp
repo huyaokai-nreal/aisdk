@@ -303,10 +303,9 @@ int main(int argc, char **argv) {
         return -1;
     }
 
+    // 3. 根据单双目选择合适的发送数据和接受数据逻辑
     int sum = input_config_json["camera_datas"]["max_used_frame_num"].asInt();
     int loopn = (sum > 0) ? std::min((int)sum, (int)l_file_map.size()) : l_file_map.size();
-
-    // 3. 根据单双目选择合适的发送数据和接受数据逻辑
     HandTrackingSdk::GetHandTrackingInstance().SetCameraNum(camera_num);
     if (1 == camera_num) {
         process_mono_camera_data(l_file_map, sum, loopn, stream_type);
