@@ -31,17 +31,9 @@ private:
     // 申请，释放运行时内存
     int MallocRuntimeBuff(void * handle, AR_U16 u16NetworkID);
     int FreeRuntimeBuff();
-    
-    // 释放PCH协处理器内存
-    int FreePchBuff();
 
-    // 构造IFC输入张量
-    int MakeIfcInput(std::shared_ptr<ARTOSYN_AIModel> &model);
-    
-    // 构造常规输入张量
-    int MakeInput(std::shared_ptr<ARTOSYN_AIModel> &model);
-    
-    // 构造输出张量
+    // 构造输入输出张量
+    int MakeInput(std::shared_ptr<ARTOSYN_AIModel> &model);    
     int MakeOutput(std::shared_ptr<ARTOSYN_AIModel> &model);
 
 private:
@@ -52,11 +44,6 @@ private:
     AR_MEM_S m_stNPUOutBuff;      // npu输出内存描述结构体
     bool m_blNPURtBuff = false;   // 运行时内存分配状态标记
     AR_MEM_S m_stNPURtBuff;       // 运行时内存描述结构体（包含权重/中间结果）
-
-    // 开启ifc还需要额外的内存
-    bool m_bEnable_ifc = false;
-    AR_U32 u32FrameId = 0;        // 帧序列标识
-    AR_IMG_SET_S m_stImg;         // 图像数据集结构
 };
 
 }  // namespace aisdk::xengine

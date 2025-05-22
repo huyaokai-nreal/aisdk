@@ -25,8 +25,7 @@ public:
     void *m_handle = nullptr;        // npu设备操作句柄
 
     AR_U32 m_batch = 0;              // 批处理大小
-    AR_U32 m_ifc_inputn = 0;         // IFC（图像特征缓存）输入数量
-    AR_U32 m_inputn = 0;             // 常规输入张量数量（不含IFC输入），由模型输入层数量决定
+    AR_U32 m_inputn = 0;             // 输入张量数量（对应模型输入层数量）
     AR_U32 m_outputn = 0;            // 输出张量数量（对应模型输出层数量）
 };
 

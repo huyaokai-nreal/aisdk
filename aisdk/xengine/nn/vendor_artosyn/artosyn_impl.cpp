@@ -28,7 +28,8 @@ ARTOSYN_AIModel::ARTOSYN_AIModel(ModelConfig &config) : AIModel() {
     m_socversion = AR_MPI_NPU_GetSocVersion();
 
     AISDK_LOG_TRACE("artosyn model_path={} model_mem={} model_size={} vendor_type={}", config.model_path.c_str(),
-                    static_cast<const void *>(config.model_mem), config.model_size, (int)config.vendor_type);
+                    static_cast<const void *>(config.model_mem), config.model_size,
+                    static_cast<int>(config.vendor_type));
 
     // step1: 初始化NPU网络描述结构体
     memset(&m_stCNNDesc, 0, sizeof(m_stCNNDesc));
@@ -42,7 +43,7 @@ ARTOSYN_AIModel::ARTOSYN_AIModel(ModelConfig &config) : AIModel() {
     // step2: 禁用NPU安全功能
     AR_S32 ret = AR_MPI_NPU_SetSecurity(0);
     if (ret < 0) {
-        AISDK_LOG_ERROR("AR_MPI_NPU_SetSecurity failure!! ret:{}", static_cast<int>(ret));
+        AISDK_LOG_ERROR("AR_MPI_NPU_SetSecurity failed. ret:{}", static_cast<int>(ret));
         return;
     } else {
         AISDK_LOG_TRACE("AR_MPI_NPU_SetSecurity succeed");
@@ -51,14 +52,14 @@ ARTOSYN_AIModel::ARTOSYN_AIModel(ModelConfig &config) : AIModel() {
     // step2: 加载模型到npu内存
     m_handle = AR_MPI_NPU_LoadModel(&m_stCNNDesc);
     if (!m_handle) {
-        AISDK_LOG_ERROR("AR_MPI_NPU_LoadModel failure!!");
+        AISDK_LOG_ERROR("AR_MPI_NPU_LoadModel failed");
     } else {
-        AISDK_LOG_TRACE("AR_MPI_NPU_LoadModel succeed");
-        m_batch = AR_MPI_NPU_GetBatchNum(m_handle);                // 获取模型支持的最大批次
-        m_ifc_inputn = AR_MPI_NPU_GetIFCInputTensorNum(m_handle);  // IFC预处理输入数量
-        m_inputn = AR_MPI_NPU_GetInputTensorNum(m_handle);         // 模型输入张量数量
-        m_outputn = AR_MPI_NPU_GetOutputTensorNum(m_handle);       // 模型输出张量数量
+        m_batch = AR_MPI_NPU_GetBatchNum(m_handle);           // 获取模型支持的最大批次
+        m_inputn = AR_MPI_NPU_GetInputTensorNum(m_handle);    // 模型输入张量数量
+        m_outputn = AR_MPI_NPU_GetOutputTensorNum(m_handle);  // 模型输出张量数量
         m_info.handle = (uint64_t)m_handle;
+        AISDK_LOG_TRACE("AR_MPI_NPU_LoadModel succeed. m_batch[{}], m_inputn[{}], m_outputn[{}].", m_batch, m_inputn,
+                        m_outputn);
     }
 }
 
@@ -67,6 +68,7 @@ ARTOSYN_AIModel::ARTOSYN_AIModel(ModelConfig &config) : AIModel() {
  */
 ARTOSYN_AIModel::~ARTOSYN_AIModel() {
     if (m_handle) {
+        // 释放加载的模型
         AR_S32 ret = AR_MPI_NPU_UnloadModel(m_handle);
         if (0 != static_cast<int>(ret)) {
             AISDK_LOG_ERROR("AR_MPI_NPU_UnloadModel failed, ret:{}", static_cast<int>(ret));
@@ -137,15 +139,11 @@ uint32_t ARTOSYNNConvertElementBype(aisdk::xengine::ElementType &type) {
     return 0;
 }
 
-ARTOSYN_Session::ARTOSYN_Session() : Session() {
-    m_input_category = ImageCategory::IS_TENSOR;
-    memset(&m_stImg, 0, sizeof(AR_IMG_SET_S));
-}
+ARTOSYN_Session::ARTOSYN_Session() : Session() { m_input_category = ImageCategory::IS_BLOB; }
 
 ARTOSYN_Session::~ARTOSYN_Session() {
     FreeNPUBuff();
     FreeRuntimeBuff();
-    FreePchBuff();
 }
 
 /**
@@ -223,12 +221,13 @@ int ARTOSYN_Session::MallocNPUBuff(void *handle, AR_U16 u16NetworkID) {
     // 为npu输入buffer申请内存空间
     std::string input_name = std::to_string(u16NetworkID) + "/input";
     m_stNPUInBuff.u64Len = u32Size;
-    // m_stNPUInBuff.u64Cacheable = 1;
     s32Ret = AR_MPI_NPU_MallocCachedBuff((AR_CHAR *)input_name.c_str(), &m_stNPUInBuff);
     if (s32Ret) {
         AISDK_LOG_ERROR("AR_MPI_NPU_MallocCachedBuff {} s32Ret={}", input_name.c_str(), s32Ret);
         return -1;
     }
+
+    // 更新input buf标记
     m_blNPUInBuff = true;
 
     // 获取npu输出buffer size
@@ -242,12 +241,13 @@ int ARTOSYN_Session::MallocNPUBuff(void *handle, AR_U16 u16NetworkID) {
     // 为npu输出buffer申请内存空间
     std::string output_name = std::to_string(u16NetworkID) + "/output";
     m_stNPUOutBuff.u64Len = u32Size;
-    // m_stNPUOutBuff.u64Cacheable = 1;
     s32Ret = AR_MPI_NPU_MallocCachedBuff((AR_CHAR *)output_name.c_str(), &m_stNPUOutBuff);
     if (s32Ret) {
         AISDK_LOG_ERROR("AR_MPI_NPU_MallocCachedBuff {} s32Ret={}", output_name.c_str(), s32Ret);
         return -1;
     }
+
+    // 更新output buf标记
     m_blNPUOutBuff = true;
 
     // memset((void *)m_stNPUInBuff.u64VirtAddr, 0, m_stNPUInBuff.u64Len);
@@ -273,168 +273,6 @@ int ARTOSYN_Session::FreeNPUBuff() {
     if (m_blNPUOutBuff) {
         s32Ret = AR_MPI_NPU_FreeBuff(&m_stNPUOutBuff);
         m_blNPUOutBuff = false;
-    }
-
-    return 0;
-}
-
-/**
- * @brief 构造ifc输入张量并分配内存缓冲区
- * @param aimodel 共享指针指向已加载的AI模型对象
- * @return int 返回0表示成功，负数表示失败
- *
- * @note 主要功能流程：
- * 1. 初始化输入图像容器的基础参数
- * 2. 遍历所有模型输入层：
- *    a. 获取输入张量的详细参数
- *    b. 获取输入格式转换(IFC)参数
- *    c. 配置输入图像结构体参数
- *    d. 根据SOC版本计算内存步长
- *    e. 分配NPU内存缓冲区
- *    f. 配置通道内存地址
- *
- * @warning 重要注意事项：
- * - 需在模型加载后、推理执行前调用
- * - 处理不同SOC芯片版本的内存对齐差异
- * - 当前仅支持GRAY/RGB三通道格式
- */
-int ARTOSYN_Session::MakeIfcInput(std::shared_ptr<ARTOSYN_AIModel> &aimodel) {
-    AR_NPU_TENSOR_S stTensor;
-    AR_S32 s32Ret = 0;
-
-    // 初始化输入容器基础参数
-    m_imagein.m_batch = aimodel->m_batch;                                 // 设置batch大小
-    m_imagein.m_ori_batch = aimodel->m_batch;                             // 原始batch大小
-    m_imagein.m_multiinput_num = aimodel->m_inputn;                       // 多输入数量
-    m_imagein.m_packed_bybatch = false;                                   // 未进行批次打包
-    m_imagein.m_imageblobs.resize(aimodel->m_inputn * aimodel->m_batch);  // 预分配图像blob存储
-    m_stImg.u32InputNum = aimodel->m_inputn;                              // 设置npu输入数量
-
-    // 遍历每个输入层
-    for (auto i = 0; i < aimodel->m_inputn; i++) {
-        // 获取输入张量参数
-        s32Ret = AR_MPI_NPU_GetInputTensorParam(aimodel->m_handle, i, &stTensor);
-        AISDK_LOG_TRACE("AR_MPI_NPU_GetInputTensorParam s32Ret={}", s32Ret);
-        AISDK_LOG_TRACE(
-            "input-{} stTensor: u32ID={},u32Bank={},u32Offset={},u32Height={},u32KStep={}, "
-            "u32KNormNum = {},"
-            "u32KSizeLast = {}, u32KSizeNorm = {}, achName = {}, achType = {}, u32Num = {}, u32OriChannels = {},"
-            "u32OriFrameSize = {} u32Precision = {}, u32RowStep = {}, u32TensorStep = {}, dScaleFactor = {},"
-            "u32Size = {}, u32Width = {}, s32ZeroPoint = {},"
-            "achLayoutType = {} ",
-            i, stTensor.u32ID, stTensor.u32Bank, stTensor.u32Offset, stTensor.u32Height, stTensor.u32KStep,
-            stTensor.u32KNormNum, stTensor.u32KSizeLast, stTensor.u32KSizeNorm, stTensor.achName, stTensor.achType,
-            stTensor.u32Num, stTensor.u32OriChannels, stTensor.u32OriFrameSize, stTensor.u32Precision,
-            stTensor.u32RowStep, stTensor.u32TensorStep, (float)stTensor.dScaleFactor, stTensor.u32Size,
-            stTensor.u32Width, stTensor.s32ZeroPoint, stTensor.achLayoutType);
-
-        // 获取输入格式转换参数
-        AR_NPU_IFC_PARAM_S stIFCParam[2];
-        s32Ret = AR_MPI_NPU_GetIFCParamByName(aimodel->m_handle, stTensor.achName, &stIFCParam[0]);
-        AISDK_LOG_TRACE("AR_MPI_NPU_GetIFCParamByName s32Ret={}", s32Ret);
-        if (s32Ret) {
-            AISDK_LOG_ERROR("AR_MPI_NPU_GetIFCParamByName failure");
-            return -1;
-        }
-
-        // 配置输入图像结构体
-        AR_INPUT_IMG_S *inimage = &m_stImg.astInputImg[i];
-        inimage->u32BatchNum = aimodel->m_batch;  // 设置batch数量
-        memcpy(inimage->achTensorName, stTensor.achName, MAX_NAME_LEN - 1);
-        inimage->bPreIfcProcess = AR_TRUE;  // 启用预处理
-
-        // 处理每个批次的图像
-        for (auto j = 0; j < aimodel->m_batch; j++) {
-            AR_IMG_S *pstImg = &inimage->astBatchImg[j];
-            auto &imageblob = m_imagein.m_imageblobs[i * aimodel->m_batch + j];
-
-            // 根据不同的soc，需要做不同的对齐要求
-            AR_U16 u16Stride;
-            if (aimodel->m_socversion == 1) {
-                u16Stride = stIFCParam[0].u32YStride;
-            } else {
-                u16Stride = stTensor.u32Width;
-            }
-
-            // 计算单通道缓冲区大小
-            AR_U32 s32PchBuffSize = u16Stride * stTensor.u32Height * stTensor.u32OriChannels;
-
-            // 配置blob元数据
-            imageblob.m_name = std::string(stTensor.achName);
-            imageblob.m_width = stTensor.u32Width;
-            imageblob.m_height = stTensor.u32Height;
-            imageblob.m_wstride = u16Stride;
-            imageblob.m_elementype = ElementType::UINT8;
-            imageblob.m_elementbyte = 1;
-            imageblob.m_elementsize = s32PchBuffSize;
-
-            // npu内存分配
-            AR_MEM_S stPchbuff;
-            stPchbuff.u64Len = s32PchBuffSize;
-            std::string ifc_name = std::to_string(aimodel->m_stCNNDesc.u16NetworkID) + "/" + std::to_string(i) + "/" +
-                                   std::to_string(j) + "/pchinput";
-            s32Ret = AR_MPI_NPU_MallocBuff((AR_CHAR *)ifc_name.c_str(), &stPchbuff);
-            if (s32Ret) {
-                AISDK_LOG_ERROR("AR_MPI_NPU_MallocBuff {} s32Ret={}", ifc_name.c_str(), s32Ret);
-                return -1;
-            }
-
-            // 目前仅支持gray和rgb
-            if (stTensor.u32OriChannels == 1) {  // 灰度图处理
-                // 所有通道指向同一内存（灰度图仅需单通道）
-                pstImg->enFormat = AR_IMG_GRAY;          // 设置NPU格式为灰度
-                imageblob.m_format = ImageFormat::GRAY;  // 设置自定义格式
-
-                // 配置三个通道的物理/虚拟地址（实际复用同一内存）
-                for (int ch = 0; ch < 3; ch++) {
-                    pstImg->astChannels[ch].u32AddrPhy = stPchbuff.u64PhyAddr;
-                    pstImg->astChannels[ch].uptrAddrVirt = stPchbuff.u64VirtAddr;
-                    imageblob.m_viraddr[ch] = (void *)stPchbuff.u64VirtAddr;
-                }
-            } else if (stTensor.u32OriChannels == 3) {              // rgb图处理
-                AR_U32 u32ChSize = u16Stride * stTensor.u32Height;  // 单通道字节数
-                pstImg->enFormat = AR_IMG_RGB;                      // 设置NPU格式为RGB
-                imageblob.m_format = ImageFormat::RGB;              // 设置自定义格式
-
-                // 分别配置三个通道的地址（内存连续分布）
-                for (int ch = 0; ch < 3; ch++) {
-                    pstImg->astChannels[ch].u32AddrPhy = stPchbuff.u64PhyAddr + ch * u32ChSize;
-                    pstImg->astChannels[ch].uptrAddrVirt = stPchbuff.u64VirtAddr + ch * u32ChSize;
-                    imageblob.m_viraddr[ch] = (void *)(stPchbuff.u64VirtAddr + ch * u32ChSize);
-                }
-            }
-        }
-    }
-
-    return 0;
-}
-
-/**
- * @brief 释放NPU预处理内存缓冲区
- * @return int 始终返回0表示执行完成，实际释放操作可能未完全处理错误状态
- * @note 功能说明：
- * 1. 遍历所有预分配的输入图像缓冲区
- * 2. 通过首个通道地址定位内存块
- * 3. 调用NPU驱动接口释放物理/虚拟内存
- * 4. 重置地址指针避免野指针
- */
-int ARTOSYN_Session::FreePchBuff() {
-    // 遍历所有输入源（通常对应不同输入层）
-    for (AR_U32 i = 0; i < MAX_INPUT_IMG_NUM; i++) {
-        // 遍历每个输入源的批次数据
-        for (AR_U32 j = 0; j < MAX_BATCH_IMG_NUM; j++) {
-            // 获取当前批次图像
-            AR_IMG_S *pstImgTmp = &m_stImg.astInputImg[i].astBatchImg[j];
-
-            // 调用npu驱动接口释放内存
-            if (pstImgTmp->astChannels[0].uptrAddrVirt) {
-                AR_MEM_S stPchbuff;
-                stPchbuff.u64VirtAddr = pstImgTmp->astChannels[0].uptrAddrVirt;
-                stPchbuff.u64PhyAddr = pstImgTmp->astChannels[0].u32AddrPhy;
-                AR_MPI_NPU_FreeBuff(&stPchbuff);
-                pstImgTmp->astChannels[0].uptrAddrVirt = 0;
-            }
-        }
     }
 
     return 0;
@@ -476,18 +314,18 @@ int ARTOSYN_Session::MakeInput(std::shared_ptr<ARTOSYN_AIModel> &aimodel) {
         s32Ret = AR_MPI_NPU_GetInputTensorParam(aimodel->m_handle, i, &stTensor);
         AISDK_LOG_TRACE("AR_MPI_NPU_GetInputTensorParam s32Ret={}", s32Ret);
 
-        AISDK_LOG_TRACE(
-            "input-{} stTensor: u32ID={},u32Bank={},u32Offset={},u32Height={},u32KStep={}, "
-            "u32KNormNum = {},"
-            "u32KSizeLast = {}, u32KSizeNorm = {}, achName = {}, achType = {}, u32Num = {}, u32OriChannels = {},"
-            "u32OriFrameSize = {} u32Precision = {}, u32RowStep = {}, u32TensorStep = {}, dScaleFactor = {},"
-            "u32Size = {}, u32Width = {}, s32ZeroPoint = {},"
-            "achLayoutType = {} ",
-            i, stTensor.u32ID, stTensor.u32Bank, stTensor.u32Offset, stTensor.u32Height, stTensor.u32KStep,
-            stTensor.u32KNormNum, stTensor.u32KSizeLast, stTensor.u32KSizeNorm, stTensor.achName, stTensor.achType,
-            stTensor.u32Num, stTensor.u32OriChannels, stTensor.u32OriFrameSize, stTensor.u32Precision,
-            stTensor.u32RowStep, stTensor.u32TensorStep, (float)stTensor.dScaleFactor, stTensor.u32Size,
-            stTensor.u32Width, stTensor.s32ZeroPoint, stTensor.achLayoutType);
+        // AISDK_LOG_TRACE(
+        //     "input-{} stTensor: u32ID={},u32Bank={},u32Offset={},u32Height={},u32KStep={}, "
+        //     "u32KNormNum = {},"
+        //     "u32KSizeLast = {}, u32KSizeNorm = {}, achName = {}, achType = {}, u32Num = {}, u32OriChannels = {},"
+        //     "u32OriFrameSize = {} u32Precision = {}, u32RowStep = {}, u32TensorStep = {}, dScaleFactor = {},"
+        //     "u32Size = {}, u32Width = {}, s32ZeroPoint = {},"
+        //     "achLayoutType = {} ",
+        //     i, stTensor.u32ID, stTensor.u32Bank, stTensor.u32Offset, stTensor.u32Height, stTensor.u32KStep,
+        //     stTensor.u32KNormNum, stTensor.u32KSizeLast, stTensor.u32KSizeNorm, stTensor.achName, stTensor.achType,
+        //     stTensor.u32Num, stTensor.u32OriChannels, stTensor.u32OriFrameSize, stTensor.u32Precision,
+        //     stTensor.u32RowStep, stTensor.u32TensorStep, (float)stTensor.dScaleFactor, stTensor.u32Size,
+        //     stTensor.u32Width, stTensor.s32ZeroPoint, stTensor.achLayoutType);
 
         // 存储张量元数据到内部结构
         m_in.m_tensors[i].m_name = std::string(stTensor.achName);
@@ -556,18 +394,18 @@ int ARTOSYN_Session::MakeOutput(std::shared_ptr<ARTOSYN_AIModel> &aimodel) {
         s32Ret = AR_MPI_NPU_GetOutputTensorParam(aimodel->m_handle, i, &stTensor);
         AISDK_LOG_TRACE("AR_MPI_NPU_GetOutputTensorParam s32Ret={}", s32Ret);
 
-        AISDK_LOG_TRACE(
-            "output-{} stTensor: u32ID={},u32Bank={},u32Offset={},u32Height={},u32KStep={}, "
-            "u32KNormNum = {},"
-            "u32KSizeLast = {}, u32KSizeNorm = {}, achName = {}, achType = {}, u32Num = {}, u32OriChannels = {},"
-            "u32OriFrameSize = {} u32Precision = {}, u32RowStep = {}, u32TensorStep = {}, dScaleFactor = {},"
-            "u32Size = {}, u32Width = {}, s32ZeroPoint = {},"
-            "achLayoutType = {} ",
-            i, stTensor.u32ID, stTensor.u32Bank, stTensor.u32Offset, stTensor.u32Height, stTensor.u32KStep,
-            stTensor.u32KNormNum, stTensor.u32KSizeLast, stTensor.u32KSizeNorm, stTensor.achName, stTensor.achType,
-            stTensor.u32Num, stTensor.u32OriChannels, stTensor.u32OriFrameSize, stTensor.u32Precision,
-            stTensor.u32RowStep, stTensor.u32TensorStep, (float)stTensor.dScaleFactor, stTensor.u32Size,
-            stTensor.u32Width, stTensor.s32ZeroPoint, stTensor.achLayoutType);
+        // AISDK_LOG_TRACE(
+        //     "output-{} stTensor: u32ID={},u32Bank={},u32Offset={},u32Height={},u32KStep={}, "
+        //     "u32KNormNum = {},"
+        //     "u32KSizeLast = {}, u32KSizeNorm = {}, achName = {}, achType = {}, u32Num = {}, u32OriChannels = {},"
+        //     "u32OriFrameSize = {} u32Precision = {}, u32RowStep = {}, u32TensorStep = {}, dScaleFactor = {},"
+        //     "u32Size = {}, u32Width = {}, s32ZeroPoint = {},"
+        //     "achLayoutType = {} ",
+        //     i, stTensor.u32ID, stTensor.u32Bank, stTensor.u32Offset, stTensor.u32Height, stTensor.u32KStep,
+        //     stTensor.u32KNormNum, stTensor.u32KSizeLast, stTensor.u32KSizeNorm, stTensor.achName, stTensor.achType,
+        //     stTensor.u32Num, stTensor.u32OriChannels, stTensor.u32OriFrameSize, stTensor.u32Precision,
+        //     stTensor.u32RowStep, stTensor.u32TensorStep, (float)stTensor.dScaleFactor, stTensor.u32Size,
+        //     stTensor.u32Width, stTensor.s32ZeroPoint, stTensor.achLayoutType);
 
         // 存储张量元数据到内部结构
         m_out.m_tensors[i].m_name = std::string(stTensor.achName);
@@ -615,58 +453,34 @@ int ARTOSYN_Session::MakeOutput(std::shared_ptr<ARTOSYN_AIModel> &aimodel) {
  * 1. 类型检查与资源验证
  * 2. NPU内存资源分配（输入输出/运行时内存）
  * 3. 输入参数一致性校验
- * 4. 预处理模式判断（IFC开关）
- * 5. 输入输出张量配置
+ * 4. 输入输出张量配置
  */
 Status ARTOSYN_Session::Init(std::shared_ptr<AIModel> &model, SessionConfig &Sconfig) {
     // step1: 类型转换与句柄校验
     auto aimodel = std::dynamic_pointer_cast<ARTOSYN_AIModel>(model);
     if (!aimodel->m_handle) {
+        AISDK_LOG_ERROR("get aimodel->m_handle failed");
         return Status::FAILURE;
     }
 
     // 步骤2：分配NPU输入输出内存
     if (0 != MallocNPUBuff(aimodel->m_handle, aimodel->m_stCNNDesc.u16NetworkID)) {
+        AISDK_LOG_ERROR("malloc npu input and output buffer failed. newworkid[{}]", aimodel->m_stCNNDesc.u16NetworkID);
         return Status::FAILURE;
     }
 
     /// 步骤3：分配NPU运行时内存
     if (0 != MallocRuntimeBuff(aimodel->m_handle, aimodel->m_stCNNDesc.u16NetworkID)) {
+        AISDK_LOG_ERROR("malloc npu runtime buffer failed. newworkid[{}]", aimodel->m_stCNNDesc.u16NetworkID);
         return Status::FAILURE;
     }
 
-    // 步骤4：输入参数一致性校验
-    if (aimodel->m_ifc_inputn > 0 && aimodel->m_ifc_inputn != aimodel->m_inputn) {
-        AISDK_LOG_ERROR("m_ifc_inputn != m_inputn");
+    // 步骤4：配置输入通道
+    if (0 != MakeInput(aimodel)) {
         return Status::FAILURE;
     }
 
-    // 步骤5：确定预处理模式（是否开ifc对前处理差别很大）
-    m_bEnable_ifc = (aimodel->m_ifc_inputn > 0) ? true : false;
-    if (m_bEnable_ifc) {
-        m_input_category = ImageCategory::IS_BLOB;  // 开启，输入为原始图像数据
-    } else {
-        m_input_category = ImageCategory::IS_TENSOR;  // 关闭，输入为tensor
-    }
-
-    AISDK_LOG_INFO("artosyn aimodel->m_ifc_inputn:{}, m_bEnable_ifc:{}, m_input_category:{}", aimodel->m_ifc_inputn,
-                   m_bEnable_ifc, static_cast<int>(m_input_category));
-
-    // 步骤6：配置输入通道
-    if (false == m_bEnable_ifc) {
-        // ifc没开启，直接将模型原始输入的tensor传递给用户
-        // 适合直接输入是tensor,并且tensor数据不会再加工
-        if (0 != MakeInput(aimodel)) {
-            return Status::FAILURE;
-        }
-    } else {
-        // 适合输入是图像，ifc开启
-        if (0 != MakeIfcInput(aimodel)) {
-            return Status::FAILURE;
-        }
-    }
-
-    // 步骤7：配置输出通道
+    // 步骤5：配置输出通道
     if (0 != MakeOutput(aimodel)) {
         return Status::FAILURE;
     }
@@ -680,9 +494,7 @@ Status ARTOSYN_Session::Init(std::shared_ptr<AIModel> &model, SessionConfig &Sco
  * @return Status 返回SUCCESS表示推理成功，FAILURE表示失败
  *
  * @note 推理流程：
- * 1. 预处理模式判断：
- *    - 非IFC模式：刷新输入缓冲区缓存（确保NPU获取最新数据）
- *    - IFC模式：使用预处理的图像输入结构体（m_stImg）
+ * 1. 刷新输入缓冲区缓存（确保NPU获取最新数据）
  * 2. 调用底层NPU驱动执行推理
  * 3. 推理成功后使输出缓存失效（强制主机重新读取设备内存数据）
  *
@@ -698,18 +510,13 @@ Status ARTOSYN_Session::Init(std::shared_ptr<AIModel> &model, SessionConfig &Sco
  *   - AR_FALSE：禁用性能分析
  */
 Status ARTOSYN_Session::Forword(ModelInfo &handle) {
-    AR_S32 s32Ret;
-    AR_IMG_SET_S *pstImg = (m_bEnable_ifc) ? &m_stImg : NULL;
+    AR_S32 s32Ret = 0;
 
-    // 输入数据同步处理
-    if (false == m_bEnable_ifc) {
-        AR_MPI_NPU_FlushCachedBuff(&m_stNPUInBuff);
-    } else {
-        // do nothing
-    }
+    // 刷新数据到NPU内存中
+    AR_MPI_NPU_FlushCachedBuff(&m_stNPUInBuff);
 
     // 执行npu前向推理
-    s32Ret = AR_MPI_NPU_Forward((void *)handle.handle, pstImg, &m_stNPUInBuff, &m_stNPUOutBuff, AR_TRUE, AR_FALSE);
+    s32Ret = AR_MPI_NPU_Forward((void *)handle.handle, NULL, &m_stNPUInBuff, &m_stNPUOutBuff, AR_TRUE, AR_FALSE);
     if (0 == s32Ret) {
         AR_MPI_NPU_InvalidCachedBuff(&m_stNPUOutBuff);
     }
