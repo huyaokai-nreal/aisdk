@@ -35,10 +35,9 @@ ARTOSYN_AIModel::ARTOSYN_AIModel(ModelConfig &config) : AIModel() {
     memset(&m_stCNNDesc, 0, sizeof(m_stCNNDesc));
     m_stCNNDesc.u16NetworkID = (AR_U16)g_NetworkID.fetch_add(1);
     m_stCNNDesc.u32Priority = NETWORK_PRIORITY_NORMAL;
-    m_stCNNDesc.u32CBToArm = 0;
-    m_stCNNDesc.u32SramAddrPhy = 0;
-    m_stCNNDesc.u32SramSize = 0;
+    m_stCNNDesc.u32CBToArm = 1;
     m_stCNNDesc.uptrNpubinVirtAddr = reinterpret_cast<AR_UINTPTR>(config.model_mem);
+    // strcpy(m_stCNNDesc.au8NpubinFileName, "det_flora_0317_onnx.npubin");
 
     // step2: 禁用NPU安全功能
     AR_S32 ret = AR_MPI_NPU_SetSecurity(0);
@@ -49,7 +48,7 @@ ARTOSYN_AIModel::ARTOSYN_AIModel(ModelConfig &config) : AIModel() {
         AISDK_LOG_TRACE("AR_MPI_NPU_SetSecurity succeed");
     }
 
-    // step2: 加载模型到npu内存
+    // step3: 加载模型到npu内存
     m_handle = AR_MPI_NPU_LoadModel(&m_stCNNDesc);
     if (!m_handle) {
         AISDK_LOG_ERROR("AR_MPI_NPU_LoadModel failed");
@@ -58,8 +57,8 @@ ARTOSYN_AIModel::ARTOSYN_AIModel(ModelConfig &config) : AIModel() {
         m_inputn = AR_MPI_NPU_GetInputTensorNum(m_handle);    // 模型输入张量数量
         m_outputn = AR_MPI_NPU_GetOutputTensorNum(m_handle);  // 模型输出张量数量
         m_info.handle = (uint64_t)m_handle;
-        AISDK_LOG_TRACE("AR_MPI_NPU_LoadModel succeed. m_batch[{}], m_inputn[{}], m_outputn[{}].", m_batch, m_inputn,
-                        m_outputn);
+        AISDK_LOG_TRACE("AR_MPI_NPU_LoadModel succeed. networkID[{}] m_batch[{}], m_inputn[{}], m_outputn[{}].",
+                        m_stCNNDesc.u16NetworkID, m_batch, m_inputn, m_outputn);
     }
 }
 
