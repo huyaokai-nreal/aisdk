@@ -97,19 +97,58 @@ enum class ImageCategory {
     IS_CVMAT = 2,
 };
 
+
+/**
+ * @struct ArtosynTensorDims
+ * @brief 描述NPU张量的多维参数和内存配置信息
+ * 
+ * 该结构体用于定义NPU加速器中的张量属性，包含从内存布局到量化参数的全方位配置。
+ * 主要用于模型加载、输入输出张量配置等底层硬件交互场景。
+ */
 struct ArtosynTensorDims {
-    uint32_t u32ID;
-    uint32_t u32Bank;
-    uint32_t u32Offset;
-    uint32_t u32Width;
-    uint32_t u32Height;
-    uint32_t u32KStep;
-    uint32_t u32KNormNum;
-    uint32_t u32KSizeLast;
-    uint32_t u32KSizeNorm;
-    uint32_t u32OriChannels;
-    uint32_t u32RowStep;
-    uint32_t u32TensorStep; //used for batch mode
+    // AR_NPU_IMG_CFG_S stImgConfig; 
+
+    // 基础标识信息
+    std::string achName;          // 张量名称标识，如"input0"/"conv1_weight"等
+    std::string achType;          // 数据类型，取值范围：["float", "int16", "int8", "uint8"]
+    std::string achStepType;      // 内存步长类型，"normal"-常规布局, "continue"-连续内存
+    std::string achLayoutType;    // 张量布局类型，如"NHWC"、"NCHW"等硬件优化布局
+    std::string achMemoryType;    // 存储介质类型，"ddr"/"sram"等，标识物理存储位置
+	std::string achDdrFormat;     // DDR内存数据格式，如"RGB_Planar"等硬件特定格式
+
+    // 量化参数
+    double dScaleFactor;          // 量化缩放因子，用于INT8/UINT8类型：fp_value = int_value * scale + zero_point
+    int32_t s32ZeroPoint;         // 量化零点偏移，通常为INT8/UINT8的零点补偿值
+
+    // 内存配置参数
+    uint32_t u32ID;               // 张量唯一标识符，用于硬件资源管理
+    uint32_t u32Bank;             // 存储体编号，指定NPU内存bank分配（0-7）
+    uint32_t u32Offset;           // 内存起始偏移量（字节），相对于bank基地址
+    uint32_t u32RowStep;          // 行步长（字节），包含内存对齐填充（例如width=120时可能对齐到128）
+    uint32_t u32TensorStep;       // 张量步长（字节），用于批处理时跨batch的内存间隔
+
+    // 空间维度参数
+    uint32_t u32Height;           // 空间维度高度（例如特征图高度）
+    uint32_t u32Width;            // 空间维度宽度（例如特征图宽度）
+    uint32_t u32OriChannels;      // 原始通道数（未分块前的通道维度）
+
+    // 通道分块参数
+    uint32_t u32KStep;            // 通道分块步长（K维度分组处理粒度）
+    uint32_t u32KNormNum;         // 归一化通道组数（用于分组卷积优化）
+    uint32_t u32KSizeLast;        // 最后一个通道块的大小（当总通道数非整数倍时）
+    uint32_t u32KSizeNorm;        // 常规通道块的标准大小
+
+    // 精度与位宽
+    uint32_t u32BitWidth;         // 单元素位宽（bits），如float32=32, int8=8
+    uint32_t u32Precision;        // 数据精度模式，0=FP32, 1=FP16, 2=INT8等
+
+    // 容量参数
+    uint32_t u32Size;             // 张量逻辑元素总数（height * width * channels等）
+    uint32_t u32MemorySize;       // 实际内存占用字节数（包含所有对齐填充）
+    
+    // 辅助参数
+    uint32_t u32Num;              // 批处理维度大小（batch size）
+    uint32_t u32OriFrameSize;     // 原始单帧数据大小（不含batch维度的元素数）
 };
 
 struct Tensor {

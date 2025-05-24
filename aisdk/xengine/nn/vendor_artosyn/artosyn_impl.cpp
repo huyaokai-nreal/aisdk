@@ -6,7 +6,7 @@
 #include "artosyn_session.h"
 #include "hal_type.h"
 
-#define ALIGNED_256B(x) ((x) % 256 == 0 ? (x) : (((x) / 256 + 1) * 256))
+// #define ALIGNED_256B(x) ((x) % 256 == 0 ? (x) : (((x) / 256 + 1) * 256))
 
 namespace aisdk::xengine {
 
@@ -27,7 +27,7 @@ ARTOSYN_AIModel::ARTOSYN_AIModel(ModelConfig &config) : AIModel() {
     // 动态获取SOC版本
     m_socversion = AR_MPI_NPU_GetSocVersion();
 
-    AISDK_LOG_TRACE("artosyn model_path={} model_mem={} model_size={} vendor_type={}", config.model_path.c_str(),
+    AISDK_LOG_TRACE("artosyn model_path[{}], model_mem[{}], model_size[{}], vendor_type[{}]", config.model_path.c_str(),
                     static_cast<const void *>(config.model_mem), config.model_size,
                     static_cast<int>(config.vendor_type));
 
@@ -53,7 +53,7 @@ ARTOSYN_AIModel::ARTOSYN_AIModel(ModelConfig &config) : AIModel() {
     if (!m_handle) {
         AISDK_LOG_ERROR("AR_MPI_NPU_LoadModel failed");
     } else {
-        m_batch = AR_MPI_NPU_GetBatchNum(m_handle);           // 获取模型支持的最大批次
+        m_batch = AR_MPI_NPU_GetBatchNum(m_handle);           // 获取模型支持的batch
         m_inputn = AR_MPI_NPU_GetInputTensorNum(m_handle);    // 模型输入张量数量
         m_outputn = AR_MPI_NPU_GetOutputTensorNum(m_handle);  // 模型输出张量数量
         m_info.handle = (uint64_t)m_handle;
@@ -107,11 +107,10 @@ aisdk::xengine::ElementType ARTOSYNNConvertElementType(AR_NPU_TENSOR_S &stTensor
     } else if (strcmp(stTensor.achType, "uint8") == 0) {  // 无符号8位整型处理
         return aisdk::xengine::ElementType::UINT8;
     } else {
-        // do nothing
+        AISDK_LOG_ERROR("can not find right element type. achType[{}], u32precision[{}]", stTensor.achType,
+                        stTensor.u32Precision);
+        return aisdk::xengine::ElementType::UNKNOWN;
     }
-
-    // 不属于上面的类型，直接返回UNKNOWN
-    return aisdk::xengine::ElementType::UNKNOWN;
 }
 
 /**
@@ -133,12 +132,12 @@ uint32_t ARTOSYNNConvertElementBype(aisdk::xengine::ElementType &type) {
         return 2;
     } else if (type == aisdk::xengine::ElementType::INT8 || type == aisdk::xengine::ElementType::UINT8) {
         return 1;
+    } else {
+        return 0;
     }
-
-    return 0;
 }
 
-ARTOSYN_Session::ARTOSYN_Session() : Session() { m_input_category = ImageCategory::IS_BLOB; }
+ARTOSYN_Session::ARTOSYN_Session() : Session() { m_input_category = ImageCategory::IS_TENSOR; }
 
 ARTOSYN_Session::~ARTOSYN_Session() {
     FreeNPUBuff();
@@ -181,6 +180,7 @@ int ARTOSYN_Session::MallocRuntimeBuff(void *handle, AR_U16 u16NetworkID) {
         return -1;
     }
 
+    // 更新标记信息
     m_blNPURtBuff = true;
     return 0;
 }
@@ -286,10 +286,9 @@ int ARTOSYN_Session::FreeNPUBuff() {
  * 1. 初始化输入容器的基础元数据
  * 2. 遍历所有模型输入层：
  *    a. 获取NPU输入张量参数
- *    b. 记录张量详细信息（调试日志）
- *    c. 转换并存储张量参数到内部数据结构
- *    d. 获取张量对应的NPU内存地址
- *    e. 配置输入张量的虚拟地址指针
+ *    b. 转换并存储张量参数到内部数据结构
+ *    c. 获取张量对应的NPU内存地址
+ *    d. 配置输入张量的虚拟地址指针
  *
  * @warning 注意事项：
  * - 需在模型加载后、推理执行前调用
@@ -297,66 +296,128 @@ int ARTOSYN_Session::FreeNPUBuff() {
  * - 假设输入张量内存由NPU驱动管理，上层无需手动分配
  */
 int ARTOSYN_Session::MakeInput(std::shared_ptr<ARTOSYN_AIModel> &aimodel) {
-    AR_NPU_TENSOR_S stTensor;
     AR_S32 s32Ret = 0;
 
     // 初始化容器元数据
     m_in.m_batch = aimodel->m_batch;            // 设置批次大小
     m_in.m_ori_batch = aimodel->m_batch;        // 原始批次数（无填充）
-    m_in.m_multishape_num = aimodel->m_inputn;  // 多输入数量
+    m_in.m_multishape_num = aimodel->m_inputn;  // 模型输入张量数量
     m_in.m_packed_bybatch = true;               // 启用批次打包模式
     m_in.m_tensors.resize(aimodel->m_inputn);   // 预分配张量存储空间
 
     // 遍历处理每个输入张量
     for (auto i = 0; i < aimodel->m_inputn; i++) {
-        // 获取张量详细参数
+        AR_NPU_TENSOR_S stTensor;
+        memset(&stTensor, 0, sizeof(stTensor));
         s32Ret = AR_MPI_NPU_GetInputTensorParam(aimodel->m_handle, i, &stTensor);
-        AISDK_LOG_TRACE("AR_MPI_NPU_GetInputTensorParam s32Ret={}", s32Ret);
+        if (0 != s32Ret) {
+            AISDK_LOG_ERROR("get input tensor param failed, handle[{}], i[{}]", aimodel->m_handle, i);
+        }
 
-        // AISDK_LOG_TRACE(
-        //     "input-{} stTensor: u32ID={},u32Bank={},u32Offset={},u32Height={},u32KStep={}, "
-        //     "u32KNormNum = {},"
-        //     "u32KSizeLast = {}, u32KSizeNorm = {}, achName = {}, achType = {}, u32Num = {}, u32OriChannels = {},"
-        //     "u32OriFrameSize = {} u32Precision = {}, u32RowStep = {}, u32TensorStep = {}, dScaleFactor = {},"
-        //     "u32Size = {}, u32Width = {}, s32ZeroPoint = {},"
-        //     "achLayoutType = {} ",
-        //     i, stTensor.u32ID, stTensor.u32Bank, stTensor.u32Offset, stTensor.u32Height, stTensor.u32KStep,
-        //     stTensor.u32KNormNum, stTensor.u32KSizeLast, stTensor.u32KSizeNorm, stTensor.achName, stTensor.achType,
-        //     stTensor.u32Num, stTensor.u32OriChannels, stTensor.u32OriFrameSize, stTensor.u32Precision,
-        //     stTensor.u32RowStep, stTensor.u32TensorStep, (float)stTensor.dScaleFactor, stTensor.u32Size,
-        //     stTensor.u32Width, stTensor.s32ZeroPoint, stTensor.achLayoutType);
+        // printf("input tensor[%d] base param: achName[%s], achType[%s], achStepType[%s], achLayoutType[%s]\n", i,
+        //        stTensor.achName, stTensor.achType, stTensor.achStepType, stTensor.achLayoutType);
+        // printf("input tensor[%d] artosyn quantification param: dScaleFactor[%f], s32ZeroPoint[%d]\n", i,
+        //        stTensor.dScaleFactor, stTensor.s32ZeroPoint);
+        // printf(
+        //     "input tensor[%d] artosyn memory param: u32ID[%u], u32Bank[%u], u32Offset[%u], u32RowStep[%u], "
+        //     "u32TensorStep[%u]\n",
+        //     i, stTensor.u32ID, stTensor.u32Bank, stTensor.u32Offset, stTensor.u32RowStep, stTensor.u32TensorStep);
+        // printf("input tensor[%d] artosyn spatial dimension param: u32Height[%u], u32Width[%u], u32OriChannels[%u]\n",
+        // i,
+        //        stTensor.u32Height, stTensor.u32Width, stTensor.u32OriChannels);
+        // printf(
+        //     "input tensor[%d] artosyn channel block param: u32KStep[%u], u32KNormNum[%u], u32KSizeLast[%u], "
+        //     "u32KSizeNorm[%u]\n",
+        //     i, stTensor.u32KStep, stTensor.u32KNormNum, stTensor.u32KSizeLast, stTensor.u32KSizeNorm);
+        // printf("input tensor[%d] artosyn accuracy param: u32BitWidth[%u], u32Precision[%u]\n", i,
+        // stTensor.u32BitWidth,
+        //        stTensor.u32Precision);
+        // printf("input tensor[%d] artosyn capacity param: u32Size[%u], u32MemorySize[%u]\n", i, stTensor.u32Size,
+        //        stTensor.u32MemorySize);
+        // printf("input tensor[%d] artosyn other param: u32Num[%u], u32OriFrameSize[%u]\n", i, stTensor.u32Num,
+        //        stTensor.u32OriFrameSize);
+
+        // AISDK_LOG_TRACE("get input tensor param succeed. index[{}] ", i);
 
         // 存储张量元数据到内部结构
         m_in.m_tensors[i].m_name = std::string(stTensor.achName);
         m_in.m_tensors[i].m_dimtype = TensorFormat::BlockingNHWC;
         m_in.m_tensors[i].m_elementype = ARTOSYNNConvertElementType(stTensor);
         m_in.m_tensors[i].m_elementbyte = ARTOSYNNConvertElementBype(m_in.m_tensors[i].m_elementype);
+
+        // 填充tensor内部数据
+        m_in.m_tensors[i].m_artosyn_dims.achName = std::string(stTensor.achName);
+        m_in.m_tensors[i].m_artosyn_dims.achType = std::string(stTensor.achType);
+        m_in.m_tensors[i].m_artosyn_dims.achStepType = std::string(stTensor.achStepType);
+        m_in.m_tensors[i].m_artosyn_dims.achLayoutType = std::string(stTensor.achLayoutType);
+        // m_in.m_tensors[i].m_artosyn_dims.achMemoryType = std::string(stTensor.achMemoryType);
+        // m_in.m_tensors[i].m_artosyn_dims.achDdrFormat = std::string(stTensor.achDdrFormat);
+        m_in.m_tensors[i].m_artosyn_dims.dScaleFactor = stTensor.dScaleFactor;
         m_in.m_tensors[i].m_artosyn_dims.u32ID = stTensor.u32ID;
         m_in.m_tensors[i].m_artosyn_dims.u32Bank = stTensor.u32Bank;
         m_in.m_tensors[i].m_artosyn_dims.u32Offset = stTensor.u32Offset;
         m_in.m_tensors[i].m_artosyn_dims.u32Height = stTensor.u32Height;
-        m_in.m_tensors[i].m_artosyn_dims.u32Width = stTensor.u32Width;
         m_in.m_tensors[i].m_artosyn_dims.u32KStep = stTensor.u32KStep;
         m_in.m_tensors[i].m_artosyn_dims.u32KNormNum = stTensor.u32KNormNum;
         m_in.m_tensors[i].m_artosyn_dims.u32KSizeLast = stTensor.u32KSizeLast;
         m_in.m_tensors[i].m_artosyn_dims.u32KSizeNorm = stTensor.u32KSizeNorm;
+        m_in.m_tensors[i].m_artosyn_dims.u32BitWidth = stTensor.u32BitWidth;
+        m_in.m_tensors[i].m_artosyn_dims.u32Num = stTensor.u32Num;
         m_in.m_tensors[i].m_artosyn_dims.u32OriChannels = stTensor.u32OriChannels;
+        m_in.m_tensors[i].m_artosyn_dims.u32OriFrameSize = stTensor.u32OriFrameSize;
+        m_in.m_tensors[i].m_artosyn_dims.u32Precision = stTensor.u32Precision;
         m_in.m_tensors[i].m_artosyn_dims.u32RowStep = stTensor.u32RowStep;
         m_in.m_tensors[i].m_artosyn_dims.u32TensorStep = stTensor.u32TensorStep;
-        m_in.m_tensors[i].m_artosyn_dims.u32OriChannels = stTensor.u32OriChannels;
+        m_in.m_tensors[i].m_artosyn_dims.u32Size = stTensor.u32Size;
+        m_in.m_tensors[i].m_artosyn_dims.u32MemorySize = stTensor.u32MemorySize;
+        m_in.m_tensors[i].m_artosyn_dims.u32Width = stTensor.u32Width;
+        m_in.m_tensors[i].m_artosyn_dims.s32ZeroPoint = stTensor.s32ZeroPoint;
+
+        // 根据类别分条进行日志记录
+        AISDK_LOG_TRACE("input tensor[{}] base param: m_name[{}], m_dimtype[{}], m_elementype[{}], m_elementbyte[{}] ",
+                        i, m_in.m_tensors[i].m_name, static_cast<int>(m_in.m_tensors[i].m_dimtype),
+                        static_cast<int>(m_in.m_tensors[i].m_elementype), m_in.m_tensors[i].m_elementbyte);
+        AISDK_LOG_TRACE(
+            "input tensor[{}] artosyn base param: achName[{}], achType[{}], achStepType[{}], achLayoutType[{}]", i,
+            m_in.m_tensors[i].m_artosyn_dims.achName, m_in.m_tensors[i].m_artosyn_dims.achType,
+            m_in.m_tensors[i].m_artosyn_dims.achStepType, m_in.m_tensors[i].m_artosyn_dims.achLayoutType);
+        AISDK_LOG_TRACE("input tensor[{}] artosyn quantification param: dScaleFactor[{}], s32ZeroPoint[{}]", i,
+                        m_in.m_tensors[i].m_artosyn_dims.dScaleFactor, m_in.m_tensors[i].m_artosyn_dims.s32ZeroPoint);
+        AISDK_LOG_TRACE(
+            "input tensor[{}] artosyn memory param: u32ID[{}], u32Bank[{}], u32Offset[{}], u32RowStep[{}], "
+            "u32TensorStep[{}]",
+            i, m_in.m_tensors[i].m_artosyn_dims.u32ID, m_in.m_tensors[i].m_artosyn_dims.u32Bank,
+            m_in.m_tensors[i].m_artosyn_dims.u32Offset, m_in.m_tensors[i].m_artosyn_dims.u32RowStep,
+            m_in.m_tensors[i].m_artosyn_dims.u32TensorStep);
+        AISDK_LOG_TRACE(
+            "input tensor[{}] artosyn spatial dimension param: u32Height[{}], u32Width[{}], u32OriChannels[{}]", i,
+            m_in.m_tensors[i].m_artosyn_dims.u32Height, m_in.m_tensors[i].m_artosyn_dims.u32Width,
+            m_in.m_tensors[i].m_artosyn_dims.u32OriChannels);
+        AISDK_LOG_TRACE(
+            "input tensor[{}] artosyn channel block param: u32KStep[{}], u32KNormNum[{}], u32KSizeLast[{}], "
+            "u32KSizeNorm[{}]",
+            i, m_in.m_tensors[i].m_artosyn_dims.u32KStep, m_in.m_tensors[i].m_artosyn_dims.u32KNormNum,
+            m_in.m_tensors[i].m_artosyn_dims.u32KSizeLast, m_in.m_tensors[i].m_artosyn_dims.u32KSizeNorm);
+        AISDK_LOG_TRACE("input tensor[{}] artosyn accuracy param: u32BitWidth[{}], u32Precision[{}]", i,
+                        m_in.m_tensors[i].m_artosyn_dims.u32BitWidth, m_in.m_tensors[i].m_artosyn_dims.u32Precision);
+        AISDK_LOG_TRACE("input tensor[{}] artosyn capacity param: u32Size[{}], u32MemorySize[{}]", i,
+                        m_in.m_tensors[i].m_artosyn_dims.u32Size, m_in.m_tensors[i].m_artosyn_dims.u32MemorySize);
+        AISDK_LOG_TRACE("input tensor[{}] artosyn other param: u32Num[{}], u32OriFrameSize[{}]", i,
+                        m_in.m_tensors[i].m_artosyn_dims.u32Num, m_in.m_tensors[i].m_artosyn_dims.u32OriFrameSize);
 
         // 获取npu内存地址
         AR_MEM_S stTensorAddr;
+        memset(&stTensorAddr, 0, sizeof(stTensorAddr));
         s32Ret =
             AR_MPI_NPU_GetInputTensorAddrByName(aimodel->m_handle, m_stNPUInBuff, stTensor.achName, 0, &stTensorAddr);
-        if (s32Ret) {
+        if (0 != s32Ret) {
             AISDK_LOG_ERROR("AR_MPI_NPU_GetInputTensorAddrByName failure");
             return -1;
         }
 
         // 存储虚拟地址，供上层填充数据
         m_in.m_tensors[i].m_viraddr = (void *)stTensorAddr.u64VirtAddr;
-        AISDK_LOG_TRACE("input[{}] virtual addr:{}", i, m_in.m_tensors[i].m_viraddr);
+        AISDK_LOG_TRACE("input tensor[{}] virtual addr:{}", i, m_in.m_tensors[i].m_viraddr);
     }
 
     return 0;
@@ -371,13 +432,11 @@ int ARTOSYN_Session::MakeInput(std::shared_ptr<ARTOSYN_AIModel> &aimodel) {
  * 1. 初始化输出容器的基础元数据
  * 2. 遍历所有模型输出层：
  *    a. 获取NPU输出张量参数
- *    b. 记录张量详细信息（调试日志）
- *    c. 转换并存储张量参数到内部数据结构
- *    d. 获取张量对应的NPU内存地址
- *    e. 配置输出张量的虚拟地址指针
+ *    b. 转换并存储张量参数到内部数据结构
+ *    c. 获取张量对应的NPU内存地址
+ *    d. 配置输出张量的虚拟地址指针
  */
 int ARTOSYN_Session::MakeOutput(std::shared_ptr<ARTOSYN_AIModel> &aimodel) {
-    AR_NPU_TENSOR_S stTensor;
     AR_S32 s32Ret = 0;
 
     // 初始化容器元数据
@@ -389,44 +448,107 @@ int ARTOSYN_Session::MakeOutput(std::shared_ptr<ARTOSYN_AIModel> &aimodel) {
 
     // 遍历处理每个输出张量
     for (auto i = 0; i < aimodel->m_outputn; i++) {
-        // 获取输出张量参数
+        AR_NPU_TENSOR_S stTensor;
+        memset(&stTensor, 0, sizeof(stTensor));
         s32Ret = AR_MPI_NPU_GetOutputTensorParam(aimodel->m_handle, i, &stTensor);
-        AISDK_LOG_TRACE("AR_MPI_NPU_GetOutputTensorParam s32Ret={}", s32Ret);
+        if (0 != s32Ret) {
+            AISDK_LOG_ERROR("get output tensor param failed, handle[{}], i[{}]", aimodel->m_handle, i);
+        }
 
-        // AISDK_LOG_TRACE(
-        //     "output-{} stTensor: u32ID={},u32Bank={},u32Offset={},u32Height={},u32KStep={}, "
-        //     "u32KNormNum = {},"
-        //     "u32KSizeLast = {}, u32KSizeNorm = {}, achName = {}, achType = {}, u32Num = {}, u32OriChannels = {},"
-        //     "u32OriFrameSize = {} u32Precision = {}, u32RowStep = {}, u32TensorStep = {}, dScaleFactor = {},"
-        //     "u32Size = {}, u32Width = {}, s32ZeroPoint = {},"
-        //     "achLayoutType = {} ",
-        //     i, stTensor.u32ID, stTensor.u32Bank, stTensor.u32Offset, stTensor.u32Height, stTensor.u32KStep,
-        //     stTensor.u32KNormNum, stTensor.u32KSizeLast, stTensor.u32KSizeNorm, stTensor.achName, stTensor.achType,
-        //     stTensor.u32Num, stTensor.u32OriChannels, stTensor.u32OriFrameSize, stTensor.u32Precision,
-        //     stTensor.u32RowStep, stTensor.u32TensorStep, (float)stTensor.dScaleFactor, stTensor.u32Size,
-        //     stTensor.u32Width, stTensor.s32ZeroPoint, stTensor.achLayoutType);
+        // printf("output tensor[%d] base param: achName[%s], achType[%s], achStepType[%s], achLayoutType[%s]\n", i,
+        //        stTensor.achName, stTensor.achType, stTensor.achStepType, stTensor.achLayoutType);
+        // printf("output tensor[%d] artosyn quantification param: dScaleFactor[%f], s32ZeroPoint[%d]\n", i,
+        //        stTensor.dScaleFactor, stTensor.s32ZeroPoint);
+        // printf(
+        //     "output tensor[%d] artosyn memory param: u32ID[%u], u32Bank[%u], u32Offset[%u], u32RowStep[%u], "
+        //     "u32TensorStep[%u]\n",
+        //     i, stTensor.u32ID, stTensor.u32Bank, stTensor.u32Offset, stTensor.u32RowStep, stTensor.u32TensorStep);
+        // printf("output tensor[%d] artosyn spatial dimension param: u32Height[%u], u32Width[%u],
+        // u32OriChannels[%u]\n",
+        //        i, stTensor.u32Height, stTensor.u32Width, stTensor.u32OriChannels);
+        // printf(
+        //     "output tensor[%d] artosyn channel block param: u32KStep[%u], u32KNormNum[%u], u32KSizeLast[%u], "
+        //     "u32KSizeNorm[%u]\n",
+        //     i, stTensor.u32KStep, stTensor.u32KNormNum, stTensor.u32KSizeLast, stTensor.u32KSizeNorm);
+        // printf("output tensor[%d] artosyn accuracy param: u32BitWidth[%u], u32Precision[%u]\n", i,
+        // stTensor.u32BitWidth,
+        //        stTensor.u32Precision);
+        // printf("output tensor[%d] artosyn capacity param: u32Size[%u], u32MemorySize[%u]\n", i, stTensor.u32Size,
+        //        stTensor.u32MemorySize);
+        // printf("output tensor[%d] artosyn other param: u32Num[%u], u32OriFrameSize[%u]\n", i, stTensor.u32Num,
+        //        stTensor.u32OriFrameSize);
+
+        // AISDK_LOG_TRACE("get output tensor param succeed. index[{}] ", i);
 
         // 存储张量元数据到内部结构
         m_out.m_tensors[i].m_name = std::string(stTensor.achName);
         m_out.m_tensors[i].m_dimtype = TensorFormat::BlockingNHWC;
         m_out.m_tensors[i].m_elementype = ARTOSYNNConvertElementType(stTensor);
         m_out.m_tensors[i].m_elementbyte = ARTOSYNNConvertElementBype(m_out.m_tensors[i].m_elementype);
+
+        // 填充tensor内部数据
+        m_out.m_tensors[i].m_artosyn_dims.achName = std::string(stTensor.achName);
+        m_out.m_tensors[i].m_artosyn_dims.achType = std::string(stTensor.achType);
+        m_out.m_tensors[i].m_artosyn_dims.achStepType = std::string(stTensor.achStepType);
+        m_out.m_tensors[i].m_artosyn_dims.achLayoutType = std::string(stTensor.achLayoutType);
+        // m_out.m_tensors[i].m_artosyn_dims.achMemoryType = std::string(stTensor.achMemoryType);
+        // m_out.m_tensors[i].m_artosyn_dims.achDdrFormat = std::string(stTensor.achDdrFormat);
+        m_out.m_tensors[i].m_artosyn_dims.dScaleFactor = stTensor.dScaleFactor;
         m_out.m_tensors[i].m_artosyn_dims.u32ID = stTensor.u32ID;
         m_out.m_tensors[i].m_artosyn_dims.u32Bank = stTensor.u32Bank;
         m_out.m_tensors[i].m_artosyn_dims.u32Offset = stTensor.u32Offset;
         m_out.m_tensors[i].m_artosyn_dims.u32Height = stTensor.u32Height;
-        m_out.m_tensors[i].m_artosyn_dims.u32Width = stTensor.u32Width;
         m_out.m_tensors[i].m_artosyn_dims.u32KStep = stTensor.u32KStep;
         m_out.m_tensors[i].m_artosyn_dims.u32KNormNum = stTensor.u32KNormNum;
         m_out.m_tensors[i].m_artosyn_dims.u32KSizeLast = stTensor.u32KSizeLast;
         m_out.m_tensors[i].m_artosyn_dims.u32KSizeNorm = stTensor.u32KSizeNorm;
+        m_out.m_tensors[i].m_artosyn_dims.u32BitWidth = stTensor.u32BitWidth;
+        m_out.m_tensors[i].m_artosyn_dims.u32Num = stTensor.u32Num;
         m_out.m_tensors[i].m_artosyn_dims.u32OriChannels = stTensor.u32OriChannels;
+        m_out.m_tensors[i].m_artosyn_dims.u32OriFrameSize = stTensor.u32OriFrameSize;
+        m_out.m_tensors[i].m_artosyn_dims.u32Precision = stTensor.u32Precision;
         m_out.m_tensors[i].m_artosyn_dims.u32RowStep = stTensor.u32RowStep;
         m_out.m_tensors[i].m_artosyn_dims.u32TensorStep = stTensor.u32TensorStep;
-        m_out.m_tensors[i].m_artosyn_dims.u32OriChannels = stTensor.u32OriChannels;
+        m_out.m_tensors[i].m_artosyn_dims.u32Size = stTensor.u32Size;
+        m_out.m_tensors[i].m_artosyn_dims.u32MemorySize = stTensor.u32MemorySize;
+        m_out.m_tensors[i].m_artosyn_dims.u32Width = stTensor.u32Width;
+        m_out.m_tensors[i].m_artosyn_dims.s32ZeroPoint = stTensor.s32ZeroPoint;
+
+        // 根据类别分条进行日志记录
+        AISDK_LOG_TRACE("output tensor[{}] base param: m_name[{}], m_dimtype[{}], m_elementype[{}], m_elementbyte[{}] ",
+                        i, m_out.m_tensors[i].m_name, static_cast<int>(m_out.m_tensors[i].m_dimtype),
+                        static_cast<int>(m_out.m_tensors[i].m_elementype), m_out.m_tensors[i].m_elementbyte);
+        AISDK_LOG_TRACE(
+            "output tensor[{}] artosyn base param: achName[{}], achType[{}], achStepType[{}], achLayoutType[{}]", i,
+            m_out.m_tensors[i].m_artosyn_dims.achName, m_out.m_tensors[i].m_artosyn_dims.achType,
+            m_out.m_tensors[i].m_artosyn_dims.achStepType, m_out.m_tensors[i].m_artosyn_dims.achLayoutType);
+        AISDK_LOG_TRACE("output tensor[{}] artosyn quantification param: dScaleFactor[{}], s32ZeroPoint[{}]", i,
+                        m_out.m_tensors[i].m_artosyn_dims.dScaleFactor, m_out.m_tensors[i].m_artosyn_dims.s32ZeroPoint);
+        AISDK_LOG_TRACE(
+            "output tensor[{}] artosyn memory param: u32ID[{}], u32Bank[{}], u32Offset[{}], u32RowStep[{}], "
+            "u32TensorStep[{}]",
+            i, m_out.m_tensors[i].m_artosyn_dims.u32ID, m_out.m_tensors[i].m_artosyn_dims.u32Bank,
+            m_out.m_tensors[i].m_artosyn_dims.u32Offset, m_out.m_tensors[i].m_artosyn_dims.u32RowStep,
+            m_out.m_tensors[i].m_artosyn_dims.u32TensorStep);
+        AISDK_LOG_TRACE(
+            "output tensor[{}] artosyn spatial dimension param: u32Height[{}], u32Width[{}], u32OriChannels[{}]", i,
+            m_out.m_tensors[i].m_artosyn_dims.u32Height, m_out.m_tensors[i].m_artosyn_dims.u32Width,
+            m_out.m_tensors[i].m_artosyn_dims.u32OriChannels);
+        AISDK_LOG_TRACE(
+            "output tensor[{}] artosyn channel block param: u32KStep[{}], u32KNormNum[{}], u32KSizeLast[{}], "
+            "u32KSizeNorm[{}]",
+            i, m_out.m_tensors[i].m_artosyn_dims.u32KStep, m_out.m_tensors[i].m_artosyn_dims.u32KNormNum,
+            m_out.m_tensors[i].m_artosyn_dims.u32KSizeLast, m_out.m_tensors[i].m_artosyn_dims.u32KSizeNorm);
+        AISDK_LOG_TRACE("output tensor[{}] artosyn accuracy param: u32BitWidth[{}], u32Precision[{}]", i,
+                        m_out.m_tensors[i].m_artosyn_dims.u32BitWidth, m_out.m_tensors[i].m_artosyn_dims.u32Precision);
+        AISDK_LOG_TRACE("output tensor[{}] artosyn capacity param: u32Size[{}], u32MemorySize[{}]", i,
+                        m_out.m_tensors[i].m_artosyn_dims.u32Size, m_out.m_tensors[i].m_artosyn_dims.u32MemorySize);
+        AISDK_LOG_TRACE("output tensor[{}] artosyn other param: u32Num[{}], u32OriFrameSize[{}]", i,
+                        m_out.m_tensors[i].m_artosyn_dims.u32Num, m_out.m_tensors[i].m_artosyn_dims.u32OriFrameSize);
 
         // 获取npu内存地址
         AR_MEM_S stTensorAddr;
+        memset(&stTensorAddr, 0, sizeof(stTensorAddr));
         s32Ret =
             AR_MPI_NPU_GetOutputTensorAddrByName(aimodel->m_handle, m_stNPUOutBuff, stTensor.achName, 0, &stTensorAddr);
         if (s32Ret) {
@@ -436,7 +558,7 @@ int ARTOSYN_Session::MakeOutput(std::shared_ptr<ARTOSYN_AIModel> &aimodel) {
 
         // 存储虚拟地址，供上层填充数据
         m_out.m_tensors[i].m_viraddr = (void *)stTensorAddr.u64VirtAddr;
-        AISDK_LOG_TRACE("output[{}] virtual addr:{}", i, m_out.m_tensors[i].m_viraddr);
+        AISDK_LOG_TRACE("output tensor[{}] virtual addr:{}", i, m_out.m_tensors[i].m_viraddr);
     }
 
     return 0;
@@ -476,11 +598,13 @@ Status ARTOSYN_Session::Init(std::shared_ptr<AIModel> &model, SessionConfig &Sco
 
     // 步骤4：配置输入通道
     if (0 != MakeInput(aimodel)) {
+        AISDK_LOG_ERROR("make input failed. newworkid[{}]", aimodel->m_stCNNDesc.u16NetworkID);
         return Status::FAILURE;
     }
 
     // 步骤5：配置输出通道
     if (0 != MakeOutput(aimodel)) {
+        AISDK_LOG_ERROR("make output failed. newworkid[{}]", aimodel->m_stCNNDesc.u16NetworkID);
         return Status::FAILURE;
     }
 
