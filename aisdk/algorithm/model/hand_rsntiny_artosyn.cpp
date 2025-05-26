@@ -164,53 +164,34 @@ absl::Status ArtosynRSNTiny::Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xe
  */
 void ArtosynRSNTiny::PreProcess(const std::vector<Image> &net_input) {
     // step1：校验输入批量与模型配置的一致性
-    int ai = iImageblobs.m_batch * iImageblobs.m_multiinput_num;  // 计算模型预期输入总数
-    int bi = net_input.size();                                    // 实际输入数量
-    if (ai != bi || iImageblobs.m_packed_bybatch == true) {
+    int ai = itensor.m_batch * itensor.m_multishape_num;  // 预期输入：批次数 * 多路输入数
+    int bi = net_input.size();                            // 实际输入数量
+    if (ai != bi || itensor.m_packed_bybatch == false) {
         return;
     }
 
+    // 获取输入的input dims的部分属性
+    int index_input = m_net->GetInputTensorIndex("input");
+    aisdk::xengine::ArtosynTensorDims &input_dims = itensor.m_tensors[index_input].m_artosyn_dims;
+    int height = input_dims.u32Height;  // 图像目标高度
+    int width = input_dims.u32Width;    // 图像目标宽度
+    int channels = input_dims.u32OriChannels;
+
     // step2：遍历处理每个输入图像
-    int multi_i = 0;
-    int batch_i = 0;
-    int height = 0;
-    int width = 0;
-    int width_s = 0;
-    int channels = 0;
-    int element_byte = 0;
     for (int i = 0; i < bi; i++) {
-        // 获取当前图像数据（OpenCV矩阵格式）
+        // step2.1：获取当前图像数据（OpenCV矩阵格式）
         auto &img = net_input[i].m_mat;
 
-        // 初始化默认尺寸（128x128）
-        int width = 128;
-        int height = 128;
-
-        // 解析输入索引（多输入多批次场景）
-        multi_i = i / iImageblobs.m_batch;  // 多输入索引
-        batch_i = i % iImageblobs.m_batch;  // 批次内索引
-        auto index = i;                     // 实际使用的内存索引
-
-        // step2.1：校验输入格式为GRAY
-        if (iImageblobs.m_imageblobs[index].m_format == aisdk::xengine::ImageFormat::GRAY) {
-            channels = 1;  // 灰度图单通道
-        } else {
-            continue;
-        }
-
         // step2.2：获取内存布局参数
-        height = iImageblobs.m_imageblobs[index].m_height;             // 图像实际高度
-        width = iImageblobs.m_imageblobs[index].m_width;               // 图像实际宽度
-        width_s = iImageblobs.m_imageblobs[index].m_wstride;           // 内存对齐后的步长
-        element_byte = iImageblobs.m_imageblobs[index].m_elementbyte;  // 每个像素的字节数
+        int width_s = width;  // 内存对齐后的步长，后续可能要修改
 
         // step2.3：获取内存地址指针
-        char *src_mem = (char *)img.data;                                      // 源数据地址（输入图像）
-        char *dst_mem = (char *)iImageblobs.m_imageblobs[index].m_viraddr[0];  // 目标地址（模型输入缓冲区）
+        char *src_mem = (char *)img.data;                        // 源数据地址（输入图像）
+        char *dst_mem = (char *)itensor.m_tensors[i].m_viraddr;  // 目标地址（模型输入缓冲区）
 
         // step2.4：执行内存拷贝（考虑内存对齐）
         if (width == width_s) {  // 当实际宽度等于步长时直接整块拷贝
-            unsigned int mem_size = height * width * channels * element_byte;
+            unsigned int mem_size = height * width * channels;
             memcpy(dst_mem, src_mem, mem_size);
         } else {  // 需要逐行拷贝并填充对齐
             for (uint32_t hi = 0; hi < height; hi++) {

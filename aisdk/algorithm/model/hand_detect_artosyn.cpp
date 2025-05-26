@@ -78,45 +78,28 @@ absl::Status ArtosynHandDetectNetv2::Init(aisdk::xengine::NetAlgoConfig &algo, a
  */
 void ArtosynHandDetectNetv2::PreProcess(const std::vector<Image> &net_input) {
     // step1：校验输入批量与模型配置的一致性
-    int ai = iImageblobs.m_batch * iImageblobs.m_multiinput_num;  // 预期输入：批次数 * 多路输入数
-    int bi = net_input.size();                                    // 实际输入数量
-    if (ai != bi || iImageblobs.m_packed_bybatch == true) {
+    int ai = itensor.m_batch * itensor.m_multishape_num;  // 预期输入：批次数 * 多路输入数
+    int bi = net_input.size();                            // 实际输入数量
+    if (ai != bi || itensor.m_packed_bybatch == false) {
         return;
     }
 
-    int multi_i = 0;
-    int batch_i = 0;
-    int height = 0;
-    int width = 0;
-    int width_s = 0;
-    int channels = 0;
-    int element_byte = 0;
+    // 获取input dims的部分属性
+    int index_images = m_net->GetInputTensorIndex("images");
+    aisdk::xengine::ArtosynTensorDims &input_dims = itensor.m_tensors[index_images].m_artosyn_dims;
+    int height = input_dims.u32Height;  // 目标高度
+    int width = input_dims.u32Width;    // 目标宽度
 
     // step2：遍历处理每个输入图像
     for (int i = 0; i < bi; i++) {
-        // 获取当前图像引用（opencv矩阵格式）
+        // step2.1：获取当前图像引用（opencv矩阵格式）
         auto &img = net_input[i].m_mat;
 
-        // 计算输入组织结构
-        multi_i = i / iImageblobs.m_batch;  // 多路输入索引
-        batch_i = i % iImageblobs.m_batch;  // 批次内索引
-        auto index = i;                     // 输入blob索引
-
-        // step2.1：校验输入格式为GRAY
-        if (iImageblobs.m_imageblobs[index].m_format == aisdk::xengine::ImageFormat::GRAY) {
-            channels = 1;  // 灰度图单通道
-        } else {
-            continue;
-        }
-
         // step2.2：获取内存布局参数
-        height = iImageblobs.m_imageblobs[index].m_height;             // 目标高度
-        width = iImageblobs.m_imageblobs[index].m_width;               // 目标宽度
-        width_s = iImageblobs.m_imageblobs[index].m_wstride;           // 内存步幅（考虑对齐填充）
-        element_byte = iImageblobs.m_imageblobs[index].m_elementbyte;  // 元素字节数
+        int width_s = width;  // itensor.m_tensors[i].m_wstride;  // 内存步幅（考虑对齐填充）暂时这么写
 
         // step2.3：获取内存地址指针
-        char *mem = (char *)iImageblobs.m_imageblobs[index].m_viraddr[0];
+        char *mem = (char *)itensor.m_tensors[i].m_viraddr;
 
         // 原始尺寸记录
         m_origin_img_width = img.cols;
