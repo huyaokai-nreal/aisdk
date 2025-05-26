@@ -95,11 +95,10 @@ void ArtosynRSNTiny::ipr(float *__restrict input_hm, float *__restrict kpt_x_out
  *
  * @note 初始化流程：
  * 1. 基类初始化：完成公共网络参数加载和基础结构准备
- * 2. 输入类型校验：强制要求输入数据为BLOB格式（二进制大对象）
- * 3. 输入尺寸获取：从模型输入层获取输入图像分辨率（128x128）
- * 4. 输出层解析：从名为"feat"的输出层获取热图维度信息
- * 5. 缓存预分配：根据输出维度初始化中间计算缓冲区
- * 6. 系数初始化：生成亚像素修正系数（mul_coeff_）
+ * 2. 输入尺寸获取：从模型输入层获取输入图像分辨率（128x128）
+ * 3. 输出层解析：从名为"feat"的输出层获取热图维度信息
+ * 4. 缓存预分配：根据输出维度初始化中间计算缓冲区
+ * 5. 系数初始化：生成亚像素修正系数（mul_coeff_）
  *
  * @warning 模型必须包含名为"input"的输入层和"feat"的输出层
  */
@@ -111,16 +110,14 @@ absl::Status ArtosynRSNTiny::Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xe
         return ret;
     }
 
-    // step2：验证输入类型为BLOB格式（二进制大对象）
-    if (m_input_category != aisdk::xengine::ImageCategory::IS_BLOB) {
-        return absl::InternalError("model input is not blob");
-    }
+    // step2：获取输入层索引并解析输入尺寸
+    int index_input = m_net->GetInputTensorIndex("input");  // 根据名称查找输入层
+    aisdk::xengine::ArtosynTensorDims &input_dims = itensor.m_tensors[index_input].m_artosyn_dims;
+    m_input_shape_ = input_dims.u32Height;  // 输入分辨率（128）
+    AISDK_LOG_INFO("2d artosyn input shape [{}]", m_input_shape_);
+    m_input_shape_ = 128;  // 暂时写死，调试使用
 
-    // step3：获取输入层索引并解析输入尺寸
-    int index_input = m_net->GetInputImageBlobsIndex("input");       // 根据名称查找输入层
-    m_input_shape_ = iImageblobs.m_imageblobs[index_input].m_width;  // 输入分辨率（128）
-
-    // step4：解析输出层维度信息
+    // step3：解析输出层维度信息
     int feat_c = 0;
     int feat_h = 0;
     int feat_w = 0;
@@ -130,21 +127,21 @@ absl::Status ArtosynRSNTiny::Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xe
     feat_h = feat_dims.u32Height;       // 热图高度（32）
     feat_w = feat_dims.u32Width;        // 热图宽度（32）
 
-    // step5.1：预分配模型输出缓存（NCHW格式）
+    // step4.1：预分配模型输出缓存（NCHW格式）
     m_outputsNCHW.resize(feat_c * feat_h * feat_w);  // 21x32x32=21504元素
 
-    // step5.2：初始化后处理相关参数
+    // step4.2：初始化后处理相关参数
     m_output_shape_ = feat_w;  // 热图分辨率32
     m_keypoint_num_ = feat_c;  // 关键点数量21
 
-    // step5.3：预分配中间计算缓冲区
+    // step4.3：预分配中间计算缓冲区
     m_hm_softmax_.resize(m_keypoint_num_ * m_output_shape_ * m_output_shape_);  // softmax后的热图 21x32x32
     m_hm_reduce_col_.resize(m_keypoint_num_ * m_output_shape_);                 // 列压缩缓存 21x32
     m_hm_reduce_row_.resize(m_keypoint_num_ * m_output_shape_);                 // 行压缩缓存 21x32
     m_hm_reduce_col_row_.resize(m_keypoint_num_ * m_output_shape_);             // 列修正缓存 21x32
     m_hm_reduce_row_col_.resize(m_keypoint_num_ * m_output_shape_);             // 行修正缓存 21x32
 
-    // step6：生成亚像素修正系数（0.0~31.0的线性序列）
+    // step5：生成亚像素修正系数（0.0~31.0的线性序列）
     m_mul_coeff_ = linspace<float>(0, 1, m_output_shape_, false);  // 生成32个等间距系数
     return ret;
 }

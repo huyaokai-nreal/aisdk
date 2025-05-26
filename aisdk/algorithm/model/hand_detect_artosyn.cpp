@@ -29,16 +29,12 @@ absl::Status ArtosynHandDetectNetv2::Init(aisdk::xengine::NetAlgoConfig &algo, a
         return ret;
     }
 
-    // step3: 验证输入类型为BLOB格式（二进制大对象）
-    if (m_input_category != aisdk::xengine::ImageCategory::IS_BLOB) {
-        AISDK_LOG_ERROR("m_input_category is not IS_BLOB. m_input_category:{}", static_cast<int>(m_input_category));
-        return absl::InternalError("model input is not blob");
-    }
-
-    // step4：获取输入层索引并解析输入尺寸
-    int index_images = m_net->GetInputImageBlobsIndex("images");
-    uint32_t height = iImageblobs.m_imageblobs[index_images].m_height;  // 输入高度
-    uint32_t width = iImageblobs.m_imageblobs[index_images].m_width;    // 输入宽度
+    // step3：获取输入层索引并解析输入尺寸
+    int index_images = m_net->GetInputTensorIndex("images");
+    aisdk::xengine::ArtosynTensorDims &input_dims = itensor.m_tensors[index_images].m_artosyn_dims;
+    uint32_t height = input_dims.u32Height;  // 输入高度, 256
+    uint32_t width = input_dims.u32Width;    // 输入宽度, 192
+    AISDK_LOG_TRACE("detect artosyn input height[{}], width[{}]", height, width);
 
     // 当输入为竖屏比例（高>宽）时，调整网格划分密度（预设场景：480x640分辨率（竖屏手机拍摄））
     if (height > width) {
@@ -46,10 +42,10 @@ absl::Status ArtosynHandDetectNetv2::Init(aisdk::xengine::NetAlgoConfig &algo, a
         m_grid_h = 16;  // 垂直方向划分16个网格单元（对应480/16=30像素每格）
     }
 
-    // step5: 预分配锚点容器空间（网格总数 = 行数×列数）
+    // step4: 预分配锚点容器空间（网格总数 = 行数×列数）
     m_grid_anchor.resize(m_grid_h * m_grid_w);
 
-    // step6: 遍历网格系统生成锚点参数
+    // step5: 遍历网格系统生成锚点参数
     for (auto i = 0; i < m_grid_h; i++) {
         for (auto j = 0; j < m_grid_w; j++) {
             auto &anchor = m_grid_anchor[i * m_grid_w + j];  // 当前锚点引用
@@ -64,7 +60,7 @@ absl::Status ArtosynHandDetectNetv2::Init(aisdk::xengine::NetAlgoConfig &algo, a
         }
     }
 
-    // step7: 性能相关记录
+    // step6: 性能相关记录
     auto &prof = aisdk::base::DebugProfiling::Get().GetOpt();
     m_export_netalgo_exec_info = prof.export_pipeline_exec_info_jsonstring;
     AISDK_LOG_TRACE("ArtosynHandDetectNetv2::Inference  m_export_netalgo_exec_info={}", m_export_netalgo_exec_info);
