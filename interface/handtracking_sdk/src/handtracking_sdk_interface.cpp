@@ -1172,16 +1172,23 @@ std::vector<int> SelectPipeline(std::vector<aisdk::xengine::PipelineConfig>& pip
                 pipeline_policy.push_back(i);
                 continue;
             }
-        } else if (config.related_feature.bind_glass == "gina" && config.related_feature.bind_runtime == "snpedsp") {
-            if (device_type == NR_DEVICE_TYPE_GINA_FLORA || device_type == NR_DEVICE_TYPE_GINA_L ||
-                device_type == NR_DEVICE_TYPE_GINA_M) {
+        } else if (((device_type == NR_DEVICE_TYPE_GINA_FLORA) || (device_type == NR_DEVICE_TYPE_GINA_L) ||
+                    (device_type == NR_DEVICE_TYPE_GINA_M)) &&
+                   (config.related_feature.bind_glass == "gina")) {
+            if (plat.is_snpe_support && config.related_feature.bind_runtime == "snpedsp") {
                 pipeline_policy.push_back(i);
                 continue;
             }
-        } else if ((config.related_feature.bind_glass == "gina") &&
-                   config.related_feature.bind_runtime == "artosynnpu") {
-            pipeline_policy.push_back(i);
-            continue;
+
+            if (!plat.is_mobile_evapro && config.related_feature.bind_runtime == "cpu") {
+                pipeline_policy.push_back(i);
+                continue;
+            }
+
+            if (plat.is_artosyn_support && config.related_feature.bind_runtime == "artosynnpu") {
+                pipeline_policy.push_back(i);
+                continue;
+            }
         } else {
             // do nothing
         }

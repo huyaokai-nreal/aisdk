@@ -30,6 +30,7 @@ NRPluginLifecycleProvider g_lifecycle_provider;
 HandTrackingProvider g_provider;
 
 CameraParams g_camera_params;
+NRDeviceType g_device_type;
 
 // #define JOINTS_COUNT 25
 // #define KPT_NUMS 21
@@ -328,13 +329,8 @@ NRPluginResult generic_GetNetworkType(NRPluginHandle handle, NRNetworkType *netw
 
 NRPluginResult generic_GetDeviceType(NRPluginHandle handle, NRDeviceType *device_type) {
     (void)handle;
-    if (g_camera_params.device1.camera_model == 1) {
-        *device_type = NRDeviceType::NR_DEVICE_TYPE_LIGHT;
-    } else if (g_camera_params.device1.camera_model == 2) {
-        *device_type = NRDeviceType::NR_DEVICE_TYPE_FLORA;
-    } else if (g_camera_params.device1.camera_model == 3) {
-        *device_type = NRDeviceType::NR_DEVICE_TYPE_FLORA;
-    }
+    *device_type = g_device_type;
+    std::cout << "device_type: " << static_cast<int>(*device_type) << std::endl;
     return NR_PLUGIN_RESULT_SUCCESS;
 }
 
@@ -695,6 +691,11 @@ int HandTrackingSdk::CameraParamsParse(std::string &json_string) {
 
         processDevice(m_camera_params.device1, meta, "cam0_K", "cam0_D");
         processDevice(m_camera_params.device2, meta, "cam1_K", "cam1_D");
+    }
+
+    // 获取眼镜平台
+    if (root.isMember("device_type") && root["device_type"].isInt()) {
+        g_device_type = static_cast<NRDeviceType>(root["device_type"].asInt());
     }
 
     g_camera_params = m_camera_params;
