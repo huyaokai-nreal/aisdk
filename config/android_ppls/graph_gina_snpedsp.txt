@@ -1,134 +1,152 @@
+# ===================== 全局配置 =====================
+# 定义整个计算图的元数据配置
 # 配置含义参考 https://github.com/nreal-alg-ai/xgraph/blob/main/mediapipe/framework/calculator.proto
+
+# 输入输出流队列最大长度（防止内存溢出）
 max_queue_size: 10
-input_stream: "IMAGE:image"
-input_stream: "HEADPOSE:head_pose"
-output_stream: "ALL_RESULTS:hand_result"
+
+# 定义输入输出流名称（数据通道）
+input_stream: "IMAGE:image"                  # 输入：图像流，标签"IMAGE"映射内部名"image"
+input_stream: "HEADPOSE:head_pose"           # 输入：头部姿态数据流
+output_stream: "ALL_RESULTS:hand_result"     # 输出：最终手部跟踪结果
+
+# 性能分析配置
 #profiler_config {
-#    enable_profiler: true
-#    enable_stream_latency: true
+#    enable_profiler: true                   # 启用性能分析器
+#    enable_stream_latency: true             # 启用流延迟跟踪
 #    trace_log_path: "/sdcard/Android/data/com.xreal.evapro.nebula/files/profile_result_handtracking"
-#    trace_log_interval_usec: 1000
-#    trace_enabled: true
-#    trace_log_count: 10
-#    trace_log_capacity: 100000
-#    trace_log_interval_count: 1000
+#    trace_log_interval_usec: 1000           # 日志记录间隔(微秒)
+#    trace_enabled: true                     # 启用跟踪
+#    trace_log_count: 10                     # 最大日志文件数
+#    trace_log_capacity: 100000              # 单个日志容量
+#    trace_log_interval_count: 1000          # 触发日志记录的间隔次数
 #}
+
+# 线程池配置（执行器设置）
 executor {
-  name: ""
+  name: ""      # 默认执行器
   options {
     [mediapipe.ThreadPoolExecutorOptions.ext] {
-      num_threads: 1
-      require_processor_performance: 2
-      thread_name_prefix: "xr_aisdk"
+      num_threads: 1                                 # 线程池大小（此处单线程，可能为实时性考虑）
+      require_processor_performance: 2               # 要求的处理器性能级别
+      thread_name_prefix: "xr_aisdk"                 # 线程名前缀（便于调试）
     }
   }
 }
 
+# ===================== 节点配置 =====================
+# 每个 node 对应一个计算单元（Calculator）
+
+# ----- 节点1：手部检测与跟踪 -----
 node {
-  name: "HandDetectionTrack"
-  calculator: "HandDetTrackCalculator"
-  input_stream: "IMAGE_INPUT:image"
-  input_side_packet: "CAM_INFO_INPUT:cam_info"
-  input_stream: "HEADPOSE:head_pose"
-  output_stream: "DET_BBOX_OUTPUT:detection_output"
-  output_stream: "IMAGE_OUTPUT:image_out"
-  output_stream: "HEADPOSE_OUTPUT:head_pose_out"
+  name: "HandDetectionTrack"                                  # 节点名称
+  calculator: "HandDetTrackCalculator"                        # 使用的calculator名称
+  input_stream: "IMAGE_INPUT:image"                           # 输入：图像
+  input_side_packet: "CAM_INFO_INPUT:cam_info"                # 输入：相机参数（静态数据包）
+  input_stream: "HEADPOSE:head_pose"                          # 输入：头部姿态
+  output_stream: "DET_BBOX_OUTPUT:detection_output"           # 输出：检测框
+  output_stream: "IMAGE_OUTPUT:image_out"                     # 输出：处理后的图像
+  output_stream: "HEADPOSE_OUTPUT:head_pose_out"              # 输出：处理后的头部姿态
+
+  # 输入流处理器配置（控制数据流处理策略）
   input_stream_handler {
-    input_stream_handler: "FixedSizeInputStreamHandler"
+    input_stream_handler: "FixedSizeInputStreamHandler"       # 固定大小输入处理器
     options {
       [mediapipe.FixedSizeInputStreamHandlerOptions.ext] {
-        trigger_queue_size: 2
-        target_queue_size: 1
-        fixed_min_size: false
+        trigger_queue_size: 2                                 # 触发处理的队列大小
+        target_queue_size: 1                                  # 目标保留的队列大小
+        fixed_min_size: false                                 # 不固定最小队列大小
       }
     }
   }
+
+  # calculator专用选项
   node_options: {
     [type.googleapis.com/aisdk.HandDetTrackCalculatorOptions] {
-      model_name: "detect_dsp_flora_mono"
-      enable_track: false
+      model_name: "detect"                                     # 使用的检测模型名称
+      enable_track: true                                      # 启用跟踪功能
     }
   }
 }
+
+# ----- 节点2：检测框平滑处理 -----
 node {
-  name: "DetBoxSmoothing"
-  calculator: "DetectBoxSmoothingCalculator"
-  input_stream: "BBOX_INPUT:detection_output"
-  output_stream: "BBOX_SMOOTHED_OUTPUT:detection_smoothed_output"
+  name: "DetBoxSmoothing"                                             # 节点名称
+  calculator: "DetectBoxSmoothingCalculator"                          # 使用的calculator名称
+  input_stream: "BBOX_INPUT:detection_output"                         # 输入：有效检测框
+  output_stream: "BBOX_SMOOTHED_OUTPUT:detection_smoothed_output"     # 输出：平滑后的检测框
 }
+
+# ----- 节点3：2D手部关键点检测 -----
 node {
-  name: "HandLandmark_2D"
-  calculator: "HandLandmarkBatchCalculator"
-  input_stream: "BBOX_SMOOTHED_OUTPUT:detection_smoothed_output"
-  input_stream: "IMAGE_INPUT:image_out"
-  input_side_packet: "CAM_INFO_INPUT:cam_info"
-  output_stream: "LANDMARK_OUTPUT:kpt2d"
+  name: "HandLandmark_2D"                                             # 节点名称
+  calculator: "HandLandmarkBatchCalculator"                           # 使用的calculator名称
+  input_stream: "BBOX_SMOOTHED_OUTPUT:detection_smoothed_output"      # 输入：平滑后的检测框
+  input_stream: "IMAGE_INPUT:image_out"                               # 输入：处理后的图像
+  input_side_packet: "CAM_INFO_INPUT:cam_info"                        # 输入：相机参数（静态数据包）
+  output_stream: "LANDMARK_OUTPUT:kpt2d"                              # 输出：2D关键点
+
+  # calculator专用选项
   node_options: {
     [type.googleapis.com/aisdk.HandLandmarkCalculatorOptions] {
-      input_height: 128
-      input_width: 128
-      bbox_expand_ratio: 1.5
-      model_name: "2d_rtmtinyb2"
-    }
-  }
-}
-node {
-  name: "MonoHand_3D"
-  calculator: "MonoHandKpt3DCalculator"
-  input_side_packet: "CAM_INFO_INPUT:cam_info"
-  input_stream: "LANDMARK_INPUT:kpt2d"
-  input_stream: "HEADPOSE:head_pose_out"
-  output_stream: "KPT3D_OUTPUT:kpt3d_mono"
-}
-
-node {
-  name: "BlockHardRules"
-  calculator: "BlockHardRulesCalculator"
-  input_stream: "kpt3d_mono"
-  output_stream: "BLOCK_OUT:kpt3d_blocked"
-  node_options: {
-    [type.googleapis.com/aisdk.BlockHardRulesCalculatorOptions] {
-      max_root_depth: 1.0
-      # score_th = 0.8 ? model_name == 3d_liftnimble else 0.85
-      score_th: 0.775
-      score_th_width: 0.05
+      input_height: 128                                               # 模型输入height
+      input_width: 128                                                # 模型输入width
+      bbox_expand_ratio: 1.5                                          # 检测框扩展比例（扩大感兴趣区域）
+      model_name: "2d_rtmtinyb2"                                      # 2D模型名称
+      pcl_able: true                                                  # 是否支持pcl处理
     }
   }
 }
 
-
+# ----- 节点4：单目3D关键点计算 -----
 node {
-  name: "ConvertToWorld"
-  calculator: "ConvertToWorldCalculator"
-  input_stream: "INPUT:kpt3d_blocked"
-  input_stream: "HEADPOSE:head_pose_out"
-  output_stream: "OUTPUT:kpt3d_world"
+  name: "MonoHand_3D"                                                 # 节点名称
+  calculator: "MonoHandKpt3DCalculator"                               # 使用的calculator名称
+  input_side_packet: "CAM_INFO_INPUT:cam_info"                        # 输入：相机参数（静态数据包）
+  input_stream: "LANDMARK_INPUT:kpt2d"                                # 输入：2D关键点
+  input_stream: "HEADPOSE:head_pose_out"                              # 输入：处理后的头部姿态
+  output_stream: "KPT3D_OUTPUT:kpt3d_mono"                            # 输出：单目3D关键点
 }
 
+# ----- 节点5：坐标系转换 -----
 node {
-  name: "GestureRecognition"
-  calculator: "GestureRecognitionCalculator"
-  input_stream: "GR_KPT2D_INPUT:kpt2d"
-  input_stream: "GR_KPT_INPUT:kpt3d_blocked"
-  output_stream: "GR_OUTPUT:gesture"
+  name: "ConvertToWorld"                                                # 节点名称
+  calculator: "ConvertToWorldCalculator"                                # 使用的calculator名称
+  input_stream: "INPUT:kpt3d_mono"                                      # 输入：过滤后的3D关键点
+  input_stream: "HEADPOSE:head_pose_out"                                # 输入：头部姿态数据
+  output_stream: "OUTPUT:kpt3d_world"                                   # 输出：世界坐标系下的3D关键点
 }
 
+# ----- 节点6：手势识别 -----
 node {
-  name: "HandFilter"
-  calculator: "HandFilterCalculator"
-  input_stream: "INPUT:kpt3d_world"
-  output_stream: "OUTPUT:kpt3d_filtered"
+  name: "GestureRecognition"                                            # 节点名称
+  calculator: "GestureRecognitionCalculator"                            # 使用的calculator名称
+  input_stream: "GR_KPT2D_INPUT:kpt2d"                                  # 输入：2D关键点
+  input_stream: "GR_KPT_INPUT:kpt3d_mono"                            # 输入：3D关键点
+  output_stream: "GR_OUTPUT:gesture"                                    # 输出：识别出的手势类型
+}
+
+# ----- 节点7：最终结果过滤 -----
+node {
+  name: "HandFilter"                                                    # 节点名称
+  calculator: "HandFilterCalculator"                                    # 使用的calculator名称
+  input_stream: "INPUT:kpt3d_world"                                     # 输入：世界坐标系关键点
+  input_stream: "GR_KPT2D_INPUT:kpt2d"                                  # 输入：2D关键点
+  output_stream: "OUTPUT:kpt3d_filtered"                                # 输出：过滤后的最终结果
+
+  # calculator专用选项
   node_options: {
     [type.googleapis.com/aisdk.HandFilterCalculatorOptions] {
-      glasses_type: "flora"
+      glasses_type: "flora"                                             # 眼镜类型（影响滤波参数）(暂时先使用flora)
     }
   }
 }
 
+# ----- 节点8：结果标准化 -----
 node {
-  name: "StandardizeKeypoints"
-  calculator: "StandardizeKeypointsCalculator"
-  input_stream: "INPUT_KPT:kpt3d_filtered"
-  input_stream: "INPUT_GR:gesture"
-  output_stream: "OUTPUT:hand_result"
+  name: "StandardizeKeypoints"                                         # 节点名称
+  calculator: "StandardizeKeypointsCalculator"                         # 使用的calculator名称
+  input_stream: "INPUT_KPT:kpt3d_filtered"                             # 输入：过滤后的3D关键点
+  input_stream: "INPUT_GR:gesture"                                     # 输入：手势识别结果
+  output_stream: "OUTPUT:hand_result"                                  # 输出：标准化后的最终输出
 }
