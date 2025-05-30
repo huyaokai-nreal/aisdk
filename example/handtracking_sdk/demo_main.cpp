@@ -61,8 +61,8 @@ std::map<std::string, std::string> ScanDirAddPicData(std::string &stream_path) {
     //遍历目录进行条目
     while ((entry = readdir(dir)) != nullptr) {
         std::string tfile(entry->d_name);
-        if (tfile == "." || tfile == "..") {
-            continue;  //跳过. 和..
+        if (tfile == "." || tfile == ".." || tfile == ".DS_Store") {
+            continue;  //跳过. 和.. 和.DS_Store
         }
 
         //获取文件绝对路径

@@ -63,7 +63,7 @@ node {
   # calculator专用选项
   node_options: {
     [type.googleapis.com/aisdk.HandDetTrackCalculatorOptions] {
-      model_name: "detect"                                     # 使用的检测模型名称
+      model_name: "detect_dsp_flora_mono"                     # 使用的检测模型名称
       enable_track: true                                      # 启用跟踪功能
     }
   }

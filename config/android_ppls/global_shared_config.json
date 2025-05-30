@@ -69,7 +69,6 @@
         "detect_dsp_flora_mono": {
             "model_config": {
                 "file_name": "models/det_flora_250317_quantized.dlc",
-
                 "vendor": "snpe"
             },
             "session_config": {

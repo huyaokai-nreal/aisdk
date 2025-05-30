@@ -59,6 +59,10 @@ void HandDetectNet::PreProcess(const std::vector<Image> &net_input) {
     int ai = itensor.m_batch * itensor.m_multishape_num;
     int bi = net_input.size();
     if (ai != bi || itensor.m_packed_bybatch == false) {
+        AISDK_LOG_ERROR(
+            "ai[{}] not equal to bi[{}] or m_apcked_bybatch[{}] is false, do not do preprocess. itensor.m_batch[{}], "
+            "itensor.m_multishape_num[{}]",
+            ai, bi, itensor.m_packed_bybatch, itensor.m_batch, itensor.m_multishape_num);
         return;
     }
 
@@ -80,8 +84,6 @@ void HandDetectNet::PreProcess(const std::vector<Image> &net_input) {
 
         int mem_size = height * width * channels * element_byte;
         char *mem = (char *)itensor.m_tensors[multi_i].m_viraddr + batch_i * mem_size;
-        // printf("PreProcess: {}, {}, {}, {}\n", height, width,
-        // channels, element_byte);
         float _mean = 0.0f;
         float _norm = 255.0f;
 
@@ -231,6 +233,10 @@ void HandDetectNet::PreProcessSingle(const std::vector<Image> &net_input, uint32
     int ai = session_batch * itensor.m_multishape_num;
     int bi = net_input.size();
     if (ai != bi || itensor.m_packed_bybatch == false) {
+        AISDK_LOG_ERROR(
+            "ai[{}] not equal to bi[{}] or m_apcked_bybatch[{}] is false, do not do preprocess. session_batch[{}], "
+            "itensor.m_multishape_num[{}]",
+            ai, bi, itensor.m_packed_bybatch, session_batch, itensor.m_multishape_num);
         return;
     }
 
@@ -252,8 +258,6 @@ void HandDetectNet::PreProcessSingle(const std::vector<Image> &net_input, uint32
 
         int mem_size = height * width * channels * element_byte;
         char *mem = (char *)itensor.m_tensors[multi_i].m_viraddr + batch_i * mem_size;
-        // printf("PreProcess: {}, {}, {}, {}\n", height, width,
-        // channels, element_byte);
         float _mean = 0.0f;
         float _norm = 255.0f;
 
@@ -440,6 +444,7 @@ absl::Status HandDetectNetv2::Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::x
         session_batch = session.batch;
         net_batch1 = true;
         session.batch = 1;
+        AISDK_LOG_TRACE("set net_batch1 true. session_batch[{}]", session_batch);
     }
 
     auto ret = CalculatorBaseNet::Init(algo, model, session);
@@ -570,6 +575,22 @@ void HandDetectNetv2::PostProcess(DetOutputInternal &result) {
         char *cls_mem =
             (char *)otensor.m_tensors[index_cls].m_viraddr + batch_i * cls_h * cls_w * cls_c * cls_element_byte;
         float *cls_data = (float *)cls_mem;
+
+        // int box_num = box_c * box_h * box_w;
+        // AISDK_LOG_TRACE("begin to output box info, box_num[{}]", box_num);
+        // for (int i = 0; i < box_num; i++) {
+        //     AISDK_LOG_TRACE("i[{}], box_data[{}]", i, box_data[i]);
+        // }
+
+        // AISDK_LOG_TRACE("end to output box info");
+
+        // int cls_num = cls_c * cls_h * cls_w;
+        // AISDK_LOG_TRACE("begin to output cls info, cls_num[{}]", cls_num);
+        // for (int i = 0; i < cls_num; i++) {
+        //     AISDK_LOG_TRACE("i[{}], cls_data[{}]", i, cls_data[i]);
+        // }
+
+        // AISDK_LOG_TRACE("end to output cls info");
 
         // if (box_c != FEATURE_BOX_NUM || cls_c != FEATURE_CLS_NUM || box_h !=
         // grid_h || box_w != grid_w ||
