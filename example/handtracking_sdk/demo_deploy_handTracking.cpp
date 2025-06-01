@@ -846,17 +846,27 @@ int HandTrackingSdk::RecvResult(uint64_t frame_id, std::shared_ptr<StreamResult>
         uint64_t hmd_time_nanos = iter->second->nano_time + 100 * 1000 * 1000;
         uint32_t out_hand_num = 2;
         if (NR_PLUGIN_RESULT_SUCCESS == g_provider.GetHandData(256, hmd_time_nanos, g_out_hand_array, &out_hand_num)) {
+            printf("get hand succeed, out_hand_num[%d]\n", out_hand_num);
+            if ((out_hand_num > 2) || (out_hand_num < 0)) {
+                printf("get hand data failed, out_hand_num[{}] is illegal. should between 0 and 2\n");
+                return -1;
+            }
+
             result = std::make_shared<StreamResult>();
             result->frame_id = frame_id;
             result->nano_time = hmd_time_nanos;
 
             Json::Value json_result;
             uint64_t quest_image_timetamp = iter->second->nano_time;
-            for (uint32_t i = 0; i < 2; i++) {
+            for (uint32_t i = 0; i < out_hand_num; i++) {
                 if (quest_image_timetamp != g_out_hand_array[i].image_timestamp_nanos) {
-                    // std::cout << "RecvResult image_timetamp is not match!!" << std::endl;
+                    printf(
+                        "RecvResult image_timetamp is not match, i[%d], quest_image_timetamp[%lu], "
+                        "g_out_hand_array[i].image_timestamp_nanos[%lu]\n",
+                        i, quest_image_timetamp, g_out_hand_array[i].image_timestamp_nanos);
                     return -1;
                 }
+
                 Json::Value root;
                 root["version"] = g_out_hand_array[i].version;
                 root["is_tracked"] = g_out_hand_array[i].is_tracked;

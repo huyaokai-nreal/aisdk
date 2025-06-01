@@ -577,20 +577,20 @@ void HandDetectNetv2::PostProcess(DetOutputInternal &result) {
         float *cls_data = (float *)cls_mem;
 
         // int box_num = box_c * box_h * box_w;
-        // AISDK_LOG_TRACE("begin to output box info, box_num[{}]", box_num);
+        // AISDK_LOG_TRACE("HandDetectNetv2::PostProcess, begin to output box info, box_num[{}]", box_num);
         // for (int i = 0; i < box_num; i++) {
-        //     AISDK_LOG_TRACE("i[{}], box_data[{}]", i, box_data[i]);
+        //     AISDK_LOG_TRACE("HandDetectNetv2::PostProcess, i[{}], box_data[{}]", i, box_data[i]);
         // }
 
-        // AISDK_LOG_TRACE("end to output box info");
+        // AISDK_LOG_TRACE("HandDetectNetv2::PostProcess, end to output box info");
 
         // int cls_num = cls_c * cls_h * cls_w;
-        // AISDK_LOG_TRACE("begin to output cls info, cls_num[{}]", cls_num);
+        // AISDK_LOG_TRACE("HandDetectNetv2::PostProcess, begin to output cls info, cls_num[{}]", cls_num);
         // for (int i = 0; i < cls_num; i++) {
-        //     AISDK_LOG_TRACE("i[{}], cls_data[{}]", i, cls_data[i]);
+        //     AISDK_LOG_TRACE("HandDetectNetv2::PostProcess, i[{}], cls_data[{}]", i, cls_data[i]);
         // }
 
-        // AISDK_LOG_TRACE("end to output cls info");
+        // AISDK_LOG_TRACE("HandDetectNetv2::PostProcess, end to output cls info");
 
         // if (box_c != FEATURE_BOX_NUM || cls_c != FEATURE_CLS_NUM || box_h !=
         // grid_h || box_w != grid_w ||

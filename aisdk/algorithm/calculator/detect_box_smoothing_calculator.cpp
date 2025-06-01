@@ -85,6 +85,8 @@ class DetectBoxSmoothingCalculator : public xgraph::CalculatorBase {
         if (input_data.lhand_lcam_valid) {
             AISDK_LOG_TRACE("[DetectBoxSmoothingCalculator] Do smoothing on lhand lcam bboxes");
             float p_score = 1.0f;
+            AISDK_LOG_TRACE("[DetectBoxSmoothingCalculator] origin w[{}], h[{}]", output_buffer_->lhand_lcam_rect.w,
+                            output_buffer_->lhand_lcam_rect.h);
             m_seq_lcam_lhand->getFilterBoxData(output_buffer_->lhand_lcam_rect, p_score);
 
             AISDK_LOG_TRACE("[DetectBoxSmoothingCalculator] Done smoothing on lhand lcam bboxes");

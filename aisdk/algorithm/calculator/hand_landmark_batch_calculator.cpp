@@ -54,7 +54,7 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
     std::string model_name_;  //模型名称
     bool pcl_able_;
     float bbox_expand_ratio_ = 1.3;
-    float mono_valid_bbox_area_ = 15000;  // 检测框面积阈值
+    float mono_valid_bbox_area_ = 30000;  // 检测框面积阈值
     std::shared_ptr<base::BaseCameraModel> lcam_model_ = nullptr;
     std::shared_ptr<base::BaseCameraModel> rcam_model_ = nullptr;
     enum class CropMethod { WarpAffine, PCL };
@@ -373,8 +373,15 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
             crop_method = CropMethod::PCL;
         }
 
+        AISDK_LOG_TRACE(
+            "[HandLandmarkBatchCalculator] input bbox_data: lhand_lcam_valid[{}], lhand_rcam_valid[{}], "
+            "rhand_lcam_valid[{}], rhand_rcam_valid[{}]",
+            bbox_data.lhand_lcam_valid, bbox_data.lhand_rcam_valid, bbox_data.rhand_lcam_valid,
+            bbox_data.rhand_rcam_valid);
+
         //  left hand
         if (bbox_data.lhand_lcam_valid && bbox_data.lhand_rcam_valid) {
+            AISDK_LOG_TRACE("[HandLandmarkBatchCalculator] bino left_hand");
             auto result = ProcessBatchHand(
                 image_data, {bbox_data.lhand_lcam_rect, bbox_data.lhand_rcam_rect}, true, crop_method,
                 lcam_model_.get(), rcam_model_.get(), output_buffer_->lhand_lcam_kpt, output_buffer_->lhand_rcam_kpt,
@@ -386,6 +393,7 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
             }
         }
         if (bbox_data.rhand_lcam_valid && bbox_data.rhand_rcam_valid) {
+            AISDK_LOG_TRACE("[HandLandmarkBatchCalculator] bino right_hand");
             auto result = ProcessBatchHand(
                 image_data, {bbox_data.rhand_lcam_rect, bbox_data.rhand_rcam_rect}, false, crop_method,
                 lcam_model_.get(), rcam_model_.get(), output_buffer_->rhand_lcam_kpt, output_buffer_->rhand_rcam_kpt,
@@ -405,6 +413,11 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
             if (result.ok() && bbox_area < mono_valid_bbox_area_) {
                 output_buffer_->lhand_lcam_valid = true;
                 output_buffer_->lhand_rcam_valid = false;
+            } else {
+                AISDK_LOG_ERROR(
+                    "[HandLandmarkBatchCalculator] mono left_hand failed. bbox_area[{}] < mono_valid_bbox_area_[{}] or "
+                    "result.ok() is false. w[{}], h[{}]",
+                    bbox_area, mono_valid_bbox_area_, bbox_data.lhand_lcam_rect.w, bbox_data.lhand_lcam_rect.h);
             }
         }
         if (bbox_data.rhand_rcam_valid && !bbox_data.rhand_lcam_valid) {
@@ -416,6 +429,11 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
             if (result.ok() && bbox_area < mono_valid_bbox_area_) {
                 output_buffer_->rhand_rcam_valid = true;
                 output_buffer_->rhand_lcam_valid = false;
+            } else {
+                AISDK_LOG_ERROR(
+                    "[HandLandmarkBatchCalculator] mono right_hand failed. bbox_area[{}] < mono_valid_bbox_area_[{}] "
+                    "or result.ok() is false. w[{}], h[{}]",
+                    bbox_area, mono_valid_bbox_area_, bbox_data.lhand_lcam_rect.w, bbox_data.lhand_lcam_rect.h);
             }
         }
 
