@@ -8,62 +8,96 @@
 namespace aisdk::algorithm {
 
 class HandDetectNet : public DetectBaseNet {
-   public:
+public:
+
+    /**
+     * @struct GridAnchor
+     * @brief 网格锚点描述结构体
+     * @details 定义检测网格系统中每个单元的参考位置和基础尺寸
+     * 
+     * 坐标系说明：
+     * - 原点(0,0)对应输入图像中心
+     * - 网格坐标基于归一化后的特征图尺寸
+     */
     struct GridAnchor {
         // 显式定义默认构造函数
-        GridAnchor() : grid_x(0), grid_y(0), anchor_rw(0), anchor_rh(0) {}
+        GridAnchor() : grid_x(0), grid_y(0), anchor_rw(0), anchor_rh(0) {}    // 默认构造初始化为原点
 
-        float grid_x;
-        float grid_y;
-        float anchor_rw;
-        float anchor_rh;
+        float grid_x;      // 网格单元中心x坐标
+        float grid_y;      // 网格单元中心y坐标
+        float anchor_rw;   // 预设瞄点参考宽度（单位：像素，基于训练数据统计）
+        float anchor_rh;   // 预设瞄点参考高度（单位：像素，基于训练数据统计）
     };
 
     HandDetectNet() : DetectBaseNet(){};
     ~HandDetectNet(){};
 
+    // 初始化
     absl::Status Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::ModelConfig &model,
                                 aisdk::xengine::SessionConfig &session);
-    void PreProcess(const std::vector<Image> &net_input);
-    void PostProcess(DetOutputInternal &result);
-    void PreProcessSingle(const std::vector<Image> &net_input, uint32_t batchn);
-    void PostProcessSingle(DetOutputInternal &result, uint32_t batchn);
+
+    void PreProcess(const std::vector<Image> &net_input);    // 批量预处理
+    void PostProcess(DetOutputInternal &result);             // 批量后处理
+
+    void PreProcessSingle(const std::vector<Image> &net_input, uint32_t batchn);   // 单样本预处理
+    void PostProcessSingle(DetOutputInternal &result, uint32_t batchn);            // 单样本后处理
+
+    // 模型推理
     virtual absl::Status Inference(const std::vector<Image> &baseinput, DetOutputInternal &baseresult) override;
 
-   protected:
+protected:
     aisdk::xengine::TensorFormat itensor_format;
     aisdk::xengine::TensorFormat otensor_format;
 
-    std::vector<GridAnchor> grid_anchor;
-    int origin_img_width;
-    int origin_img_height;
+    std::vector<GridAnchor> grid_anchor;    // 网络瞄点集合（按行优先顺序进行存储）
+    int origin_img_width;      // 原始输入图像宽度（预处理前）
+    int origin_img_height;     // 原始输入图像高度（预处理后）
 
-    float score_threshold = 0.5f;
-    float iou_threshold = 0.45f;
+    // 检测阈值参数
+    float score_threshold = 0.5f;    // 置信度阈值（默认0.5，过滤低质量检测）
+    float iou_threshold = 0.45f;     // NMS重叠阈值（默认0.45，抑制重复框） 
 
-    uint32_t grid_stride = 16;
-    uint32_t grid_w = 16;
-    uint32_t grid_h = 12;
+    // 网格系统参数
+    uint32_t grid_stride = 16;       // 网格步长（单位：像素。对应特征图下的采样率）
+    uint32_t grid_w = 16;            // 水平方向网格数（默认16，适合640宽输入）
+    uint32_t grid_h = 12;            // 垂直方向网格数（默认12，适合480高输入）
 
-    bool net_batch1 = false;
-    uint32_t session_batch = 1;
+    // 批量处理控制
+    bool net_batch1 = false;         // 单批次模式标志（当模型不支持批量时启用）
+    uint32_t session_batch = 1;      // 用户设置的原始批量值（用于结果重组）
 
+    // 执行信息导出标志（用于调试追踪）
     bool export_netalgo_exec_info = false;
 };
 
-/*
-    Det v2.0 从单输出变成双输出
-    - output_cls [B, 3, 16, 12] (3维依次是conf, left_cls, right_cls)
-    - output_box [B, 4, 16, 12] (4维依次是x1,y1,x2,y2)
-*/
+/**
+ * @class HandDetectNetv2
+ * @brief 手部检测专用神经网络实现（v2版本）
+ * @details 继承自通用检测基类DetectBaseNet，实现针对手部检测的优化逻辑
+ *          包含网格锚点机制、多分辨率适配、批量处理策略等增强特性
+ *          Det v2.0 从单输出变成双输出
+ *          - output_cls [B, 3, 16, 12] (3维依次是conf, left_cls, right_cls)
+ *          - output_box [B, 4, 16, 12] (4维依次是x1,y1,x2,y2)
+ * 
+ * @note 主要特性：
+ * - 支持单帧/批量输入处理
+ * - 自适应输入图像宽高比
+ * - 内置基于统计的锚点参数
+ * - 可配置的检测阈值参数
+ */
 class HandDetectNetv2 : public HandDetectNet {
    public:
     HandDetectNetv2() : HandDetectNet(){};
     ~HandDetectNetv2(){};
 
+    // 初始化
     absl::Status Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::ModelConfig &model,
                                 aisdk::xengine::SessionConfig &session);
+
+    // 模型推理
     virtual absl::Status Inference(const std::vector<Image> &baseinput, DetOutputInternal &baseresult) override;
+
+    // 批量后处理
     void PostProcess(DetOutputInternal &result);
     // void PostProcessSingle(DetOutputInternal &result, uint32_t batchn);  // TODO: develop中的 PostProcessSingle
 };
