@@ -175,8 +175,14 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
 
         // step6: 平台特定图像剪裁（仅限Android ARM64）
 #if ((defined(ANDROID) || defined(__ANDROID__)) && defined(__aarch64__))
-        crop_image = xengine::perspective_crop_image_raw(origin_camera, virutal_camera.get(), input_width_,
-                                                         input_height_, image_data.m_mat);
+        if (!(image_data.m_mat.empty())) {
+            crop_image = xengine::perspective_crop_image_raw(origin_camera, virutal_camera.get(), input_width_,
+                                                             input_height_, image_data.m_mat);
+        } else {
+            AISDK_LOG_ERROR("ProcessSingleHand failed. image_data.m_mat is empty");
+            return {absl::StatusCode::kInternal,
+                    "[HandLandmarkBatchCalculator] ProcessSingleHand failed. image_data.m_mat is empty."};
+        }
 #endif
 
         // step7: 镜像处理左手数据
@@ -187,6 +193,7 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
         // step8: 执行神经网络推理
         auto rsn_result = netalgo->Inference({crop_image, crop_image});
         if (!rsn_result.ok()) {
+            AISDK_LOG_ERROR("[HandLandmarkBatchCalculator] netalgo->Inference failed");
             return rsn_result.status();
         }
 
@@ -375,11 +382,15 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
 
         AISDK_LOG_TRACE(
             "[HandLandmarkBatchCalculator] input bbox_data: lhand_lcam_valid[{}], lhand_rcam_valid[{}], "
-            "rhand_lcam_valid[{}], rhand_rcam_valid[{}]",
+            "rhand_lcam_valid[{}], rhand_rcam_valid[{}], image_data.size[{}]",
             bbox_data.lhand_lcam_valid, bbox_data.lhand_rcam_valid, bbox_data.rhand_lcam_valid,
-            bbox_data.rhand_rcam_valid);
+            bbox_data.rhand_rcam_valid, image_data.size());
 
-        //  left hand
+        /**
+         * 双目处理逻辑：
+         * lhand_lcam和lhan_rcam都存在，则认为是单目的左手;
+         * rhand_lcam和rhand_rcam都存在，则认为是单目的右手;
+         */
         if (bbox_data.lhand_lcam_valid && bbox_data.lhand_rcam_valid) {
             AISDK_LOG_TRACE("[HandLandmarkBatchCalculator] bino left_hand");
             auto result = ProcessBatchHand(
@@ -404,6 +415,12 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
                 output_buffer_->rhand_rcam_valid = true;
             }
         }
+
+        /**
+         * 单目处理逻辑(单目只集中在相机lcam上，并且由于只有一张图，所以只处理image_data[0])：
+         * lhand_lcam存在，并且lhand_ram不存在，则认为是单目的左手
+         * rhand_lcam存在，并且rhand_rcam不存在，则认为是单目的右手
+         */
         if (bbox_data.lhand_lcam_valid && !bbox_data.lhand_rcam_valid) {
             float bbox_area = bbox_data.lhand_lcam_rect.w * bbox_data.lhand_lcam_rect.h;
             AISDK_LOG_TRACE("[HandLandmarkBatchCalculator] mono left_hand bbox_area {}", bbox_area);
@@ -420,20 +437,20 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
                     bbox_area, mono_valid_bbox_area_, bbox_data.lhand_lcam_rect.w, bbox_data.lhand_lcam_rect.h);
             }
         }
-        if (bbox_data.rhand_rcam_valid && !bbox_data.rhand_lcam_valid) {
-            float bbox_area = bbox_data.rhand_rcam_rect.w * bbox_data.rhand_rcam_rect.h;
+        if (bbox_data.rhand_lcam_valid && !bbox_data.rhand_rcam_valid) {
+            float bbox_area = bbox_data.rhand_lcam_rect.w * bbox_data.rhand_lcam_rect.h;
             AISDK_LOG_TRACE("[HandLandmarkBatchCalculator] mono right_hand bbox_area {}", bbox_area);
-            auto result = ProcessSingleHand(image_data[1], bbox_data.rhand_rcam_rect, false, rcam_model_.get(),
-                                            output_buffer_->rhand_rcam_kpt, output_buffer_->rhand_rcam_rdepth,
-                                            output_buffer_->rhand_rcam_virtual_camera, bbox_data.det_flag);
+            auto result = ProcessSingleHand(image_data[0], bbox_data.rhand_lcam_rect, false, lcam_model_.get(),
+                                            output_buffer_->rhand_lcam_kpt, output_buffer_->rhand_lcam_rdepth,
+                                            output_buffer_->rhand_lcam_virtual_camera, bbox_data.det_flag);
             if (result.ok() && bbox_area < mono_valid_bbox_area_) {
-                output_buffer_->rhand_rcam_valid = true;
-                output_buffer_->rhand_lcam_valid = false;
+                output_buffer_->rhand_lcam_valid = true;
+                output_buffer_->rhand_rcam_valid = false;
             } else {
                 AISDK_LOG_ERROR(
                     "[HandLandmarkBatchCalculator] mono right_hand failed. bbox_area[{}] < mono_valid_bbox_area_[{}] "
                     "or result.ok() is false. w[{}], h[{}]",
-                    bbox_area, mono_valid_bbox_area_, bbox_data.lhand_lcam_rect.w, bbox_data.lhand_lcam_rect.h);
+                    bbox_area, mono_valid_bbox_area_, bbox_data.rhand_lcam_rect.w, bbox_data.rhand_lcam_rect.h);
             }
         }
 

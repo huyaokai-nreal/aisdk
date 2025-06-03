@@ -88,6 +88,25 @@ class ConvertToWorldCalculator : public xgraph::CalculatorBase {
                 AISDK_LOG_TRACE("[ConvertToWorldCalculator] Transform right hand 3d kpt complete!");
             }
 
+            AISDK_LOG_TRACE(
+                "[ConvertToWorldCalculator] input_data.left_hand.kpt3d.size[{}], "
+                "input_data.right_hand.kpt3d.size[{}], output_buffer_->left_hand.kpt3d.size[{}], "
+                "output_buffer_->right_hand.kpt3d.size[{}]",
+                input_data.left_hand.kpt3d.size(), input_data.right_hand.kpt3d.size(),
+                output_buffer_->left_hand.kpt3d.size(), output_buffer_->right_hand.kpt3d.size());
+            AISDK_LOG_TRACE(
+                "[ConvertToWorldCalculator] input_data.left_hand.kpt2d_lcam.size[{}], "
+                "input_data.left_hand.kpt2d_rcam.size[{}], input_data.right_hand.kpt2d_lcam.size[{}], "
+                "input_data.right_hand.kpt2d_rcam.size[{}]",
+                input_data.left_hand.kpt2d_lcam.size(), input_data.left_hand.kpt2d_rcam.size(),
+                input_data.right_hand.kpt2d_lcam.size(), input_data.right_hand.kpt2d_rcam.size());
+            AISDK_LOG_TRACE(
+                "[ConvertToWorldCalculator] output_buffer_->left_hand.kpt2d_lcam.size[{}], "
+                "output_buffer_->left_hand.kpt2d_rcam.size[{}], output_buffer_->right_hand.kpt2d_lcam.size[{}], "
+                "output_buffer_->right_hand.kpt2d_rcam.size[{}]",
+                output_buffer_->left_hand.kpt2d_lcam.size(), output_buffer_->left_hand.kpt2d_rcam.size(),
+                output_buffer_->right_hand.kpt2d_lcam.size(), output_buffer_->right_hand.kpt2d_rcam.size());
+
             //输出
             if (output_buffer_->lhand_valid || output_buffer_->rhand_valid) {
                 cc->Outputs().Tag("OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());

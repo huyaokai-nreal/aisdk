@@ -77,6 +77,12 @@ class HandFilterCalculator : public xgraph::CalculatorBase {
         const auto& timestamp = cc->InputTimestamp().Seconds();
         std::unique_ptr<HandsData> output_buffer_ = absl::make_unique<HandsData>();
         *output_buffer_ = kpt3d_world;
+
+        AISDK_LOG_TRACE(
+            "kpt3d_world.lhand_valid[{}], kpt3d_world.rhand_valid[{}], kpt2d_data.lhand_lcam_valid[{}], "
+            "kpt2d_data.lhand_rcam_valid[{}], kpt2d_data.rhand_lcam_valid[{}], kpt2d_data.rhand_rcam_valid[{}]",
+            kpt3d_world.lhand_valid, kpt3d_world.rhand_valid, kpt2d_data.lhand_lcam_valid, kpt2d_data.lhand_rcam_valid,
+            kpt2d_data.rhand_lcam_valid, kpt2d_data.rhand_rcam_valid);
         auto& predictor_lhand = GlobalPredictorService::getInstance().get_predictor_lhand();
         auto& predictor_rhand = GlobalPredictorService::getInstance().get_predictor_rhand();
         auto& predictor_lhand_lcam_bbox = GlobalPredictorService::getInstance().get_predictor_lhand_lcam_bbox();

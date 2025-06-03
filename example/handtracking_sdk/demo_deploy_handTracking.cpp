@@ -844,13 +844,9 @@ int HandTrackingSdk::RecvResult(uint64_t frame_id, std::shared_ptr<StreamResult>
     auto iter = m_wait_free_datas.find(frame_id);
     if (m_sdk_started && iter != m_wait_free_datas.end()) {
         uint64_t hmd_time_nanos = iter->second->nano_time + 100 * 1000 * 1000;
-        uint32_t out_hand_num = 2;
+        uint32_t out_hand_num = 0;
         if (NR_PLUGIN_RESULT_SUCCESS == g_provider.GetHandData(256, hmd_time_nanos, g_out_hand_array, &out_hand_num)) {
             printf("get hand succeed, out_hand_num[%d]\n", out_hand_num);
-            if ((out_hand_num > 2) || (out_hand_num < 0)) {
-                printf("get hand data failed, out_hand_num[{}] is illegal. should between 0 and 2\n");
-                return -1;
-            }
 
             result = std::make_shared<StreamResult>();
             result->frame_id = frame_id;
