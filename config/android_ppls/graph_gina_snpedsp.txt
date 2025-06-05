@@ -80,7 +80,7 @@ node {
 # ----- 节点3：2D手部关键点检测 -----
 node {
   name: "HandLandmark_2D"                                             # 节点名称
-  calculator: "HandLandmarkBatchCalculator"                           # 使用的calculator名称
+  calculator: "HandLandmarkBatch25DCalculator"                        # 使用的calculator名称
   input_stream: "BBOX_SMOOTHED_OUTPUT:detection_smoothed_output"      # 输入：平滑后的检测框
   input_stream: "IMAGE_INPUT:image_out"                               # 输入：处理后的图像
   input_side_packet: "CAM_INFO_INPUT:cam_info"                        # 输入：相机参数（静态数据包）
@@ -101,7 +101,7 @@ node {
 # ----- 节点4：单目3D关键点计算 -----
 node {
   name: "MonoHand_3D"                                                 # 节点名称
-  calculator: "MonoHandKpt3DCalculator"                               # 使用的calculator名称
+  calculator: "MonoHandKpt3D25DCalculator"                            # 使用的calculator名称
   input_side_packet: "CAM_INFO_INPUT:cam_info"                        # 输入：相机参数（静态数据包）
   input_stream: "LANDMARK_INPUT:kpt2d"                                # 输入：2D关键点
   input_stream: "HEADPOSE:head_pose_out"                              # 输入：处理后的头部姿态
@@ -122,7 +122,7 @@ node {
   name: "GestureRecognition"                                            # 节点名称
   calculator: "GestureRecognitionCalculator"                            # 使用的calculator名称
   input_stream: "GR_KPT2D_INPUT:kpt2d"                                  # 输入：2D关键点
-  input_stream: "GR_KPT_INPUT:kpt3d_mono"                            # 输入：3D关键点
+  input_stream: "GR_KPT_INPUT:kpt3d_mono"                               # 输入：3D关键点
   output_stream: "GR_OUTPUT:gesture"                                    # 输出：识别出的手势类型
 }
 

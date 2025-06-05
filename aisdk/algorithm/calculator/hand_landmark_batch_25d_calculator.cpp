@@ -16,6 +16,7 @@
 #include "aisdk/algorithm/internal_structs/det_struct_internal.h"
 #include "aisdk/algorithm/internal_structs/kpt2d_struct_internal.h"
 #include "aisdk/algorithm/model/calculator_basenet.h"
+#include "aisdk/algorithm/model/hand_rsntiny_artosyn.h"
 #include "aisdk/algorithm/model/hand_rtmtiny.h"
 #include "aisdk/base/camera_model.h"
 #include "aisdk/base/log.h"
@@ -30,7 +31,7 @@ namespace aisdk::algorithm {
 // A calculator generate hand landmark result, based on rsntiny/rsnnano neural network.
 // Definition:
 // node {
-//   calculator: "HandLandmarkBatchCalculator"
+//   calculator: "HandLandmarkBatch25DCalculator"
 //   input_stream: "BBOX_SMOOTHED_OUTPUT:detection_smoothed_output"
 //   input_stream: "IMAGE_INPUT:image"
 //   output_stream: "LANDMARK_OUTPUT:kpt2d"
@@ -43,16 +44,17 @@ namespace aisdk::algorithm {
 
 /// @brief
 /// 基于双目摄像头（或单目）输入的图像和检测框，批量处理手部关键点检测，生成手部姿态相关的2D关键点坐标及相对深度信息
-class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
+class HandLandmarkBatch25DCalculator : public xgraph::CalculatorBase {
    private:
     // RSNTiny algo instance
     std::shared_ptr<HandLandmarkBaseNet> netalgo;  //模型对象
-    int32_t input_width_;                          //
+
+    int32_t input_width_;  //
     int32_t input_height_;
     std::string model_name_;  //模型名称
     bool pcl_able_;
     float bbox_expand_ratio_ = 1.3;
-    float mono_valid_bbox_area_ = 15000;  // 检测框面积阈值
+    float mono_valid_bbox_area_ = 30000;  // 检测框面积阈值
     std::shared_ptr<base::BaseCameraModel> lcam_model_ = nullptr;
     std::shared_ptr<base::BaseCameraModel> rcam_model_ = nullptr;
     enum class CropMethod { WarpAffine, PCL };
@@ -62,14 +64,25 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
     /// @param cc mediapipe计算图的上下文（提供输出输出流，SidePacket，选项参数等）
     /// @return absl::OkStatus()
     static absl::Status GetContract(xgraph::CalculatorContract* cc) {
-        AISDK_LOG_TRACE("[HandLandmarkBatchCalculator] GetContract start");
+        AISDK_LOG_TRACE("[HandLandmarkBatch25DCalculator] GetContract start");
 
-        cc->Inputs().Tag("IMAGE_INPUT").Set<std::vector<Image>>();          //原始IMAGE
-        cc->Inputs().Tag("BBOX_SMOOTHED_OUTPUT").Set<DetOutputInternal>();  //平滑后的检测框
+        /**
+         * 输入：
+         * BBOX_SMOOTHED_OUTPUT：平滑后的检测框
+         * IMAGE_INPUT：图像
+         * CAM_INFO_INPUT：相机参数（静态数据包）
+         */
+        cc->Inputs().Tag("IMAGE_INPUT").Set<std::vector<Image>>();
+        cc->Inputs().Tag("BBOX_SMOOTHED_OUTPUT").Set<DetOutputInternal>();
         cc->InputSidePackets().Tag("CAM_INFO_INPUT").Set<std::vector<std::shared_ptr<aisdk::base::BaseCameraModel>>>();
-        cc->Outputs().Tag("LANDMARK_OUTPUT").Set<Kpt2dInternal>();  //关键点输出
 
-        AISDK_LOG_TRACE("[HandLandmarkBatchCalculator] GetContract complete");
+        /**
+         * 输出：
+         * LANDMARK_OUTPUT：2D关键点
+         */
+        cc->Outputs().Tag("LANDMARK_OUTPUT").Set<Kpt2dInternal>();
+
+        AISDK_LOG_TRACE("[HandLandmarkBatch25DCalculator] GetContract complete");
         return absl::OkStatus();
     }
 
@@ -77,7 +90,7 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
     /// @param cc mediapipe计算图的上下文（提供输入输出流，SidePacket，选项参数等）
     /// @return 返回结果，成功返回absl::OkStatus()
     absl::Status Open(xgraph::CalculatorContext* cc) final {
-        AISDK_LOG_TRACE("[HandLandmarkBatchCalculator] Open start");
+        AISDK_LOG_TRACE("[HandLandmarkBatch25DCalculator] Open start");
         const auto& options = cc->Options<aisdk::HandLandmarkCalculatorOptions>();
         input_height_ = options.input_height();
         input_width_ = options.input_width();
@@ -87,19 +100,24 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
             bbox_expand_ratio_ = options.bbox_expand_ratio();
         }
 
-        //目前只支持2d_rtmtinyb2模型
+        //根据模型名称，寻找适配的模型
         if (model_name_ == "2d_rtmtinyb2") {
-            AISDK_LOG_TRACE("[HandLandmarkBatchCalculator] start init rtmtinyb2");
+            AISDK_LOG_TRACE("[HandLandmarkBatch25DCalculator] start init rtmtinyb2");
             netalgo = XGraphServiceUtils::CreateNetAlgoBase<RTMTiny>((void*)0x202310, model_name_);
-            AISDK_LOG_TRACE("[HandLandmarkBatchCalculator] finish init rtmtinyb2");
+            AISDK_LOG_TRACE("[HandLandmarkBatch25DCalculator] finish init rtmtinyb2");
+        } else if ("2d_rtmtiny_ar9481npu_gina" == model_name_) {
+            AISDK_LOG_TRACE("[HandLandmarkBatch25DCalculator] start init artosyn_rsn_tiny");
+            netalgo = XGraphServiceUtils::CreateNetAlgoBase<ArtosynRSNTiny>((void*)0x202310, model_name_);
+            AISDK_LOG_TRACE("[HandLandmarkBatch25DCalculator] finish init artosyn_rsn_tiny");
         } else {
+            AISDK_LOG_ERROR("HandDetTrackCalculator init failed. can not find model:{}", model_name_);
             return absl::AbortedError(fmt::format("can not init model with {}", model_name_));
         }
 
         if (!netalgo) {
-            AISDK_LOG_TRACE("[HandLandmarkBatchCalculator]  init landmark model failed");
+            AISDK_LOG_TRACE("[HandLandmarkBatch25DCalculator]  init landmark model failed");
             return {absl::StatusCode::kInvalidArgument,
-                    "[HandLandmarkBatchCalculator] CreateNetAlgoBase nodename error"};
+                    "[HandLandmarkBatch25DCalculator] CreateNetAlgoBase nodename error"};
         }
 
         //解析加载输入的相机相关信息
@@ -111,7 +129,7 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
             rcam_model_ = cam_info.at(1);
         }
 
-        AISDK_LOG_TRACE("[HandLandmarkBatchCalculator] Open complete");
+        AISDK_LOG_TRACE("[HandLandmarkBatch25DCalculator] Open complete");
         return absl::OkStatus();
     }
 
@@ -157,8 +175,14 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
 
         // step6: 平台特定图像剪裁（仅限Android ARM64）
 #if ((defined(ANDROID) || defined(__ANDROID__)) && defined(__aarch64__))
-        crop_image = xengine::perspective_crop_image_raw(origin_camera, virutal_camera.get(), input_width_,
-                                                         input_height_, image_data.m_mat);
+        if (!(image_data.m_mat.empty())) {
+            crop_image = xengine::perspective_crop_image_raw(origin_camera, virutal_camera.get(), input_width_,
+                                                             input_height_, image_data.m_mat);
+        } else {
+            AISDK_LOG_ERROR("ProcessSingleHand failed. image_data.m_mat is empty");
+            return {absl::StatusCode::kInternal,
+                    "[HandLandmarkBatch25DCalculator] ProcessSingleHand failed. image_data.m_mat is empty."};
+        }
 #endif
 
         // step7: 镜像处理左手数据
@@ -169,6 +193,7 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
         // step8: 执行神经网络推理
         auto rsn_result = netalgo->Inference({crop_image, crop_image});
         if (!rsn_result.ok()) {
+            AISDK_LOG_ERROR("[HandLandmarkBatch25DCalculator] netalgo->Inference failed");
             return rsn_result.status();
         }
 
@@ -337,12 +362,12 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
     /// @return absl::OkStatus()
     absl::Status Process(xgraph::CalculatorContext* cc) final {
 #if defined(ENABLE_ALGORITHM_CALCULATOR_PROCESS_EVAL_TIME)
-        TIMER_ONCE_WITH_TAG(HandLandmarkBatchCalculator::Process);
+        TIMER_ONCE_WITH_TAG(HandLandmarkBatch25DCalculator::Process);
 #endif
         //输入标准检查
         if (cc->Inputs().Tag("IMAGE_INPUT").IsEmpty() || cc->Inputs().Tag("BBOX_SMOOTHED_OUTPUT").IsEmpty()) {
             AISDK_LOG_TRACE(
-                "[HandLandmarkBatchCalculator] IMAGE_INPUT/BBOX_SMOOTHED_OUTPUT lost, this loop terminated here!");
+                "[HandLandmarkBatch25DCalculator] IMAGE_INPUT/BBOX_SMOOTHED_OUTPUT lost, this loop terminated here!");
             return absl::OkStatus();
         }
 
@@ -355,8 +380,19 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
             crop_method = CropMethod::PCL;
         }
 
-        //  left hand
+        AISDK_LOG_TRACE(
+            "[HandLandmarkBatch25DCalculator] input bbox_data: lhand_lcam_valid[{}], lhand_rcam_valid[{}], "
+            "rhand_lcam_valid[{}], rhand_rcam_valid[{}], image_data.size[{}]",
+            bbox_data.lhand_lcam_valid, bbox_data.lhand_rcam_valid, bbox_data.rhand_lcam_valid,
+            bbox_data.rhand_rcam_valid, image_data.size());
+
+        /**
+         * 双目处理逻辑：
+         * lhand_lcam和lhan_rcam都存在，则认为是单目的左手;
+         * rhand_lcam和rhand_rcam都存在，则认为是单目的右手;
+         */
         if (bbox_data.lhand_lcam_valid && bbox_data.lhand_rcam_valid) {
+            AISDK_LOG_TRACE("[HandLandmarkBatch25DCalculator] bino left_hand");
             auto result = ProcessBatchHand(
                 image_data, {bbox_data.lhand_lcam_rect, bbox_data.lhand_rcam_rect}, true, crop_method,
                 lcam_model_.get(), rcam_model_.get(), output_buffer_->lhand_lcam_kpt, output_buffer_->lhand_rcam_kpt,
@@ -368,6 +404,7 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
             }
         }
         if (bbox_data.rhand_lcam_valid && bbox_data.rhand_rcam_valid) {
+            AISDK_LOG_TRACE("[HandLandmarkBatch25DCalculator] bino right_hand");
             auto result = ProcessBatchHand(
                 image_data, {bbox_data.rhand_lcam_rect, bbox_data.rhand_rcam_rect}, false, crop_method,
                 lcam_model_.get(), rcam_model_.get(), output_buffer_->rhand_lcam_kpt, output_buffer_->rhand_rcam_kpt,
@@ -378,26 +415,44 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
                 output_buffer_->rhand_rcam_valid = true;
             }
         }
+
+        /**
+         * 单目处理逻辑(单目只集中在相机lcam上，并且由于只有一张图，所以只处理image_data[0])：
+         * lhand_lcam存在，并且lhand_ram不存在，则认为是单目的左手
+         * rhand_lcam存在，并且rhand_rcam不存在，则认为是单目的右手
+         */
         if (bbox_data.lhand_lcam_valid && !bbox_data.lhand_rcam_valid) {
             float bbox_area = bbox_data.lhand_lcam_rect.w * bbox_data.lhand_lcam_rect.h;
-            AISDK_LOG_TRACE("[HandLandmarkBatchCalculator] mono left_hand bbox_area {}", bbox_area);
+            AISDK_LOG_TRACE("[HandLandmarkBatch25DCalculator] mono left_hand bbox_area {}", bbox_area);
             auto result = ProcessSingleHand(image_data[0], bbox_data.lhand_lcam_rect, true, lcam_model_.get(),
                                             output_buffer_->lhand_lcam_kpt, output_buffer_->lhand_lcam_rdepth,
                                             output_buffer_->lhand_lcam_virtual_camera, bbox_data.det_flag);
             if (result.ok() && bbox_area < mono_valid_bbox_area_) {
                 output_buffer_->lhand_lcam_valid = true;
                 output_buffer_->lhand_rcam_valid = false;
+            } else {
+                AISDK_LOG_ERROR(
+                    "[HandLandmarkBatch25DCalculator] mono left_hand failed. bbox_area[{}] < mono_valid_bbox_area_[{}] "
+                    "or "
+                    "result.ok() is false. w[{}], h[{}]",
+                    bbox_area, mono_valid_bbox_area_, bbox_data.lhand_lcam_rect.w, bbox_data.lhand_lcam_rect.h);
             }
         }
-        if (bbox_data.rhand_rcam_valid && !bbox_data.rhand_lcam_valid) {
-            float bbox_area = bbox_data.rhand_rcam_rect.w * bbox_data.rhand_rcam_rect.h;
-            AISDK_LOG_TRACE("[HandLandmarkBatchCalculator] mono right_hand bbox_area {}", bbox_area);
-            auto result = ProcessSingleHand(image_data[1], bbox_data.rhand_rcam_rect, false, rcam_model_.get(),
-                                            output_buffer_->rhand_rcam_kpt, output_buffer_->rhand_rcam_rdepth,
-                                            output_buffer_->rhand_rcam_virtual_camera, bbox_data.det_flag);
+        if (bbox_data.rhand_lcam_valid && !bbox_data.rhand_rcam_valid) {
+            float bbox_area = bbox_data.rhand_lcam_rect.w * bbox_data.rhand_lcam_rect.h;
+            AISDK_LOG_TRACE("[HandLandmarkBatch25DCalculator] mono right_hand bbox_area {}", bbox_area);
+            auto result = ProcessSingleHand(image_data[0], bbox_data.rhand_lcam_rect, false, lcam_model_.get(),
+                                            output_buffer_->rhand_lcam_kpt, output_buffer_->rhand_lcam_rdepth,
+                                            output_buffer_->rhand_lcam_virtual_camera, bbox_data.det_flag);
             if (result.ok() && bbox_area < mono_valid_bbox_area_) {
-                output_buffer_->rhand_rcam_valid = true;
-                output_buffer_->rhand_lcam_valid = false;
+                output_buffer_->rhand_lcam_valid = true;
+                output_buffer_->rhand_rcam_valid = false;
+            } else {
+                AISDK_LOG_ERROR(
+                    "[HandLandmarkBatch25DCalculator] mono right_hand failed. bbox_area[{}] < "
+                    "mono_valid_bbox_area_[{}] "
+                    "or result.ok() is false. w[{}], h[{}]",
+                    bbox_area, mono_valid_bbox_area_, bbox_data.rhand_lcam_rect.w, bbox_data.rhand_lcam_rect.h);
             }
         }
 
@@ -406,17 +461,17 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
             output_buffer_->rhand_rcam_valid) {
             // clang-format off
             AISDK_LOG_TRACE(
-                "[HandLandmarkBatchCalculator] lhand_lcam_valid: {}, lhand_rcam_valid: {},  lhand_lcam: {}, lhand_rcam: {} / rhand_lcam_valid: {}, rhand_rcam_valid: {},  rhand_lcam: {}, rhand_rcam: {}",
+                "[HandLandmarkBatch25DCalculator] lhand_lcam_valid: {}, lhand_rcam_valid: {},  lhand_lcam: {}, lhand_rcam: {} / rhand_lcam_valid: {}, rhand_rcam_valid: {},  rhand_lcam: {}, rhand_rcam: {}",
                 output_buffer_->lhand_lcam_valid, output_buffer_->lhand_rcam_valid, output_buffer_->lhand_lcam_kpt.size(), output_buffer_->lhand_rcam_kpt.size(),
                 output_buffer_->rhand_lcam_valid, output_buffer_->rhand_rcam_valid, output_buffer_->rhand_lcam_kpt.size(), output_buffer_->rhand_rcam_kpt.size());
             cc->Outputs().Tag("LANDMARK_OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
             // clang-format on
         } else {
             cc->Outputs().Tag("LANDMARK_OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
-            AISDK_LOG_TRACE("[HandLandmarkBatchCalculator] No valid hand, truncated here");
+            AISDK_LOG_TRACE("[HandLandmarkBatch25DCalculator] No valid hand, truncated here");
         }
 
-        AISDK_LOG_TRACE("[HandLandmarkBatchCalculator] Process complete");
+        AISDK_LOG_TRACE("[HandLandmarkBatch25DCalculator] Process complete");
         return absl::OkStatus();
     }
 };
