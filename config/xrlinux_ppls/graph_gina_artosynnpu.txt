@@ -69,33 +69,18 @@ node {
   }
 }
 
-# ----- 节点2：单目/双目模式切换 -----
+# ----- 节点2：检测框平滑处理 -----
 node {
-  name: "MonoBinoSwitch"                                # 节点名称
-  calculator: "MonoBinoSwitchCalculator"                # 使用的calculator名称
-  input_stream: "BBOX_IN:detection_output"              # 输入：检测框
-  output_stream: "BBOX_OUT:detection_valid"             # 输出：有效检测框
-
-  # calculator专用选项
-  node_options: {
-    [type.googleapis.com/aisdk.MonoBinoSwitchCalculatorOptions] {
-      mode: "SWITCH"                                    # 切换模式：BINO(双目), MONO(单目), SWITCH(自动切换)
-    }
-  }
+  name: "DetBoxSmoothing"                                             # 节点名称
+  calculator: "DetectBoxSmoothingCalculator"                          # 使用的calculator名称
+  input_stream: "BBOX_INPUT:detection_output"                         # 输入：有效检测框
+  output_stream: "BBOX_SMOOTHED_OUTPUT:detection_smoothed_output"     # 输出：平滑后的检测框
 }
 
-# ----- 节点3：检测框平滑处理 -----
-node {
-  name: "DetBoxSmoothing"                                            # 节点名称
-  calculator: "DetectBoxSmoothingCalculator"                         # 使用的calculator名称
-  input_stream: "BBOX_INPUT:detection_valid"                         # 输入：有效检测框
-  output_stream: "BBOX_SMOOTHED_OUTPUT:detection_smoothed_output"    # 输出：平滑后的检测框
-}
-
-# ----- 节点4：2D手部关键点检测 -----
+# ----- 节点3：2D手部关键点检测 -----
 node {
   name: "HandLandmark_2D"                                             # 节点名称
-  calculator: "HandLandmarkBatchCalculator"                           # 使用的calculator名称
+  calculator: "HandLandmarkBatch25DCalculator"                        # 使用的calculator名称
   input_stream: "BBOX_SMOOTHED_OUTPUT:detection_smoothed_output"      # 输入：平滑后的检测框
   input_stream: "IMAGE_INPUT:image_out"                               # 输入：处理后的图像
   input_side_packet: "CAM_INFO_INPUT:cam_info"                        # 输入：相机参数（静态数据包）
@@ -108,85 +93,40 @@ node {
       input_width: 128                                                 # 模型输入width
       bbox_expand_ratio: 1.5                                           # 检测框扩展比例（扩大感兴趣区域）
       model_name: "2d_rtmtiny_ar9481npu_gina"                          # 2D模型名称
-      pcl_able: false                                                  # 是否支持pcl处理
+      pcl_able: true                                                   # 是否支持pcl处理
     }
   }
 }
 
-# 关键点滤波器
-#node {
-#  name: "LandmarkFilter"                                              # 节点名称
-#  calculator: "LandmarkFilterCalculator"                              # 使用的calculator名称
-#  input_stream: "LANDMARK_INPUT:kpt2d"                                # 输入：2D关键点
-#  output_stream: "LANDMARK_OUTPUT:kpt2d_filter"                       # 输出：滤波后的2d关键点
-#}
-
-# ----- 节点5：单目3D关键点计算 -----
+# ----- 节点4：单目3D关键点计算 -----
 node {
-  name: "MonoHand_3D"                                                  # 节点名称
-  calculator: "MonoHandKpt3DCalculator"                                # 使用的calculator名称
-  input_side_packet: "CAM_INFO_INPUT:cam_info"                         # 输入：相机参数（静态数据包）
-  input_stream: "LANDMARK_INPUT:kpt2d"                                 # 输入：2D关键点
-  input_stream: "HEADPOSE:head_pose_out"                               # 输入：处理后的头部姿态
-  output_stream: "KPT3D_OUTPUT:kpt3d_mono"                             # 输出：单目3D关键点
+  name: "MonoHand_3D"                                                 # 节点名称
+  calculator: "MonoHandKpt3D25DCalculator"                            # 使用的calculator名称
+  input_side_packet: "CAM_INFO_INPUT:cam_info"                        # 输入：相机参数（静态数据包）
+  input_stream: "LANDMARK_INPUT:kpt2d"                                # 输入：2D关键点
+  input_stream: "HEADPOSE:head_pose_out"                              # 输入：处理后的头部姿态
+  output_stream: "KPT3D_OUTPUT:kpt3d_mono"                            # 输出：单目3D关键点
 }
 
-# ----- 节点6：双目3D关键点提升 -----
-node {
-  name: "LiftNet_3D"                                                    # 节点名称
-  calculator: "HandLiftCalculator"                                      # 使用的calculator名称
-  input_side_packet: "CAM_INFO_INPUT:cam_info"                          # 输入：相机参数（静态数据包）
-  input_stream: "LANDMARK_INPUT:kpt2d"                                  # 输入：2D关键点
-  output_stream: "LIFT_OUTPUT:kpt3d_bino"                               # 输出：双目3D关键点
-
-  # calculator专用选项
-  node_options: {
-    [type.googleapis.com/aisdk.HandLiftCalculatorOptions] {
-      model_name: "3d_liftnimble"                                       # 3D提升模型名称
-    }
-  }
-}
-
-# ----- 节点7：硬规则过滤 -----
-node {
-  name: "BlockHardRules"                                                # 节点名称
-  calculator: "BlockHardRulesCalculator"                                # 使用的calculator名称
-  input_stream: "kpt3d_mono"                                            # 输入：单目3D关键点
-  input_stream: "kpt3d_bino"                                            # 输入：双目3D关键点
-  output_stream: "BLOCK_OUT:kpt3d_blocked"                              # 输出：过滤后3D关键点
-
-  # calculator专用选项
-  node_options: {
-    [type.googleapis.com/aisdk.BlockHardRulesCalculatorOptions] {
-      max_root_depth: 1.0                                               # 最大根部深度阈值
-      # score_th = 0.8 ? model_name == 3d_liftnimble else 0.85          
-      score_th: 0.725                                                   # 置信度阈值
-      score_th_width: 0.05                                              # 阈值过渡区间宽度
-      rmse_th: 5                                                        # 均方根误差阈值
-      rmse_th_width: 1                                                  # RMSE过渡区间宽度
-    }
-  }
-}
-
-# ----- 节点8：坐标系转换 -----
+# ----- 节点5：坐标系转换 -----
 node {
   name: "ConvertToWorld"                                                # 节点名称
   calculator: "ConvertToWorldCalculator"                                # 使用的calculator名称
-  input_stream: "INPUT:kpt3d_blocked"                                   # 输入：过滤后的3D关键点
+  input_stream: "INPUT:kpt3d_mono"                                      # 输入：过滤后的3D关键点
   input_stream: "HEADPOSE:head_pose_out"                                # 输入：头部姿态数据
   output_stream: "OUTPUT:kpt3d_world"                                   # 输出：世界坐标系下的3D关键点
 }
 
-# ----- 节点9：手势识别 -----
+# ----- 节点6：手势识别 -----
 node {
   name: "GestureRecognition"                                            # 节点名称
   calculator: "GestureRecognitionCalculator"                            # 使用的calculator名称
   input_stream: "GR_KPT2D_INPUT:kpt2d"                                  # 输入：2D关键点
-  input_stream: "GR_KPT_INPUT:kpt3d_blocked"                            # 输入：3D关键点
+  input_stream: "GR_KPT_INPUT:kpt3d_mono"                               # 输入：3D关键点
   output_stream: "GR_OUTPUT:gesture"                                    # 输出：识别出的手势类型
 }
 
-# ----- 节点10：最终结果过滤 -----
+# ----- 节点7：最终结果过滤 -----
 node {
   name: "HandFilter"                                                    # 节点名称
   calculator: "HandFilterCalculator"                                    # 使用的calculator名称
@@ -197,12 +137,12 @@ node {
   # calculator专用选项
   node_options: {
     [type.googleapis.com/aisdk.HandFilterCalculatorOptions] {
-      glasses_type: "flora"                                             # 眼镜类型（影响滤波参数）
+      glasses_type: "flora"                                             # 眼镜类型（影响滤波参数）(暂时先使用flora)
     }
   }
 }
 
-# ----- 节点11：结果标准化 -----
+# ----- 节点8：结果标准化 -----
 node {
   name: "StandardizeKeypoints"                                          # 节点名称
   calculator: "StandardizeKeypointsCalculator"                          # 使用的calculator名称
