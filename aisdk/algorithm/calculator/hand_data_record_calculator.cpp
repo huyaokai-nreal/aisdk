@@ -127,8 +127,16 @@ class HandDataRecordCalculator : public xgraph::CalculatorBase {
         const auto& cam_info = cc->InputSidePackets()
                                    .Tag("CAM_INFO_INPUT")
                                    .Get<std::vector<std::shared_ptr<aisdk::base::BaseCameraModel>>>();
-        lcam_model_ = cam_info.at(0);
-        rcam_model_ = cam_info.at(1);
+        AISDK_LOG_TRACE("cam_info.size[{}]", cam_info.size());
+        if (1 == cam_info.size()) {
+            lcam_model_ = cam_info.at(0);
+        } else if (2 == cam_info.size()) {
+            lcam_model_ = cam_info.at(0);
+            rcam_model_ = cam_info.at(1);
+        } else {
+            // do nothing
+        }
+
         precorder = GetSharedDataDebugRecord(std::string("calculator+task"));
         return absl::OkStatus();
     }
@@ -160,11 +168,19 @@ class HandDataRecordCalculator : public xgraph::CalculatorBase {
                             const auto& image_data = package.Get<std::vector<Image>>();
                             cache->async_nodestatus[int32_t(NodeStatus::INPUT_IMAGE)] = true;
                             cache->m_nodestatus = NodeStatus::INPUT_IMAGE;
+                            AISDK_LOG_TRACE("image_data.size[{}]", image_data.size());
                             cache->raw_time_nanos = image_data[0].raw_time_nanos;
-                            cache->detect_images.resize(2);
-                            cache->detect_images[0].m_mat = image_data[0].m_mat.clone();
-                            cache->detect_images[1].m_mat = image_data[1].m_mat.clone();
-                            recorder.DebugImage(cache, image_data);
+                            cache->detect_images.resize(image_data.size());
+                            if (1 == image_data.size()) {
+                                cache->detect_images[0].m_mat = image_data[0].m_mat.clone();
+                                recorder.DebugImage(cache, image_data);
+                            } else if (2 == image_data.size()) {
+                                cache->detect_images[0].m_mat = image_data[0].m_mat.clone();
+                                cache->detect_images[1].m_mat = image_data[1].m_mat.clone();
+                                recorder.DebugImage(cache, image_data);
+                            } else {
+                                // do nothing
+                            }
                         }
                         m_mgr.SetLatestTime(time_id);
                     } else if (coll.Name() == "head_pose") {
@@ -229,16 +245,27 @@ class HandDataRecordCalculator : public xgraph::CalculatorBase {
                             cache->rhand_valid = kpt3d_data.rhand_valid;
 
                             if (kpt3d_data.lhand_valid) {
-                                cache->lhand_lcam_reproj_kpt2d =
-                                    lcam_model_->world_to_window(kpt3d_data.left_hand.kpt3d);
-                                cache->lhand_rcam_reproj_kpt2d =
-                                    rcam_model_->world_to_window(kpt3d_data.left_hand.kpt3d);
+                                if (lcam_model_) {
+                                    cache->lhand_lcam_reproj_kpt2d =
+                                        lcam_model_->world_to_window(kpt3d_data.left_hand.kpt3d);
+                                }
+
+                                if (rcam_model_) {
+                                    cache->lhand_rcam_reproj_kpt2d =
+                                        rcam_model_->world_to_window(kpt3d_data.left_hand.kpt3d);
+                                }
                             }
+
                             if (kpt3d_data.rhand_valid) {
-                                cache->rhand_lcam_reproj_kpt2d =
-                                    lcam_model_->world_to_window(kpt3d_data.right_hand.kpt3d);
-                                cache->rhand_rcam_reproj_kpt2d =
-                                    rcam_model_->world_to_window(kpt3d_data.right_hand.kpt3d);
+                                if (lcam_model_) {
+                                    cache->rhand_lcam_reproj_kpt2d =
+                                        lcam_model_->world_to_window(kpt3d_data.right_hand.kpt3d);
+                                }
+
+                                if (rcam_model_) {
+                                    cache->rhand_rcam_reproj_kpt2d =
+                                        rcam_model_->world_to_window(kpt3d_data.right_hand.kpt3d);
+                                }
                             }
                             recorder.DebugLift(cache, kpt3d_data);
                         }

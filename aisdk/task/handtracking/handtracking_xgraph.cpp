@@ -57,54 +57,141 @@ static std::map<HandGesture, int> GestureMap = {
 
 HandTrackingXGraph::HandTrackingXGraph() {}
 
+/// @brief 向mediapipe配置中添加数据记录计算器
+///
+/// 该函数根据输入配置的绑定类型（单目/双目）动态生成新的mediapipe图配置，
+/// 用于添加手势数据记录功能。主要修改包括添加执行器和计算器节点配置。
+/// 参考："aisdk/algorithm/calculator/hand_data_record_calculator.cpp"
+/// 一定需要整体graph和calcutor的实现同时匹配
+/// 数据录制单独走一个执行器
+///
+/// @param[in] config mediapipe配置引用，包含特征绑定信息
+/// @param[out] new_graph_config 生成的新管道图配置字符串
+/// @return bool 是否成功添加配置（true=已添加；false=未添加）
 bool AddDataRecordCalculater(aisdk::xengine::PipelineConfig& config, std::string& new_graph_config) {
     // clang-format off
-    // 参考："aisdk/algorithm/calculator/hand_data_record_calculator.cpp"
-    // 一定需要整体graph和calcutor的实现同时匹配
-    // 数据录制单独走一个执行器
-    std::string new_exector_config = 
+
+    // config.related_feature.bind_mono_bino = "mono";
+    AISDK_LOG_TRACE("bind_mono_bino type[{}]", config.related_feature.bind_mono_bino);
+    if ("bino" == config.related_feature.bind_mono_bino) {
+        // 设定双目模式所需的数据录制的calculator
+
+        /**
+         * 执行器配置
+         * 创建专用执行器配置（防止数据记录阻塞主线程）
+        */
+        std::string new_exector_config = 
         "\n"
-        "output_stream: \"RECORD_RESULTS:record_result\"\n"
+        "output_stream: \"RECORD_RESULTS:record_result\"\n"        // 声明输出数据流
         "executor {\n"
-        "  name: \"handtracking_data_exector\"\n"
-        "  type: \"ThreadPoolExecutor\"\n"
+        "  name: \"handtracking_data_exector\"\n"                  // 执行器名称
+        "  type: \"ThreadPoolExecutor\"\n"                         // 使用线程池执行器
         "  options {\n"
         "    [mediapipe.ThreadPoolExecutorOptions.ext] {\n"
-        "      num_threads: 1\n"
+        "      num_threads: 1\n"                                   // 单线程处理避免并发问题
         "    }\n"
         "  }\n"
         "}\n";
-    // 3d模块输出kpt3d_bino
-    std::string new_bino_node_config2 =     
-        "node {\n"
-        "  name: \"HandDataRecord\"\n"
-        "  executor: \"handtracking_data_exector\"\n"
-        "  calculator: \"HandDataRecordCalculator\"\n"
-        "  input_stream: \"IMAGE_INPUT:image\"\n"
-        "  input_stream: \"HEADPOSE_INPUT:head_pose\"\n"
-        "  input_stream: \"DET_BBOX_OUTPUT:detection_output\"\n"
-        "  input_stream: \"LANDMARK_OUTPUT:kpt2d\"\n"
-        "  input_stream: \"LIFT_OUTPUT:kpt3d_bino\"\n"
-        "  input_stream: \"KPT3D_OUTPUT:kpt3d_mono\"\n"
-        "  input_stream: \"BLOCK_OUT:kpt3d_blocked\"\n"
-        "  input_stream: \"CONVERTWORLD_OUT:kpt3d_world\"\n"
-        "  input_stream: \"GR_OUTPUT:gesture\"\n"
-        "  input_stream: \"ALL_RESULTS:hand_result\"\n"
-        "  input_side_packet: \"CAM_INFO_INPUT:cam_info\"\n"
-        "  output_stream: \"RECORD_RESULTS:record_result\"\n"
-        "  input_stream_handler {\n"
-        "    input_stream_handler: \"ImmediateInputStreamHandler\"\n"
+
+        /**
+         * 计算器节点配置
+         * 构建bino手势数据记录计算器的节点配置
+         * 3d模块输出kpt3d_bino
+        */
+        std::string new_bino_node_config2 =     
+            "node {\n"
+            "  name: \"HandDataRecord\"\n"                                // 节点名称
+            "  executor: \"handtracking_data_exector\"\n"                 // 绑定专用执行器
+            "  calculator: \"HandDataRecordCalculator\"\n"                // 指定calculator类型
+
+            // 输入数据流配置（连接其他模块的输出）：
+            "  input_stream: \"IMAGE_INPUT:image\"\n"                     // 原始图像
+            "  input_stream: \"HEADPOSE_INPUT:head_pose\"\n"              // 头部姿态数据
+            "  input_stream: \"DET_BBOX_OUTPUT:detection_output\"\n"      // 检测框
+            "  input_stream: \"LANDMARK_OUTPUT:kpt2d\"\n"                 // 2D关键点
+            "  input_stream: \"LIFT_OUTPUT:kpt3d_bino\"\n"                // 双目3D关键点
+            "  input_stream: \"KPT3D_OUTPUT:kpt3d_mono\"\n"               // 单目3D关键点
+            "  input_stream: \"BLOCK_OUT:kpt3d_blocked\"\n"               // 阻塞状态信息
+            "  input_stream: \"CONVERTWORLD_OUT:kpt3d_world\"\n"          // 世界坐标系关键点
+            "  input_stream: \"GR_OUTPUT:gesture\"\n"                     // 手势识别结果
+            "  input_stream: \"ALL_RESULTS:hand_result\"\n"               // 汇总结果
+
+            // 输入旁路包（非流式数据）：
+            "  input_side_packet: \"CAM_INFO_INPUT:cam_info\"\n"
+
+            // 输出数据流：
+            "  output_stream: \"RECORD_RESULTS:record_result\"\n"
+
+            // 输入流处理策略（立即处理模式）：
+            "  input_stream_handler {\n"
+            "    input_stream_handler: \"ImmediateInputStreamHandler\"\n"      // 实时处理到达数据
+            "  }\n"
+            "}\n";
+
+        new_graph_config = config.graph_config + new_exector_config + new_bino_node_config2;
+    } else if ("mono" == config.related_feature.bind_mono_bino) {
+        // 设定单目模式所需的数据录制的calculator
+
+        /**
+         * 执行器配置
+         * 创建专用执行器配置（防止数据记录阻塞主线程）
+        */
+        std::string new_exector_config = 
+        "\n"
+        "output_stream: \"RECORD_RESULTS:record_result\"\n"        // 声明输出数据流
+        "executor {\n"
+        "  name: \"handtracking_data_exector\"\n"                  // 执行器名称
+        "  type: \"ThreadPoolExecutor\"\n"                         // 使用线程池执行器
+        "  options {\n"
+        "    [mediapipe.ThreadPoolExecutorOptions.ext] {\n"
+        "      num_threads: 1\n"                                   // 单线程处理避免并发问题
+        "    }\n"
         "  }\n"
         "}\n";
-    // clang-format on
 
-    // 目前仅支持双目
-    if (config.related_feature.bind_mono_bino == "bino") {
-        new_graph_config = config.graph_config + new_exector_config + new_bino_node_config2;
-        return true;
+        /**
+         * 计算器节点配置
+         * 构建mono手势数据记录计算器的节点配置
+         * 3d模块输出kpt3d_mono
+        */
+        std::string new_mono_node_config2 =     
+            "node {\n"
+            "  name: \"HandDataRecord\"\n"                                // 节点名称
+            "  executor: \"handtracking_data_exector\"\n"                 // 绑定专用执行器
+            "  calculator: \"HandDataRecordCalculator\"\n"                // 指定calculator类型
+
+            // 输入数据流配置（连接其他模块的输出）：
+            "  input_stream: \"IMAGE_INPUT:image\"\n"                     // 原始图像
+            "  input_stream: \"HEADPOSE_INPUT:head_pose\"\n"              // 头部姿态数据
+            "  input_stream: \"DET_BBOX_OUTPUT:detection_output\"\n"      // 检测框
+            "  input_stream: \"LANDMARK_OUTPUT:kpt2d\"\n"                 // 2D关键点
+            "  input_stream: \"LIFT_OUTPUT:kpt3d_mono\"\n"                // 单目3D关键点
+            "  input_stream: \"KPT3D_OUTPUT:kpt3d_mono\"\n"               // 单目3D关键点(这里为了处理的calculator格式统一)
+            "  input_stream: \"BLOCK_OUT:kpt3d_blocked\"\n"               // 阻塞状态信息
+            "  input_stream: \"CONVERTWORLD_OUT:kpt3d_world\"\n"          // 世界坐标系关键点
+            "  input_stream: \"GR_OUTPUT:gesture\"\n"                     // 手势识别结果
+            "  input_stream: \"ALL_RESULTS:hand_result\"\n"               // 汇总结果
+
+            // 输入旁路包（非流式数据）：
+            "  input_side_packet: \"CAM_INFO_INPUT:cam_info\"\n"
+
+            // 输出数据流：
+            "  output_stream: \"RECORD_RESULTS:record_result\"\n"
+
+            // 输入流处理策略（立即处理模式）：
+            "  input_stream_handler {\n"
+            "    input_stream_handler: \"ImmediateInputStreamHandler\"\n"      // 实时处理到达数据
+            "  }\n"
+            "}\n";
+
+        new_graph_config = config.graph_config + new_exector_config + new_mono_node_config2;
+    } else {
+        // clang-format on
+        return false;
     }
 
-    return false;
+    // clang-format on
+    return true;
 }
 
 aisdk::algorithm::Status HandTrackingXGraph::Init(aisdk::xengine::DlSymFuncs& funcs,

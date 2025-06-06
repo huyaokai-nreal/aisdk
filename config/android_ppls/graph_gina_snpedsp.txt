@@ -108,25 +108,46 @@ node {
   output_stream: "KPT3D_OUTPUT:kpt3d_mono"                            # 输出：单目3D关键点
 }
 
-# ----- 节点5：坐标系转换 -----
+# ----- 节点5：硬规则过滤 -----
+node {
+  name: "BlockHardRules"                                                # 节点名称
+  calculator: "BlockHardRulesCalculator"                                # 使用的calculator名称
+  input_stream: "kpt3d_mono"                                            # 输入：单目3D关键点
+  # input_stream: "kpt3d_bino"                                          # 输入：双目3D关键点
+  output_stream: "BLOCK_OUT:kpt3d_blocked"                              # 输出：过滤后3D关键点
+
+  # calculator专用选项
+  node_options: {
+    [type.googleapis.com/aisdk.BlockHardRulesCalculatorOptions] {
+      max_root_depth: 1.0                                               # 最大根部深度阈值
+      # score_th = 0.8 ? model_name == 3d_liftnimble else 0.85          
+      score_th: 0.725                                                   # 置信度阈值
+      score_th_width: 0.05                                              # 阈值过渡区间宽度
+      rmse_th: 5                                                        # 均方根误差阈值
+      rmse_th_width: 1                                                  # RMSE过渡区间宽度
+    }
+  }
+}
+
+# ----- 节点6：坐标系转换 -----
 node {
   name: "ConvertToWorld"                                                # 节点名称
   calculator: "ConvertToWorldCalculator"                                # 使用的calculator名称
-  input_stream: "INPUT:kpt3d_mono"                                      # 输入：过滤后的3D关键点
+  input_stream: "INPUT:kpt3d_blocked"                                   # 输入：过滤后的3D关键点
   input_stream: "HEADPOSE:head_pose_out"                                # 输入：头部姿态数据
   output_stream: "OUTPUT:kpt3d_world"                                   # 输出：世界坐标系下的3D关键点
 }
 
-# ----- 节点6：手势识别 -----
+# ----- 节点7：手势识别 -----
 node {
   name: "GestureRecognition"                                            # 节点名称
   calculator: "GestureRecognitionCalculator"                            # 使用的calculator名称
   input_stream: "GR_KPT2D_INPUT:kpt2d"                                  # 输入：2D关键点
-  input_stream: "GR_KPT_INPUT:kpt3d_mono"                               # 输入：3D关键点
+  input_stream: "GR_KPT_INPUT:kpt3d_blocked"                            # 输入：3D关键点
   output_stream: "GR_OUTPUT:gesture"                                    # 输出：识别出的手势类型
 }
 
-# ----- 节点7：最终结果过滤 -----
+# ----- 节点8：最终结果过滤 -----
 node {
   name: "HandFilter"                                                    # 节点名称
   calculator: "HandFilterCalculator"                                    # 使用的calculator名称
@@ -142,7 +163,7 @@ node {
   }
 }
 
-# ----- 节点8：结果标准化 -----
+# ----- 节点9：结果标准化 -----
 node {
   name: "StandardizeKeypoints"                                         # 节点名称
   calculator: "StandardizeKeypointsCalculator"                         # 使用的calculator名称

@@ -363,14 +363,10 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
             auto &predictor_rhand = GlobalPredictorService::getInstance().get_predictor_rhand();
             predictor_rhand.stop_tracking();
 
-            // #if defined(ENABLE_ALGORITHM_DATA_RECORD) && !defined(ENABLE_SEGMENT_JOINT_INFERENCE_MODE)
             cc->Outputs().Tag("DET_BBOX_OUTPUT").Add(output_buffer_.release(), cc->InputTimestamp());
             cc->Outputs().Tag("IMAGE_OUTPUT").AddPacket(cc->Inputs().Tag("IMAGE_INPUT").Value());
             cc->Outputs().Tag("HEADPOSE_OUTPUT").AddPacket(cc->Inputs().Tag("HEADPOSE").Value());
-            //             AISDK_LOG_TRACE("[HandDetTrackCalculator] empty hand, pass");
-            // #else
             AISDK_LOG_TRACE("[HandDetTrackCalculator] No valid hand, truncated here");
-            // #endif
         }
 
         AISDK_LOG_TRACE("[HandDetTrackCalculator] Process complete");
