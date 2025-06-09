@@ -8,6 +8,7 @@
             "detect_cpu_flora",
             "detect_dsp_flora_mono",
             "2d_rtmtinyb2",
+            "2d_rtmtiny_nimble",
             "2d_rsnnano",
             "2d_filter",
             "3d_lift_ella",
@@ -96,6 +97,26 @@
                     "feat_x",
                     "feat_y",
                     "feat_z"
+                ]
+            }
+        },
+        "2d_rtmtiny_nimble": {
+            "model_config": {
+                "file_name": "models/liftnimble_pcl_mono_ln2bn_250529_f488cd_quantized.dlc",
+                "vendor": "snpe"
+            },
+            "session_config": {
+                "batch": 1,
+                "precision": "int16",
+                "thread_num": 1,
+                "runtime": "dsp",
+                "output_tensors": [
+                    "feat_x",
+                    "feat_y",
+                    "angle",
+                    "svd_pt",
+                    "score",
+                    "sigma"
                 ]
             }
         },

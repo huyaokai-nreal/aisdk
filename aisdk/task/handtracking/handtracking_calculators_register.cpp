@@ -17,6 +17,7 @@
 #include "aisdk/algorithm/calculator/mono_bino_switch_calculator.cpp"
 #include "aisdk/algorithm/calculator/mono_hand_kpt3d_25d_calculator.cpp"
 #include "aisdk/algorithm/calculator/mono_hand_kpt3d_calculator.cpp"
+#include "aisdk/algorithm/calculator/mono_hand_kpt3d_nimble_DLT_calculator.cpp"
 #include "aisdk/algorithm/calculator/standardize_keypoints_calculator.cpp"
 
 namespace aisdk::task {
@@ -40,6 +41,7 @@ void TriggerGloalGraphCalculatorsConstructForHandTracking() {
     REGISTER_CALCULATOR(MonoHandKpt3DCalculator);         // OK!
     REGISTER_CALCULATOR(MonoHandKpt3D25DCalculator);      // OK!
     REGISTER_CALCULATOR(MonoBinoSwitchCalculator);
+    REGISTER_CALCULATOR(MonoHandKpt3DNimbleCalculator);
 }
 // 这里是要规避全局类不构造的问题, 以后找到原因解决
 void TriggerGloalGraphCalculatorsConstruct() {

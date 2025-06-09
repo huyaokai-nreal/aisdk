@@ -67,4 +67,6 @@ target_sources(
     ${CMAKE_CURRENT_SOURCE_DIR}/hand_data_record_calculator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mono_hand_kpt3d_calculator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mono_hand_kpt3d_25d_calculator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mono_hand_kpt3d_nimble_DLT_calculator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mono_hand_kpt3d_nimble_DLT_calculator.pb.cc
 )

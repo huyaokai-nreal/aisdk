@@ -21,4 +21,7 @@ target_sources(
     # 手部姿态提升逻辑实现文件
     ${CMAKE_CURRENT_SOURCE_DIR}/hand_lift.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hand_lift_nimble.cpp
+
+    # 单目3D
+    ${CMAKE_CURRENT_SOURCE_DIR}/hand_rtmtiny_nimble.cpp
 )
