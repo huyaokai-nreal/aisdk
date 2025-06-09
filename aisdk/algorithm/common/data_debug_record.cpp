@@ -614,6 +614,20 @@ int DataDebugRecord::CheckRealTimeDebugConfig(uint64_t new_timestamp) {
 }
 
 void DataDebugRecord::DebugImage(Recordcache* record, const std::vector<Image>& input_image) {
+    // 参数校验
+    if ((1 == input_image.size()) && (input_image[0].m_mat.empty())) {
+        AISDK_LOG_ERROR("input_image size is 1 but input_image[0].m_mat is empty in func DataDebugRecord::DebugImage");
+    } else if ((2 == input_image.size()) && ((input_image[0].m_mat.empty()) || (input_image[1].m_mat.empty()))) {
+        AISDK_LOG_ERROR(
+            "input_image size is 2 but input_image[0].m_mat.empty[{}] is true or input_image[1].m_mat.empty[{}] is "
+            "true in func DataDebugRecord::DebugImage",
+            input_image[0].m_mat.empty(), input_image[1].m_mat.empty());
+    } else {
+        AISDK_LOG_ERROR("param is illegal. input_image.size()[{}] must be 1 or 2 in func DataDebugRecord::DebugImage",
+                        input_image.size());
+        return;
+    }
+
     if (enable_detect_record_rawimage) {
         uint64_t cur_time_ms = static_cast<uint64_t>(record->frame_timestamp / 1e3);
         if ((cur_time_ms - last_detect_record_rawimage_time_ms) > detect_record_rawimage_interval_ms) {
@@ -623,11 +637,16 @@ void DataDebugRecord::DebugImage(Recordcache* record, const std::vector<Image>& 
             std::string rcam_pic_name = rcam_local_record_rootpath + "/seq_" +
                                         aisdk::base::StringSprintf("%010d", record->sequence_id) + "_detect." +
                                         rawimage_images_encoding;
-            const cv::Mat& lcam = input_image[0].m_mat;
-            const cv::Mat& rcam = input_image[1].m_mat;
 
-            cv::imwrite(lcam_pic_name, lcam);
-            cv::imwrite(rcam_pic_name, rcam);
+            if (1 == input_image.size()) {
+                cv::imwrite(lcam_pic_name, input_image[0].m_mat);
+            } else if (2 == input_image.size()) {
+                cv::imwrite(lcam_pic_name, input_image[0].m_mat);
+                cv::imwrite(rcam_pic_name, input_image[1].m_mat);
+            } else {
+                // do nothing
+            }
+
             last_detect_record_rawimage_time_ms = cur_time_ms;
         }
     }
@@ -648,20 +667,52 @@ void DataDebugRecord::DebugHeadpose(Recordcache* record, const aisdk::algorithm:
 }
 
 void DataDebugRecord::DetectOpRecord(Recordcache* record, const aisdk::algorithm::DetOutputInternal& detect_result) {
+    // 参数校验
+    if (!record) {
+        AISDK_LOG_ERROR("param is illegal. record is nullptr");
+        return;
+    }
+
+    if ((1 == record->detect_images.size()) && (record->detect_images[0].m_mat.empty())) {
+        AISDK_LOG_ERROR(
+            "record->detect_images size is 1 but record->detect_images[0].m_mat is empty in func "
+            "DataDebugRecord::DetectOpRecord");
+    } else if ((2 == record->detect_images.size()) &&
+               ((record->detect_images[0].m_mat.empty()) || (record->detect_images[1].m_mat.empty()))) {
+        AISDK_LOG_ERROR(
+            "record->detect_images size is 2 but record->detect_images[0].m_mat.empty[{}] is true or "
+            "record->detect_images[1].m_mat.empty[{}] is true in func DataDebugRecord::DetectOpRecord",
+            record->detect_images[0].m_mat.empty(), record->detect_images[1].m_mat.empty());
+    } else {
+        AISDK_LOG_ERROR(
+            "param is illegal. record->detect_images.size()[{}] must be 1 or 2 in func DataDebugRecord::DetectOpRecord",
+            record->detect_images.size());
+        return;
+    }
+
     std::string lcam_pic_name =
         lcam_local_record_rootpath + "/seq_" + aisdk::base::StringSprintf("%010d", record->sequence_id) + "_detect.jpg";
     std::string rcam_pic_name =
         rcam_local_record_rootpath + "/seq_" + aisdk::base::StringSprintf("%010d", record->sequence_id) + "_detect.jpg";
+
     cv::Mat lcam;
-    cv::cvtColor(record->detect_images[0].m_mat, lcam, cv::COLOR_GRAY2BGR);
     cv::Mat rcam;
-    cv::cvtColor(record->detect_images[1].m_mat, rcam, cv::COLOR_GRAY2BGR);
+    int image_num = record->detect_images.size();
+    if (1 == image_num) {
+        cv::cvtColor(record->detect_images[0].m_mat, lcam, cv::COLOR_GRAY2BGR);
+    } else if (2 == image_num) {
+        cv::cvtColor(record->detect_images[0].m_mat, lcam, cv::COLOR_GRAY2BGR);
+        cv::cvtColor(record->detect_images[1].m_mat, rcam, cv::COLOR_GRAY2BGR);
+    } else {
+        // do nothing
+    }
+
     cv::Scalar rectcolor(255, 255, 255);
     if (record->is_tracker_detect) {
         rectcolor = cv::Scalar(0, 255, 0);
     }
 
-    for (uint32_t cam_id = 0; cam_id < 2; cam_id++) {
+    for (uint32_t cam_id = 0; cam_id < image_num; cam_id++) {
         if (detect_result.lhand_lcam_valid) {
             cv::Rect rt = {(int)detect_result.lhand_lcam_rect.x, (int)detect_result.lhand_lcam_rect.y,
                            (int)detect_result.lhand_lcam_rect.w, (int)detect_result.lhand_lcam_rect.h};
@@ -685,8 +736,13 @@ void DataDebugRecord::DetectOpRecord(Recordcache* record, const aisdk::algorithm
         }
     }
 
-    cv::imwrite(lcam_pic_name, lcam);
-    cv::imwrite(rcam_pic_name, rcam);
+    if (!lcam.empty()) {
+        cv::imwrite(lcam_pic_name, lcam);
+    }
+
+    if (!rcam.empty()) {
+        cv::imwrite(rcam_pic_name, rcam);
+    }
 }
 
 void DataDebugRecord::DetectOpToJsonString(Recordcache* record,
@@ -765,12 +821,45 @@ void DataDebugRecord::DetectOpToJsonString(Recordcache* record,
 }
 
 void DataDebugRecord::RsnOpRecord(Recordcache* record, const aisdk::algorithm::Kpt2dInternal& kpt2d_result) {
+    // 参数校验
+    if (!record) {
+        AISDK_LOG_ERROR("param is illegal. record is nullptr");
+        return;
+    }
+
+    if ((1 == record->detect_images.size()) && (record->detect_images[0].m_mat.empty())) {
+        AISDK_LOG_ERROR(
+            "record->detect_images size is 1 but record->detect_images[0].m_mat is empty in func "
+            "DataDebugRecord::RsnOpRecord");
+    } else if ((2 == record->detect_images.size()) &&
+               ((record->detect_images[0].m_mat.empty()) || (record->detect_images[1].m_mat.empty()))) {
+        AISDK_LOG_ERROR(
+            "record->detect_images size is 2 but record->detect_images[0].m_mat.empty[{}] is true or "
+            "record->detect_images[1].m_mat.empty[{}] is true in func DataDebugRecord::RsnOpRecord",
+            record->detect_images[0].m_mat.empty(), record->detect_images[1].m_mat.empty());
+    } else {
+        AISDK_LOG_ERROR(
+            "param is illegal. record->detect_images.size()[{}] must be 1 or 2 in func DataDebugRecord::RsnOpRecord",
+            record->detect_images.size());
+        return;
+    }
+
     std::string lcam_pic_name =
         lcam_local_record_rootpath + "/seq_" + aisdk::base::StringSprintf("%010d", record->sequence_id) + "_rsn.jpg";
     std::string rcam_pic_name =
         rcam_local_record_rootpath + "/seq_" + aisdk::base::StringSprintf("%010d", record->sequence_id) + "_rsn.jpg";
-    cv::Mat lcam = record->detect_images[0].m_mat.clone();
-    cv::Mat rcam = record->detect_images[1].m_mat.clone();
+
+    cv::Mat lcam;
+    cv::Mat rcam;
+    int image_num = record->detect_images.size();
+    if (1 == image_num) {
+        cv::Mat lcam = record->detect_images[0].m_mat.clone();
+    } else if (2 == image_num) {
+        cv::Mat lcam = record->detect_images[0].m_mat.clone();
+        cv::Mat rcam = record->detect_images[1].m_mat.clone();
+    } else {
+        // do nothing
+    }
 
     if (kpt2d_result.lhand_lcam_valid) {
         for (int kpt_index = 0; kpt_index < kAlgoKeypointNum; kpt_index++) {
@@ -791,8 +880,13 @@ void DataDebugRecord::RsnOpRecord(Recordcache* record, const aisdk::algorithm::K
         }
     }
 
-    cv::imwrite(lcam_pic_name, lcam);
-    cv::imwrite(rcam_pic_name, rcam);
+    if (!lcam.empty()) {
+        cv::imwrite(lcam_pic_name, lcam);
+    }
+
+    if (!rcam.empty()) {
+        cv::imwrite(rcam_pic_name, rcam);
+    }
 }
 
 void DataDebugRecord::RsnOpToJsonString(Recordcache* record, const aisdk::algorithm::Kpt2dInternal& kpt2d_result) {
@@ -937,12 +1031,45 @@ void DataDebugRecord::RsnOpToJsonString(Recordcache* record, const aisdk::algori
 // }
 
 void DataDebugRecord::liftOpRecord(Recordcache* record, const aisdk::algorithm::HandsData& kpt3d_result) {
+    // 参数校验
+    if (!record) {
+        AISDK_LOG_ERROR("param is illegal. record is nullptr");
+        return;
+    }
+
+    if ((1 == record->detect_images.size()) && (record->detect_images[0].m_mat.empty())) {
+        AISDK_LOG_ERROR(
+            "record->detect_images size is 1 but record->detect_images[0].m_mat is empty in func "
+            "DataDebugRecord::liftOpRecord");
+    } else if ((2 == record->detect_images.size()) &&
+               ((record->detect_images[0].m_mat.empty()) || (record->detect_images[1].m_mat.empty()))) {
+        AISDK_LOG_ERROR(
+            "record->detect_images size is 2 but record->detect_images[0].m_mat.empty[{}] is true or "
+            "record->detect_images[1].m_mat.empty[{}] is true in func DataDebugRecord::liftOpRecord",
+            record->detect_images[0].m_mat.empty(), record->detect_images[1].m_mat.empty());
+    } else {
+        AISDK_LOG_ERROR(
+            "param is illegal. record->detect_images.size()[{}] must be 1 or 2 in func DataDebugRecord::liftOpRecord",
+            record->detect_images.size());
+        return;
+    }
+
     std::string lcam_pic_name = lcam_local_record_rootpath + "/seq_" +
                                 aisdk::base::StringSprintf("%010d", record->sequence_id) + "_lift_reproj.jpg";
     std::string rcam_pic_name = rcam_local_record_rootpath + "/seq_" +
                                 aisdk::base::StringSprintf("%010d", record->sequence_id) + "_lift_reproj.jpg";
-    cv::Mat lcam = record->detect_images[0].m_mat.clone();
-    cv::Mat rcam = record->detect_images[1].m_mat.clone();
+
+    cv::Mat lcam;
+    cv::Mat rcam;
+    int image_num = record->detect_images.size();
+    if (1 == image_num) {
+        cv::Mat lcam = record->detect_images[0].m_mat.clone();
+    } else if (2 == image_num) {
+        cv::Mat lcam = record->detect_images[0].m_mat.clone();
+        cv::Mat rcam = record->detect_images[1].m_mat.clone();
+    } else {
+        // do nothing
+    }
 
     if (kpt3d_result.lhand_valid) {
         for (int kpt_index = 0; kpt_index < kAlgoKeypointNum; kpt_index++) {
@@ -967,8 +1094,13 @@ void DataDebugRecord::liftOpRecord(Recordcache* record, const aisdk::algorithm::
         }
     }
 
-    cv::imwrite(lcam_pic_name, lcam);
-    cv::imwrite(rcam_pic_name, rcam);
+    if (!lcam.empty()) {
+        cv::imwrite(lcam_pic_name, lcam);
+    }
+
+    if (!rcam.empty()) {
+        cv::imwrite(rcam_pic_name, rcam);
+    }
 }
 
 void DataDebugRecord::liftToJsonString(Recordcache* record, const aisdk::algorithm::HandsData& kpt3d_result) {
