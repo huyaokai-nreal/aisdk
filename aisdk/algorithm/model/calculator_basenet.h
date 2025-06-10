@@ -126,5 +126,9 @@ class LiftBaseNet: public CalculatorBaseNet {
     virtual absl::StatusOr<LiftNetOutputs> Inference(const LiftNetInputs& input) = 0;
     virtual absl::Status SetCameraInfo(const std::shared_ptr<base::BaseCameraModel>& left_camera, const std::shared_ptr<base::BaseCameraModel>& right_camera) = 0;
 };
+class MonoNimbleDLTBaseNet: public CalculatorBaseNet {
+    public:
+    virtual absl::StatusOr<MonoHandNimbleOutputs> Inference(const MonoHandNimbleInputs &input) = 0;
 
+};
 }  // namespace aisdk::algorithm

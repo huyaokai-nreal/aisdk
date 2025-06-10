@@ -345,7 +345,7 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
             AISDK_LOG_TRACE("[HandDetTrackCalculator] At least single hand valid, pass");
         } else {
             // update lastframe kpt3d
-            AISDK_LOG_ERROR("No valid hand, stop tracking");
+            AISDK_LOG_ERROR("[HandDetTrackCalculator] No valid hand, stop tracking");
             lastframe_kpt2d.lhand_lcam_valid = false;
             lastframe_kpt2d.rhand_lcam_valid = false;
             lastframe_kpt2d.lhand_rcam_valid = false;
