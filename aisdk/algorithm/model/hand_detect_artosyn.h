@@ -60,6 +60,7 @@ private:
     void PreProcessSingle(const std::vector<Image> &net_input, uint32_t batchn) {};   // 单样本预处理
     void PostProcessSingle(DetOutputInternal &result, uint32_t batchn) {};           // 单样本后处理
     void ArtosynHandDetectNetV2reset();
+    bool ChangeCHW2HWC(float *src, std::vector<float> &dest, int channels, int height, int width);
 
     aisdk::xengine::TensorFormat m_itensor_format;
     aisdk::xengine::TensorFormat m_otensor_format;

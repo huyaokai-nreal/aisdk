@@ -105,6 +105,45 @@ void ArtosynHandDetectNetv2::ArtosynHandDetectNetV2reset() {
     return;
 }
 
+bool ArtosynHandDetectNetv2::ChangeCHW2HWC(float *src, std::vector<float> &dest, int channels, int height, int width) {
+    // 验证输入参数有效性
+    int total_elements = channels * height * width;
+    if ((!src) || (channels <= 0) || (height <= 0) || (width <= 0) || (dest.size() != total_elements)) {
+        AISDK_LOG_ERROR(
+            "[ArtosynHandDetectNetv2] param is illegal in func ChangeCHW2HWC. src[{}] is nullptr or channels[{}] "
+            "<= 0 or height[{}] <= 0 or width[{}] <= 0 or dest.size[{}] not equal to total_elements[{}]",
+            (void *)src, channels, height, width, dest.size(), total_elements);
+        return false;
+    }
+
+    // 计算每个维度的跨度
+    const int HxW = height * width;
+    const int WxC = width * channels;
+
+    for (int hi = 0; hi < height; hi++) {
+        for (int wi = 0; wi < width; wi++) {
+            for (int ci = 0; ci < channels; ci++) {
+                int src_idx = ci * HxW + hi * width + wi;
+                int dest_idx = hi * WxC + wi * channels + ci;
+
+                // 确保索引在有效范围内
+                if (src_idx >= total_elements || dest_idx >= total_elements) {
+                    AISDK_LOG_ERROR(
+                        "[ArtosynHandDetectNetv2] Index out of bounds: src_idx[{}] should < total_elements[{}] and  "
+                        "dest_idx[{}] should < total_elements[{}]",
+                        src_idx, total_elements, dest_idx, total_elements);
+                    return false;
+                }
+
+                // 复制数据
+                dest[dest_idx] = src[src_idx];
+            }
+        }
+    }
+
+    return true;
+}
+
 /// @brief 初始化手势检测网络
 /// @param algo 算法配置参数（后处理参数等）
 /// @param model 模型配置（模型路径，输入输出规格等）
@@ -229,7 +268,7 @@ void ArtosynHandDetectNetv2::PreProcess(const std::vector<Image> &net_input) {
         float ratio = std::min(wratio, hratio);                        // 取最小缩放比例（保持宽高比）
         int tmp = (ratio < 1.0f) ? cv::INTER_AREA : cv::INTER_LINEAR;  // 缩小用区域插值，放大用线性插值
 
-        // step9: 缩放图像到模型输入尺寸
+        // step9: 图像resize
         AISDK_LOG_TRACE("going to resize, width[{}], height[{}], tmp[{}]", width, height, tmp);
         cv::Mat image_resized(cv::Size(width, height), CV_8UC1);  // 创建临时8位图像
         cv::resize(img, image_resized, cv::Size(width, height), 0, 0, tmp);
@@ -237,6 +276,7 @@ void ArtosynHandDetectNetv2::PreProcess(const std::vector<Image> &net_input) {
         // step10: 类型转换
         image_resized.convertTo(image_resized, CV_32FC1);         // 转换为32位浮点数
         cv::Mat new_mat(cv::Size(width, height), CV_32FC1, mem);  // 创建目标内存包装矩阵
+        image_resized.copyTo(new_mat);
     }
 }
 
@@ -288,12 +328,20 @@ void ArtosynHandDetectNetv2::PostProcess(DetOutputInternal &result) {
         int box_element_byte = otensor.m_tensors[index_box].m_elementbyte;
         char *box_mem =
             (char *)otensor.m_tensors[index_box].m_viraddr + batch_i * box_h * box_w * box_c * box_element_byte;
-        float *box_data = (float *)box_mem;
+        float *box_data_origin = (float *)box_mem;
+        std::vector<float> box_data(box_c * box_h * box_w, 0.0f);
+        if (true != ChangeCHW2HWC(box_data_origin, box_data, box_c, box_h, box_w)) {
+            continue;
+        }
 
         int cls_element_byte = otensor.m_tensors[index_cls].m_elementbyte;
         char *cls_mem =
             (char *)otensor.m_tensors[index_cls].m_viraddr + batch_i * cls_h * cls_w * cls_c * cls_element_byte;
-        float *cls_data = (float *)cls_mem;
+        float *cls_data_origin = (float *)cls_mem;
+        std::vector<float> cls_data(cls_c * cls_h * cls_w, 0.0f);
+        if (true != ChangeCHW2HWC(cls_data_origin, cls_data, cls_c, cls_h, cls_w)) {
+            continue;
+        }
 
         // int box_num = box_c * box_h * box_w;
         // AISDK_LOG_TRACE("ArtosynHandDetectNetv2::PostProcess, begin to output box info, box_num[{}]", box_num);
@@ -325,12 +373,11 @@ void ArtosynHandDetectNetv2::PostProcess(DetOutputInternal &result) {
         std::vector<DetectRect> tmp_result;                // 临时存储所有检测框
         for (int idx_i = 0; idx_i < cls_h; idx_i++) {      // y坐标遍历
             for (int idx_j = 0; idx_j < cls_w; idx_j++) {  // x坐标遍历
-                int cls_idx_group = 0;                     // 不同属性的索引位置
-
                 // 计算不同属性的索引位置
-                int cls_idx_score = 1 * cls_h * cls_w + idx_i * cls_w + idx_j;  // 置信度分数位置
-                int cls_idx_left = 2 * cls_h * cls_w + idx_i * cls_w + idx_j;   // 左手置信度位置
-                int cls_idx_right = 3 * cls_h * cls_w + idx_i * cls_w + idx_j;  // 右手置信度位置
+                int cls_idx_group = idx_i * cls_w * cls_c + idx_j * cls_c;
+                int cls_idx_score = cls_idx_group;      // 置信度分数位置
+                int cls_idx_left = cls_idx_group + 1;   // 左手置信度位置
+                int cls_idx_right = cls_idx_group + 2;  // 右手置信度位置
 
                 // 当前网格单元的置信度分数
                 float obj_score = cls_data[cls_idx_score];
@@ -341,14 +388,19 @@ void ArtosynHandDetectNetv2::PostProcess(DetOutputInternal &result) {
                 bool is_left = left_score > right_score;
                 float score = is_left ? left_score : right_score;
 
+                // AISDK_LOG_TRACE(
+                //     "cls_idx_score[{}], cls_idx_left[{}], cls_idx_right[{}], score[{}], left_score[{}], "
+                //     "right_score[{}], obj_score[{}], score_threshold[{}]",
+                //     cls_idx_score, cls_idx_left, cls_idx_right, score, left_score, right_score, obj_score,
+                //     m_score_threshold);
                 // 如果置信度超过阈值，则处理该检测结果
                 if (score > m_score_threshold) {
                     float _coord[box_c];
 
                     // 进行这组结果的坐标提取
+                    int box_idx_group = idx_i * box_w * box_c + idx_j * box_c;
                     for (int i = 0; i < 4; i++) {
-                        int _val_idx = i * box_h * box_w + idx_i * box_w + idx_j;
-                        _coord[i] = box_data[_val_idx];
+                        _coord[i] = box_data[box_idx_group + i];
                     }
 
                     // 计算当前网格在特征图中的索引
