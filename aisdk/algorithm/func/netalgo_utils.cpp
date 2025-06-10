@@ -78,7 +78,20 @@ aisdk::xengine::TensorFormat checkshapeformat(aisdk::xengine::VendorType& vendor
         } else if (m_rank == 4) {
             ret = aisdk::xengine::TensorFormat::NCHW;
         }
+    } else if (aisdk::xengine::VendorType::ARTOSYN == vendor) {
+        if (m_rank == 1) {
+            ret = aisdk::xengine::TensorFormat::W;
+        } else if (m_rank == 2) {
+            ret = aisdk::xengine::TensorFormat::HW;  // 不确定
+        } else if (m_rank == 3) {
+            ret = aisdk::xengine::TensorFormat::CHW;
+        } else if (m_rank == 4) {
+            ret = aisdk::xengine::TensorFormat::NCHW;
+        }
+    } else {
+        // do nothing
     }
+
     return ret;
 }
 

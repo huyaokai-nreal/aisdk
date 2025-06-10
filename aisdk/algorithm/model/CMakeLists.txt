@@ -10,10 +10,9 @@ target_sources(
 
     # 2d点检测逻辑实现文件，android平台和npu平台
     ${CMAKE_CURRENT_SOURCE_DIR}/hand_rsntiny.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/hand_rsntiny_artosyn.cpp
-
     ${CMAKE_CURRENT_SOURCE_DIR}/hand_rsnnano.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hand_rtmtiny.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/hand_rtmtiny_artosyn.cpp
 
     # 关键点滤波处理逻辑实现文件
     ${CMAKE_CURRENT_SOURCE_DIR}/landmark_filter.cpp

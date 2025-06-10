@@ -5,8 +5,105 @@
 #include "aisdk/base/profiling.h"
 #include "aisdk/xengine/cv/xr_cv.h"
 #include "aisdk/xengine/nrhal_common.h"
+#include "aisdk/xengine/nrhal_define.h"
 
 namespace aisdk::algorithm {
+
+void ArtosynHandDetectNetv2::ArtosynHandDetectNetV2reset() {
+    itensor.m_tensors[0].m_name = "images";
+    // itensor.m_tensors[0].m_dimtype = TensorFormat::NCHW;
+    itensor.m_tensors[0].m_elementype = aisdk::xengine::ElementType::UINT8;
+    itensor.m_tensors[0].m_elementbyte = 1;
+    itensor.m_tensors[0].m_artosyn_dims.achName = "images";
+    itensor.m_tensors[0].m_artosyn_dims.achType = "uint8";
+    itensor.m_tensors[0].m_artosyn_dims.achStepType = "";
+    itensor.m_tensors[0].m_artosyn_dims.achLayoutType = "";
+    // itensor.m_tensors[0].m_artosyn_dims.achMemoryType = std::string(stTensor.achMemoryType);
+    // itensor.m_tensors[0].m_artosyn_dims.achDdrFormat = std::string(stTensor.achDdrFormat);
+    itensor.m_tensors[0].m_artosyn_dims.dScaleFactor = 0.000000;
+    itensor.m_tensors[0].m_artosyn_dims.u32ID = 0;
+    itensor.m_tensors[0].m_artosyn_dims.u32Bank = 0;
+    itensor.m_tensors[0].m_artosyn_dims.u32Offset = 0;
+    itensor.m_tensors[0].m_artosyn_dims.u32Height = 256;
+    itensor.m_tensors[0].m_artosyn_dims.u32KStep = 0;
+    itensor.m_tensors[0].m_artosyn_dims.u32KNormNum = 0;
+    itensor.m_tensors[0].m_artosyn_dims.u32KSizeLast = 0;
+    itensor.m_tensors[0].m_artosyn_dims.u32KSizeNorm = 0;
+    itensor.m_tensors[0].m_artosyn_dims.u32BitWidth = 8;
+    itensor.m_tensors[0].m_artosyn_dims.u32Num = 1;
+    itensor.m_tensors[0].m_artosyn_dims.u32OriChannels = 1;
+    itensor.m_tensors[0].m_artosyn_dims.u32OriFrameSize = 1;
+    itensor.m_tensors[0].m_artosyn_dims.u32Precision = 0;
+    itensor.m_tensors[0].m_artosyn_dims.u32RowStep = 0;
+    itensor.m_tensors[0].m_artosyn_dims.u32TensorStep = 0;
+    itensor.m_tensors[0].m_artosyn_dims.u32Size = 147456;
+    itensor.m_tensors[0].m_artosyn_dims.u32MemorySize = 147456;
+    itensor.m_tensors[0].m_artosyn_dims.u32Width = 192;
+    itensor.m_tensors[0].m_artosyn_dims.s32ZeroPoint = 0;
+
+    otensor.m_tensors[0].m_name = "output_box";
+    // otensor.m_tensors[0].m_dimtype = TensorFormat::NCHW;
+    otensor.m_tensors[0].m_elementype = aisdk::xengine::ElementType::FLOAT32;
+    otensor.m_tensors[0].m_elementbyte = 4;
+    otensor.m_tensors[0].m_artosyn_dims.achName = "output_box";
+    otensor.m_tensors[0].m_artosyn_dims.achType = "float";
+    otensor.m_tensors[0].m_artosyn_dims.achStepType = "normal";
+    otensor.m_tensors[0].m_artosyn_dims.achLayoutType = "float";
+    // otensor.m_tensors[0].m_artosyn_dims.achMemoryType = std::string(stTensor.achMemoryType);
+    // otensor.m_tensors[0].m_artosyn_dims.achDdrFormat = std::string(stTensor.achDdrFormat);
+    otensor.m_tensors[0].m_artosyn_dims.dScaleFactor = 0.003887;
+    otensor.m_tensors[0].m_artosyn_dims.u32ID = 74;
+    otensor.m_tensors[0].m_artosyn_dims.u32Bank = 0;
+    otensor.m_tensors[0].m_artosyn_dims.u32Offset = 0;
+    otensor.m_tensors[0].m_artosyn_dims.u32Height = 16;
+    otensor.m_tensors[0].m_artosyn_dims.u32KStep = 768;
+    otensor.m_tensors[0].m_artosyn_dims.u32KNormNum = 3;
+    otensor.m_tensors[0].m_artosyn_dims.u32KSizeLast = 1;
+    otensor.m_tensors[0].m_artosyn_dims.u32KSizeNorm = 1;
+    otensor.m_tensors[0].m_artosyn_dims.u32BitWidth = 0;
+    otensor.m_tensors[0].m_artosyn_dims.u32Num = 1;
+    otensor.m_tensors[0].m_artosyn_dims.u32OriChannels = 4;
+    otensor.m_tensors[0].m_artosyn_dims.u32OriFrameSize = 1;
+    otensor.m_tensors[0].m_artosyn_dims.u32Precision = 32;
+    otensor.m_tensors[0].m_artosyn_dims.u32RowStep = 48;
+    otensor.m_tensors[0].m_artosyn_dims.u32TensorStep = 768;
+    otensor.m_tensors[0].m_artosyn_dims.u32Size = 768;
+    otensor.m_tensors[0].m_artosyn_dims.u32MemorySize = 3072;
+    otensor.m_tensors[0].m_artosyn_dims.u32Width = 12;
+    otensor.m_tensors[0].m_artosyn_dims.s32ZeroPoint = -128;
+
+    otensor.m_tensors[1].m_name = "output_cls";
+    // otensor.m_tensors[1].m_dimtype = TensorFormat::NCHW;
+    otensor.m_tensors[1].m_elementype = aisdk::xengine::ElementType::FLOAT32;
+    otensor.m_tensors[1].m_elementbyte = 4;
+    otensor.m_tensors[1].m_artosyn_dims.achName = "output_cls";
+    otensor.m_tensors[1].m_artosyn_dims.achType = "float";
+    otensor.m_tensors[1].m_artosyn_dims.achStepType = "normal";
+    otensor.m_tensors[1].m_artosyn_dims.achLayoutType = "float";
+    // otensor.m_tensors[1].m_artosyn_dims.achMemoryType = std::string(stTensor.achMemoryType);
+    // otensor.m_tensors[1].m_artosyn_dims.achDdrFormat = std::string(stTensor.achDdrFormat);
+    otensor.m_tensors[1].m_artosyn_dims.dScaleFactor = 0.003921;
+    otensor.m_tensors[1].m_artosyn_dims.u32ID = 76;
+    otensor.m_tensors[1].m_artosyn_dims.u32Bank = 0;
+    otensor.m_tensors[1].m_artosyn_dims.u32Offset = 4096;
+    otensor.m_tensors[1].m_artosyn_dims.u32Height = 16;
+    otensor.m_tensors[1].m_artosyn_dims.u32KStep = 768;
+    otensor.m_tensors[1].m_artosyn_dims.u32KNormNum = 3;
+    otensor.m_tensors[1].m_artosyn_dims.u32KSizeLast = 1;
+    otensor.m_tensors[1].m_artosyn_dims.u32KSizeNorm = 1;
+    otensor.m_tensors[1].m_artosyn_dims.u32BitWidth = 0;
+    otensor.m_tensors[1].m_artosyn_dims.u32Num = 1;
+    otensor.m_tensors[1].m_artosyn_dims.u32OriChannels = 3;
+    otensor.m_tensors[1].m_artosyn_dims.u32OriFrameSize = 1;
+    otensor.m_tensors[1].m_artosyn_dims.u32Precision = 32;
+    otensor.m_tensors[1].m_artosyn_dims.u32RowStep = 48;
+    otensor.m_tensors[1].m_artosyn_dims.u32TensorStep = 768;
+    otensor.m_tensors[1].m_artosyn_dims.u32Size = 768;
+    otensor.m_tensors[1].m_artosyn_dims.u32MemorySize = 3072;
+    otensor.m_tensors[1].m_artosyn_dims.u32Width = 12;
+    otensor.m_tensors[1].m_artosyn_dims.s32ZeroPoint = -128;
+    return;
+}
 
 /// @brief 初始化手势检测网络
 /// @param algo 算法配置参数（后处理参数等）
@@ -29,34 +126,37 @@ absl::Status ArtosynHandDetectNetv2::Init(aisdk::xengine::NetAlgoConfig &algo, a
         return ret;
     }
 
+    ArtosynHandDetectNetV2reset();
+
     // step3：获取输入层索引并解析输入尺寸
-    int index_images = m_net->GetInputTensorIndex("images");
-    aisdk::xengine::ArtosynTensorDims &input_dims = itensor.m_tensors[index_images].m_artosyn_dims;
+    // int index_images = m_net->GetInputTensorIndex("images");
+    aisdk::xengine::ArtosynTensorDims &input_dims = itensor.m_tensors[0].m_artosyn_dims;
     uint32_t height = input_dims.u32Height;  // 输入高度, 256
     uint32_t width = input_dims.u32Width;    // 输入宽度, 192
+
+    // m_itensor_format = checkshapeformat(model.vendor_type, 4);
     AISDK_LOG_TRACE("detect artosyn input height[{}], width[{}]", height, width);
 
-    // 当输入为竖屏比例（高>宽）时，调整网格划分密度（预设场景：480x640分辨率（竖屏手机拍摄））
-    if (height > width) {
-        m_grid_w = 12;  // 水平方向划分12个网格单元（对应640/16=40像素每格）
-        m_grid_h = 16;  // 垂直方向划分16个网格单元（对应480/16=30像素每格）
-    }
+    // 计算特征网格尺寸（输入尺寸/网格步长）
+    m_grid_h = height / m_grid_stride;
+    m_grid_w = width / m_grid_stride;
 
-    // step4: 预分配锚点容器空间（网格总数 = 行数×列数）
+    // step4: 解析输出张量格式
+    // m_otensor_format = checkshapeformat(model.vendor_type, 4);
+
+    // step5: 预分配锚点容器空间（网格总数 = 行数×列数）
     m_grid_anchor.resize(m_grid_h * m_grid_w);
 
-    // step5: 遍历网格系统生成锚点参数
+    // step6: 生成网格锚点系统
     for (auto i = 0; i < m_grid_h; i++) {
         for (auto j = 0; j < m_grid_w; j++) {
-            auto &anchor = m_grid_anchor[i * m_grid_w + j];  // 当前锚点引用
+            // 计算网格中心坐标（归一化坐标，原点在图像中心）
+            m_grid_anchor[i * m_grid_w + j].grid_x = -0.5f + j * 1.0f;  // X轴中心位置
+            m_grid_anchor[i * m_grid_w + j].grid_y = -0.5f + i * 1.0f;  // Y轴中心位置
 
-            // 计算网格中心相对坐标（归一化坐标系，原点在图像中心）
-            anchor.grid_x = -0.5f + j * 1.0f;  // X坐标：从-0.5开始，步长1.0
-            anchor.grid_y = -0.5f + i * 1.0f;  // Y坐标：从-0.5开始，步长1.0
-
-            // 预设锚点尺寸（基于典型手部检测框统计）
-            anchor.anchor_rw = 31.0f;  // 预设宽度参考值（单位：像素）
-            anchor.anchor_rh = 68.0f;  // 预设高度参考值（单位：像素）
+            // 设置锚点基准尺寸（基于典型手部尺寸）
+            m_grid_anchor[i * m_grid_w + j].anchor_rw = 33.0f;  // 参考宽度（像素）
+            m_grid_anchor[i * m_grid_w + j].anchor_rh = 30.0f;  // 参考高度（像素）
         }
     }
 
@@ -77,52 +177,66 @@ absl::Status ArtosynHandDetectNetv2::Init(aisdk::xengine::NetAlgoConfig &algo, a
  * 4. 数据格式转换（当前仅支持GRAY格式）
  */
 void ArtosynHandDetectNetv2::PreProcess(const std::vector<Image> &net_input) {
-    // step1：校验输入批量与模型配置的一致性
-    int ai = itensor.m_batch * itensor.m_multishape_num;  // 预期输入：批次数 * 多路输入数
-    int bi = net_input.size();                            // 实际输入数量
+    // step1: 检查输入数量与模型配置是否匹配
+    int ai = itensor.m_batch * itensor.m_multishape_num;  // 模型预期输入数量 = 批次大小 × 多形状数
+    int bi = net_input.size();                            // 实际输入图像数量
+
+    // 输入验证：输入数量必须匹配且模型已配置批处理模式
     if (ai != bi || itensor.m_packed_bybatch == false) {
+        AISDK_LOG_ERROR(
+            "ArtosynHandDetectNetv2::PreProcess ai[{}] not equal to bi[{}] or m_apcked_bybatch[{}] is false, do not do "
+            "preprocess. itensor.m_batch[{}], "
+            "itensor.m_multishape_num[{}]",
+            ai, bi, itensor.m_packed_bybatch, itensor.m_batch, itensor.m_multishape_num);
         return;
     }
 
-    // 获取input dims的部分属性
-    int index_images = m_net->GetInputTensorIndex("images");
-    aisdk::xengine::ArtosynTensorDims &input_dims = itensor.m_tensors[index_images].m_artosyn_dims;
-    int height = input_dims.u32Height;  // 目标高度
-    int width = input_dims.u32Width;    // 目标宽度
-
-    // step2：遍历处理每个输入图像
+    AISDK_LOG_TRACE("bi[{}]", bi);
+    // step2: 遍历处理每张输入图像
     for (int i = 0; i < bi; i++) {
-        // step2.1：获取当前图像引用（opencv矩阵格式）
         auto &img = net_input[i].m_mat;
 
-        // step2.2：获取内存布局参数
-        int width_s = width;  // itensor.m_tensors[i].m_wstride;  // 内存步幅（考虑对齐填充）暂时这么写
+        // step3: 计算张量索引位置
+        int multi_i = i / itensor.m_batch;  // 多形状索引（支持多种输入形状）
+        int batch_i = i % itensor.m_batch;  // 批次索引（当前批次中的位置）
 
-        // step2.3：获取内存地址指针
-        char *mem = (char *)itensor.m_tensors[i].m_viraddr;
+        // step4: 根据张量格式解析输入尺寸
+        int height = 0;
+        int width = 0;
+        int channels = 0;
+        channels = itensor.m_tensors[multi_i].m_artosyn_dims.u32OriChannels;
+        height = itensor.m_tensors[multi_i].m_artosyn_dims.u32Height;
+        width = itensor.m_tensors[multi_i].m_artosyn_dims.u32Width;
 
-        // 原始尺寸记录
-        m_origin_img_width = img.cols;
-        m_origin_img_height = img.rows;
+        AISDK_LOG_TRACE("multi_i[{}], channels[{}], height[{}], width[{}]", multi_i, channels, height, width);
 
-        // 计算宽高缩放比例
-        float wratio = float(width) / float(m_origin_img_width);
-        float hratio = float(height) / float(m_origin_img_height);
+        // step5: 准备张量内存信息
+        int element_byte = itensor.m_tensors[multi_i].m_elementbyte;  // 张量元素字节大小
+        int mem_size = height * width * channels * element_byte;      // 单张输入所需内存大小
+        char *mem = (char *)itensor.m_tensors[multi_i].m_viraddr + batch_i * mem_size;  // 当前输入的目标内存地址
 
-        // 选择最优缩放策略
-        float ratio = std::min(wratio, hratio);                        // 保持长宽比的缩放比例
-        int tmp = (ratio < 1.0f) ? cv::INTER_AREA : cv::INTER_LINEAR;  // 下采样用AREA, 上采样用LINEAR
+        // step6: 记录原始图像尺寸（用于后处理阶段坐标映射）
+        m_origin_img_width = img.cols;   // 原始图像宽度
+        m_origin_img_height = img.rows;  // 原始图像高度
 
-        // step2.4：执行内存拷贝（考虑内存对齐）
-        if (width == width_s) {  // 无内存步幅的特殊处理
-            // 直接创建目标尺寸的opencv矩阵，执行resize操作（直接写入设备内存）
-            cv::Mat image_resized(cv::Size(width, height), CV_8UC1, mem);
-            cv::resize(img, image_resized, cv::Size(width, height), 0, 0, tmp);
-        } else {  // 存在内存对齐步幅的处理
-            // 创建带步幅的目标矩阵，在有效区域内执行resize（避免写入填充区域）
-            cv::Mat dst_resized(cv::Size(width_s, height), CV_8UC1, mem);
-            cv::resize(img, dst_resized(cv::Rect(0, 0, width, height)), cv::Size(width, height), 0, 0, tmp);
-        }
+        AISDK_LOG_TRACE("m_origin_img_width[{}], m_origin_img_height[{}]", m_origin_img_width, m_origin_img_height);
+
+        // step7: 计算宽高缩放比例
+        float wratio = float(width) / float(m_origin_img_width);    // 宽度缩放比例
+        float hratio = float(height) / float(m_origin_img_height);  // 高度缩放比例
+
+        // step8: 计算最佳缩放比例并选择插值方法
+        float ratio = std::min(wratio, hratio);                        // 取最小缩放比例（保持宽高比）
+        int tmp = (ratio < 1.0f) ? cv::INTER_AREA : cv::INTER_LINEAR;  // 缩小用区域插值，放大用线性插值
+
+        // step9: 缩放图像到模型输入尺寸
+        AISDK_LOG_TRACE("going to resize, width[{}], height[{}], tmp[{}]", width, height, tmp);
+        cv::Mat image_resized(cv::Size(width, height), CV_8UC1);  // 创建临时8位图像
+        cv::resize(img, image_resized, cv::Size(width, height), 0, 0, tmp);
+
+        // step10: 类型转换
+        image_resized.convertTo(image_resized, CV_32FC1);         // 转换为32位浮点数
+        cv::Mat new_mat(cv::Size(width, height), CV_32FC1, mem);  // 创建目标内存包装矩阵
     }
 }
 
@@ -138,75 +252,114 @@ void ArtosynHandDetectNetv2::PreProcess(const std::vector<Image> &net_input) {
  * 6. 分类存储左右手检测结果
  */
 void ArtosynHandDetectNetv2::PostProcess(DetOutputInternal &result) {
-    // step1: 初始化结果容器，按批次大小预分配左右手结果容器
+    // if (otensor.m_packed_bybatch == false) {
+    //     return;
+    // }
+
+    AISDK_LOG_TRACE("ArtosynHandDetectNetv2::PostProcess");
+
+    // step1: 初始化结果容器
     result.images_lhand_rects.resize(otensor.m_batch);
     result.images_rhand_rects.resize(otensor.m_batch);
 
-    // step2: 获取输出张量信息
-    int index_box = m_net->GetOutputTensorIndex("output_box");  // 获取output_box输出张量索引
-    int index_cls = m_net->GetOutputTensorIndex("output_cls");  // 获取ouput_cls输出张量索引
+    // step2: 获取输出张量索引
+    int index_box = 0;
+    int index_cls = 1;
 
-    // 解析张量维度信息
-    aisdk::xengine::ArtosynTensorDims &box_dims = otensor.m_tensors[index_box].m_artosyn_dims;
-    aisdk::xengine::ArtosynTensorDims &cls_dims = otensor.m_tensors[index_cls].m_artosyn_dims;
-    int box_c = box_dims.u32OriChannels;                                // 边界框通道数（应为4: x,y,w,h）
-    int box_h = box_dims.u32Height;                                     // 特征图高度（对应网格行数）
-    int box_w = box_dims.u32Width;                                      // 特征图宽度（对应网格列数）
-    float *box_data = (float *)otensor.m_tensors[index_box].m_viraddr;  // 边界框数据指针
-
-    int cls_c = cls_dims.u32OriChannels;  // 分类通道数（应为3: 置信度 + 左右手概率）
-    int cls_h = cls_dims.u32Height;       // 特征图高度（与box_h一致）
-    int cls_w = cls_dims.u32Width;        // 特征图宽度（与box_w一致）
-    float *cls_data = (float *)otensor.m_tensors[index_cls].m_viraddr;  // 分类数据指针
-
-    // step3: 批次遍历处理
+    // step3: 批次循环处理，目前不支持多batch，batch始终为1
     for (int batch_i = 0; batch_i < otensor.m_batch; batch_i++) {
+        // int box_n = otensor.m_tensors[index_box].m_artosyn_dims.u32Num;
+        int box_c = otensor.m_tensors[index_box].m_artosyn_dims.u32OriChannels;
+        int box_h = otensor.m_tensors[index_box].m_artosyn_dims.u32Height;
+        int box_w = otensor.m_tensors[index_box].m_artosyn_dims.u32Width;
+        // int box_begin_index = 32 * 1024 * 1024 * otensor.m_tensors[index_box].m_artosyn_dims.u32Bank +
+        // otensor.m_tensors[index_box].m_artosyn_dims.u32Offset; const size_t box_total_size = box_n * box_c * box_h *
+        // box_w;
+
+        // int cls_n = otensor.m_tensors[index_cls].m_artosyn_dims.u32Num;
+        int cls_c = otensor.m_tensors[index_cls].m_artosyn_dims.u32OriChannels;
+        int cls_h = otensor.m_tensors[index_cls].m_artosyn_dims.u32Height;
+        int cls_w = otensor.m_tensors[index_cls].m_artosyn_dims.u32Width;
+        // int cls_begin_index = 32 * 1024 * 1024 * otensor.m_tensors[index_cls].m_artosyn_dims.u32Bank +
+        // otensor.m_tensors[index_cls].m_artosyn_dims.u32Offset; const size_t cls_total_size = cls_n * cls_c * cls_h *
+        // cls_w;
+
+        // step4: 计算当前输出尺度下的内存起始位置，并获取数据内容到box_data和cls_data中
+        int box_element_byte = otensor.m_tensors[index_box].m_elementbyte;
+        char *box_mem =
+            (char *)otensor.m_tensors[index_box].m_viraddr + batch_i * box_h * box_w * box_c * box_element_byte;
+        float *box_data = (float *)box_mem;
+
+        int cls_element_byte = otensor.m_tensors[index_cls].m_elementbyte;
+        char *cls_mem =
+            (char *)otensor.m_tensors[index_cls].m_viraddr + batch_i * cls_h * cls_w * cls_c * cls_element_byte;
+        float *cls_data = (float *)cls_mem;
+
+        // int box_num = box_c * box_h * box_w;
+        // AISDK_LOG_TRACE("ArtosynHandDetectNetv2::PostProcess, begin to output box info, box_num[{}]", box_num);
+        // for (int i = 0; i < box_num; i++) {
+        //     AISDK_LOG_TRACE("ArtosynHandDetectNetv2::PostProcess, i[{}], box_data[{}]", i, box_data[i]);
+        // }
+
+        // AISDK_LOG_TRACE("ArtosynHandDetectNetv2::PostProcess, end to output box info");
+
+        // int cls_num = cls_c * cls_h * cls_w;
+        // AISDK_LOG_TRACE("ArtosynHandDetectNetv2::PostProcess, begin to output cls info, cls_num[{}]", cls_num);
+        // for (int i = 0; i < cls_num; i++) {
+        //     AISDK_LOG_TRACE("ArtosynHandDetectNetv2::PostProcess, i[{}], cls_data[{}]", i, cls_data[i]);
+        // }
+
+        // AISDK_LOG_TRACE("ArtosynHandDetectNetv2::PostProcess, end to output cls info");
+
+        // if (box_c != FEATURE_BOX_NUM || cls_c != FEATURE_CLS_NUM || box_h !=
+        // m_grid_h || box_w != m_grid_w ||
+        //     cls_h != m_grid_h || cls_w != m_grid_w) {
+        //     continue;
+        // }
+
         AISDK_LOG_TRACE("ArtosynHandDetectNetv2::Get Results");
-        AISDK_LOG_TRACE("ArtosynHandDetectNetv2v2:: cls_c: {}, cls_h: {}, cls_w: {}, box_c: {}, box_h: {}, bow_w: {}",
+        AISDK_LOG_TRACE("ArtosynHandDetectNetv2:: cls_c[{}], cls_h[{}], cls_w[{}], box_c[{}], box_h[{}], bow_w[{}]",
                         cls_c, cls_h, cls_w, box_c, box_h, box_w);
 
-        // 临时结果缓存
-        std::vector<DetectRect> tmp_result;
-        int cls_idx_group = 0;
-        int cls_idx_score = 0;
-        int cls_idx_left = 0;
-        int cls_idx_right = 0;
-        int box_idx_group = 0;
+        // step5: 特征图遍历，遍历所有网格单元，获取合理结果并保存到tmp_result中
+        std::vector<DetectRect> tmp_result;                // 临时存储所有检测框
+        for (int idx_i = 0; idx_i < cls_h; idx_i++) {      // y坐标遍历
+            for (int idx_j = 0; idx_j < cls_w; idx_j++) {  // x坐标遍历
+                int cls_idx_group = 0;                     // 不同属性的索引位置
 
-        // step4: 网格遍历，解析原始输出
-        for (int idx_i = 0; idx_i < cls_h; idx_i++) {      // 行遍历（y轴）
-            for (int idx_j = 0; idx_j < cls_w; idx_j++) {  // 列遍历（x轴）
-                // 计算当前网络的分类数据索引
-                cls_idx_score =
-                    ArtosynNpuGetEntryIndex(batch_i, otensor.m_batch, idx_i, idx_j, 0, sizeof(float), cls_dims);
-                cls_idx_left =
-                    ArtosynNpuGetEntryIndex(batch_i, otensor.m_batch, idx_i, idx_j, 1, sizeof(float), cls_dims);
-                cls_idx_right =
-                    ArtosynNpuGetEntryIndex(batch_i, otensor.m_batch, idx_i, idx_j, 2, sizeof(float), cls_dims);
+                // 计算不同属性的索引位置
+                int cls_idx_score = 1 * cls_h * cls_w + idx_i * cls_w + idx_j;  // 置信度分数位置
+                int cls_idx_left = 2 * cls_h * cls_w + idx_i * cls_w + idx_j;   // 左手置信度位置
+                int cls_idx_right = 3 * cls_h * cls_w + idx_i * cls_w + idx_j;  // 右手置信度位置
 
-                // 获取置信度并判断左右手
-                float score = cls_data[cls_idx_score];
-                bool is_left = cls_data[cls_idx_left] * score > cls_data[cls_idx_right] * score;
+                // 当前网格单元的置信度分数
+                float obj_score = cls_data[cls_idx_score];
+                float left_score = cls_data[cls_idx_left] * obj_score;
+                float right_score = cls_data[cls_idx_right] * obj_score;
 
-                // 置信度阈值过滤
+                // 判断是左手还是右手（根据左右手置信度的加权分数）
+                bool is_left = left_score > right_score;
+                float score = is_left ? left_score : right_score;
+
+                // 如果置信度超过阈值，则处理该检测结果
                 if (score > m_score_threshold) {
-                    // 获取对应边界框坐标数据
                     float _coord[box_c];
+
+                    // 进行这组结果的坐标提取
                     for (int i = 0; i < 4; i++) {
-                        box_idx_group =
-                            ArtosynNpuGetEntryIndex(batch_i, otensor.m_batch, idx_i, idx_j, i, sizeof(float), box_dims);
-                        _coord[i] = box_data[box_idx_group];
+                        int _val_idx = i * box_h * box_w + idx_i * box_w + idx_j;
+                        _coord[i] = box_data[_val_idx];
                     }
 
-                    // 计算当前网络对应的锚点索引
+                    // 计算当前网格在特征图中的索引
                     uint32_t grid_anchor_index = idx_i * box_w + idx_j;
 
                     /**
-                     * Description: 生成检测框参数
-                     * 宽度计算：(2*coord[2])^2 * 锚点参考宽
-                     * 高度计算：(2*coord[3])^2 * 锚点参考高
-                     * X坐标计算：(2*coord[0] + 网格x偏移) * 步长 - 半宽
-                     * Y坐标计算：(2*coord[1] + 网格y偏移) * 步长 - 半高
+                     * 创建检测矩形对象并填充信息(xywh)
+                     * 计算宽度(w)：公式源于网络设计 (pow(coord[2]*2, 2) * 锚点基准宽)
+                     * 计算高度(h)：公式源于网络设计 (pow(coord[3]*2, 2) * 锚点基准高)
+                     * 计算中心点x坐标：(coord[0]*2 + 网格x位置) * 网格步长 - 宽度/2
+                     * 计算中心点y坐标：(coord[1]*2 + 网格y位置) * 网格步长 - 高度/2
                      */
                     DetectRect tmp;
                     tmp.w = std::pow(_coord[2] * 2, 2) * m_grid_anchor[grid_anchor_index].anchor_rw;
@@ -214,61 +367,60 @@ void ArtosynHandDetectNetv2::PostProcess(DetOutputInternal &result) {
                     tmp.x = (_coord[0] * 2 + m_grid_anchor[grid_anchor_index].grid_x) * m_grid_stride - tmp.w / 2;
                     tmp.y = (_coord[1] * 2 + m_grid_anchor[grid_anchor_index].grid_y) * m_grid_stride - tmp.h / 2;
 
-                    // 置信度及分类信息记录
-                    tmp.confidence = score;
-                    tmp.left_confidence = cls_data[cls_idx_left];
-                    tmp.right_confidence = cls_data[cls_idx_right];
-                    tmp.is_left = is_left;
-                    tmp.nms_suppressed = false;
+                    // 其他属性信息
+                    tmp.confidence = score;                          // 置信度分数
+                    tmp.left_confidence = cls_data[cls_idx_left];    // 左手置信度
+                    tmp.right_confidence = cls_data[cls_idx_right];  // 右手置信度
+                    tmp.is_left = is_left;                           // 是否左右手
+                    tmp.nms_suppressed = false;                      // NMS标记初始化为未抑制
                     tmp_result.emplace_back(tmp);
                 }
             }
         }
 
-        // step5: 非极大值抑制处理
-        AISDK_LOG_TRACE("ArtosynHandDetectNetv2v2::tmp_result size(before nms): {}", tmp_result.size());
+        AISDK_LOG_TRACE("ArtosynHandDetectNetv2::tmp_result size(before nms): {}", tmp_result.size());
+
         auto &lhand_rect = result.images_lhand_rects[batch_i];
         auto &rhand_rect = result.images_rhand_rects[batch_i];
-        nms(tmp_result, m_iou_threshold);  // 执行MNS算法
-        AISDK_LOG_TRACE("ArtosynHandDetectNetv2v2::tmp_result size(after nms): {}", tmp_result.size());
 
-        // 获取预处理后的网络输入尺寸
-        int height = iImageblobs.m_imageblobs[0].m_height;
-        int width = iImageblobs.m_imageblobs[0].m_width;
+        // step6: 对获取的临时结果，应用非极大值抑制(NMS)，消除重叠框
+        nms(tmp_result, m_iou_threshold);
+        AISDK_LOG_TRACE("ArtosynHandDetectNetv2::tmp_result size(after nms): {}", tmp_result.size());
 
-        // 计算预处理时的缩放比例和填充量
+        // step7: 获取不同输入格式下的height和width，并进一步计算输入张量与原始图像的缩放比例和填充
+        int height = itensor.m_tensors[0].m_artosyn_dims.u32Height;
+        int width = itensor.m_tensors[0].m_artosyn_dims.u32Width;
+
+        // 计算输入张量和原始图像的缩放比例和填充
         float min_ratio =
             std::min(float(width) / float(m_origin_img_width), float(height) / float(m_origin_img_height));
         float padx = (float(width) - float(m_origin_img_width) * min_ratio) / 2;
         float pady = (float(height) - float(m_origin_img_height) * min_ratio) / 2;
 
-        // step6: 遍历处理每个有效检测框
+        // step8: 遍历经过NMS后的检测框，获取一组最终左右手的结果，填充到lhand_rect和rhand_rect中
         for (auto &iter : tmp_result) {
             if (iter.nms_suppressed) {
                 continue;
             }
 
-            // 坐标反变换计算（去除填充并缩放回原图尺寸）
+            // 将框坐标从网络输入尺寸转换回原始图像尺寸
             iter.x = std::round((iter.x - padx) / min_ratio);
             iter.y = std::round((iter.y - pady) / min_ratio);
             iter.w = std::round(iter.w / min_ratio);
             iter.h = std::round(iter.h / min_ratio);
 
-            // 分类存储左右手结果（当前实现每图只取最高置信度结果）
             if (true == iter.is_left && lhand_rect.size() == 0) {
                 AISDK_LOG_TRACE("push lhand rect: x: {}, y: {}, w: {}, h: {}", iter.x, iter.y, iter.w, iter.h);
                 lhand_rect.push_back(iter);
             } else if (false == iter.is_left && rhand_rect.size() == 0) {
                 AISDK_LOG_TRACE("push rhand rect: x: {}, y: {}, w: {}, h: {}", iter.x, iter.y, iter.w, iter.h);
                 rhand_rect.push_back(iter);
+            } else {
+                // do nothing
             }
         }
     }
 }
-
-void ArtosynHandDetectNetv2::PreProcessSingle(const std::vector<Image> &net_input, uint32_t batchn) {}
-
-void ArtosynHandDetectNetv2::PostProcessSingle(DetOutputInternal &result, uint32_t batchn) {}
 
 /**
  * @brief 执行手部检测推理流程
@@ -281,26 +433,30 @@ void ArtosynHandDetectNetv2::PostProcessSingle(DetOutputInternal &result, uint32
  * 2. 正常批量模式：直接处理整个批量输入
  */
 absl::Status ArtosynHandDetectNetv2::Inference(const std::vector<Image> &baseinput, DetOutputInternal &baseresult) {
+    AISDK_LOG_TRACE("enter ArtosynHandDetectNetv2::Inference to process");
     absl::Status ret;
     if (m_net_batch1) {  // 单批次处理
-        // 结果容器预分配（根据用户设置的原始批量值）
-        baseresult.images_lhand_rects.resize(m_session_batch);
-        baseresult.images_rhand_rects.resize(m_session_batch);
+        AISDK_LOG_ERROR("failed, not support ArtosynHandDetectNetv2::Inference single batch branch");
 
-        // 遍历处理每个输入样本（模拟批量处理）
-        for (uint32_t i = 0; i < m_session_batch; i++) {
-            PreProcessSingle(baseinput, i);
-            ret = m_net->RunNet();
-            if (ret.ok()) {
-                PostProcessSingle(baseresult, i);
-            } else {
-                AISDK_LOG_TRACE("ArtosynHandDetectNetv2::Inference  Error!");
-            }
-        }
+        // // 结果容器预分配（根据用户设置的原始批量值）
+        // baseresult.images_lhand_rects.resize(m_session_batch);
+        // baseresult.images_rhand_rects.resize(m_session_batch);
+
+        // // 遍历处理每个输入样本（模拟批量处理）
+        // for (uint32_t i = 0; i < m_session_batch; i++) {
+        //     PreProcessSingle(baseinput, i);
+        //     ret = m_net->RunNet();
+        //     if (ret.ok()) {
+        //         PostProcessSingle(baseresult, i);
+        //     } else {
+        //         AISDK_LOG_TRACE("ArtosynHandDetectNetv2::Inference  Error!");
+        //     }
+        // }
     } else {  // 批量处理
         PreProcess(baseinput);
         ret = m_net->RunNet();
         if (ret.ok()) {
+            AISDK_LOG_TRACE("going to postprocess");
             PostProcess(baseresult);
 
             AISDK_LOG_TRACE("[ArtosynHandDetectNetv2::Inference] baseresult.images_lhand_rects[0].size(): {}",

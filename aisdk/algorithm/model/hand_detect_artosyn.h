@@ -57,8 +57,12 @@ private:
     void PreProcess(const std::vector<Image> &net_input);  // 批量预处理
     void PostProcess(DetOutputInternal &result);           // 批量后处理
 
-    void PreProcessSingle(const std::vector<Image> &net_input, uint32_t batchn);  // 单样本预处理
-    void PostProcessSingle(DetOutputInternal &result, uint32_t batchn);           // 单样本后处理
+    void PreProcessSingle(const std::vector<Image> &net_input, uint32_t batchn) {};   // 单样本预处理
+    void PostProcessSingle(DetOutputInternal &result, uint32_t batchn) {};           // 单样本后处理
+    void ArtosynHandDetectNetV2reset();
+
+    aisdk::xengine::TensorFormat m_itensor_format;
+    aisdk::xengine::TensorFormat m_otensor_format;
 
     std::vector<GridAnchor> m_grid_anchor;  // 网络瞄点集合（按行优先顺序进行存储）
     int m_origin_img_width;   // 原始输入图像宽度（预处理前）

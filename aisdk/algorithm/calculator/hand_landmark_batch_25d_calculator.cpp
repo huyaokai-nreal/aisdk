@@ -16,8 +16,8 @@
 #include "aisdk/algorithm/internal_structs/det_struct_internal.h"
 #include "aisdk/algorithm/internal_structs/kpt2d_struct_internal.h"
 #include "aisdk/algorithm/model/calculator_basenet.h"
-#include "aisdk/algorithm/model/hand_rsntiny_artosyn.h"
 #include "aisdk/algorithm/model/hand_rtmtiny.h"
+#include "aisdk/algorithm/model/hand_rtmtiny_artosyn.h"
 #include "aisdk/base/camera_model.h"
 #include "aisdk/base/log.h"
 #include "aisdk/base/time.h"
@@ -107,7 +107,7 @@ class HandLandmarkBatch25DCalculator : public xgraph::CalculatorBase {
             AISDK_LOG_TRACE("[HandLandmarkBatch25DCalculator] finish init rtmtinyb2");
         } else if ("2d_rtmtiny_ar9481npu_gina" == model_name_) {
             AISDK_LOG_TRACE("[HandLandmarkBatch25DCalculator] start init artosyn_rsn_tiny");
-            netalgo = XGraphServiceUtils::CreateNetAlgoBase<ArtosynRSNTiny>((void*)0x202310, model_name_);
+            netalgo = XGraphServiceUtils::CreateNetAlgoBase<ArtosynRTMTiny>((void*)0x202310, model_name_);
             AISDK_LOG_TRACE("[HandLandmarkBatch25DCalculator] finish init artosyn_rsn_tiny");
         } else {
             AISDK_LOG_ERROR("HandDetTrackCalculator init failed. can not find model:{}", model_name_);

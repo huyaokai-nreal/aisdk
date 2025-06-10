@@ -10,7 +10,7 @@
 namespace aisdk::algorithm {
 
 /**
- * @class ArtosynRSNTiny
+ * @class ArtosynRTMTiny
  * @brief 手部关键点检测网络模型（轻量级实现），继承自基础手部关键点检测网络
  * @details 本类实现了一个基于热图回归的轻量级手部21关键点检测模型，支持128x128输入分辨率，
  *          输出32x32热图并通过后处理计算关键点坐标。包含完整的预处理、推理、后处理流程，
@@ -23,9 +23,9 @@ namespace aisdk::algorithm {
  * - 包含热图后处理优化（ipr方法）
  * - 支持自定义模型参数配置
  */
-class ArtosynRSNTiny : public HandLandmarkBaseNet {
+class ArtosynRTMTiny : public HandLandmarkBaseNet {
 public:
-    ArtosynRSNTiny() = default;
+    ArtosynRTMTiny() = default;
 
     // 初始化
     absl::Status Init(aisdk::xengine::NetAlgoConfig &algo, aisdk::xengine::ModelConfig &model,
@@ -35,22 +35,21 @@ public:
     absl::StatusOr<Kpt2dResult> Inference(const std::vector<Image> &input) override;
 
 private:
-    // 改进的热图坐标回归方法
-    void ipr(float *__restrict input_hm, float *__restrict kpt_x_out, float *__restrict kpt_y_out);
-
     void PreProcess(const std::vector<Image> &net_input);  // 前处理    
     void PostProcess(Kpt2dResult &result);                 // 后处理
+    void HandRtmtinyArtosynreset();
 
-    unsigned int m_input_shape_ = 128;   // 网络输入分辨率（默认128x128）
-    unsigned int m_output_shape_ = 32;   // 热图输出分辨率（默认32x32）
-    unsigned int m_keypoint_num_ = 21;   // 手部关键点数量（标准21点）
-    std::vector<float> m_hm_softmax_;           // 中间缓存：softmax处理后的热图数据
-    std::vector<float> m_hm_reduce_col_;        // 中间缓存：列方向聚合后的热图数据
-    std::vector<float> m_hm_reduce_row_;        // 中间缓存：行方向聚合后的热图数据
-    std::vector<float> m_hm_reduce_col_row_;    // 中间缓存：先列后行聚合结果（用于坐标计算）
-    std::vector<float> m_hm_reduce_row_col_;    // 中间缓存：先行后列聚合结果（用于坐标计算）
-    std::vector<float> m_outputsNCHW;         // 模型输出缓存（NCHW格式）
-    std::vector<float> m_mul_coeff_;            // 坐标缩放系数（用于后处理坐标映射）
+    // 模型相关配置
+    aisdk::xengine::TensorFormat itensor_format_;    // input tensor内存布局
+    aisdk::xengine::TensorFormat otensor_format_;    // output tensor内存布局
+
+    // 热力图处理缓冲区
+    std::vector<float> mul_coeff_;        // 热图坐标到原图坐标的缩放系数
+
+    // 模型结构数据
+    unsigned int input_shape_ = 128;      // 输入图像缓存（正方形，128*128像素）
+    unsigned int output_shape_ = 256;     // 输出图像缓存（正方形, 32*32像素）
+    unsigned int keypoint_num_ = 21;      // 手部关键点数量（21个关键点）
 };
 
 }  // namespace aisdk::algorithm
