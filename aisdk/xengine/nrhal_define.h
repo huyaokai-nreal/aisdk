@@ -140,7 +140,7 @@ struct ArtosynTensorDims {
 
     // 精度与位宽
     uint32_t u32BitWidth;         // 单元素位宽（bits），如float32=32, int8=8
-    uint32_t u32Precision;        // 数据精度模式，0=FP32, 1=FP16, 2=INT8等
+    uint32_t u32Precision;        // 数据精度模式，32=FP32, 16=FP16, 8=INT8等
 
     // 容量参数
     uint32_t u32Size;             // 张量逻辑元素总数（height * width * channels等）

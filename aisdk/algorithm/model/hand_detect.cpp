@@ -796,6 +796,11 @@ void HandDetectNetv2::PostProcess(DetOutputInternal &result) {
                 bool is_left = left_score > right_score;
                 float score = is_left ? left_score : right_score;
 
+                // AISDK_LOG_TRACE(
+                //     "cls_idx_score[{}], cls_idx_left[{}], cls_idx_right[{}], score[{}], left_score[{}], "
+                //     "right_score[{}], obj_score[{}], score_threshold[{}]",
+                //     cls_idx_score, cls_idx_left, cls_idx_right, score, left_score, right_score, obj_score,
+                //     score_threshold);
                 // 如果置信度超过阈值，则处理该检测结果
                 if (score > score_threshold) {
                     float _coord[box_c];

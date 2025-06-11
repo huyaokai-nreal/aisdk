@@ -9,6 +9,7 @@
 
 namespace aisdk::algorithm {
 
+// 调用获取接口会崩溃，暂时这么写
 void ArtosynHandDetectNetv2::ArtosynHandDetectNetV2reset() {
     itensor.m_tensors[0].m_name = "images";
     // itensor.m_tensors[0].m_dimtype = TensorFormat::NCHW;
@@ -173,15 +174,11 @@ absl::Status ArtosynHandDetectNetv2::Init(aisdk::xengine::NetAlgoConfig &algo, a
     uint32_t height = input_dims.u32Height;  // 输入高度, 256
     uint32_t width = input_dims.u32Width;    // 输入宽度, 192
 
-    // m_itensor_format = checkshapeformat(model.vendor_type, 4);
-    AISDK_LOG_TRACE("detect artosyn input height[{}], width[{}]", height, width);
+    AISDK_LOG_TRACE("artosyn detect input height[{}], width[{}]", height, width);
 
     // 计算特征网格尺寸（输入尺寸/网格步长）
     m_grid_h = height / m_grid_stride;
     m_grid_w = width / m_grid_stride;
-
-    // step4: 解析输出张量格式
-    // m_otensor_format = checkshapeformat(model.vendor_type, 4);
 
     // step5: 预分配锚点容器空间（网格总数 = 行数×列数）
     m_grid_anchor.resize(m_grid_h * m_grid_w);
@@ -209,18 +206,13 @@ absl::Status ArtosynHandDetectNetv2::Init(aisdk::xengine::NetAlgoConfig &algo, a
 /**
  * @brief 执行批量输入预处理
  * @param net_input 输入图像集合（多批次/多路输入）
- * @note 核心预处理流程：
- * 1. 输入数据合规性检查
- * 2. 遍历处理每个输入样本
- * 3. 尺寸调整与内存布局适配
- * 4. 数据格式转换（当前仅支持GRAY格式）
  */
 void ArtosynHandDetectNetv2::PreProcess(const std::vector<Image> &net_input) {
-    // step1: 检查输入数量与模型配置是否匹配
+    AISDK_LOG_TRACE("ArtosynHandDetectNetv2::PreProcess");
+
+    // step1: 检查输入数量与模型配置是否匹配（输入数量必须匹配且模型已配置批处理模式）
     int ai = itensor.m_batch * itensor.m_multishape_num;  // 模型预期输入数量 = 批次大小 × 多形状数
     int bi = net_input.size();                            // 实际输入图像数量
-
-    // 输入验证：输入数量必须匹配且模型已配置批处理模式
     if (ai != bi || itensor.m_packed_bybatch == false) {
         AISDK_LOG_ERROR(
             "ArtosynHandDetectNetv2::PreProcess ai[{}] not equal to bi[{}] or m_apcked_bybatch[{}] is false, do not do "
@@ -230,7 +222,6 @@ void ArtosynHandDetectNetv2::PreProcess(const std::vector<Image> &net_input) {
         return;
     }
 
-    AISDK_LOG_TRACE("bi[{}]", bi);
     // step2: 遍历处理每张输入图像
     for (int i = 0; i < bi; i++) {
         auto &img = net_input[i].m_mat;
@@ -247,8 +238,6 @@ void ArtosynHandDetectNetv2::PreProcess(const std::vector<Image> &net_input) {
         height = itensor.m_tensors[multi_i].m_artosyn_dims.u32Height;
         width = itensor.m_tensors[multi_i].m_artosyn_dims.u32Width;
 
-        AISDK_LOG_TRACE("multi_i[{}], channels[{}], height[{}], width[{}]", multi_i, channels, height, width);
-
         // step5: 准备张量内存信息
         int element_byte = itensor.m_tensors[multi_i].m_elementbyte;  // 张量元素字节大小
         int mem_size = height * width * channels * element_byte;      // 单张输入所需内存大小
@@ -257,8 +246,6 @@ void ArtosynHandDetectNetv2::PreProcess(const std::vector<Image> &net_input) {
         // step6: 记录原始图像尺寸（用于后处理阶段坐标映射）
         m_origin_img_width = img.cols;   // 原始图像宽度
         m_origin_img_height = img.rows;  // 原始图像高度
-
-        AISDK_LOG_TRACE("m_origin_img_width[{}], m_origin_img_height[{}]", m_origin_img_width, m_origin_img_height);
 
         // step7: 计算宽高缩放比例
         float wratio = float(width) / float(m_origin_img_width);    // 宽度缩放比例
@@ -269,13 +256,11 @@ void ArtosynHandDetectNetv2::PreProcess(const std::vector<Image> &net_input) {
         int tmp = (ratio < 1.0f) ? cv::INTER_AREA : cv::INTER_LINEAR;  // 缩小用区域插值，放大用线性插值
 
         // step9: 图像resize
-        AISDK_LOG_TRACE("going to resize, width[{}], height[{}], tmp[{}]", width, height, tmp);
         cv::Mat image_resized(cv::Size(width, height), CV_8UC1);  // 创建临时8位图像
         cv::resize(img, image_resized, cv::Size(width, height), 0, 0, tmp);
 
-        // step10: 类型转换
-        image_resized.convertTo(image_resized, CV_32FC1);         // 转换为32位浮点数
-        cv::Mat new_mat(cv::Size(width, height), CV_32FC1, mem);  // 创建目标内存包装矩阵
+        // step10: 数据拷贝
+        cv::Mat new_mat(cv::Size(width, height), CV_8UC1, mem);  // 创建目标内存包装矩阵
         image_resized.copyTo(new_mat);
     }
 }
@@ -283,13 +268,6 @@ void ArtosynHandDetectNetv2::PreProcess(const std::vector<Image> &net_input) {
 /**
  * @brief 执行检测结果后处理
  * @param result 输出结果容器（包含左右手检测框信息）
- * @note 处理流程：
- * 1. 初始化结果容器
- * 2. 获取网络输出张量信息
- * 3. 遍历所有网格位置解析检测结果
- * 4. 应用非极大值抑制(NMS)
- * 5. 坐标映射回原始图像空间
- * 6. 分类存储左右手检测结果
  */
 void ArtosynHandDetectNetv2::PostProcess(DetOutputInternal &result) {
     // if (otensor.m_packed_bybatch == false) {
@@ -479,13 +457,8 @@ void ArtosynHandDetectNetv2::PostProcess(DetOutputInternal &result) {
  * @param baseinput 输入图像集合（支持多批次输入）
  * @param baseresult 输出检测结果容器
  * @return absl::Status 返回推理状态（包含错误信息）
- *
- * @note 核心处理逻辑根据模型是否支持批量处理分为两种模式：
- * 1. 单批次模式（m_net_batch1=true）：拆分输入为单样本循环处理
- * 2. 正常批量模式：直接处理整个批量输入
  */
 absl::Status ArtosynHandDetectNetv2::Inference(const std::vector<Image> &baseinput, DetOutputInternal &baseresult) {
-    AISDK_LOG_TRACE("enter ArtosynHandDetectNetv2::Inference to process");
     absl::Status ret;
     if (m_net_batch1) {  // 单批次处理
         AISDK_LOG_ERROR("failed, not support ArtosynHandDetectNetv2::Inference single batch branch");
@@ -508,7 +481,6 @@ absl::Status ArtosynHandDetectNetv2::Inference(const std::vector<Image> &baseinp
         PreProcess(baseinput);
         ret = m_net->RunNet();
         if (ret.ok()) {
-            AISDK_LOG_TRACE("going to postprocess");
             PostProcess(baseresult);
 
             AISDK_LOG_TRACE("[ArtosynHandDetectNetv2::Inference] baseresult.images_lhand_rects[0].size(): {}",
