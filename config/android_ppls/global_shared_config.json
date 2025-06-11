@@ -6,6 +6,7 @@
             "detect_dsp_ella",
             "detect_cpu_ella",
             "detect_cpu_flora",
+            "detect_dsp_gina",
             "detect_dsp_flora_mono",
             "2d_rtmtinyb2",
             "2d_rtmtiny_nimble",
@@ -70,6 +71,22 @@
         "detect_dsp_flora_mono": {
             "model_config": {
                 "file_name": "models/det_flora_250317_quantized.dlc",
+                "vendor": "snpe"
+            },
+            "session_config": {
+                "batch": 1,
+                "precision": "int8",
+                "thread_num": 1,
+                "runtime": "dsp",
+                "output_tensors": [
+                    "output_box",
+                    "output_cls"
+                ]
+            }
+        },
+        "detect_dsp_gina": {
+            "model_config": {
+                "file_name": "models/gina_hand_det_0611_quantized.dlc",
                 "vendor": "snpe"
             },
             "session_config": {

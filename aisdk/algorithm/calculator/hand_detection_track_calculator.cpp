@@ -95,7 +95,8 @@ class HandDetTrackCalculator : public xgraph::CalculatorBase {
             // 老模型
             AISDK_LOG_TRACE("[HandDetTrackCalculator] HandDetectNet init {}", model_name_);
             netalgo = XGraphServiceUtils::CreateNetAlgoBase<HandDetectNet>((void *)0x202310, model_name_);
-        } else if (("detect" == model_name_) || ("detect_dsp_flora_mono" == model_name_)) {
+        } else if (("detect" == model_name_) || ("detect_dsp_flora_mono" == model_name_) ||
+                   ("detect_dsp_gina" == model_name_)) {
             // 新模型
             AISDK_LOG_TRACE("[HandDetTrackCalculator] HandDetectNetv2 init {}", model_name_);
             netalgo = XGraphServiceUtils::CreateNetAlgoBase<HandDetectNetv2>((void *)0x202310, model_name_);
