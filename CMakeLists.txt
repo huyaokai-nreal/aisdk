@@ -230,10 +230,10 @@ install(
 ## 模型打包配置
 if(Xrlinux)
     set(tar_ppls "xrlinux_ppls")
-    set(tar_model "hand_tracking_gina")
+    set(tar_model "hand_tracking_xrlinux")
 else()
     set(tar_ppls "android_ppls")
-    set(tar_model "hand_tracking")
+    set(tar_model "hand_tracking_bp")
 endif()
 
 execute_process(

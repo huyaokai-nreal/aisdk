@@ -45,7 +45,7 @@ node {
   }
   node_options: {
     [type.googleapis.com/aisdk.HandDetTrackCalculatorOptions] {
-      model_name: "detect_dsp_flora_mono"
+      model_name: "detect_dsp_gina"
       enable_track: false
     }
   }
