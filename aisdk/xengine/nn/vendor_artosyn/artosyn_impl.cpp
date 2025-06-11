@@ -5,7 +5,6 @@
 #include "aisdk/xengine/nrhal_common.h"
 #include "artosyn_model.h"
 #include "artosyn_session.h"
-#include "hal_type.h"
 
 // #define ALIGNED_256B(x) ((x) % 256 == 0 ? (x) : (((x) / 256 + 1) * 256))
 

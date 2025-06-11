@@ -270,21 +270,23 @@ void ArtosynHandDetectNetv2::PreProcess(const std::vector<Image> &net_input) {
  * @param result 输出结果容器（包含左右手检测框信息）
  */
 void ArtosynHandDetectNetv2::PostProcess(DetOutputInternal &result) {
-    // if (otensor.m_packed_bybatch == false) {
-    //     return;
-    // }
-
     AISDK_LOG_TRACE("ArtosynHandDetectNetv2::PostProcess");
 
-    // step1: 初始化结果容器
+    // step1: 检查输出tensor支持批处理
+    if (otensor.m_packed_bybatch == false) {
+        AISDK_LOG_ERROR("[ArtosynHandDetectNetv2] postprocess otensor.m_packed_bybatch is not true");
+        return;
+    }
+
+    // step2: 初始化结果容器
     result.images_lhand_rects.resize(otensor.m_batch);
     result.images_rhand_rects.resize(otensor.m_batch);
 
-    // step2: 获取输出张量索引
+    // step3: 获取输出张量索引
     int index_box = 0;
     int index_cls = 1;
 
-    // step3: 批次循环处理，目前不支持多batch，batch始终为1
+    // step4: 批次循环处理，目前不支持多batch，batch始终为1
     for (int batch_i = 0; batch_i < otensor.m_batch; batch_i++) {
         // int box_n = otensor.m_tensors[index_box].m_artosyn_dims.u32Num;
         int box_c = otensor.m_tensors[index_box].m_artosyn_dims.u32OriChannels;
@@ -302,7 +304,7 @@ void ArtosynHandDetectNetv2::PostProcess(DetOutputInternal &result) {
         // otensor.m_tensors[index_cls].m_artosyn_dims.u32Offset; const size_t cls_total_size = cls_n * cls_c * cls_h *
         // cls_w;
 
-        // step4: 计算当前输出尺度下的内存起始位置，并获取数据内容到box_data和cls_data中
+        // step5: 计算当前输出尺度下的内存起始位置，并获取数据内容到box_data和cls_data中
         int box_element_byte = otensor.m_tensors[index_box].m_elementbyte;
         char *box_mem =
             (char *)otensor.m_tensors[index_box].m_viraddr + batch_i * box_h * box_w * box_c * box_element_byte;
@@ -347,7 +349,7 @@ void ArtosynHandDetectNetv2::PostProcess(DetOutputInternal &result) {
         AISDK_LOG_TRACE("ArtosynHandDetectNetv2:: cls_c[{}], cls_h[{}], cls_w[{}], box_c[{}], box_h[{}], bow_w[{}]",
                         cls_c, cls_h, cls_w, box_c, box_h, box_w);
 
-        // step5: 特征图遍历，遍历所有网格单元，获取合理结果并保存到tmp_result中
+        // step6: 特征图遍历，遍历所有网格单元，获取合理结果并保存到tmp_result中
         std::vector<DetectRect> tmp_result;                // 临时存储所有检测框
         for (int idx_i = 0; idx_i < cls_h; idx_i++) {      // y坐标遍历
             for (int idx_j = 0; idx_j < cls_w; idx_j++) {  // x坐标遍历
@@ -413,11 +415,11 @@ void ArtosynHandDetectNetv2::PostProcess(DetOutputInternal &result) {
         auto &lhand_rect = result.images_lhand_rects[batch_i];
         auto &rhand_rect = result.images_rhand_rects[batch_i];
 
-        // step6: 对获取的临时结果，应用非极大值抑制(NMS)，消除重叠框
+        // step7: 对获取的临时结果，应用非极大值抑制(NMS)，消除重叠框
         nms(tmp_result, m_iou_threshold);
         AISDK_LOG_TRACE("ArtosynHandDetectNetv2::tmp_result size(after nms): {}", tmp_result.size());
 
-        // step7: 获取不同输入格式下的height和width，并进一步计算输入张量与原始图像的缩放比例和填充
+        // step8: 获取不同输入格式下的height和width，并进一步计算输入张量与原始图像的缩放比例和填充
         int height = itensor.m_tensors[0].m_artosyn_dims.u32Height;
         int width = itensor.m_tensors[0].m_artosyn_dims.u32Width;
 
@@ -427,7 +429,7 @@ void ArtosynHandDetectNetv2::PostProcess(DetOutputInternal &result) {
         float padx = (float(width) - float(m_origin_img_width) * min_ratio) / 2;
         float pady = (float(height) - float(m_origin_img_height) * min_ratio) / 2;
 
-        // step8: 遍历经过NMS后的检测框，获取一组最终左右手的结果，填充到lhand_rect和rhand_rect中
+        // step9: 遍历经过NMS后的检测框，获取一组最终左右手的结果，填充到lhand_rect和rhand_rect中
         for (auto &iter : tmp_result) {
             if (iter.nms_suppressed) {
                 continue;
@@ -461,22 +463,10 @@ void ArtosynHandDetectNetv2::PostProcess(DetOutputInternal &result) {
 absl::Status ArtosynHandDetectNetv2::Inference(const std::vector<Image> &baseinput, DetOutputInternal &baseresult) {
     absl::Status ret;
     if (m_net_batch1) {  // 单批次处理
-        AISDK_LOG_ERROR("failed, not support ArtosynHandDetectNetv2::Inference single batch branch");
-
-        // // 结果容器预分配（根据用户设置的原始批量值）
-        // baseresult.images_lhand_rects.resize(m_session_batch);
-        // baseresult.images_rhand_rects.resize(m_session_batch);
-
-        // // 遍历处理每个输入样本（模拟批量处理）
-        // for (uint32_t i = 0; i < m_session_batch; i++) {
-        //     PreProcessSingle(baseinput, i);
-        //     ret = m_net->RunNet();
-        //     if (ret.ok()) {
-        //         PostProcessSingle(baseresult, i);
-        //     } else {
-        //         AISDK_LOG_TRACE("ArtosynHandDetectNetv2::Inference  Error!");
-        //     }
-        // }
+        AISDK_LOG_ERROR(
+            "[ArtosynHandDetectNetv2] Inference failed, not support ArtosynHandDetectNetv2::Inference single batch "
+            "branch");
+        return absl::UnavailableError("failed to do inference in ArtosynHandDetectNetv2");
     } else {  // 批量处理
         PreProcess(baseinput);
         ret = m_net->RunNet();
