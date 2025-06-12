@@ -8,7 +8,7 @@
         ],
         "detect_ar9481npu_gina": {
             "model_config": {
-                "file_name": "models/det_flora_0317_onnx.npubin",
+                "file_name": "models/det_gina_0612_onnx.npubin",
                 "vendor": "artosyn"
             },
             "session_config": {

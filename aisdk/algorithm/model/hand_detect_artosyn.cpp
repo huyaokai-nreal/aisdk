@@ -25,7 +25,7 @@ void ArtosynHandDetectNetv2::ArtosynHandDetectNetV2reset() {
     itensor.m_tensors[0].m_artosyn_dims.u32ID = 0;
     itensor.m_tensors[0].m_artosyn_dims.u32Bank = 0;
     itensor.m_tensors[0].m_artosyn_dims.u32Offset = 0;
-    itensor.m_tensors[0].m_artosyn_dims.u32Height = 256;
+    itensor.m_tensors[0].m_artosyn_dims.u32Height = 192;
     itensor.m_tensors[0].m_artosyn_dims.u32KStep = 0;
     itensor.m_tensors[0].m_artosyn_dims.u32KNormNum = 0;
     itensor.m_tensors[0].m_artosyn_dims.u32KSizeLast = 0;
@@ -39,7 +39,7 @@ void ArtosynHandDetectNetv2::ArtosynHandDetectNetV2reset() {
     itensor.m_tensors[0].m_artosyn_dims.u32TensorStep = 0;
     itensor.m_tensors[0].m_artosyn_dims.u32Size = 147456;
     itensor.m_tensors[0].m_artosyn_dims.u32MemorySize = 147456;
-    itensor.m_tensors[0].m_artosyn_dims.u32Width = 192;
+    itensor.m_tensors[0].m_artosyn_dims.u32Width = 256;
     itensor.m_tensors[0].m_artosyn_dims.s32ZeroPoint = 0;
 
     otensor.m_tensors[0].m_name = "output_box";
@@ -52,11 +52,11 @@ void ArtosynHandDetectNetv2::ArtosynHandDetectNetV2reset() {
     otensor.m_tensors[0].m_artosyn_dims.achLayoutType = "float";
     // otensor.m_tensors[0].m_artosyn_dims.achMemoryType = std::string(stTensor.achMemoryType);
     // otensor.m_tensors[0].m_artosyn_dims.achDdrFormat = std::string(stTensor.achDdrFormat);
-    otensor.m_tensors[0].m_artosyn_dims.dScaleFactor = 0.003887;
+    otensor.m_tensors[0].m_artosyn_dims.dScaleFactor = 0.003891;
     otensor.m_tensors[0].m_artosyn_dims.u32ID = 74;
     otensor.m_tensors[0].m_artosyn_dims.u32Bank = 0;
-    otensor.m_tensors[0].m_artosyn_dims.u32Offset = 0;
-    otensor.m_tensors[0].m_artosyn_dims.u32Height = 16;
+    otensor.m_tensors[0].m_artosyn_dims.u32Offset = 4096;
+    otensor.m_tensors[0].m_artosyn_dims.u32Height = 12;
     otensor.m_tensors[0].m_artosyn_dims.u32KStep = 768;
     otensor.m_tensors[0].m_artosyn_dims.u32KNormNum = 3;
     otensor.m_tensors[0].m_artosyn_dims.u32KSizeLast = 1;
@@ -66,11 +66,11 @@ void ArtosynHandDetectNetv2::ArtosynHandDetectNetV2reset() {
     otensor.m_tensors[0].m_artosyn_dims.u32OriChannels = 4;
     otensor.m_tensors[0].m_artosyn_dims.u32OriFrameSize = 1;
     otensor.m_tensors[0].m_artosyn_dims.u32Precision = 32;
-    otensor.m_tensors[0].m_artosyn_dims.u32RowStep = 48;
+    otensor.m_tensors[0].m_artosyn_dims.u32RowStep = 64;
     otensor.m_tensors[0].m_artosyn_dims.u32TensorStep = 768;
     otensor.m_tensors[0].m_artosyn_dims.u32Size = 768;
     otensor.m_tensors[0].m_artosyn_dims.u32MemorySize = 3072;
-    otensor.m_tensors[0].m_artosyn_dims.u32Width = 12;
+    otensor.m_tensors[0].m_artosyn_dims.u32Width = 16;
     otensor.m_tensors[0].m_artosyn_dims.s32ZeroPoint = -128;
 
     otensor.m_tensors[1].m_name = "output_cls";
@@ -83,11 +83,11 @@ void ArtosynHandDetectNetv2::ArtosynHandDetectNetV2reset() {
     otensor.m_tensors[1].m_artosyn_dims.achLayoutType = "float";
     // otensor.m_tensors[1].m_artosyn_dims.achMemoryType = std::string(stTensor.achMemoryType);
     // otensor.m_tensors[1].m_artosyn_dims.achDdrFormat = std::string(stTensor.achDdrFormat);
-    otensor.m_tensors[1].m_artosyn_dims.dScaleFactor = 0.003921;
+    otensor.m_tensors[1].m_artosyn_dims.dScaleFactor = 0.003920;
     otensor.m_tensors[1].m_artosyn_dims.u32ID = 76;
     otensor.m_tensors[1].m_artosyn_dims.u32Bank = 0;
-    otensor.m_tensors[1].m_artosyn_dims.u32Offset = 4096;
-    otensor.m_tensors[1].m_artosyn_dims.u32Height = 16;
+    otensor.m_tensors[1].m_artosyn_dims.u32Offset = 0;
+    otensor.m_tensors[1].m_artosyn_dims.u32Height = 12;
     otensor.m_tensors[1].m_artosyn_dims.u32KStep = 768;
     otensor.m_tensors[1].m_artosyn_dims.u32KNormNum = 3;
     otensor.m_tensors[1].m_artosyn_dims.u32KSizeLast = 1;
@@ -97,11 +97,11 @@ void ArtosynHandDetectNetv2::ArtosynHandDetectNetV2reset() {
     otensor.m_tensors[1].m_artosyn_dims.u32OriChannels = 3;
     otensor.m_tensors[1].m_artosyn_dims.u32OriFrameSize = 1;
     otensor.m_tensors[1].m_artosyn_dims.u32Precision = 32;
-    otensor.m_tensors[1].m_artosyn_dims.u32RowStep = 48;
+    otensor.m_tensors[1].m_artosyn_dims.u32RowStep = 64;
     otensor.m_tensors[1].m_artosyn_dims.u32TensorStep = 768;
     otensor.m_tensors[1].m_artosyn_dims.u32Size = 768;
     otensor.m_tensors[1].m_artosyn_dims.u32MemorySize = 3072;
-    otensor.m_tensors[1].m_artosyn_dims.u32Width = 12;
+    otensor.m_tensors[1].m_artosyn_dims.u32Width = 16;
     otensor.m_tensors[1].m_artosyn_dims.s32ZeroPoint = -128;
     return;
 }
@@ -230,13 +230,10 @@ void ArtosynHandDetectNetv2::PreProcess(const std::vector<Image> &net_input) {
         int multi_i = i / itensor.m_batch;  // 多形状索引（支持多种输入形状）
         int batch_i = i % itensor.m_batch;  // 批次索引（当前批次中的位置）
 
-        // step4: 根据张量格式解析输入尺寸
-        int height = 0;
-        int width = 0;
-        int channels = 0;
-        channels = itensor.m_tensors[multi_i].m_artosyn_dims.u32OriChannels;
-        height = itensor.m_tensors[multi_i].m_artosyn_dims.u32Height;
-        width = itensor.m_tensors[multi_i].m_artosyn_dims.u32Width;
+        // step4: 解析输入尺寸
+        int channels = itensor.m_tensors[multi_i].m_artosyn_dims.u32OriChannels;
+        int height = itensor.m_tensors[multi_i].m_artosyn_dims.u32Height;
+        int width = itensor.m_tensors[multi_i].m_artosyn_dims.u32Width;
 
         // step5: 准备张量内存信息
         int element_byte = itensor.m_tensors[multi_i].m_elementbyte;  // 张量元素字节大小
