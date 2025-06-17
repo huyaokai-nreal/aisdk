@@ -190,9 +190,9 @@ find_package(abseil REQUIRED)                  # Abseil 基础库（C++ 工具�
 if(NOT Xrlinux AND (CMAKE_SYSTEM_NAME STREQUAL "Android" OR CMAKE_SYSTEM_NAME STREQUAL "Linux"))
     # Android/Linux平台使用 SNPE 推理引擎（高通 DSP 加速）
     find_package(snpe REQUIRED)
-elseif(Xrlinux)
-    # Xrlinux平台使用 Artosyn NPU 加速
-    find_package(artosyn REQUIRED)
+# elseif(Xrlinux)
+#     # Xrlinux平台使用 Artosyn NPU 加速
+#     find_package(artosyn REQUIRED)
 endif()
 
 ## 4. 项目框架核心依赖
