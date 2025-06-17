@@ -8,6 +8,17 @@ target_include_directories(${XENGINE_LIBRARY_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/thirdparty/artosyn/inc
 )
 
+# 设置运行时库搜索路径（优先级：应用目录 > /lib > /usr/lib > 系统路径）
+set(CMAKE_INSTALL_RPATH "$ORIGIN:$ORIGIN/../lib:/lib:/usr/lib")
+set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+
+# 禁用新的DTAG系统
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--disable-new-dtags")
+
+# 明确指定不使用默认路径
+set(CMAKE_SKIP_RPATH FALSE)
+set(CMAKE_SKIP_INSTALL_RPATH FALSE)
+
 # 添加链接库目录
 link_directories(${CMAKE_SOURCE_DIR}/thirdparty/artosyn/lib)
 
@@ -45,13 +56,6 @@ foreach(lib ${ARTOSYN_LIBS})
     # 使用完整的路径链接库
     target_link_libraries(${XENGINE_LIBRARY_NAME} PRIVATE "${LIB_FILE}")
 endforeach()
-
-# 设置运行时库搜索路径（优先级：应用目录 > /lib > /usr/lib > 系统路径）
-set(CMAKE_INSTALL_RPATH "$ORIGIN:$ORIGIN/../lib:/lib:/usr/lib")
-set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
-
-# 添加 -Wl,--disable-new-dtags 链接器选项
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--disable-new-dtags")
 
 # 库文件检查
 add_custom_target(verify_artosyn_libs ALL

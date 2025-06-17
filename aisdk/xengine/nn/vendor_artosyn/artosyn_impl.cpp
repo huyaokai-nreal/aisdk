@@ -310,48 +310,57 @@ int ARTOSYN_Session::MakeInput(std::shared_ptr<ARTOSYN_AIModel> &aimodel) {
     m_in.m_packed_bybatch = true;               // 启用批次打包模式
     m_in.m_tensors.resize(aimodel->m_inputn);   // 预分配张量存储空间
 
+    std::vector<std::string> nameVec;
+    if (2 == aimodel->m_outputn) {
+        nameVec.push_back("images");
+    }
+
+    if (3 == aimodel->m_outputn) {
+        nameVec.push_back("input");
+    }
+
     // 遍历处理每个输入张量
     for (auto i = 0; i < aimodel->m_inputn; i++) {
-        AR_NPU_TENSOR_S stTensor;
-        memset(&stTensor, 0, sizeof(stTensor));
-        s32Ret = AR_MPI_NPU_GetInputTensorParam(aimodel->m_handle, i, &stTensor);
-        if (0 != s32Ret) {
-            AISDK_LOG_ERROR("get input tensor param failed, handle[{}], i[{}]", (void *)aimodel->m_handle, i);
-        }
+        // AR_NPU_TENSOR_S stTensor;
+        // memset(&stTensor, 0, sizeof(stTensor));
+        // AISDK_LOG_INFO("going to call AR_MPI_NPU_GetInputTensorParam, handle[{}], i[{}]", (void *)aimodel->m_handle,
+        // i); s32Ret = AR_MPI_NPU_GetInputTensorParam(aimodel->m_handle, i, &stTensor); if (0 != s32Ret) {
+        //     AISDK_LOG_ERROR("get input tensor param failed, handle[{}], i[{}]", (void *)aimodel->m_handle, i);
+        // }
 
-        // 存储张量元数据到内部结构
-        m_in.m_tensors[i].m_name = std::string(stTensor.achName);
-        m_in.m_tensors[i].m_dimtype = TensorFormat::NCHW;
-        m_in.m_tensors[i].m_elementype = ARTOSYNNConvertElementType(stTensor);
-        m_in.m_tensors[i].m_elementbyte = ARTOSYNNConvertElementBype(m_in.m_tensors[i].m_elementype);
+        // // 存储张量元数据到内部结构
+        // m_in.m_tensors[i].m_name = std::string(stTensor.achName);
+        // m_in.m_tensors[i].m_dimtype = TensorFormat::NCHW;
+        // m_in.m_tensors[i].m_elementype = ARTOSYNNConvertElementType(stTensor);
+        // m_in.m_tensors[i].m_elementbyte = ARTOSYNNConvertElementBype(m_in.m_tensors[i].m_elementype);
 
-        // 填充tensor内部数据
-        m_in.m_tensors[i].m_artosyn_dims.achName = std::string(stTensor.achName);
-        m_in.m_tensors[i].m_artosyn_dims.achType = std::string(stTensor.achType);
-        m_in.m_tensors[i].m_artosyn_dims.achStepType = std::string(stTensor.achStepType);
-        m_in.m_tensors[i].m_artosyn_dims.achLayoutType = std::string(stTensor.achLayoutType);
-        // m_in.m_tensors[i].m_artosyn_dims.achMemoryType = std::string(stTensor.achMemoryType);
-        // m_in.m_tensors[i].m_artosyn_dims.achDdrFormat = std::string(stTensor.achDdrFormat);
-        m_in.m_tensors[i].m_artosyn_dims.dScaleFactor = stTensor.dScaleFactor;
-        m_in.m_tensors[i].m_artosyn_dims.u32ID = stTensor.u32ID;
-        m_in.m_tensors[i].m_artosyn_dims.u32Bank = stTensor.u32Bank;
-        m_in.m_tensors[i].m_artosyn_dims.u32Offset = stTensor.u32Offset;
-        m_in.m_tensors[i].m_artosyn_dims.u32Height = stTensor.u32Height;
-        m_in.m_tensors[i].m_artosyn_dims.u32KStep = stTensor.u32KStep;
-        m_in.m_tensors[i].m_artosyn_dims.u32KNormNum = stTensor.u32KNormNum;
-        m_in.m_tensors[i].m_artosyn_dims.u32KSizeLast = stTensor.u32KSizeLast;
-        m_in.m_tensors[i].m_artosyn_dims.u32KSizeNorm = stTensor.u32KSizeNorm;
-        m_in.m_tensors[i].m_artosyn_dims.u32BitWidth = stTensor.u32BitWidth;
-        m_in.m_tensors[i].m_artosyn_dims.u32Num = stTensor.u32Num;
-        m_in.m_tensors[i].m_artosyn_dims.u32OriChannels = stTensor.u32OriChannels;
-        m_in.m_tensors[i].m_artosyn_dims.u32OriFrameSize = stTensor.u32OriFrameSize;
-        m_in.m_tensors[i].m_artosyn_dims.u32Precision = stTensor.u32Precision;
-        m_in.m_tensors[i].m_artosyn_dims.u32RowStep = stTensor.u32RowStep;
-        m_in.m_tensors[i].m_artosyn_dims.u32TensorStep = stTensor.u32TensorStep;
-        m_in.m_tensors[i].m_artosyn_dims.u32Size = stTensor.u32Size;
-        m_in.m_tensors[i].m_artosyn_dims.u32MemorySize = stTensor.u32MemorySize;
-        m_in.m_tensors[i].m_artosyn_dims.u32Width = stTensor.u32Width;
-        m_in.m_tensors[i].m_artosyn_dims.s32ZeroPoint = stTensor.s32ZeroPoint;
+        // // 填充tensor内部数据
+        // m_in.m_tensors[i].m_artosyn_dims.achName = std::string(stTensor.achName);
+        // m_in.m_tensors[i].m_artosyn_dims.achType = std::string(stTensor.achType);
+        // m_in.m_tensors[i].m_artosyn_dims.achStepType = std::string(stTensor.achStepType);
+        // m_in.m_tensors[i].m_artosyn_dims.achLayoutType = std::string(stTensor.achLayoutType);
+        // // m_in.m_tensors[i].m_artosyn_dims.achMemoryType = std::string(stTensor.achMemoryType);
+        // // m_in.m_tensors[i].m_artosyn_dims.achDdrFormat = std::string(stTensor.achDdrFormat);
+        // m_in.m_tensors[i].m_artosyn_dims.dScaleFactor = stTensor.dScaleFactor;
+        // m_in.m_tensors[i].m_artosyn_dims.u32ID = stTensor.u32ID;
+        // m_in.m_tensors[i].m_artosyn_dims.u32Bank = stTensor.u32Bank;
+        // m_in.m_tensors[i].m_artosyn_dims.u32Offset = stTensor.u32Offset;
+        // m_in.m_tensors[i].m_artosyn_dims.u32Height = stTensor.u32Height;
+        // m_in.m_tensors[i].m_artosyn_dims.u32KStep = stTensor.u32KStep;
+        // m_in.m_tensors[i].m_artosyn_dims.u32KNormNum = stTensor.u32KNormNum;
+        // m_in.m_tensors[i].m_artosyn_dims.u32KSizeLast = stTensor.u32KSizeLast;
+        // m_in.m_tensors[i].m_artosyn_dims.u32KSizeNorm = stTensor.u32KSizeNorm;
+        // m_in.m_tensors[i].m_artosyn_dims.u32BitWidth = stTensor.u32BitWidth;
+        // m_in.m_tensors[i].m_artosyn_dims.u32Num = stTensor.u32Num;
+        // m_in.m_tensors[i].m_artosyn_dims.u32OriChannels = stTensor.u32OriChannels;
+        // m_in.m_tensors[i].m_artosyn_dims.u32OriFrameSize = stTensor.u32OriFrameSize;
+        // m_in.m_tensors[i].m_artosyn_dims.u32Precision = stTensor.u32Precision;
+        // m_in.m_tensors[i].m_artosyn_dims.u32RowStep = stTensor.u32RowStep;
+        // m_in.m_tensors[i].m_artosyn_dims.u32TensorStep = stTensor.u32TensorStep;
+        // m_in.m_tensors[i].m_artosyn_dims.u32Size = stTensor.u32Size;
+        // m_in.m_tensors[i].m_artosyn_dims.u32MemorySize = stTensor.u32MemorySize;
+        // m_in.m_tensors[i].m_artosyn_dims.u32Width = stTensor.u32Width;
+        // m_in.m_tensors[i].m_artosyn_dims.s32ZeroPoint = stTensor.s32ZeroPoint;
 
         // // 根据类别分条进行日志记录
         // AISDK_LOG_TRACE("input tensor[{}] base param: m_name[{}], m_dimtype[{}], m_elementype[{}],
@@ -390,8 +399,8 @@ int ARTOSYN_Session::MakeInput(std::shared_ptr<ARTOSYN_AIModel> &aimodel) {
         // 获取npu内存地址
         AR_MEM_S stTensorAddr;
         memset(&stTensorAddr, 0, sizeof(stTensorAddr));
-        s32Ret =
-            AR_MPI_NPU_GetInputTensorAddrByName(aimodel->m_handle, m_stNPUInBuff, stTensor.achName, 0, &stTensorAddr);
+        s32Ret = AR_MPI_NPU_GetInputTensorAddrByName(aimodel->m_handle, m_stNPUInBuff, (AR_CHAR *)(nameVec[i].c_str()),
+                                                     0, &stTensorAddr);
         if (0 != s32Ret) {
             AISDK_LOG_ERROR("AR_MPI_NPU_GetInputTensorAddrByName failure");
             return -1;
@@ -433,48 +442,62 @@ int ARTOSYN_Session::MakeOutput(std::shared_ptr<ARTOSYN_AIModel> &aimodel) {
     m_out.m_packed_bybatch = true;
     m_out.m_tensors.resize(aimodel->m_outputn);
 
+    std::vector<std::string> nameVec;
+    if (2 == aimodel->m_outputn) {
+        nameVec.push_back("output_box");
+        nameVec.push_back("output_cls");
+    }
+
+    if (3 == aimodel->m_outputn) {
+        nameVec.push_back("feat_x");
+        nameVec.push_back("feat_y");
+        nameVec.push_back("feat_z");
+    }
+
     // 遍历处理每个输出张量
     for (auto i = 0; i < aimodel->m_outputn; i++) {
-        AR_NPU_TENSOR_S stTensor;
-        memset(&stTensor, 0, sizeof(stTensor));
-        s32Ret = AR_MPI_NPU_GetOutputTensorParam(aimodel->m_handle, i, &stTensor);
-        if (0 != s32Ret) {
-            AISDK_LOG_ERROR("get output tensor param failed, handle[{}], i[{}]", aimodel->m_handle, i);
-        }
+        // AR_NPU_TENSOR_S stTensor;
+        // memset(&stTensor, 0, sizeof(stTensor));
+        // AISDK_LOG_INFO("going to call AR_MPI_NPU_GetOutputTensorParam, handle[{}], i[{}]", (void *)aimodel->m_handle,
+        //                i);
+        // s32Ret = AR_MPI_NPU_GetOutputTensorParam(aimodel->m_handle, i, &stTensor);
+        // if (0 != s32Ret) {
+        //     AISDK_LOG_ERROR("get output tensor param failed, handle[{}], i[{}]", aimodel->m_handle, i);
+        // }
 
-        // 存储张量元数据到内部结构
-        m_out.m_tensors[i].m_name = std::string(stTensor.achName);
-        m_out.m_tensors[i].m_dimtype = TensorFormat::NCHW;
-        m_out.m_tensors[i].m_elementype = ARTOSYNNConvertElementType(stTensor);
-        m_out.m_tensors[i].m_elementbyte = ARTOSYNNConvertElementBype(m_out.m_tensors[i].m_elementype);
+        // // 存储张量元数据到内部结构
+        // m_out.m_tensors[i].m_name = std::string(stTensor.achName);
+        // m_out.m_tensors[i].m_dimtype = TensorFormat::NCHW;
+        // m_out.m_tensors[i].m_elementype = ARTOSYNNConvertElementType(stTensor);
+        // m_out.m_tensors[i].m_elementbyte = ARTOSYNNConvertElementBype(m_out.m_tensors[i].m_elementype);
 
-        // 填充tensor内部数据
-        m_out.m_tensors[i].m_artosyn_dims.achName = std::string(stTensor.achName);
-        m_out.m_tensors[i].m_artosyn_dims.achType = std::string(stTensor.achType);
-        m_out.m_tensors[i].m_artosyn_dims.achStepType = std::string(stTensor.achStepType);
-        m_out.m_tensors[i].m_artosyn_dims.achLayoutType = std::string(stTensor.achLayoutType);
-        // m_out.m_tensors[i].m_artosyn_dims.achMemoryType = std::string(stTensor.achMemoryType);
-        // m_out.m_tensors[i].m_artosyn_dims.achDdrFormat = std::string(stTensor.achDdrFormat);
-        m_out.m_tensors[i].m_artosyn_dims.dScaleFactor = stTensor.dScaleFactor;
-        m_out.m_tensors[i].m_artosyn_dims.u32ID = stTensor.u32ID;
-        m_out.m_tensors[i].m_artosyn_dims.u32Bank = stTensor.u32Bank;
-        m_out.m_tensors[i].m_artosyn_dims.u32Offset = stTensor.u32Offset;
-        m_out.m_tensors[i].m_artosyn_dims.u32Height = stTensor.u32Height;
-        m_out.m_tensors[i].m_artosyn_dims.u32KStep = stTensor.u32KStep;
-        m_out.m_tensors[i].m_artosyn_dims.u32KNormNum = stTensor.u32KNormNum;
-        m_out.m_tensors[i].m_artosyn_dims.u32KSizeLast = stTensor.u32KSizeLast;
-        m_out.m_tensors[i].m_artosyn_dims.u32KSizeNorm = stTensor.u32KSizeNorm;
-        m_out.m_tensors[i].m_artosyn_dims.u32BitWidth = stTensor.u32BitWidth;
-        m_out.m_tensors[i].m_artosyn_dims.u32Num = stTensor.u32Num;
-        m_out.m_tensors[i].m_artosyn_dims.u32OriChannels = stTensor.u32OriChannels;
-        m_out.m_tensors[i].m_artosyn_dims.u32OriFrameSize = stTensor.u32OriFrameSize;
-        m_out.m_tensors[i].m_artosyn_dims.u32Precision = stTensor.u32Precision;
-        m_out.m_tensors[i].m_artosyn_dims.u32RowStep = stTensor.u32RowStep;
-        m_out.m_tensors[i].m_artosyn_dims.u32TensorStep = stTensor.u32TensorStep;
-        m_out.m_tensors[i].m_artosyn_dims.u32Size = stTensor.u32Size;
-        m_out.m_tensors[i].m_artosyn_dims.u32MemorySize = stTensor.u32MemorySize;
-        m_out.m_tensors[i].m_artosyn_dims.u32Width = stTensor.u32Width;
-        m_out.m_tensors[i].m_artosyn_dims.s32ZeroPoint = stTensor.s32ZeroPoint;
+        // // 填充tensor内部数据
+        // m_out.m_tensors[i].m_artosyn_dims.achName = std::string(stTensor.achName);
+        // m_out.m_tensors[i].m_artosyn_dims.achType = std::string(stTensor.achType);
+        // m_out.m_tensors[i].m_artosyn_dims.achStepType = std::string(stTensor.achStepType);
+        // m_out.m_tensors[i].m_artosyn_dims.achLayoutType = std::string(stTensor.achLayoutType);
+        // // m_out.m_tensors[i].m_artosyn_dims.achMemoryType = std::string(stTensor.achMemoryType);
+        // // m_out.m_tensors[i].m_artosyn_dims.achDdrFormat = std::string(stTensor.achDdrFormat);
+        // m_out.m_tensors[i].m_artosyn_dims.dScaleFactor = stTensor.dScaleFactor;
+        // m_out.m_tensors[i].m_artosyn_dims.u32ID = stTensor.u32ID;
+        // m_out.m_tensors[i].m_artosyn_dims.u32Bank = stTensor.u32Bank;
+        // m_out.m_tensors[i].m_artosyn_dims.u32Offset = stTensor.u32Offset;
+        // m_out.m_tensors[i].m_artosyn_dims.u32Height = stTensor.u32Height;
+        // m_out.m_tensors[i].m_artosyn_dims.u32KStep = stTensor.u32KStep;
+        // m_out.m_tensors[i].m_artosyn_dims.u32KNormNum = stTensor.u32KNormNum;
+        // m_out.m_tensors[i].m_artosyn_dims.u32KSizeLast = stTensor.u32KSizeLast;
+        // m_out.m_tensors[i].m_artosyn_dims.u32KSizeNorm = stTensor.u32KSizeNorm;
+        // m_out.m_tensors[i].m_artosyn_dims.u32BitWidth = stTensor.u32BitWidth;
+        // m_out.m_tensors[i].m_artosyn_dims.u32Num = stTensor.u32Num;
+        // m_out.m_tensors[i].m_artosyn_dims.u32OriChannels = stTensor.u32OriChannels;
+        // m_out.m_tensors[i].m_artosyn_dims.u32OriFrameSize = stTensor.u32OriFrameSize;
+        // m_out.m_tensors[i].m_artosyn_dims.u32Precision = stTensor.u32Precision;
+        // m_out.m_tensors[i].m_artosyn_dims.u32RowStep = stTensor.u32RowStep;
+        // m_out.m_tensors[i].m_artosyn_dims.u32TensorStep = stTensor.u32TensorStep;
+        // m_out.m_tensors[i].m_artosyn_dims.u32Size = stTensor.u32Size;
+        // m_out.m_tensors[i].m_artosyn_dims.u32MemorySize = stTensor.u32MemorySize;
+        // m_out.m_tensors[i].m_artosyn_dims.u32Width = stTensor.u32Width;
+        // m_out.m_tensors[i].m_artosyn_dims.s32ZeroPoint = stTensor.s32ZeroPoint;
 
         // // 根据类别分条进行日志记录
         // AISDK_LOG_TRACE("output tensor[{}] base param: m_name[{}], m_dimtype[{}], m_elementype[{}],
@@ -514,8 +537,8 @@ int ARTOSYN_Session::MakeOutput(std::shared_ptr<ARTOSYN_AIModel> &aimodel) {
         // 获取npu内存地址
         AR_MEM_S stTensorAddr;
         memset(&stTensorAddr, 0, sizeof(stTensorAddr));
-        s32Ret =
-            AR_MPI_NPU_GetOutputTensorAddrByName(aimodel->m_handle, m_stNPUOutBuff, stTensor.achName, 0, &stTensorAddr);
+        s32Ret = AR_MPI_NPU_GetOutputTensorAddrByName(aimodel->m_handle, m_stNPUOutBuff,
+                                                      (AR_CHAR *)(nameVec[i].c_str()), 0, &stTensorAddr);
         if (s32Ret) {
             AISDK_LOG_ERROR("AR_MPI_NPU_GetOutputTensorAddrByName failure");
             return -1;
