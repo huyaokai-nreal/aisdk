@@ -53,7 +53,7 @@ ARTOSYN_AIModel::ARTOSYN_AIModel(ModelConfig &config) : AIModel() {
     if (!m_handle) {
         AISDK_LOG_ERROR("AR_MPI_NPU_LoadModel failed");
     } else {
-        m_batch = AR_MPI_NPU_GetBatchNum(m_handle);           // 获取模型支持的batch
+        m_batch = 1;  // AR_MPI_NPU_GetBatchNum(m_handle);     // 获取模型支持的batch
         m_inputn = AR_MPI_NPU_GetInputTensorNum(m_handle);    // 模型输入张量数量
         m_outputn = AR_MPI_NPU_GetOutputTensorNum(m_handle);  // 模型输出张量数量
         m_info.handle = (uint64_t)m_handle;
