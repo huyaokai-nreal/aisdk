@@ -147,9 +147,10 @@ class MonoHandKpt3DNimbleCalculator : public xgraph::CalculatorBase {
             if (mono_nimble_outputs.ok()) {
                 output_buffer_->lhand_valid = true;
                 output_buffer_->left_hand.source = CamType::MONO;
-                // output_buffer_->left_hand.score = 1.0;
                 output_buffer_->left_hand.score = mono_nimble_outputs->kpt3d_score;
                 output_buffer_->left_hand.kpt3d = interpolation_to_26points(mono_nimble_outputs->res3d);
+                AISDK_LOG_TRACE("[MonoHandKpt3DNimbleCalculator] left hand score is {}",
+                                output_buffer_->left_hand.score);
                 AISDK_LOG_TRACE("[MonoHandKpt3DNimbleCalculator] left hand 3d after converting 26");
                 for (int i = 0; i < 26; i++) {
                     AISDK_LOG_TRACE("{} {} {} ", output_buffer_->left_hand.kpt3d[i][0],
@@ -188,10 +189,12 @@ class MonoHandKpt3DNimbleCalculator : public xgraph::CalculatorBase {
             if (mono_nimble_outputs.ok()) {
                 output_buffer_->rhand_valid = true;
                 output_buffer_->right_hand.source = CamType::MONO;
-                // output_buffer_->right_hand.score = 1.0;
                 output_buffer_->right_hand.score = mono_nimble_outputs->kpt3d_score;
                 output_buffer_->right_hand.kpt3d = interpolation_to_26points(mono_nimble_outputs->res3d);
                 kpt2d_buffer_->rhand_lcam_kpt = mono_nimble_outputs->kpts;  // pcl 128x128
+                AISDK_LOG_TRACE("[MonoHandKpt3DNimbleCalculator] right hand score is {}",
+                                output_buffer_->right_hand.score);
+                AISDK_LOG_TRACE("[MonoHandKpt3DNimbleCalculator] right hand 3d after converting 26");
             } else {
                 output_buffer_->rhand_valid = false;
                 AISDK_LOG_TRACE("[MonoHandKpt3DNimbleCalculator] Falied to solve right hand on left image: {}");

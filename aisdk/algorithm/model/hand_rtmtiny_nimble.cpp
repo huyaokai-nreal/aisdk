@@ -219,8 +219,11 @@ void RTMTinyNimbleDLT::PostProcess(MonoHandNimbleOutputs &result) {
     AISDK_LOG_TRACE("[RTMTinyNimbleDLTNet] infer kpt success");
 
     // score
-    int index_score = this->m_net->GetOutputTensorIndex("score");
-    float score = *((float *)otensor.m_tensors[index_score].m_viraddr);
+    float score = 0.;
+    for (float value : sigma) {
+        score += 1. / (1. + std::exp(-1. * value));
+    }
+    score = score / sigma.size();
     result.kpt3d_score = 1 - score;
 
     // mem_out

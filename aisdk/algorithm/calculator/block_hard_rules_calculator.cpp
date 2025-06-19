@@ -42,18 +42,23 @@ class BlockHardRulesCalculator : public xgraph::CalculatorBase {
             : score_th_(score_th), score_th_width_(score_th_width), rmse_th_(rmse_th), rmse_th_width_(rmse_th_width) {}
         HandState last_state;
         HandState update(CamType hand_source, float score) {
-            if (hand_source == CamType::BINO) {
-                if (score < score_th_ - score_th_width_ / 2.F) {
-                    last_state = HandState::Lost;
-                } else if (score > score_th_ + score_th_width_ / 2.F) {
-                    last_state = HandState::Tracking;
-                }
-            } else {
-                if (score > rmse_th_ + rmse_th_width_ / 2.F) {
-                    last_state = HandState::Lost;
-                } else if (score < rmse_th_ - rmse_th_width_ / 2.F) {
-                    last_state = HandState::Tracking;
-                }
+            // if (hand_source == CamType::BINO) {
+            //     if (score < score_th_ - score_th_width_ / 2.F) {
+            //         last_state = HandState::Lost;
+            //     } else if (score > score_th_ + score_th_width_ / 2.F) {
+            //         last_state = HandState::Tracking;
+            //     }
+            // } else {
+            //     if (score > rmse_th_ + rmse_th_width_ / 2.F) {
+            //         last_state = HandState::Lost;
+            //     } else if (score < rmse_th_ - rmse_th_width_ / 2.F) {
+            //         last_state = HandState::Tracking;
+            //     }
+            // }
+            if (score < score_th_ - score_th_width_ / 2.F) {
+                last_state = HandState::Lost;
+            } else if (score > score_th_ + score_th_width_ / 2.F) {
+                last_state = HandState::Tracking;
             }
             return last_state;
         }
@@ -137,28 +142,14 @@ class BlockHardRulesCalculator : public xgraph::CalculatorBase {
                     AISDK_LOG_TRACE("[BlockHardRulesCalculator] block left hand using root point depth {}",
                                     input_data.left_hand.kpt3d[root_index][2]);
                     output_buffer_->lhand_valid = false;
-                } else if (input_data.left_hand.source == CamType::MONO &&
-                           left_hand_state_updator_->update(input_data.left_hand.source,
-                                                            input_data.left_hand.reproj_rmse) == HandState::Lost) {
-                    //过滤规则2：单目模式下的重投影误差过滤
-                    AISDK_LOG_TRACE("[BlockHardRulesCalculator] block left hand using MONO hand rmse metric {}",
-                                    input_data.left_hand.reproj_rmse);
-                    output_buffer_->lhand_valid = false;
-                } else if (input_data.left_hand.source == CamType::BINO &&
-                           left_hand_state_updator_->update(input_data.left_hand.source, input_data.left_hand.score) ==
-                               HandState::Lost) {
-                    //过滤规则3：双目模式下的置信度过滤
-                    AISDK_LOG_TRACE("[BlockHardRulesCalculator] block left hand using BINO hand score {}",
+                } else if (left_hand_state_updator_->update(input_data.left_hand.source, input_data.left_hand.score) ==
+                           HandState::Lost) {
+                    //过滤规则3：置信度过滤
+                    AISDK_LOG_TRACE("[BlockHardRulesCalculator] block left hand using hand score {}",
                                     input_data.left_hand.score);
                     output_buffer_->lhand_valid = false;
-                    // 如果手在非视线水平以上区域，可以宽容一些
-                    if (input_data.left_hand.kpt3d[root_index][1] > -0.05 &&
-                        input_data.left_hand.score > (score_th_ - score_th_width_ / 2 - 0.1)) {
-                        output_buffer_->lhand_valid = true;
-                        AISDK_LOG_TRACE("[BlockHardRulesCalculator] block but save left hand");
-                    }
                 } else {
-                    AISDK_LOG_TRACE("[BlockHardRulesCalculator] left_hand don't block");
+                    AISDK_LOG_TRACE("[BlockHardRulesCalculator] left_hand don't block {} ", input_data.left_hand.score);
                 }
             }
 
@@ -175,28 +166,15 @@ class BlockHardRulesCalculator : public xgraph::CalculatorBase {
                     AISDK_LOG_TRACE("[BlockHardRulesCalculator] block right hand using root point depth {}",
                                     input_data.right_hand.kpt3d[root_index][2]);
                     output_buffer_->rhand_valid = false;
-                } else if (input_data.right_hand.source == CamType::MONO &&
-                           right_hand_state_updator_->update(input_data.right_hand.source,
-                                                             input_data.right_hand.reproj_rmse) == HandState::Lost) {
-                    //过滤规则2：单目模式下的重投影误差过滤
-                    AISDK_LOG_TRACE("[BlockHardRulesCalculator] block right hand using MONO hand rmse metric {}",
-                                    input_data.right_hand.reproj_rmse);
-                    output_buffer_->rhand_valid = false;
-                } else if (input_data.right_hand.source == CamType::BINO &&
-                           right_hand_state_updator_->update(input_data.right_hand.source,
+                } else if (right_hand_state_updator_->update(input_data.right_hand.source,
                                                              input_data.right_hand.score) == HandState::Lost) {
-                    //过滤规则3：双目模式下的置信度过滤
-                    AISDK_LOG_TRACE("[BlockHardRulesCalculator] block right hand using BINO hand score {}",
+                    //过滤规则3：置信度过滤
+                    AISDK_LOG_TRACE("[BlockHardRulesCalculator] block right hand using hand score {}",
                                     input_data.right_hand.score);
                     output_buffer_->rhand_valid = false;
-                    // 如果手在非视线水平以上区域，可以宽容一些
-                    if (input_data.right_hand.kpt3d[root_index][1] > -0.05 &&
-                        input_data.right_hand.score > (score_th_ - score_th_width_ / 2 - 0.1)) {
-                        output_buffer_->rhand_valid = true;
-                        AISDK_LOG_TRACE("[BlockHardRulesCalculator] block but save right hand");
-                    }
                 } else {
-                    AISDK_LOG_TRACE("[BlockHardRulesCalculator] right_hand don't block");
+                    AISDK_LOG_TRACE("[BlockHardRulesCalculator] right_hand don't block {} ",
+                                    input_data.right_hand.score);
                 }
             }
         }
