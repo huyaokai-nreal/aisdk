@@ -13,11 +13,11 @@ class AISDK(ConanFile):
     def build_requirements(self):
         super().build_requirements()
         if os.getenv('BUILD_TOOL'):
-            self.tool_requires("grpc/1.54.3")
-            self.tool_requires("protobuf/3.21.9")
+            self.tool_requires("grpc/1.72.1")
         if self.settings.os == "Android": 
             self.tool_requires("android-ndk/r25c")
         self.test_requires("doctest/2.4.11")
+        self.tool_requires("protobuf/5.27.0")
     
     def build(self):
         update_model_cmd = "git submodule init && git submodule update"
@@ -37,7 +37,7 @@ class AISDK(ConanFile):
 
     def requirements(self):
         if os.getenv('BUILD_TOOL'):
-            self.requires("grpc/1.54.3")
+            self.requires("grpc/1.72.1")
         self.requires("fmt/9.1.0", transitive_headers=True, transitive_libs=True)
         self.requires("opencv/4.5.5", transitive_headers=True, transitive_libs=True)
         self.requires("eigen/3.3.7", transitive_headers=True, transitive_libs=True)
@@ -60,8 +60,8 @@ class AISDK(ConanFile):
             enable_xgraph_profiler = True
             xgraph_version = "xgraph/0.10.0.profiler"
         self.requires(xgraph_version, transitive_libs=True, options={"enable_profiler": enable_xgraph_profiler})
-        self.requires("abseil/20230125.3", transitive_libs=True)
-        self.requires("protobuf/3.21.9", transitive_libs=True)
+        self.requires("abseil/20240116.1", transitive_libs=True)
+        self.requires("protobuf/5.27.0", transitive_libs=True)
         self.requires("glog/0.6.0", transitive_libs=True)
         self.requires("suitesparse/5.7.1")  #ceres-slover依赖suitesparse/5.7.1
         self.requires("ceres-solver/2.0.0.1")
