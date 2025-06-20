@@ -75,7 +75,7 @@ static inline __attribute__((always_inline)) void fisheye_project(
     float32x4_t thetaf8 = vmulq_f32(thetaf4, thetaf4);
     float32x4_t thetaf10 = vmulq_f32(thetaf6, thetaf4);
     float32x4_t thetaf12 = vmulq_f32(thetaf6, thetaf6);
-    float32x4_t select = vcgeq_f32(vdupq_n_f32(std::numeric_limits<float>::epsilon()), thetaf);
+    uint32x4_t select = vcgeq_f32(vdupq_n_f32(std::numeric_limits<float>::epsilon()), thetaf);
     float32x4_t th_divr = vdivq_f32(thetaf, rf);
 
     float32x4_t th_radial = vfmaq_laneq_f32(onef, thetaf2, kc0, 0);
@@ -84,7 +84,7 @@ static inline __attribute__((always_inline)) void fisheye_project(
     th_radial = vfmaq_laneq_f32(th_radial, thetaf8, kc0, 3);
     th_radial = vfmaq_laneq_f32(th_radial, thetaf10, kc4, 0);
     th_radial = vfmaq_laneq_f32(th_radial, thetaf12, kc4, 1);
-    th_divr = vbslq_s32(select, onef, th_divr);
+    th_divr = vbslq_f32(select, onef, th_divr);
     // float32x4_t org_x = {undistorted_pt[0], undistorted_pt1[0], undistorted_pt2[0],
     // undistorted_pt3[0]}; float32x4_t org_y = {undistorted_pt[1], undistorted_pt1[1],
     // undistorted_pt2[1], undistorted_pt3[1]};
@@ -109,8 +109,8 @@ static inline __attribute__((always_inline)) void fisheye_project(
     xr_yr_x = vfmaq_f32(cx_s, xr_yr_x, fx_s);
     xr_yr_y = vfmaq_f32(cy_s, xr_yr_y, fy_s);
     uint32x4_t dpck = vcgezq_f32(src_eye_z);
-    xr_yr_x = vbslq_s32(dpck, xr_yr_x, depthcheck);
-    xr_yr_y = vbslq_s32(dpck, xr_yr_y, depthcheck);
+    xr_yr_x = vbslq_f32(dpck, xr_yr_x, depthcheck);
+    xr_yr_y = vbslq_f32(dpck, xr_yr_y, depthcheck);
 }
 
 static inline __attribute__((always_inline)) void pinhole_project(const float32x4_t src_eye_x,
@@ -181,26 +181,35 @@ cv::Mat perspective_crop_image(const base::BaseCameraModel *src_camera, const ba
     float *kc = (float *)kc_mat.data();
     // printf("kc %f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", kc[0], kc[1], kc[2],kc[3],
     // kc[4], kc[5], kc[6], kc[7], kc[8], kc[9], kc[10], kc[11]);
-    float32x4x4_t kenel = vld1q_f32_x4(combined_transform.data());
-    float32x4_t kc0 = {kc[0], kc[1], kc[2], kc[3]};
-    float32x4_t kc4 = {0, 0, 0, 0};
-    float32x4_t kc8 = {0, 0, 0, 0};
+    // float32x4x4_t kenel = vld1q_f32_x4(combined_transform.data());
+    float kc0_data[] = {kc[0], kc[1], kc[2], kc[3]};
+    float32x4_t kc0 = vld1q_f32(kc0_data);
+    float32x4_t kc4 = vdupq_n_f32(0);
+    float32x4_t kc8 = vdupq_n_f32(0);
     if (src_camera->camera_type_ == base::CameraType::FISHEYE624) {
-        kc4 = {kc[4], kc[5], kc[6], kc[7]};
-        kc8 = {kc[8], kc[9], kc[10], kc[11]};
+        float kc4_data[] = {kc[4], kc[5], kc[6], kc[7]};
+        kc4 = vld1q_f32(kc4_data);
+        float kc8_data[] = {kc[8], kc[9], kc[10], kc[11]};
+        kc8 = vld1q_f32(kc8_data);
     } else if (src_camera->camera_type_ == base::CameraType::PINHOLE) {
-        kc0 = {kc[0], kc[1], kc[4], 0};
-        kc4 = {0, 0, kc[2], kc[3]};
+        float kc0_data[] = {kc[0], kc[1], kc[4], 0};
+        float kc4_data[] = {0, 0, kc[2], kc[3]};
+        kc0 = vld1q_f32(kc0_data);
+        kc4 = vld1q_f32(kc4_data);
     } else {
         AISDK_LOG_ERROR("unspoorted camera model type {}", int(src_camera->camera_type_));
     }
     float32x4_t depthcheck = vdupq_n_f32(-1);
     float32x4_t th_radial;
 
-    float32x4_t kenel_a = kenel.val[0];
-    float32x4_t kenel_b = kenel.val[1];
-    float32x4_t kenel_c = kenel.val[2];
-    float32x4_t kenel_d = kenel.val[3];
+    // float32x4_t kenel_a = kenel.val[0];
+    // float32x4_t kenel_b = kenel.val[1];
+    // float32x4_t kenel_c = kenel.val[2];
+    // float32x4_t kenel_d = kenel.val[3];
+    float32x4_t kenel_a = vld1q_f32((float *)combined_transform.data());
+    float32x4_t kenel_b = vld1q_f32((float *)combined_transform.data() + 4);
+    float32x4_t kenel_c = vld1q_f32((float *)combined_transform.data() + 8);
+    float32x4_t kenel_d = vld1q_f32((float *)combined_transform.data() + 12);
 
     float32x4_t one_x = vdupq_n_f32(kenel_d[0]);
     float32x4_t one_y = vdupq_n_f32(kenel_d[1]);
@@ -319,19 +328,19 @@ cv::Mat perspective_crop_image(const base::BaseCameraModel *src_camera, const ba
             float16x8_t wy2 = vcombine_f16(vcvt_f16_f32(wy02), vcvt_f16_f32(wy03));
             float16x8_t wy3 = vcombine_f16(vcvt_f16_f32(wy12), vcvt_f16_f32(wy13));
 
-            int32x4_t v_is_overflow0 = vorrq_s32(vcltq_s32(vx0, vdupq_n_s32(0)), vcleq_s32(vwidth, vx0));
-            int32x4_t v_is_overflow1 = vorrq_s32(vcltq_s32(vx1, vdupq_n_s32(0)), vcleq_s32(vwidth, vx1));
-            int32x4_t v_is_overflow2 = vorrq_s32(vcltq_s32(vx2, vdupq_n_s32(0)), vcleq_s32(vwidth, vx2));
-            int32x4_t v_is_overflow3 = vorrq_s32(vcltq_s32(vx3, vdupq_n_s32(0)), vcleq_s32(vwidth, vx3));
+            uint32x4_t v_is_overflow0 = vorrq_u32(vcltq_s32(vx0, vdupq_n_s32(0)), vcleq_s32(vwidth, vx0));
+            uint32x4_t v_is_overflow1 = vorrq_u32(vcltq_s32(vx1, vdupq_n_s32(0)), vcleq_s32(vwidth, vx1));
+            uint32x4_t v_is_overflow2 = vorrq_u32(vcltq_s32(vx2, vdupq_n_s32(0)), vcleq_s32(vwidth, vx2));
+            uint32x4_t v_is_overflow3 = vorrq_u32(vcltq_s32(vx3, vdupq_n_s32(0)), vcleq_s32(vwidth, vx3));
 
             v_is_overflow0 =
-                vorrq_s32(v_is_overflow0, vorrq_s32(vcltq_s32(vy0, vdupq_n_s32(0)), vcleq_s32(vheight, vy0)));
+                vorrq_u32(v_is_overflow0, vorrq_u32(vcltq_s32(vy0, vdupq_n_s32(0)), vcleq_s32(vheight, vy0)));
             v_is_overflow1 =
-                vorrq_s32(v_is_overflow1, vorrq_s32(vcltq_s32(vy1, vdupq_n_s32(0)), vcleq_s32(vheight, vy1)));
+                vorrq_u32(v_is_overflow1, vorrq_u32(vcltq_s32(vy1, vdupq_n_s32(0)), vcleq_s32(vheight, vy1)));
             v_is_overflow2 =
-                vorrq_s32(v_is_overflow2, vorrq_s32(vcltq_s32(vy2, vdupq_n_s32(0)), vcleq_s32(vheight, vy2)));
+                vorrq_u32(v_is_overflow2, vorrq_u32(vcltq_s32(vy2, vdupq_n_s32(0)), vcleq_s32(vheight, vy2)));
             v_is_overflow3 =
-                vorrq_s32(v_is_overflow3, vorrq_s32(vcltq_s32(vy3, vdupq_n_s32(0)), vcleq_s32(vheight, vy3)));
+                vorrq_u32(v_is_overflow3, vorrq_u32(vcltq_s32(vy3, vdupq_n_s32(0)), vcleq_s32(vheight, vy3)));
 
             int32x4_t voffset0 = vmlaq_s32(vx0, vy0, vstep);
             int32x4_t voffset1 = vmlaq_s32(vx1, vy1, vstep);
