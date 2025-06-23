@@ -185,10 +185,10 @@ void RTMTinyNimbleDLT::PostProcess(MonoHandNimbleOutputs &result) {
     local_angles = decode_hand_angle(local_angles);
     auto local_kpt = decode_hand_joints(shape_param, local_angles);
 
-    Eigen::Matrix<float, k3DAlgoStdKeypointNum, 3> rel_kpt_26 = (global_rotation * local_kpt.transpose()).transpose();
+    Eigen::Matrix<float, 26, 3> rel_kpt_26 = (global_rotation * local_kpt.transpose()).transpose();
 
-    Eigen::Matrix<float, kAlgoKeypointNum, 3> rel_kpt = rel_kpt_26.block(0, 0, kAlgoKeypointNum, 3);
-    Eigen::Matrix<float, 5, 3> rel_kpt_else = rel_kpt_26.block(kAlgoKeypointNum, 0, 5, 3);
+    Eigen::Matrix<float, 21, 3> rel_kpt = rel_kpt_26.block(0, 0, 21, 3);
+    Eigen::Matrix<float, 5, 3> rel_kpt_else = rel_kpt_26.block(21, 0, 5, 3);
 
     Eigen::Matrix3f intrix_matrix;
     auto l_K = virtual_camera_->get_camera_intrinsics();
@@ -201,11 +201,11 @@ void RTMTinyNimbleDLT::PostProcess(MonoHandNimbleOutputs &result) {
 
     Eigen::MatrixXf kpt_weight = cal_kpt_weight(sigma);
 
-    Eigen::Matrix<float, kAlgoKeypointNum, 3> global_kpt = get_3d_kpt(rel_kpt, result.kpts, intrix_matrix, kpt_weight);
+    Eigen::Matrix<float, 21, 3> global_kpt = get_3d_kpt(rel_kpt, result.kpts, intrix_matrix, kpt_weight);
 
     std::vector<Eigen::Vector3f> glbal_kpt_v3f;
-    glbal_kpt_v3f.reserve(k3DAlgoStdKeypointNum);
-    for (int i = 0; i < kAlgoKeypointNum; ++i) {
+    glbal_kpt_v3f.reserve(26);
+    for (int i = 0; i < 21; ++i) {
         glbal_kpt_v3f.emplace_back(global_kpt(i, 0), global_kpt(i, 1), global_kpt(i, 2));
     }
 
@@ -218,8 +218,8 @@ void RTMTinyNimbleDLT::PostProcess(MonoHandNimbleOutputs &result) {
     glbal_kpt_v3f = virtual_camera_->eye_to_world(glbal_kpt_v3f);
 
     AISDK_LOG_TRACE("global_kpt in cam coordinate");
-    result.res3d.resize(k3DAlgoStdKeypointNum);
-    for (int i = 0; i < k3DAlgoStdKeypointNum; i++) {
+    result.res3d.resize(26);
+    for (int i = 0; i < 26; i++) {
         AISDK_LOG_TRACE("{}, {}, {},", glbal_kpt_v3f[i][0], glbal_kpt_v3f[i][1], glbal_kpt_v3f[i][2]);
         result.res3d[i] = Vec3f_t{glbal_kpt_v3f[i][0], glbal_kpt_v3f[i][1], glbal_kpt_v3f[i][2]};
     }
