@@ -53,7 +53,7 @@ class AISDK(ConanFile):
         else:
             #self.requires(super().override_require("framework/jenkins"), run=True)
             self.requires(super().override_require("framework/jenkins#f86342896a5a5513b153e90ae1991e704dbd3070"), run=True)
-        xgraph_version = "xgraph/main"
+        xgraph_version = "xgraph/20250623"
         enable_xgraph_profiler = False
         if os.getenv('ENABLE_XGRAPH_PROFILER') == 'ON':
             print("Enable xgraph profiler !!!!!!!!")
