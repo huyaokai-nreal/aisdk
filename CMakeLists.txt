@@ -55,14 +55,14 @@ if(Xrlinux AND ENABLE_SEGMENT_JOINT_INFERENCE_MODE)
     # Xrlinux是Flora/Gina眼镜所对应的操作系统的标签，等同于Android/Darwin/Linux等
     # 分段联合模式下，眼镜业务的模型包
     set(tar_ppls "xrlinux_ppls")
-    set(tar_model "hand_tracking_gina")
+    set(tar_model "hand_tracking_xrlinux")
 elseif(Xrlinux AND NOT ENABLE_SEGMENT_JOINT_INFERENCE_MODE)
     # 暂不支持
     message(FATAL_ERROR "Xrlinux && !ENABLE_SEGMENT_JOINT_INFERENCE_MODE")
 else()
     # 默认模式下的模型包
     set(tar_ppls "android_ppls")
-    set(tar_model "hand_tracking")
+    set(tar_model "hand_tracking_bp")
 endif()
 
 option(BUILD_EXAMPLE "Build examples." ON)
