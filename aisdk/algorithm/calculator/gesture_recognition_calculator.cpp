@@ -87,6 +87,10 @@ class GestureRecognitionCalculator : public xgraph::CalculatorBase {
                 kpt3d_data.left_hand, kpt2d_data.lhand_lcam_kpt, true, kpt3d_world_pre.lhand_valid,
                 kpt3d_world_pre.left_hand.root_v.norm());
             output_buffer_->lhand_gesture = gesture_res;
+            if (kpt2d_data.lhand_hold_label) {
+                output_buffer_->lhand_gesture = HandGesture::Invalid;
+                AISDK_LOG_TRACE("[GestureRecognitionCalculator] lefthand gesture label is modified by hand_held_cls.");
+            }
             AISDK_LOG_TRACE("[GestureRecognitionCalculator] process left hand complete. {}",
                             HandGestureNames[static_cast<int>(output_buffer_->lhand_gesture)]);
         }
@@ -98,6 +102,11 @@ class GestureRecognitionCalculator : public xgraph::CalculatorBase {
                 kpt3d_data.right_hand, kpt2d_data.rhand_rcam_kpt, false, kpt3d_world_pre.rhand_valid,
                 kpt3d_world_pre.right_hand.root_v.norm());
             output_buffer_->rhand_gesture = gesture_res;
+            if (kpt2d_data.rhand_hold_label) {
+                output_buffer_->rhand_gesture = HandGesture::Invalid;
+                AISDK_LOG_TRACE(
+                    "[GestureRecognitionCalculator] right hand gesture label is modified by hand_held_cls.");
+            }
             AISDK_LOG_TRACE("[GestureRecognitionCalculator] process right hand complete. {}",
                             HandGestureNames[static_cast<int>(output_buffer_->rhand_gesture)]);
         }

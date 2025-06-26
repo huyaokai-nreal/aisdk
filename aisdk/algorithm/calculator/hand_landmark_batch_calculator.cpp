@@ -138,7 +138,8 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
     absl::Status ProcessSingleHand(const Image& image_data, const DetectRect& bbox, bool left_hand,
                                    base::BaseCameraModel* origin_camera, std::vector<Vec2f_t>& kpt,
                                    std::vector<float>& rdepth,
-                                   std::shared_ptr<base::PerspectiveCameraModel>& virutal_camera, bool det_flag) {
+                                   std::shared_ptr<base::PerspectiveCameraModel>& virutal_camera, bool det_flag,
+                                   bool& hand_hold_label) {
         // step1: 准备裁剪图像
         cv::Mat crop_image;
 
@@ -187,7 +188,10 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
         if (!rsn_result->rdepths.empty()) {
             std::copy(rsn_result->rdepths[0].begin(), rsn_result->rdepths[0].end(), rdepth.begin());
         }
-
+        if (!rsn_result->hold_labels.empty()) {
+            hand_hold_label = rsn_result->hold_labels[0];
+            AISDK_LOG_TRACE("[HandLandmarkBatchCalculator], hand_hold_label, {}", hand_hold_label);
+        }
         //返回成功状态
         return absl::OkStatus();
     }
@@ -212,7 +216,8 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
                                   std::vector<Vec2f_t>& kpt_rcam, std::vector<float>& rdepth_lcam,
                                   std::vector<float>& rdepth_rcam,
                                   std::shared_ptr<base::PerspectiveCameraModel>& lvirutal_camera,
-                                  std::shared_ptr<base::PerspectiveCameraModel>& rvirutal_camera) {
+                                  std::shared_ptr<base::PerspectiveCameraModel>& rvirutal_camera,
+                                  bool& hand_hold_label) {
         // 参数初始化
         float bbox_scale = bbox_expand_ratio_;  // 边界框扩展比例
         std::vector<Image> crop_images(2);      // 存储左右裁剪图像
@@ -328,7 +333,11 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
             std::copy(rsn_result->rdepths[0].begin(), rsn_result->rdepths[0].end(), rdepth_lcam.begin());
             std::copy(rsn_result->rdepths[1].begin(), rsn_result->rdepths[1].end(), rdepth_rcam.begin());
         }
-
+        if (!rsn_result->hold_labels.empty()) {
+            hand_hold_label = rsn_result->hold_labels[0] & rsn_result->hold_labels[1];
+            AISDK_LOG_TRACE("[HandLandmarkBatchCalculator], hand_hold_label, lcam {}, rcam {}, final {}",
+                            rsn_result->hold_labels[0], rsn_result->hold_labels[1], hand_hold_label);
+        }
         return absl::OkStatus();
     }
 
@@ -357,22 +366,24 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
 
         //  left hand
         if (bbox_data.lhand_lcam_valid && bbox_data.lhand_rcam_valid) {
-            auto result = ProcessBatchHand(
-                image_data, {bbox_data.lhand_lcam_rect, bbox_data.lhand_rcam_rect}, true, crop_method,
-                lcam_model_.get(), rcam_model_.get(), output_buffer_->lhand_lcam_kpt, output_buffer_->lhand_rcam_kpt,
-                output_buffer_->lhand_lcam_rdepth, output_buffer_->lhand_rcam_rdepth,
-                output_buffer_->lhand_lcam_virtual_camera, output_buffer_->lhand_rcam_virtual_camera);
+            auto result =
+                ProcessBatchHand(image_data, {bbox_data.lhand_lcam_rect, bbox_data.lhand_rcam_rect}, true, crop_method,
+                                 lcam_model_.get(), rcam_model_.get(), output_buffer_->lhand_lcam_kpt,
+                                 output_buffer_->lhand_rcam_kpt, output_buffer_->lhand_lcam_rdepth,
+                                 output_buffer_->lhand_rcam_rdepth, output_buffer_->lhand_lcam_virtual_camera,
+                                 output_buffer_->lhand_rcam_virtual_camera, output_buffer_->lhand_hold_label);
             if (result.ok()) {
                 output_buffer_->lhand_lcam_valid = true;
                 output_buffer_->lhand_rcam_valid = true;
             }
         }
         if (bbox_data.rhand_lcam_valid && bbox_data.rhand_rcam_valid) {
-            auto result = ProcessBatchHand(
-                image_data, {bbox_data.rhand_lcam_rect, bbox_data.rhand_rcam_rect}, false, crop_method,
-                lcam_model_.get(), rcam_model_.get(), output_buffer_->rhand_lcam_kpt, output_buffer_->rhand_rcam_kpt,
-                output_buffer_->rhand_lcam_rdepth, output_buffer_->rhand_rcam_rdepth,
-                output_buffer_->rhand_lcam_virtual_camera, output_buffer_->rhand_rcam_virtual_camera);
+            auto result =
+                ProcessBatchHand(image_data, {bbox_data.rhand_lcam_rect, bbox_data.rhand_rcam_rect}, false, crop_method,
+                                 lcam_model_.get(), rcam_model_.get(), output_buffer_->rhand_lcam_kpt,
+                                 output_buffer_->rhand_rcam_kpt, output_buffer_->rhand_lcam_rdepth,
+                                 output_buffer_->rhand_rcam_rdepth, output_buffer_->rhand_lcam_virtual_camera,
+                                 output_buffer_->rhand_rcam_virtual_camera, output_buffer_->rhand_hold_label);
             if (result.ok()) {
                 output_buffer_->rhand_lcam_valid = true;
                 output_buffer_->rhand_rcam_valid = true;
@@ -383,7 +394,8 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
             AISDK_LOG_TRACE("[HandLandmarkBatchCalculator] mono left_hand bbox_area {}", bbox_area);
             auto result = ProcessSingleHand(image_data[0], bbox_data.lhand_lcam_rect, true, lcam_model_.get(),
                                             output_buffer_->lhand_lcam_kpt, output_buffer_->lhand_lcam_rdepth,
-                                            output_buffer_->lhand_lcam_virtual_camera, bbox_data.det_flag);
+                                            output_buffer_->lhand_lcam_virtual_camera, bbox_data.det_flag,
+                                            output_buffer_->lhand_hold_label);
             if (result.ok() && bbox_area < mono_valid_bbox_area_) {
                 output_buffer_->lhand_lcam_valid = true;
                 output_buffer_->lhand_rcam_valid = false;
@@ -394,7 +406,8 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
             AISDK_LOG_TRACE("[HandLandmarkBatchCalculator] mono right_hand bbox_area {}", bbox_area);
             auto result = ProcessSingleHand(image_data[1], bbox_data.rhand_rcam_rect, false, rcam_model_.get(),
                                             output_buffer_->rhand_rcam_kpt, output_buffer_->rhand_rcam_rdepth,
-                                            output_buffer_->rhand_rcam_virtual_camera, bbox_data.det_flag);
+                                            output_buffer_->rhand_rcam_virtual_camera, bbox_data.det_flag,
+                                            output_buffer_->rhand_hold_label);
             if (result.ok() && bbox_area < mono_valid_bbox_area_) {
                 output_buffer_->rhand_rcam_valid = true;
                 output_buffer_->rhand_lcam_valid = false;

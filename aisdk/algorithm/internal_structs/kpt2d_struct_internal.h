@@ -13,6 +13,7 @@ struct Kpt2dResult {
     std::vector<std::vector<Vec2f_t>> kpts;  // 单手 左目，右目
     std::vector<std::vector<float>> scores;
     std::vector<std::vector<float>> rdepths;
+    std::vector<bool> hold_labels;
 };
 struct Kpt2dInternal {
     Kpt2dInternal() {
@@ -44,7 +45,10 @@ struct Kpt2dInternal {
     bool lhand_rcam_valid = false;  //右相机是否检测到左手
     bool rhand_lcam_valid = false;  //左相机是否检测到右手
     bool rhand_rcam_valid = false;  //右相机是否检测到右手
-
+    
+    bool lhand_hold_label = false;
+    bool rhand_hold_label = false;
+    
     void clear() {
         lhand_lcam_kpt.clear();
         lhand_rcam_kpt.clear();
@@ -62,6 +66,8 @@ struct Kpt2dInternal {
         lhand_rcam_valid = false;
         rhand_lcam_valid = false;
         rhand_rcam_valid = false;
+        lhand_hold_label = false;
+        rhand_hold_label = false;
     }
 };
 

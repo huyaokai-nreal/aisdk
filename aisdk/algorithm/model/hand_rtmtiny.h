@@ -22,9 +22,12 @@ class RTMTiny : public HandLandmarkBaseNet {
    private:
     aisdk::xengine::TensorFormat itensor_format_;
     aisdk::xengine::TensorFormat otensor_format_;
+    float img_mean = 114.4950;            // 图像预处理均值
+    float img_std = 57.63;                // 图像预处理方差
     unsigned int input_shape_ = 128;
     unsigned int output_shape_ = 256;
     unsigned int keypoint_num_ = 21;
+    float hand_label_cls_thr = 0.6;
     std::vector<float> mul_coeff_;
 };
 

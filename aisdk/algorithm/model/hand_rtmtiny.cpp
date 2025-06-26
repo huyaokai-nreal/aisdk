@@ -62,6 +62,8 @@ void RTMTiny::PreProcess(const std::vector<Image> &net_input) {
 
         cv::Mat image_resized(img.size(), CV_32FC1, mem);
         img.convertTo(image_resized, CV_32FC1);
+        image_resized -= img_mean;
+        image_resized /= img_std;
     }
 }
 
@@ -71,9 +73,22 @@ void RTMTiny::PostProcess(Kpt2dResult &result) {
     }
     result.kpts.resize(otensor.m_batch);
     result.rdepths.resize(otensor.m_batch);
+    result.hold_labels.resize(otensor.m_batch);
     unsigned int _h, _w, _c, element_byte;
     for (size_t multi_i = 0; multi_i < otensor.m_multishape_num; multi_i++) {
         for (size_t batch_i = 0; batch_i < otensor.m_batch; batch_i++) {
+            if (otensor.m_tensors[multi_i].m_name == "hold_cls") {
+                element_byte = otensor.m_tensors[multi_i].m_elementbyte;
+                char *mem = (char *)otensor.m_tensors[multi_i].m_viraddr + batch_i * element_byte;
+                float *_data = (float *)mem;
+                result.hold_labels[batch_i] = false;
+                AISDK_LOG_TRACE(
+                    fmt::format("[RTMTinyInferenceCalculator], hold_cls_score {:.4f}", static_cast<float>(_data[0])));
+                if (_data[0] > hand_label_cls_thr) {
+                    result.hold_labels[batch_i] = true;
+                }
+                continue;
+            }
             _c = 1;
             _h = otensor.m_tensors[multi_i].m_dims[0];
             _w = otensor.m_tensors[multi_i].m_dims[1];

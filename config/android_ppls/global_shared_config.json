@@ -85,7 +85,7 @@
         },
         "2d_rtmtinyb2": {
             "model_config": {
-                "file_name": "models/rtmtiny_res26sw_kpt_0120_51838e_quantized.dlc",
+                "file_name": "models/rtmtiny_res26sw_kpt_0529_freeze_hold_cls_sigmoid_6ba036_quantized.dlc",
                 "vendor": "snpe"
             },
             "session_config": {
@@ -96,7 +96,8 @@
                 "output_tensors": [
                     "feat_x",
                     "feat_y",
-                    "feat_z"
+                    "feat_z",
+                    "hold_cls"
                 ]
             }
         },
