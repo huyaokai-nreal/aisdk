@@ -145,7 +145,7 @@
         },
         "3d_liftnimble": {
             "model_config": {
-                "file_name": "models/liftnimble_res26sw_250316_reproj_ebeff3.mnn",
+                "file_name": "models/liftnimble_res26sw_250603_mpjpa20_b5a9f9.mnn",
                 "vendor": "mnn"
             },
             "session_config": {
