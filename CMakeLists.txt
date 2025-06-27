@@ -62,7 +62,7 @@ elseif(Xrlinux AND NOT ENABLE_SEGMENT_JOINT_INFERENCE_MODE)
 else()
     # 默认模式下的模型包
     set(tar_ppls "android_ppls")
-    set(tar_model "hand_tracking_bp")
+    set(tar_model "hand_tracking_android")
 endif()
 
 option(BUILD_EXAMPLE "Build examples." ON)
