@@ -71,6 +71,9 @@ target_link_libraries(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PUBLIC
     libyuv::libyuv
 )
 
+# 限制输出的手势库满足google 16kb对齐的要求
+target_link_options(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PRIVATE "LINKER:-z,max-page-size=0x4000")
+
 # 输出目录设置
 set_target_properties(${HANDTRACKING_INTERFACE_LIBRARY_NAME} PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib
