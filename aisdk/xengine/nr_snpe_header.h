@@ -7,6 +7,7 @@
 #define SNPE_1680 (1680)
 #define SNPE_2070 (2070)
 #define SNPE_2170 (2170)
+#define SNPE_2360 (2360)
 
 #if SNPE_VERSION < 2000
 

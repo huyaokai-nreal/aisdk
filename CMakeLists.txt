@@ -106,7 +106,8 @@ option(ENABLE_XENGINE_SHARED_LIB "enable xengine shared lib."  OFF)
 if(NOT Xrlinux AND (CMAKE_SYSTEM_NAME STREQUAL "Android" OR CMAKE_SYSTEM_NAME STREQUAL "Linux"))
     # 启动snpe推理引擎
     option(ENABLE_XENGINE_SNPE_NN "enable snpe nn."  ON)
-    set(SNPE_VERSION "snpe-2.17.0" CACHE STRING "set snpe version.")
+    # set(SNPE_VERSION "snpe-2.17.0" CACHE STRING "set snpe version.")
+    set(SNPE_VERSION "snpe-2.36.0" CACHE STRING "set snpe version.")
     message(STATUS "SNPE_VERSION=" ${SNPE_VERSION})
     # 启动snpe的Debug
     option(ENABLE_XENGINE_TRACE_SNPE_LOG "enable trace snpe log."  OFF)

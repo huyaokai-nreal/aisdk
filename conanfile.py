@@ -46,7 +46,7 @@ class AISDK(ConanFile):
         self.requires("libyuv/stable", transitive_libs=True)
         self.requires("nreal_mnn/2.0.0", transitive_headers=True, transitive_libs=True)
         if self.settings.os in ["Linux", "Android"] and self.conf.get("user.os:distro") != "Xrlinux":
-            self.requires("snpe/2.17.0", transitive_headers=False, transitive_libs=False)
+            self.requires("snpe/2.36.0", transitive_headers=False, transitive_libs=False)
         self.requires("camera_model/develop", transitive_libs=True)
         if self.settings.os == "Linux" and self.conf.get("user.os:distro") != "Xrlinux":
             self.requires("framework/jenkins#835223d03ea5fdca60b7c57a1a759936897707f0")
