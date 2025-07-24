@@ -8,6 +8,7 @@
             "detect_cpu_flora",
             "detect_dsp_flora_mono",
             "2d_rtmtinyb2",
+            "2d_rtmtiny_nimble_flora",
             "2d_rsnnano",
             "2d_filter",
             "3d_lift_ella",
@@ -85,7 +86,7 @@
         },
         "2d_rtmtinyb2": {
             "model_config": {
-                "file_name": "models/rtmtiny_res26sw_kpt_0529_freeze_hold_cls_sigmoid_6ba036_quantized.dlc",
+                "file_name": "models/rtmtiny_res26sw_kpt_0721_feat_xyz_raw_feats_held_cls_a1ae45_quantized.dlc",
                 "vendor": "snpe"
             },
             "session_config": {
@@ -97,7 +98,26 @@
                     "feat_x",
                     "feat_y",
                     "feat_z",
-                    "hold_cls"
+                    "raw_feats",
+                    "held_cls"
+                ]
+            }
+        },
+        "2d_rtmtiny_nimble_flora": {
+            "model_config": {
+                "file_name": "models/liftnimble_pcl_mono_ln2bn_seq_250708_0a70a7_quantized.dlc",
+                "vendor": "snpe"
+            },
+            "session_config": {
+                "batch": 1,
+                "precision": "int16",
+                "thread_num": 1,
+                "runtime": "dsp",
+                "output_tensors": [
+                    "angle",
+                    "svd_pt",
+                    "out_mems",
+                    "sigma"
                 ]
             }
         },

@@ -90,7 +90,7 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
         //目前只支持2d_rtmtinyb2模型
         if (model_name_ == "2d_rtmtinyb2") {
             AISDK_LOG_TRACE("[HandLandmarkBatchCalculator] start init rtmtinyb2");
-            netalgo = XGraphServiceUtils::CreateNetAlgoBase<RTMTiny>((void*)0x202310, model_name_);
+            netalgo = XGraphServiceUtils::CreateNetAlgoBase<RTMTinyFlora>((void*)0x202310, model_name_);
             AISDK_LOG_TRACE("[HandLandmarkBatchCalculator] finish init rtmtinyb2");
         } else {
             return absl::AbortedError(fmt::format("can not init model with {}", model_name_));
@@ -136,9 +136,9 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
     /// @param det_flag 检测标志（未在函数中使用）
     /// @return
     absl::Status ProcessSingleHand(const Image& image_data, const DetectRect& bbox, bool left_hand,
-                                   base::BaseCameraModel* origin_camera, std::vector<Vec2f_t>& kpt,
-                                   std::vector<float>& rdepth,
-                                   std::shared_ptr<base::PerspectiveCameraModel>& virutal_camera, bool det_flag,
+                                   base::BaseCameraModel* origin_camera, std::vector<float>& pred_x,
+                                   std::vector<float>& pred_y, std::vector<float>& raw_feats, std::vector<Vec2f_t>& kpt,
+                                   std::shared_ptr<base::PerspectiveCameraModel>& virutal_camera,
                                    bool& hand_hold_label) {
         // step1: 准备裁剪图像
         cv::Mat crop_image;
@@ -184,10 +184,17 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
             kpt = rsn_result->kpts[0];
         }
 
-        // step10: 处理深度信息
-        if (!rsn_result->rdepths.empty()) {
-            std::copy(rsn_result->rdepths[0].begin(), rsn_result->rdepths[0].end(), rdepth.begin());
+        for (const auto& point : rsn_result->kpts[0]) {
+            pred_x.push_back(point[0]);
+            pred_y.push_back(point[1]);
         }
+        raw_feats = rsn_result->raw_feats[0];
+        // rdepth = rsn_result->rdepths[0];
+
+        // step10: 处理深度信息
+        // if (!rsn_result->rdepths.empty()) {
+        //     std::copy(rsn_result->rdepths[0].begin(), rsn_result->rdepths[0].end(), rdepth.begin());
+        // }
         if (!rsn_result->hold_labels.empty()) {
             hand_hold_label = rsn_result->hold_labels[0];
             AISDK_LOG_TRACE("[HandLandmarkBatchCalculator], hand_hold_label, {}", hand_hold_label);
@@ -213,8 +220,7 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
     absl::Status ProcessBatchHand(const std::vector<Image>& image_data, const std::vector<DetectRect>& bboxes,
                                   bool left_hand, CropMethod crop_method, base::BaseCameraModel* lcam_model,
                                   base::BaseCameraModel* rcam_model, std::vector<Vec2f_t>& kpt_lcam,
-                                  std::vector<Vec2f_t>& kpt_rcam, std::vector<float>& rdepth_lcam,
-                                  std::vector<float>& rdepth_rcam,
+                                  std::vector<Vec2f_t>& kpt_rcam,
                                   std::shared_ptr<base::PerspectiveCameraModel>& lvirutal_camera,
                                   std::shared_ptr<base::PerspectiveCameraModel>& rvirutal_camera,
                                   bool& hand_hold_label) {
@@ -329,10 +335,10 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
         }
 
         // step6: 深度信息处理
-        if (!rsn_result->rdepths.empty()) {
-            std::copy(rsn_result->rdepths[0].begin(), rsn_result->rdepths[0].end(), rdepth_lcam.begin());
-            std::copy(rsn_result->rdepths[1].begin(), rsn_result->rdepths[1].end(), rdepth_rcam.begin());
-        }
+        // if (!rsn_result->rdepths.empty()) {
+        //     std::copy(rsn_result->rdepths[0].begin(), rsn_result->rdepths[0].end(), rdepth_lcam.begin());
+        //     std::copy(rsn_result->rdepths[1].begin(), rsn_result->rdepths[1].end(), rdepth_rcam.begin());
+        // }
         if (!rsn_result->hold_labels.empty()) {
             hand_hold_label = rsn_result->hold_labels[0] & rsn_result->hold_labels[1];
             AISDK_LOG_TRACE("[HandLandmarkBatchCalculator], hand_hold_label, lcam {}, rcam {}, final {}",
@@ -369,8 +375,7 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
             auto result =
                 ProcessBatchHand(image_data, {bbox_data.lhand_lcam_rect, bbox_data.lhand_rcam_rect}, true, crop_method,
                                  lcam_model_.get(), rcam_model_.get(), output_buffer_->lhand_lcam_kpt,
-                                 output_buffer_->lhand_rcam_kpt, output_buffer_->lhand_lcam_rdepth,
-                                 output_buffer_->lhand_rcam_rdepth, output_buffer_->lhand_lcam_virtual_camera,
+                                 output_buffer_->lhand_rcam_kpt, output_buffer_->lhand_lcam_virtual_camera,
                                  output_buffer_->lhand_rcam_virtual_camera, output_buffer_->lhand_hold_label);
             if (result.ok()) {
                 output_buffer_->lhand_lcam_valid = true;
@@ -381,8 +386,7 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
             auto result =
                 ProcessBatchHand(image_data, {bbox_data.rhand_lcam_rect, bbox_data.rhand_rcam_rect}, false, crop_method,
                                  lcam_model_.get(), rcam_model_.get(), output_buffer_->rhand_lcam_kpt,
-                                 output_buffer_->rhand_rcam_kpt, output_buffer_->rhand_lcam_rdepth,
-                                 output_buffer_->rhand_rcam_rdepth, output_buffer_->rhand_lcam_virtual_camera,
+                                 output_buffer_->rhand_rcam_kpt, output_buffer_->rhand_lcam_virtual_camera,
                                  output_buffer_->rhand_rcam_virtual_camera, output_buffer_->rhand_hold_label);
             if (result.ok()) {
                 output_buffer_->rhand_lcam_valid = true;
@@ -392,10 +396,10 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
         if (bbox_data.lhand_lcam_valid && !bbox_data.lhand_rcam_valid) {
             float bbox_area = bbox_data.lhand_lcam_rect.w * bbox_data.lhand_lcam_rect.h;
             AISDK_LOG_TRACE("[HandLandmarkBatchCalculator] mono left_hand bbox_area {}", bbox_area);
-            auto result = ProcessSingleHand(image_data[0], bbox_data.lhand_lcam_rect, true, lcam_model_.get(),
-                                            output_buffer_->lhand_lcam_kpt, output_buffer_->lhand_lcam_rdepth,
-                                            output_buffer_->lhand_lcam_virtual_camera, bbox_data.det_flag,
-                                            output_buffer_->lhand_hold_label);
+            auto result = ProcessSingleHand(
+                image_data[0], bbox_data.lhand_lcam_rect, true, lcam_model_.get(), output_buffer_->lhand_lcam_pred_x,
+                output_buffer_->lhand_lcam_pred_y, output_buffer_->lhand_lcam_raw_feats, output_buffer_->lhand_lcam_kpt,
+                output_buffer_->lhand_lcam_virtual_camera, output_buffer_->lhand_hold_label);
             if (result.ok() && bbox_area < mono_valid_bbox_area_) {
                 output_buffer_->lhand_lcam_valid = true;
                 output_buffer_->lhand_rcam_valid = false;
@@ -404,10 +408,10 @@ class HandLandmarkBatchCalculator : public xgraph::CalculatorBase {
         if (bbox_data.rhand_rcam_valid && !bbox_data.rhand_lcam_valid) {
             float bbox_area = bbox_data.rhand_rcam_rect.w * bbox_data.rhand_rcam_rect.h;
             AISDK_LOG_TRACE("[HandLandmarkBatchCalculator] mono right_hand bbox_area {}", bbox_area);
-            auto result = ProcessSingleHand(image_data[1], bbox_data.rhand_rcam_rect, false, rcam_model_.get(),
-                                            output_buffer_->rhand_rcam_kpt, output_buffer_->rhand_rcam_rdepth,
-                                            output_buffer_->rhand_rcam_virtual_camera, bbox_data.det_flag,
-                                            output_buffer_->rhand_hold_label);
+            auto result = ProcessSingleHand(
+                image_data[1], bbox_data.rhand_rcam_rect, false, rcam_model_.get(), output_buffer_->rhand_rcam_pred_x,
+                output_buffer_->rhand_rcam_pred_y, output_buffer_->rhand_rcam_raw_feats, output_buffer_->rhand_rcam_kpt,
+                output_buffer_->rhand_rcam_virtual_camera, output_buffer_->rhand_hold_label);
             if (result.ok() && bbox_area < mono_valid_bbox_area_) {
                 output_buffer_->rhand_rcam_valid = true;
                 output_buffer_->rhand_lcam_valid = false;

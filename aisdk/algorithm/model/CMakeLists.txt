@@ -4,7 +4,9 @@ ${CMAKE_CURRENT_SOURCE_DIR}/hand_detect.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/hand_rsntiny.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/hand_rsnnano.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/hand_rtmtiny.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/hand_rtmtiny_flora.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/landmark_filter.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/hand_lift.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/hand_lift_nimble.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/hand_rtmtiny_nimble_flora.cpp
 )

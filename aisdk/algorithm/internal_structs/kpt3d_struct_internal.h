@@ -2,8 +2,10 @@
 #include <opencv2/opencv.hpp>
 #include <vector>
 #include "aisdk/algorithm/common/hand_define.h"
+#include "aisdk/algorithm/common/nrnet_define.h"
 #include "Eigen/Dense"
 #include "aisdk/base/type.h"
+#include "aisdk/base/camera_model.h"
 
 namespace aisdk::algorithm {
 struct HandsData {
@@ -30,4 +32,26 @@ struct LiftNetOutputs {
     float kpt3d_score = 0;
 };
 
+struct MonoHandNimbleInputs {
+
+    Image img_input;
+    std::vector<float> pred_x;
+    std::vector<float> pred_y;
+    std::vector<float> raw_feats;
+    std::shared_ptr<base::PerspectiveCameraModel> virtual_camera = nullptr;
+    
+    bool is_left = false;
+    double timestamp;
+    void clear() {
+        virtual_camera = nullptr;
+    }
+};
+
+struct MonoHandNimbleOutputs {
+    
+    std::vector<Vec2f_t> kpts;
+    std::vector<Vec3f_t> res3d;
+    float kpt3d_score = 0.;
+    std::vector<std::vector<float>> scores;
+};
 }  // namespace aisdk::algorithm

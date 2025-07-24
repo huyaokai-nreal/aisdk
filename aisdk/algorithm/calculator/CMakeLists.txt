@@ -43,5 +43,7 @@ ${CMAKE_CURRENT_SOURCE_DIR}/gesture_recognition_calculator.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/gesture_recognition_calculator.pb.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/hand_data_record_calculator.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/mono_hand_kpt3d_calculator.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/mono_hand_kpt3d_nimble_DLT_flora_calculator.cpp
+${CMAKE_CURRENT_SOURCE_DIR}/mono_hand_kpt3d_nimble_DLT_flora_calculator.pb.cc
 
 )

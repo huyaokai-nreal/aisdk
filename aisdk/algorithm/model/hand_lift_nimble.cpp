@@ -80,6 +80,30 @@ absl::Status GMLPLiftNimble::SetCameraInfo(const std::shared_ptr<BaseCameraModel
     return absl::OkStatus();
 }
 
+// 方案3: 分段函数 (小x线性，大x指数)
+void compensateWithPiecewise(Eigen::Vector3f &global_translation) {
+    // 原z补偿保持线性
+    global_translation[2] += 0.25 * global_translation[0];
+
+    // x补偿使用分段函数
+    float x = global_translation[0];
+    if (x > 0.) {
+        if (x < 0.3) {
+            // 小x区域保持线性
+            global_translation[0] += 0.085 * x;
+        } else {
+            global_translation[0] += 0.1 * x;
+        }
+    } else {
+        // 负方向对称处理
+        if (std::abs(x) < 0.3) {
+            global_translation[0] -= 0.085 * x;
+        } else {
+            global_translation[0] -= 0.1 * x;
+        }
+    }
+}
+
 void GMLPLiftNimble::PreProcess(const LiftNetInputs &inputs) {
     int index_input = this->m_net->GetInputTensorIndex("feat");
     int input_channels = itensor.m_tensors[index_input].m_dims[0];
@@ -160,7 +184,9 @@ void GMLPLiftNimble::PostProcess(const LiftNetInputs &inputs, LiftNetOutputs &ou
     Eigen::Vector3f global_translation_ = global_hand_pose.translation();
     Eigen::Vector3f global_translation = rot_left_.inverse() * global_translation_;
     global_rotation.noalias() = rot_left_.inverse() * global_rotation;
-
+    AISDK_LOG_TRACE("[GMLPLiftNimble] root {} {} {}", global_translation[0], global_translation[1],
+                    global_translation[2]);
+    compensateWithPiecewise(global_translation);
     // right to left
     if (inputs.is_left != 0.) {
         Eigen::Matrix3f flip_x;

@@ -14,6 +14,7 @@ struct Kpt2dResult {
     std::vector<std::vector<float>> scores;
     std::vector<std::vector<float>> rdepths;
     std::vector<bool> hold_labels;
+    std::vector<std::vector<float>> raw_feats;
 };
 struct Kpt2dInternal {
     Kpt2dInternal() {
@@ -48,6 +49,14 @@ struct Kpt2dInternal {
     
     bool lhand_hold_label = false;
     bool rhand_hold_label = false;
+    
+    // 单目backbone输出所需
+    std::vector<float> lhand_lcam_raw_feats;
+    std::vector<float> lhand_lcam_pred_x;
+    std::vector<float> lhand_lcam_pred_y;
+    std::vector<float> rhand_rcam_raw_feats;
+    std::vector<float> rhand_rcam_pred_x;
+    std::vector<float> rhand_rcam_pred_y;
     
     void clear() {
         lhand_lcam_kpt.clear();

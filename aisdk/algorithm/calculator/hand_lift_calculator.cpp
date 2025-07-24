@@ -4,10 +4,13 @@
 #include "../internal_structs/kpt2d_struct_internal.h"
 #include "../internal_structs/kpt3d_struct_internal.h"
 #include "../model/hand_lift.h"
+#include "aisdk/algorithm/common/NR_GlobalPredictorService.h"
+#include "aisdk/algorithm/common/NR_Transfer.h"
 #include "aisdk/algorithm/common/hand_define.h"
 #include "aisdk/algorithm/common/metrics.h"
 #include "aisdk/algorithm/common/nrcore_define.h"
 #include "aisdk/algorithm/func/netalgo_utils.h"
+#include "aisdk/algorithm/internal_structs/headpose_struct_internal.h"
 #include "aisdk/algorithm/model/calculator_basenet.h"
 #include "aisdk/algorithm/model/hand_lift_nimble.h"
 #include "aisdk/base/camera_model.h"
@@ -47,6 +50,7 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
         AISDK_LOG_TRACE("[LiftCalculator] GetContract start");
         cc->InputSidePackets().Tag("CAM_INFO_INPUT").Set<std::vector<std::shared_ptr<aisdk::base::BaseCameraModel>>>();
         cc->Inputs().Tag("LANDMARK_INPUT").Set<Kpt2dInternal>();
+        cc->Inputs().Tag("HEADPOSE").Set<HeadPoseInternal>();
         cc->Outputs().Tag("LIFT_OUTPUT").Set<HandsData>();
         AISDK_LOG_TRACE("[LiftCalculator] GetContract complete");
         return absl::OkStatus();
@@ -97,7 +101,9 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
         //输入输出数据准备
         AISDK_LOG_TRACE("[LiftCalculator] Process start");
         const auto& kpt2d = cc->Inputs().Tag("LANDMARK_INPUT").Get<Kpt2dInternal>();
+        const auto& head_pose = cc->Inputs().Tag("HEADPOSE").Get<HeadPoseInternal>();
         const auto& timestamp = cc->InputTimestamp().Seconds();
+        const auto kpt3d_world_pre = GlobalPredictorService::getInstance().get_last_kpt3d_world();
         std::unique_ptr<HandsData> output_buffer_ = absl::make_unique<HandsData>();
 
         //左手处理逻辑
@@ -182,6 +188,31 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
                     output_buffer_->left_hand.score =
                         compute_score_with_reprojection(output_buffer_->left_hand.kpt3d, kpt2d.lhand_lcam_kpt,
                                                         kpt2d.lhand_rcam_kpt, lcam_model_, rcam_model_);
+                }
+                // smooth:mono to bino
+                if (kpt3d_world_pre.lhand_valid && kpt3d_world_pre.left_hand.source == CamType::MONO) {
+                    output_buffer_->left_hand.smooth_frames = SmoothTotalFrames;  // 单双目切换帧，开始smooth
+                    auto kpt3d_cam_pre =
+                        recal_lcam_kpt3d_cv_with_new_headpose(head_pose.transform, kpt3d_world_pre.left_hand.kpt3d);
+                } else if (kpt3d_world_pre.lhand_valid && kpt3d_world_pre.left_hand.source == CamType::BINO) {
+                    if (kpt3d_world_pre.left_hand.smooth_frames > 0) {
+                        // 持续smooth，继承剩余需要smooth的帧数
+                        output_buffer_->left_hand.smooth_frames = kpt3d_world_pre.left_hand.smooth_frames;
+                    }
+                }
+                if (output_buffer_->left_hand.smooth_frames > 0) {
+                    auto kpt3d_cam_pre =
+                        recal_lcam_kpt3d_cv_with_new_headpose(head_pose.transform, kpt3d_world_pre.left_hand.kpt3d);
+                    float delta = (output_buffer_->left_hand.smooth_frames / SmoothTotalFrames);
+                    float x_smooth_delta = (kpt3d_cam_pre[0][0] - output_buffer_->left_hand.kpt3d[0][0]) * delta;
+                    float y_smooth_delta = (kpt3d_cam_pre[0][1] - output_buffer_->left_hand.kpt3d[0][1]) * delta;
+                    float z_smooth_delta = (kpt3d_cam_pre[0][2] - output_buffer_->left_hand.kpt3d[0][2]) * delta;
+                    for (int i = 0; i < 26; i++) {
+                        output_buffer_->left_hand.kpt3d[i][0] += x_smooth_delta;
+                        output_buffer_->left_hand.kpt3d[i][1] += y_smooth_delta;
+                        output_buffer_->left_hand.kpt3d[i][2] += z_smooth_delta;
+                    }
+                    output_buffer_->left_hand.smooth_frames -= 1;
                 }
                 // virtualcam 2d convert oricam 2d
                 if (kpt2d.lhand_lcam_virtual_camera != nullptr && kpt2d.lhand_rcam_virtual_camera != nullptr) {
@@ -280,6 +311,31 @@ class HandLiftCalculator : public xgraph::CalculatorBase {
                                                         kpt2d.rhand_rcam_kpt, lcam_model_, rcam_model_);
                 }
 
+                // smooth:mono to bino
+                if (kpt3d_world_pre.rhand_valid && kpt3d_world_pre.right_hand.source == CamType::MONO) {
+                    output_buffer_->right_hand.smooth_frames = SmoothTotalFrames;  // 单双目切换帧，开始smooth
+                    auto kpt3d_cam_pre =
+                        recal_lcam_kpt3d_cv_with_new_headpose(head_pose.transform, kpt3d_world_pre.right_hand.kpt3d);
+                } else if (kpt3d_world_pre.rhand_valid && kpt3d_world_pre.right_hand.source == CamType::BINO) {
+                    if (kpt3d_world_pre.right_hand.smooth_frames > 0) {
+                        // 持续smooth，继承剩余需要smooth的帧数
+                        output_buffer_->right_hand.smooth_frames = kpt3d_world_pre.right_hand.smooth_frames;
+                    }
+                }
+                if (output_buffer_->right_hand.smooth_frames > 0) {
+                    auto kpt3d_cam_pre =
+                        recal_lcam_kpt3d_cv_with_new_headpose(head_pose.transform, kpt3d_world_pre.right_hand.kpt3d);
+                    float delta = (output_buffer_->right_hand.smooth_frames / SmoothTotalFrames);
+                    float x_smooth_delta = (kpt3d_cam_pre[0][0] - output_buffer_->right_hand.kpt3d[0][0]) * delta;
+                    float y_smooth_delta = (kpt3d_cam_pre[0][1] - output_buffer_->right_hand.kpt3d[0][1]) * delta;
+                    float z_smooth_delta = (kpt3d_cam_pre[0][2] - output_buffer_->right_hand.kpt3d[0][2]) * delta;
+                    for (int i = 0; i < 26; i++) {
+                        output_buffer_->right_hand.kpt3d[i][0] += x_smooth_delta;
+                        output_buffer_->right_hand.kpt3d[i][1] += y_smooth_delta;
+                        output_buffer_->right_hand.kpt3d[i][2] += z_smooth_delta;
+                    }
+                    output_buffer_->right_hand.smooth_frames -= 1;
+                }
                 // virtualcam 2d convert oricam 2d
                 if (kpt2d.rhand_lcam_virtual_camera != nullptr && kpt2d.rhand_rcam_virtual_camera != nullptr) {
                     output_buffer_->right_hand.kpt2d_lcam =

@@ -85,6 +85,11 @@ class ConvertToWorldCalculator : public xgraph::CalculatorBase {
                 AISDK_LOG_TRACE("[ConvertToWorldCalculator] Transform right hand 3d kpt form cv left to world!");
                 output_buffer_->right_hand.kpt3d =
                     transfer_from_cvL_to_world(headpose_data.transform, input_data.right_hand.kpt3d);
+
+                AISDK_LOG_TRACE("[ConvertToWorldCalculator] world_root {}, {}, {}, {},",
+                                input_data.right_hand.kpt3d[0][0], output_buffer_->right_hand.kpt3d[0][0],
+                                output_buffer_->right_hand.kpt3d[0][1], output_buffer_->right_hand.kpt3d[0][2]);
+
                 AISDK_LOG_TRACE("[ConvertToWorldCalculator] Transform right hand 3d kpt complete!");
             }
 

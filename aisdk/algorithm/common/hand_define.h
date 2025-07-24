@@ -14,6 +14,7 @@ constexpr int k3DAlgoStdKeypointNum = 23;
 #endif
 constexpr int kKeypointRootId = 21;
 constexpr int kKeypoint2dRootId = 9;
+constexpr float SmoothTotalFrames = 30.; // Flora单双目切换总时长（帧）
 #if defined(ENABLE_OPENXR_HANDJOINT_FORMAT)
 const std::set<int> kPalmKeypointIndexSet {0,1,5,9,13,17,22,23,24,25};
 #else
@@ -30,6 +31,8 @@ struct SingleHandData {
     Vec3f_t root_v{0, 0, 0};
     float score = 0;
     float reproj_rmse = 0;
+    int smooth_frames = 0; // flora发生区域变化时，剩余smooth帧数
+    bool need_smooth = false; // 当前帧需要smooth
     HandGesture gesture = HandGesture::Invalid;  //手势信息
     CamType source = CamType::UNKNOWN;  //摄像头类别
     bool constrained {false};

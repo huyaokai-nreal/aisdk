@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package aisdk;
+
+message MonoHandKpt3DNimbleFloraCalculatorOptions  {
+  int32 input_width = 1;
+  int32 input_height = 2; 
+  string  model_name = 3;
+  float bbox_expand_ratio = 4;
+  bool pcl_able = 5;
+}
