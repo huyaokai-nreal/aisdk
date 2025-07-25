@@ -27,7 +27,7 @@ class RTMTiny : public HandLandmarkBaseNet {
     unsigned int input_shape_ = 128;
     unsigned int output_shape_ = 256;
     unsigned int keypoint_num_ = 21;
-    float hand_label_cls_thr = 0.6;
+    float hand_label_cls_thr = 1.0;
     std::vector<float> mul_coeff_;
 };
 
